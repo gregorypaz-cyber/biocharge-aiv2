@@ -1,0 +1,116 @@
+{
+  "name": "DailyCheckin",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the check-in"
+    },
+    "biocharge_morning": {
+      "type": "number",
+      "description": "BioCharge morning score (0-100)"
+    },
+    "biocharge_pre_workout": {
+      "type": "number",
+      "description": "BioCharge pre-workout score (0-100)"
+    },
+    "biocharge_post_workout": {
+      "type": "number",
+      "description": "BioCharge post-workout score (0-100)"
+    },
+    "sleep_score": {
+      "type": "number",
+      "description": "Sleep score (0-100)"
+    },
+    "fatigue": {
+      "type": "number",
+      "description": "Fatigue level (0-100)"
+    },
+    "deep_sleep_pct": {
+      "type": "number",
+      "description": "Deep sleep percentage (0-100)"
+    },
+    "rpe": {
+      "type": "number",
+      "description": "Rate of Perceived Exertion (1-10)"
+    },
+    "mood": {
+      "type": "number",
+      "description": "Mood (1-5)"
+    },
+    "stress": {
+      "type": "number",
+      "description": "Stress level (1-5)"
+    },
+    "energy": {
+      "type": "number",
+      "description": "Energy level (1-5)"
+    },
+    "hydration": {
+      "type": "number",
+      "description": "Hydration level (1-5)"
+    },
+    "muscle_soreness": {
+      "type": "number",
+      "description": "Muscle soreness (1-5)"
+    },
+    "sleep_hours": {
+      "type": "number",
+      "description": "Hours of sleep"
+    },
+    "resting_hr": {
+      "type": "number",
+      "description": "Resting heart rate"
+    },
+    "hrv": {
+      "type": "number",
+      "description": "Heart rate variability"
+    },
+    "body_weight": {
+      "type": "number",
+      "description": "Body weight in kg"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Daily observations"
+    },
+    "recovery_score": {
+      "type": "number",
+      "description": "Calculated recovery score"
+    },
+    "zone": {
+      "type": "string",
+      "enum": [
+        "green",
+        "yellow",
+        "red"
+      ],
+      "description": "Recovery zone"
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "Training recommendation"
+    },
+    "alert": {
+      "type": "string",
+      "description": "Alert status"
+    },
+    "training_load": {
+      "type": "string",
+      "description": "Training load assessment"
+    },
+    "delta_pre": {
+      "type": "number",
+      "description": "Delta BioCharge pre-workout"
+    },
+    "delta_post": {
+      "type": "number",
+      "description": "Delta BioCharge post-workout"
+    }
+  },
+  "required": [
+    "date",
+    "biocharge_morning"
+  ]
+}
