@@ -123,14 +123,22 @@ export default function History() {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-semibold">
                     {c.date ? format(new Date(c.date), "dd 'de' MMM", { locale: ptBR }) : '—'}
                   </span>
-                  <StatusBadge zone={c.zone} className="text-[10px] py-0.5 px-2" />
+                  {c.rest_day ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                      🛌 Descanso
+                    </span>
+                  ) : (
+                    <StatusBadge zone={c.zone} className="text-[10px] py-0.5 px-2" />
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  Sono: {c.sleep_score} · Fadiga: {c.fatigue} · {c.recommendation}
+                  {c.rest_day
+                    ? `Sono: ${c.sleep_score} · Dia de descanso`
+                    : `Sono: ${c.sleep_score} · Fadiga: ${c.fatigue} · ${c.recommendation}`}
                 </p>
               </div>
 

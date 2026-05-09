@@ -6,15 +6,18 @@ import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { Save, ArrowLeft, Moon, Activity, Heart, Scale } from 'lucide-react';
 import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
+import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 
 const DEFAULT_FORM = {
   date: format(new Date(), 'yyyy-MM-dd'),
+  rest_day: false,
   biocharge_morning: 70,
   biocharge_pre_workout: null,
   biocharge_post_workout: null,
@@ -40,18 +43,23 @@ export default function DailyCheckin() {
   const editData = location.state?.editData;
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState(editData || DEFAULT_FORM);
+  const [form, setForm] = useState(editData ? { rest_day: false, ...editData } : DEFAULT_FORM);
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const isRestDay = form.rest_day;
   const preview = computeCheckinScores(form);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      const scores = computeCheckinScores(data);
+      const payload = data.rest_day
+        ? { ...data, rpe: 0, fatigue: 0, biocharge_pre_workout: null, biocharge_post_workout: null }
+        : data;
+      const scores = computeCheckinScores(payload);
       if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
       return base44.entities.DailyCheckin.create(scores);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checkins'] });
+      toast.success('✅ Check-in salvo com sucesso!');
       navigate('/');
     },
   });
@@ -71,6 +79,9 @@ export default function DailyCheckin() {
         <div className="w-16" />
       </div>
 
+      {/* Rest Day Toggle */}
+      <RestDayToggle value={isRestDay} onChange={v => update('rest_day', v)} />
+
       {/* Live Preview */}
       <LivePreview preview={preview} />
 
@@ -88,8 +99,12 @@ export default function DailyCheckin() {
       {/* BioCharge */}
       <CheckinStep title="BioCharge" emoji="⚡" delay={0.05}>
         <SliderField label="Manhã" value={form.biocharge_morning} onChange={v => update('biocharge_morning', v)} />
-        <SliderField label="Pré-Treino" value={form.biocharge_pre_workout ?? 0} onChange={v => update('biocharge_pre_workout', v)} />
-        <SliderField label="Pós-Treino" value={form.biocharge_post_workout ?? 0} onChange={v => update('biocharge_post_workout', v)} />
+        {!isRestDay && (
+          <>
+            <SliderField label="Pré-Treino" value={form.biocharge_pre_workout ?? 0} onChange={v => update('biocharge_pre_workout', v)} />
+            <SliderField label="Pós-Treino" value={form.biocharge_post_workout ?? 0} onChange={v => update('biocharge_post_workout', v)} />
+          </>
+        )}
       </CheckinStep>
 
       {/* Sleep */}
@@ -110,11 +125,13 @@ export default function DailyCheckin() {
         </div>
       </CheckinStep>
 
-      {/* Performance */}
-      <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
-        <SliderField label="Fadiga" value={form.fatigue} onChange={v => update('fatigue', v)} icon={Activity} />
-        <SliderField label="RPE (Esforço Percebido)" value={form.rpe} onChange={v => update('rpe', v)} min={1} max={10} />
-      </CheckinStep>
+      {/* Performance — hidden on rest day */}
+      {!isRestDay && (
+        <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
+          <SliderField label="Fadiga" value={form.fatigue} onChange={v => update('fatigue', v)} icon={Activity} />
+          <SliderField label="RPE (Esforço Percebido)" value={form.rpe} onChange={v => update('rpe', v)} min={1} max={10} />
+        </CheckinStep>
+      )}
 
       {/* Wellbeing */}
       <CheckinStep title="Bem-estar" emoji="🧠" delay={0.2}>

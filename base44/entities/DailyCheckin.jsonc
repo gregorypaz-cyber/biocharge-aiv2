@@ -7,6 +7,11 @@
       "format": "date",
       "description": "Date of the check-in"
     },
+    "rest_day": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this is a rest/recovery day with no training"
+    },
     "biocharge_morning": {
       "type": "number",
       "description": "BioCharge morning score (0-100)"

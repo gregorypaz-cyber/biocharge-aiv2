@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { format, subDays } from 'date-fns';
 import {
   AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine,
+  XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { cn } from '@/lib/utils';
@@ -51,12 +51,20 @@ export default function Trends() {
   const chartData = [...filtered].reverse().map(c => ({
     date: c.date ? format(new Date(c.date), 'dd/MM') : '',
     ...c,
+    // Null out performance metrics on rest days so they show as gaps
+    ...(c.rest_day ? {
+      recovery_score: null, readiness_score: null,
+      fatigue_score: null, stress_score: null, rpe: null,
+    } : {}),
   }));
 
   const metricConfig = metrics.find(m => m.key === selectedMetric);
 
+  // Performance metrics exclude rest days
+  const performanceMetrics = ['recovery_score', 'readiness_score', 'fatigue_score', 'stress_score', 'rpe', 'biocharge_morning'];
   const avg = (arr, key) => {
-    const vals = arr.filter(c => c[key] != null).map(c => c[key]);
+    const filtered = performanceMetrics.includes(key) ? arr.filter(c => !c.rest_day) : arr;
+    const vals = filtered.filter(c => c[key] != null).map(c => c[key]);
     return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
   };
 
@@ -219,7 +227,11 @@ export default function Trends() {
                 <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="recovery_score" fill="hsl(142,70%,50%)" radius={[3, 3, 0, 0]} opacity={0.85} name="Recovery" />
+                <Bar dataKey="recovery_score" radius={[3, 3, 0, 0]} opacity={0.85} name="Recovery">
+                  {chartData.map((entry, index) => (
+                    <Cell key={index} fill={entry.rest_day ? 'hsl(220,15%,30%)' : 'hsl(142,70%,50%)'} />
+                  ))}
+                </Bar>
                 <Bar dataKey="fatigue_score" fill="hsl(0,72%,55%)" radius={[3, 3, 0, 0]} opacity={0.7} name="Fadiga" />
               </BarChart>
             </ResponsiveContainer>

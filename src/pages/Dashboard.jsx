@@ -11,6 +11,7 @@ import WeekStrip from '@/components/dashboard/WeekStrip';
 import MiniChart from '@/components/dashboard/MiniChart';
 import InsightPill from '@/components/ui-bio/InsightPill';
 import RecommendationCard from '@/components/dashboard/RecommendationCard';
+import StreakCard from '@/components/dashboard/StreakCard';
 
 export default function Dashboard() {
   const { data: checkins = [], isLoading } = useQuery({
@@ -75,6 +76,9 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      {/* Streak */}
+      <StreakCard streak={streak} />
 
       {/* Recommendation */}
       <RecommendationCard today={today} />
