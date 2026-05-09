@@ -1,179 +1,297 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Edit2, Trash2, Copy, ChevronRight, Calendar } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { computeCheckinScores, getZoneColor } from '@/lib/biocharge-utils';
-import StatusBadge from '@/components/ui-bio/StatusBadge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell } from 'lucide-react';
+import { computeCheckinScores } from '@/lib/biocharge-utils';
+import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
+import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
+
+// Group checkins by week
+function groupByWeek(checkins) {
+  const weeks = {};
+  checkins.forEach(c => {
+    const d = parseLocalDate(c.date);
+    if (!d) return;
+    const day = d.getDay();
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - day);
+    const key = weekStart.toISOString().slice(0, 10);
+    if (!weeks[key]) weeks[key] = [];
+    weeks[key].push(c);
+  });
+  return Object.entries(weeks)
+    .sort((a, b) => new Date(b[0] + 'T12:00:00') - new Date(a[0] + 'T12:00:00'))
+    .map(([weekStart, items]) => ({ weekStart, items }));
+}
+
+function WeekLabel({ weekStart }) {
+  const d = parseLocalDate(weekStart);
+  const end = new Date(d);
+  end.setDate(d.getDate() + 6);
+  return (
+    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+      {d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} — {end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
+    </span>
+  );
+}
+
+function DayDetailSheet({ checkin, sessions, onClose }) {
+  const score = checkin.recovery_score || checkin.morning_recovery_score || 0;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 60 }}
+        animate={{ y: 0 }}
+        exit={{ y: 60 }}
+        className="bg-card border border-border rounded-3xl w-full max-w-md max-h-[80vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-lg font-black">{formatDateShort(checkin.date)}</p>
+              {checkin.current_body_state && <BodyStateBadge state={checkin.current_body_state} size="sm" />}
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-black font-mono text-primary">{score}</p>
+              <p className="text-[10px] text-muted-foreground">recovery</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[
+              { label: 'Sono', val: checkin.sleep_hours ? `${checkin.sleep_hours}h` : '—' },
+              { label: 'Fadiga', val: checkin.fatigue ?? '—' },
+              { label: 'Strain', val: checkin.daily_strain_accumulated ?? '—' },
+              { label: 'HRV', val: checkin.hrv ?? '—' },
+              { label: 'RHR', val: checkin.resting_hr ?? '—' },
+              { label: 'Humor', val: checkin.mood ?? '—' },
+            ].map(m => (
+              <div key={m.label} className="rounded-xl bg-secondary p-2.5 text-center">
+                <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                <p className="text-sm font-bold mt-0.5">{m.val}</p>
+              </div>
+            ))}
+          </div>
+
+          {sessions.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Treinos</p>
+              {sessions.map((s, i) => (
+                <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-secondary">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">{s.sport}</span>
+                    <span className="text-xs text-muted-foreground">{s.duration_minutes}min</span>
+                  </div>
+                  <span className="text-xs font-bold text-amber-400">strain {s.strain_score || 0}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {checkin.notes && (
+            <div className="mt-3 p-3 rounded-xl bg-secondary">
+              <p className="text-xs text-muted-foreground">Notas</p>
+              <p className="text-sm mt-0.5">{checkin.notes}</p>
+            </div>
+          )}
+
+          {checkin.next_day_forecast && (
+            <div className="mt-3 p-3 rounded-xl bg-primary/8 border border-primary/15">
+              <p className="text-xs text-primary font-semibold mb-1">Previsão para o dia seguinte</p>
+              <p className="text-xs text-muted-foreground">{checkin.next_day_forecast}</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function History() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [filterZone, setFilterZone] = useState('all');
+  const [expandedWeeks, setExpandedWeeks] = useState({});
+  const [selectedCheckin, setSelectedCheckin] = useState(null);
 
   const { data: checkins = [], isLoading } = useQuery({
     queryKey: ['checkins'],
-    queryFn: () => base44.entities.DailyCheckin.list('-date', 100),
+    queryFn: () => base44.entities.DailyCheckin.list('-date', 120),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.DailyCheckin.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['checkins'] }),
-  });
-
-  const duplicateMutation = useMutation({
-    mutationFn: async (checkin) => {
-      const { id, created_date, updated_date, created_by, ...data } = checkin;
-      return base44.entities.DailyCheckin.create({
-        ...data,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        notes: `Duplicado de ${checkin.date}`,
-      });
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['checkins'] }),
+  const { data: allSessions = [] } = useQuery({
+    queryKey: ['training-sessions'],
+    queryFn: () => base44.entities.TrainingSession.list('-date', 200),
   });
 
   const computed = checkins.map(computeCheckinScores);
-  const filtered = computed.filter(c => {
-    const matchSearch = !search || c.date?.includes(search) || c.notes?.toLowerCase().includes(search.toLowerCase());
-    const matchZone = filterZone === 'all' || c.zone === filterZone;
-    return matchSearch && matchZone;
-  });
+  const weeks = groupByWeek(computed);
+
+  const toggleWeek = (key) => setExpandedWeeks(prev => ({ ...prev, [key]: !prev[key] }));
+
+  // Calculate week-level trend
+  const weekTrend = (items) => {
+    if (items.length < 2) return null;
+    const sorted = [...items].sort((a, b) => new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00'));
+    const recent = sorted.slice(0, Math.ceil(sorted.length / 2));
+    const older = sorted.slice(Math.ceil(sorted.length / 2));
+    const recentAvg = recent.reduce((s, c) => s + (c.recovery_score || 0), 0) / recent.length;
+    const olderAvg = older.reduce((s, c) => s + (c.recovery_score || 0), 0) / older.length;
+    return recentAvg - olderAvg;
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-4 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold">Histórico</h1>
-        <p className="text-sm text-muted-foreground mt-1">{checkins.length} registros</p>
+        <h1 className="text-2xl font-black">Timeline Fisiológica</h1>
+        <p className="text-sm text-muted-foreground mt-1">{computed.length} registros · agrupados por semana</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por data ou notas..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-10 bg-card border-border"
-          />
-        </div>
-        <div className="flex gap-1">
-          {['all', 'green', 'yellow', 'red'].map(zone => (
-            <button
-              key={zone}
-              onClick={() => setFilterZone(zone)}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                filterZone === zone
-                  ? 'bg-primary/20 text-primary'
-                  : 'bg-secondary text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {zone === 'all' ? 'Todos' : zone === 'green' ? '🟢' : zone === 'yellow' ? '🟡' : '🔴'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* List */}
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Calendar className="w-10 h-10 mx-auto mb-3 opacity-50" />
-          <p>Nenhum registro encontrado</p>
-        </div>
+      {weeks.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">Nenhum registro ainda.</div>
       ) : (
-        <AnimatePresence>
-          {filtered.map((c, i) => (
+        weeks.map(({ weekStart, items }) => {
+          const isOpen = expandedWeeks[weekStart] !== false; // default open
+          const trend = weekTrend(items);
+          const weekAvg = Math.round(items.reduce((s, c) => s + (c.recovery_score || 0), 0) / items.length);
+          const hasAlert = items.some(c => c.current_body_state === 'Overreached' || c.recovery_score < 50);
+
+          return (
             <motion.div
-              key={c.id}
-              initial={{ opacity: 0, y: 10 }}
+              key={weekStart}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ delay: i * 0.03 }}
-              className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:border-border/80 transition-all group"
+              className="rounded-2xl border border-border bg-card overflow-hidden"
             >
-              {/* Score circle */}
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center font-mono font-bold text-lg shrink-0"
-                style={{ backgroundColor: `${getZoneColor(c.zone)}20`, color: getZoneColor(c.zone) }}
+              {/* Week header */}
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
+                onClick={() => toggleWeek(weekStart)}
               >
-                {c.recovery_score}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold">
-                    {c.date ? format(new Date(c.date), "dd 'de' MMM", { locale: ptBR }) : '—'}
-                  </span>
-                  {c.rest_day ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                      🛌 Descanso
-                    </span>
-                  ) : (
-                    <StatusBadge zone={c.zone} className="text-[10px] py-0.5 px-2" />
-                  )}
+                <div className="flex items-center gap-3">
+                  <WeekLabel weekStart={weekStart} />
+                  {hasAlert && <AlertTriangle className="w-3.5 h-3.5 text-red-400" />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {c.rest_day
-                    ? `Sono: ${c.sleep_score} · Dia de descanso`
-                    : `Sono: ${c.sleep_score} · Fadiga: ${c.fatigue} · ${c.recommendation}`}
-                </p>
-              </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground">avg {weekAvg}</span>
+                  {trend !== null && (
+                    trend > 3 ? <TrendingUp className="w-4 h-4 text-emerald-400" /> :
+                    trend < -3 ? <TrendingDown className="w-4 h-4 text-red-400" /> :
+                    <Minus className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/checkin', { state: { editData: c } })}>
-                  <Edit2 className="w-3.5 h-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => duplicateMutation.mutate(c)}>
-                  <Copy className="w-3.5 h-3.5" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-card border-border">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
-                      <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+              {/* Days */}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: 'auto' }}
+                    exit={{ height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-border divide-y divide-border/50">
+                      {[...items]
+                        .sort((a, b) => new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00'))
+                        .map((c, i) => {
+                          const sessions = allSessions.filter(s => s.date === c.date);
+                          const score = c.recovery_score || c.morning_recovery_score || 0;
+                          const isAlert = c.current_body_state === 'Overreached' || score < 50;
 
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          return (
+                            <motion.button
+                              key={c.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: i * 0.03 }}
+                              onClick={() => setSelectedCheckin(c)}
+                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/20 transition-colors text-left"
+                            >
+                              {/* Date */}
+                              <div className="w-10 text-center shrink-0">
+                                <p className="text-xs text-muted-foreground">
+                                  {parseLocalDate(c.date)?.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}
+                                </p>
+                                <p className="text-sm font-bold">{parseLocalDate(c.date)?.getDate()}</p>
+                              </div>
+
+                              {/* Score */}
+                              <div
+                                className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
+                                style={{
+                                  background: isAlert ? 'rgba(220,38,38,0.15)' : score >= 80 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
+                                  color: isAlert ? '#ef4444' : score >= 80 ? '#22c55e' : '#eab308'
+                                }}
+                              >
+                                {score}
+                              </div>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {c.current_body_state ? (
+                                    <BodyStateBadge state={c.current_body_state} size="sm" />
+                                  ) : c.rest_day ? (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">🛌 Descanso</span>
+                                  ) : null}
+                                </div>
+                                <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
+                                  {sessions.length > 0 && (
+                                    <span className="flex items-center gap-0.5">
+                                      <Dumbbell className="w-3 h-3" /> {sessions.length} treino{sessions.length > 1 ? 's' : ''}
+                                    </span>
+                                  )}
+                                  {c.daily_strain_accumulated > 0 && (
+                                    <span className="text-amber-400">strain {c.daily_strain_accumulated}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Trend arrow */}
+                              <div className="shrink-0">
+                                {i < items.length - 1 ? (
+                                  score > (items[i + 1]?.recovery_score || 0) + 3
+                                    ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                                    : score < (items[i + 1]?.recovery_score || 0) - 3
+                                    ? <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+                                    : <Minus className="w-3.5 h-3.5 text-muted-foreground" />
+                                ) : null}
+                              </div>
+                            </motion.button>
+                          );
+                        })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
-          ))}
-        </AnimatePresence>
+          );
+        })
       )}
+
+      {/* Day Detail Sheet */}
+      <AnimatePresence>
+        {selectedCheckin && (
+          <DayDetailSheet
+            checkin={selectedCheckin}
+            sessions={allSessions.filter(s => s.date === selectedCheckin.date)}
+            onClose={() => setSelectedCheckin(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

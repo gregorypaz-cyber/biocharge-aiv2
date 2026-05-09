@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { format, subDays } from 'date-fns';
+import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
@@ -46,10 +46,11 @@ export default function Trends() {
   });
 
   const computed = checkins.map(computeCheckinScores);
-  const cutoff = subDays(new Date(), period);
-  const filtered = computed.filter(c => c.date && new Date(c.date) >= cutoff);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - period);
+  const filtered = computed.filter(c => c.date && parseLocalDate(c.date) >= cutoff);
   const chartData = [...filtered].reverse().map(c => ({
-    date: c.date ? format(new Date(c.date), 'dd/MM') : '',
+    date: c.date ? formatDateChart(c.date) : '',
     ...c,
     // Null out performance metrics on rest days so they show as gaps
     ...(c.rest_day ? {

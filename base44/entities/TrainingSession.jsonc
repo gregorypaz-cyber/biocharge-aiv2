@@ -1,0 +1,70 @@
+{
+  "name": "TrainingSession",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the training session (YYYY-MM-DD, local timezone)"
+    },
+    "checkin_id": {
+      "type": "string",
+      "description": "Reference to the DailyCheckin of the same day"
+    },
+    "time_of_day": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "afternoon",
+        "evening",
+        "night"
+      ],
+      "description": "Time of day when training occurred"
+    },
+    "sport": {
+      "type": "string",
+      "description": "Sport or activity (e.g., corrida, muscula\u00e7\u00e3o, futsal, jiu-jitsu)"
+    },
+    "intensity": {
+      "type": "string",
+      "enum": [
+        "very_light",
+        "light",
+        "moderate",
+        "hard",
+        "very_hard"
+      ],
+      "description": "Perceived intensity of the session"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Duration of the session in minutes"
+    },
+    "heart_rate_avg": {
+      "type": "number",
+      "description": "Average heart rate during session (optional)"
+    },
+    "perceived_effort": {
+      "type": "number",
+      "description": "Rate of Perceived Exertion (1-10)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about the session"
+    },
+    "strain_score": {
+      "type": "number",
+      "description": "Calculated strain score based on intensity, duration and sport"
+    },
+    "impact_message": {
+      "type": "string",
+      "description": "AI-generated message about the physiological impact of this session"
+    }
+  },
+  "required": [
+    "date",
+    "sport",
+    "intensity",
+    "duration_minutes"
+  ]
+}

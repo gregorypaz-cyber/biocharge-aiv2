@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import { getTodayLocal } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -16,7 +16,7 @@ import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 
 const DEFAULT_FORM = {
-  date: format(new Date(), 'yyyy-MM-dd'),
+  date: getTodayLocal(),
   rest_day: false,
   biocharge_morning: 70,
   biocharge_pre_workout: null,
@@ -54,6 +54,10 @@ export default function DailyCheckin() {
         ? { ...data, rpe: 0, fatigue: 0, biocharge_pre_workout: null, biocharge_post_workout: null }
         : data;
       const scores = computeCheckinScores(payload);
+      // Set morning_recovery_score only on NEW check-ins (immutable after creation)
+      if (!editData?.id) {
+        scores.morning_recovery_score = scores.recovery_score;
+      }
       if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
       return base44.entities.DailyCheckin.create(scores);
     },

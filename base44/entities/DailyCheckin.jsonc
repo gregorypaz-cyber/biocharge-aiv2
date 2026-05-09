@@ -5,7 +5,7 @@
     "date": {
       "type": "string",
       "format": "date",
-      "description": "Date of the check-in"
+      "description": "Date of the check-in (YYYY-MM-DD, local timezone)"
     },
     "rest_day": {
       "type": "boolean",
@@ -84,6 +84,10 @@
       "type": "number",
       "description": "Calculated recovery score"
     },
+    "morning_recovery_score": {
+      "type": "number",
+      "description": "Fixed morning recovery score \u2014 never changes after check-in"
+    },
     "zone": {
       "type": "string",
       "enum": [
@@ -112,6 +116,49 @@
     "delta_post": {
       "type": "number",
       "description": "Delta BioCharge post-workout"
+    },
+    "daily_strain_accumulated": {
+      "type": "number",
+      "description": "Total strain accumulated from all training sessions today (0-100)"
+    },
+    "current_body_state": {
+      "type": "string",
+      "enum": [
+        "Recovered",
+        "Activated",
+        "Balanced",
+        "Loaded",
+        "Sympathetic_Load",
+        "Fatigued",
+        "Overreached"
+      ],
+      "description": "Current physiological body state \u2014 updated after each training session"
+    },
+    "remaining_capacity": {
+      "type": "string",
+      "enum": [
+        "High",
+        "Moderate",
+        "Low",
+        "Minimal"
+      ],
+      "description": "Remaining training capacity for the day"
+    },
+    "recovery_demand": {
+      "type": "number",
+      "description": "How much recovery the day demands (0-100)"
+    },
+    "sleep_need_tonight": {
+      "type": "number",
+      "description": "Recommended hours of sleep tonight"
+    },
+    "next_day_forecast": {
+      "type": "string",
+      "description": "AI-generated forecast for the next day"
+    },
+    "delayed_fatigue_alert": {
+      "type": "string",
+      "description": "Alert about delayed fatigue patterns detected from history"
     }
   },
   "required": [

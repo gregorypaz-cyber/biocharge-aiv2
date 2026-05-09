@@ -1,14 +1,14 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, Brain, Clock, TrendingUp, Settings } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Brain, Clock, Activity, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Home' },
-  { path: '/trends', icon: TrendingUp, label: 'Trends' },
+  { path: '/today', icon: Activity, label: 'Hoje' },
   { path: '/checkin', icon: PlusCircle, label: 'Check-in', primary: true },
   { path: '/insights', icon: Brain, label: 'IA' },
-  { path: '/history', icon: Clock, label: 'Histórico' },
+  { path: '/history', icon: Clock, label: 'Timeline' },
 ];
 
 export default function AppLayout() {

@@ -1,27 +1,87 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { User, LogOut, Moon, Bell, Shield, Heart } from 'lucide-react';
+import { User, LogOut, Globe, Dumbbell, Clock, Target, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+
+const COMMON_SPORTS = ['Corrida', 'Musculação', 'Ciclismo', 'Natação', 'Futsal', 'Futebol', 'Jiu-jitsu', 'CrossFit', 'HIIT', 'Yoga', 'Caminhada', 'Boxe', 'Basquete', 'Pilates'];
+
+const TRAINING_TIMES = [
+  { value: 'morning', label: 'Manhã', emoji: '🌅' },
+  { value: 'afternoon', label: 'Tarde', emoji: '☀️' },
+  { value: 'evening', label: 'Noite', emoji: '🌆' },
+  { value: 'night', label: 'Madrugada', emoji: '🌙' },
+];
+
+const RECOVERY_GOALS = [
+  { value: 'performance', label: 'Alta Performance', desc: 'Maximizar resultados e PR', emoji: '🏆' },
+  { value: 'health', label: 'Saúde Geral', desc: 'Equilíbrio e longevidade', emoji: '💚' },
+  { value: 'rehab', label: 'Reabilitação', desc: 'Recuperação de lesão', emoji: '🩺' },
+];
 
 export default function AppSettings() {
   const { user } = useAuth();
+  const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const handleLogout = () => {
-    base44.auth.logout('/login');
+  const [prefs, setPrefs] = useState({
+    timezone: detectedTz,
+    sports: [],
+    training_times: [],
+    recovery_goal: 'health',
+  });
+  const [customSport, setCustomSport] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user?.preferences) {
+      setPrefs(p => ({ ...p, ...user.preferences }));
+    }
+  }, [user]);
+
+  const toggleSport = (sport) => {
+    setPrefs(p => ({
+      ...p,
+      sports: p.sports.includes(sport) ? p.sports.filter(s => s !== sport) : [...p.sports, sport]
+    }));
+  };
+
+  const addCustomSport = () => {
+    if (!customSport.trim()) return;
+    if (!prefs.sports.includes(customSport.trim())) {
+      setPrefs(p => ({ ...p, sports: [...p.sports, customSport.trim()] }));
+    }
+    setCustomSport('');
+  };
+
+  const toggleTime = (time) => {
+    setPrefs(p => ({
+      ...p,
+      training_times: p.training_times.includes(time)
+        ? p.training_times.filter(t => t !== time)
+        : [...p.training_times, time]
+    }));
+  };
+
+  const savePrefs = async () => {
+    setSaving(true);
+    await base44.auth.updateMe({ preferences: prefs });
+    setSaving(false);
+    toast.success('Preferências salvas!');
   };
 
   return (
-    <div className="space-y-6 max-w-lg mx-auto">
+    <div className="space-y-5 max-w-lg mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie sua conta e preferências</p>
+        <p className="text-sm text-muted-foreground mt-1">Conta e preferências fisiológicas</p>
       </div>
 
       {/* Profile */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl border border-border bg-card p-5"
       >
@@ -36,33 +96,165 @@ export default function AppSettings() {
         </div>
       </motion.div>
 
-      {/* Menu Items */}
-      <div className="space-y-2">
-        {[
-          { icon: Moon, label: 'Aparência', desc: 'Dark mode ativo' },
-          { icon: Bell, label: 'Notificações', desc: 'Lembretes de check-in' },
-          { icon: Shield, label: 'Privacidade', desc: 'Seus dados são seguros' },
-          { icon: Heart, label: 'Sobre', desc: 'BioCharge AI v1.0' },
-        ].map((item, i) => (
-          <motion.div
-            key={item.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-secondary/50 transition-colors cursor-pointer"
+      {/* Timezone */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Fuso Horário</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Detectado automaticamente. Confirme para garantir datas corretas nos registros.
+        </p>
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-secondary">
+          <span className="text-sm font-mono text-primary flex-1">{prefs.timezone}</span>
+          <button
+            onClick={() => setPrefs(p => ({ ...p, timezone: detectedTz }))}
+            className="text-xs text-muted-foreground hover:text-foreground"
           >
-            <div className="p-2 rounded-xl bg-secondary">
-              <item.icon className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <span className="text-sm font-medium">{item.label}</span>
-              <p className="text-xs text-muted-foreground">{item.desc}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            Redefinir
+          </button>
+        </div>
+      </motion.div>
 
-      <Button onClick={handleLogout} variant="outline" className="w-full border-destructive/30 text-destructive hover:bg-destructive/10">
+      {/* Sports Profile */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Dumbbell className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Esportes que Pratica</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Ajuda a IA a aprender padrões de fadiga específicos para seus esportes.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {COMMON_SPORTS.map(sport => (
+            <button
+              key={sport}
+              onClick={() => toggleSport(sport)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                prefs.sports.includes(sport)
+                  ? 'border-primary/50 bg-primary/15 text-foreground'
+                  : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {sport}
+            </button>
+          ))}
+        </div>
+        {/* Custom sport */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Adicionar esporte..."
+            value={customSport}
+            onChange={e => setCustomSport(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addCustomSport()}
+            className="bg-secondary border-border text-sm h-8"
+          />
+          <Button size="sm" variant="outline" onClick={addCustomSport} className="h-8 w-8 p-0">
+            <Plus className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+        {/* Custom sports tags */}
+        {prefs.sports.filter(s => !COMMON_SPORTS.includes(s)).length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {prefs.sports.filter(s => !COMMON_SPORTS.includes(s)).map(s => (
+              <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-xs">
+                {s}
+                <button onClick={() => toggleSport(s)}><X className="w-3 h-3" /></button>
+              </span>
+            ))}
+          </div>
+        )}
+      </motion.div>
+
+      {/* Typical Training Times */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Horários Típicos de Treino</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Melhora a contextualização dos insights de fadiga tardia.
+        </p>
+        <div className="flex gap-2">
+          {TRAINING_TIMES.map(t => (
+            <button
+              key={t.value}
+              onClick={() => toggleTime(t.value)}
+              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                prefs.training_times.includes(t.value)
+                  ? 'border-primary/50 bg-primary/15 text-foreground'
+                  : 'border-border bg-secondary text-muted-foreground'
+              }`}
+            >
+              <span className="text-lg">{t.emoji}</span>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Recovery Goal */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Objetivo de Recuperação</span>
+        </div>
+        <div className="space-y-2">
+          {RECOVERY_GOALS.map(g => (
+            <button
+              key={g.value}
+              onClick={() => setPrefs(p => ({ ...p, recovery_goal: g.value }))}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border text-left ${
+                prefs.recovery_goal === g.value
+                  ? 'border-primary/50 bg-primary/10'
+                  : 'border-border bg-secondary hover:border-border/80'
+              }`}
+            >
+              <span className="text-2xl">{g.emoji}</span>
+              <div>
+                <p className="text-sm font-semibold">{g.label}</p>
+                <p className="text-xs text-muted-foreground">{g.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Save */}
+      <Button
+        onClick={savePrefs}
+        disabled={saving}
+        className="w-full font-semibold"
+      >
+        {saving ? 'Salvando...' : 'Salvar Preferências'}
+      </Button>
+
+      {/* Logout */}
+      <Button
+        onClick={() => base44.auth.logout('/login')}
+        variant="outline"
+        className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+      >
         <LogOut className="w-4 h-4 mr-2" /> Sair da conta
       </Button>
     </div>

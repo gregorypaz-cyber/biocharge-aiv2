@@ -11,6 +11,7 @@ import Dashboard from '@/pages/Dashboard';
 import DailyCheckin from '@/pages/DailyCheckin';
 import Insights from '@/pages/Insights';
 import History from '@/pages/History';
+import Today from '@/pages/Today';
 import Trends from '@/pages/Trends';
 import AppSettings from '@/pages/AppSettings';
 import Login from '@/pages/Login';
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/checkin" element={<DailyCheckin />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/today" element={<Today />} />
           <Route path="/history" element={<History />} />
           <Route path="/trends" element={<Trends />} />
           <Route path="/settings" element={<AppSettings />} />
