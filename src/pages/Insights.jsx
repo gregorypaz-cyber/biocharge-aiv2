@@ -3,11 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
-import { computeCheckinScores, getSmartMessage, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
+import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
+import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
+import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
+import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
+import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 
 export default function Insights() {
   const [aiInsight, setAiInsight] = useState('');
@@ -28,7 +32,8 @@ export default function Insights() {
     ? Math.round(computed.reduce((s, c) => s + (c.recovery_score || 0), 0) / computed.length)
     : 0;
   const perfLevel = getPerformanceLevel(avgRecovery);
-  const messages = computed[0] ? getSmartMessage(computed[0], computed) : [];
+  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
+  const messages = analysis?.actionableRecs?.map(r => `${r.icon} [${r.category}] ${r.text}`) || [];
 
   const generateInsights = async () => {
     if (computed.length < 3) return;
@@ -127,6 +132,9 @@ Regras:
         <p className="text-sm text-muted-foreground mt-1">Insights personalizados baseados nos seus dados</p>
       </div>
 
+      {/* Physio State */}
+      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
+
       {/* Performance Level + Streak */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -201,6 +209,16 @@ Regras:
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Training Load */}
+      {analysis && (
+        <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
+      )}
+
+      {/* Correlations (engine-detected) */}
+      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) && (
+        <CorrelationsCard correlations={analysis.correlations} laggedEffects={analysis.laggedEffects} />
       )}
 
       {/* Pattern Detection */}

@@ -4,14 +4,22 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { computeCheckinScores, getSmartMessage, calculateStreak } from '@/lib/biocharge-utils';
+import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
+import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
+
 import HeroSection from '@/components/dashboard/HeroSection';
 import ScoresGrid from '@/components/dashboard/ScoresGrid';
 import WeekStrip from '@/components/dashboard/WeekStrip';
 import MiniChart from '@/components/dashboard/MiniChart';
-import InsightPill from '@/components/ui-bio/InsightPill';
-import RecommendationCard from '@/components/dashboard/RecommendationCard';
 import StreakCard from '@/components/dashboard/StreakCard';
+
+import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
+import NarrativeCard from '@/components/intelligence/NarrativeCard';
+import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
+import BaselineInsightsRow from '@/components/intelligence/BaselineInsightsRow';
+import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
+import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
+import ActionableRecsCard from '@/components/intelligence/ActionableRecsCard';
 
 export default function Dashboard() {
   const { data: checkins = [], isLoading } = useQuery({
@@ -22,7 +30,9 @@ export default function Dashboard() {
   const computed = checkins.map(computeCheckinScores);
   const today = computed[0];
   const streak = calculateStreak(checkins);
-  const messages = today ? getSmartMessage(today, computed) : [];
+
+  // Run full physiological analysis
+  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
 
   if (isLoading) {
     return (
@@ -47,7 +57,7 @@ export default function Dashboard() {
         </div>
         <h1 className="text-3xl font-black mb-2 tracking-tight">BioCharge AI</h1>
         <p className="text-muted-foreground mb-8 max-w-sm leading-relaxed">
-          Registre seu primeiro check-in para ativar seu painel de inteligência biológica e receber insights personalizados.
+          Registre seu primeiro check-in para ativar seu painel de inteligência fisiológica e receber insights personalizados.
         </p>
         <Link
           to="/checkin"
@@ -64,24 +74,52 @@ export default function Dashboard() {
       {/* Hero */}
       <HeroSection today={today} streak={streak} />
 
+      {/* Physiological State — flagship card */}
+      {analysis?.physioState && (
+        <PhysioStateCard physioState={analysis.physioState} />
+      )}
+
+      {/* Narrative — human language interpretation */}
+      {analysis?.narrative && (
+        <NarrativeCard narrative={analysis.narrative} />
+      )}
+
+      {/* Why Score */}
+      {analysis?.whyScore?.length > 0 && (
+        <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={today.recovery_score} />
+      )}
+
+      {/* Baseline Comparison */}
+      {analysis?.baselineInsights?.length > 0 && (
+        <BaselineInsightsRow insights={analysis.baselineInsights} />
+      )}
+
       {/* Score Grid */}
       <ScoresGrid today={today} />
 
-      {/* AI Insights */}
-      {messages.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Insights IA</h3>
-          {messages.map((msg, i) => (
-            <InsightPill key={i} text={msg} delay={i * 0.07} />
-          ))}
-        </div>
+      {/* Actionable Recommendations */}
+      {analysis?.actionableRecs?.length > 0 && (
+        <ActionableRecsCard recs={analysis.actionableRecs} />
+      )}
+
+      {/* Training Load + Sleep Debt */}
+      {analysis && (
+        <TrainingLoadCard
+          trainingLoad={analysis.trainingLoad}
+          sleepDebt={analysis.sleepDebt}
+        />
       )}
 
       {/* Streak */}
       <StreakCard streak={streak} />
 
-      {/* Recommendation */}
-      <RecommendationCard today={today} />
+      {/* Correlations + Lagged Effects */}
+      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) && (
+        <CorrelationsCard
+          correlations={analysis.correlations}
+          laggedEffects={analysis.laggedEffects}
+        />
+      )}
 
       {/* Week + Chart */}
       <WeekStrip data={computed} />
