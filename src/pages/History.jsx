@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,6 +38,12 @@ function WeekLabel({ weekStart }) {
 
 function DayDetailSheet({ checkin, sessions, onClose }) {
   const score = checkin.recovery_score || checkin.morning_recovery_score || 0;
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -53,7 +59,10 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
         className="bg-card border border-border rounded-3xl w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
-        <div className="overflow-y-auto p-5 pb-20" style={{ maxHeight: '80vh' }}>
+        <div
+          className="overflow-y-auto p-5"
+          style={{ maxHeight: '80vh', overscrollBehavior: 'contain', paddingBottom: '80px' }}
+        >
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-lg font-black">{formatDateShort(checkin.date)}</p>
