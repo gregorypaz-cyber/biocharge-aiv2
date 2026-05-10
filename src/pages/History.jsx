@@ -50,10 +50,10 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
         initial={{ y: 60 }}
         animate={{ y: 0 }}
         exit={{ y: 60 }}
-        className="bg-card border border-border rounded-3xl w-full max-w-md max-h-[80vh] overflow-y-auto"
+        className="bg-card border border-border rounded-3xl w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-5">
+        <div className="overflow-y-auto p-5 pb-20" style={{ maxHeight: '80vh' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-lg font-black">{formatDateShort(checkin.date)}</p>
