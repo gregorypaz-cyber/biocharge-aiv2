@@ -1,0 +1,35 @@
+{
+  "name": "SleepRecord",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the sleep record (YYYY-MM-DD)"
+    },
+    "total_hours": {
+      "type": "number",
+      "description": "Total sleep hours"
+    },
+    "deep_sleep_hours": {
+      "type": "number",
+      "description": "Deep sleep hours"
+    },
+    "rem_sleep_hours": {
+      "type": "number",
+      "description": "REM sleep hours"
+    },
+    "sleep_score": {
+      "type": "number",
+      "description": "Sleep quality score (0-100)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "date",
+    "total_hours"
+  ]
+}

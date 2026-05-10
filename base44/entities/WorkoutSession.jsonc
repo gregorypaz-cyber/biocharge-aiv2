@@ -1,0 +1,55 @@
+{
+  "name": "WorkoutSession",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the workout (YYYY-MM-DD)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "corrida",
+        "caminhada",
+        "for\u00e7a",
+        "ciclismo",
+        "outro"
+      ],
+      "description": "Type of workout"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Duration in minutes"
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Distance in kilometers"
+    },
+    "avg_heart_rate": {
+      "type": "number",
+      "description": "Average heart rate (bpm)"
+    },
+    "max_heart_rate": {
+      "type": "number",
+      "description": "Maximum heart rate (bpm)"
+    },
+    "avg_pace_min_per_km": {
+      "type": "number",
+      "description": "Average pace in min/km"
+    },
+    "perceived_effort": {
+      "type": "number",
+      "description": "Perceived effort (1-10)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "date",
+    "type",
+    "duration_minutes"
+  ]
+}

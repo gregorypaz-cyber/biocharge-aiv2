@@ -98,10 +98,11 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
-        className="bg-card border border-border rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="bg-card border border-border rounded-3xl w-full max-w-md flex flex-col"
+        style={{ maxHeight: '85vh' }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
+        {/* Header — fixo */}
+        <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <Dumbbell className="w-5 h-5 text-primary" />
             <h2 className="font-bold text-base">Registrar Treino</h2>
@@ -115,152 +116,162 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
         <AnimatePresence>
           {impactMsg && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mx-5 mt-5 p-4 rounded-2xl bg-primary/10 border border-primary/20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex-1 overflow-y-auto p-5"
             >
-              <p className="text-xs font-semibold text-primary mb-1">⚡ Impacto Fisiológico</p>
-              <p className="text-sm leading-relaxed text-foreground">{impactMsg}</p>
-              <Button className="w-full mt-3" onClick={() => { onAdded?.(); onClose(); }}>
-                Fechar
-              </Button>
+              <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
+                <p className="text-xs font-semibold text-primary mb-1">⚡ Impacto Fisiológico</p>
+                <p className="text-sm leading-relaxed text-foreground">{impactMsg}</p>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border shrink-0">
+                <Button className="w-full h-12 font-semibold" onClick={() => { onAdded?.(); onClose(); }}>
+                  Fechar
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {!impactMsg && (
-          <form onSubmit={handleSubmit} className="p-5 space-y-5">
-            {/* Sport */}
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Esporte / Atividade</label>
-              <Input
-                placeholder="Ex: Corrida, Musculação..."
-                value={form.sport}
-                onChange={e => set('sport', e.target.value)}
-                className="bg-secondary border-border mb-2"
-              />
-              <div className="flex flex-wrap gap-1.5">
-                {COMMON_SPORTS.map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => set('sport', s)}
-                    className={`px-2.5 py-1 rounded-lg text-xs transition-colors ${
-                      form.sport === s ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Intensity */}
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Intensidade</label>
-              <div className="flex gap-1.5">
-                {INTENSITIES.map(i => (
-                  <button
-                    key={i.value}
-                    type="button"
-                    onClick={() => set('intensity', i.value)}
-                    className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[10px] font-semibold transition-all border ${
-                      form.intensity === i.value
-                        ? 'border-primary/50 bg-primary/10 text-foreground'
-                        : 'border-border bg-secondary text-muted-foreground'
-                    }`}
-                  >
-                    <span className="text-base">{i.emoji}</span>
-                    <span>{i.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Duration + Time */}
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {/* Sport */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Duração (min)</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Esporte / Atividade</label>
                 <Input
-                  type="number"
-                  min={5}
-                  max={300}
-                  value={form.duration_minutes}
-                  onChange={e => set('duration_minutes', e.target.value)}
-                  className="bg-secondary border-border"
+                  placeholder="Ex: Corrida, Musculação..."
+                  value={form.sport}
+                  onChange={e => set('sport', e.target.value)}
+                  className="bg-secondary border-border mb-2"
                 />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Período</label>
-                <div className="grid grid-cols-2 gap-1">
-                  {TIME_OF_DAY.map(t => (
+                <div className="flex flex-wrap gap-1.5">
+                  {COMMON_SPORTS.map(s => (
                     <button
-                      key={t.value}
+                      key={s}
                       type="button"
-                      onClick={() => set('time_of_day', t.value)}
-                      className={`py-1.5 rounded-lg text-[10px] font-semibold transition-all border ${
-                        form.time_of_day === t.value
-                          ? 'border-primary/50 bg-primary/10 text-foreground'
-                          : 'border-border bg-secondary text-muted-foreground'
+                      onClick={() => set('sport', s)}
+                      className={`px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                        form.sport === s ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      {t.emoji} {t.label}
+                      {s}
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Effort + HR */}
-            <div className="grid grid-cols-2 gap-3">
+              {/* Intensity */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Esforço (1-10)</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Intensidade</label>
+                <div className="flex gap-1.5">
+                  {INTENSITIES.map(i => (
+                    <button
+                      key={i.value}
+                      type="button"
+                      onClick={() => set('intensity', i.value)}
+                      className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[10px] font-semibold transition-all border ${
+                        form.intensity === i.value
+                          ? 'border-primary/50 bg-primary/10 text-foreground'
+                          : 'border-border bg-secondary text-muted-foreground'
+                      }`}
+                    >
+                      <span className="text-base">{i.emoji}</span>
+                      <span>{i.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Duration + Time */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Duração (min)</label>
+                  <Input
+                    type="number"
+                    min={5}
+                    max={300}
+                    value={form.duration_minutes}
+                    onChange={e => set('duration_minutes', e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Período</label>
+                  <div className="grid grid-cols-2 gap-1">
+                    {TIME_OF_DAY.map(t => (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => set('time_of_day', t.value)}
+                        className={`py-1.5 rounded-lg text-[10px] font-semibold transition-all border ${
+                          form.time_of_day === t.value
+                            ? 'border-primary/50 bg-primary/10 text-foreground'
+                            : 'border-border bg-secondary text-muted-foreground'
+                        }`}
+                      >
+                        {t.emoji} {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Effort + HR */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Esforço (1-10)</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={form.perceived_effort}
+                    onChange={e => set('perceived_effort', e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">FC Média (opt)</label>
+                  <Input
+                    type="number"
+                    placeholder="bpm"
+                    value={form.heart_rate_avg}
+                    onChange={e => set('heart_rate_avg', e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Notas (opcional)</label>
                 <Input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={form.perceived_effort}
-                  onChange={e => set('perceived_effort', e.target.value)}
+                  placeholder="Como foi o treino?"
+                  value={form.notes}
+                  onChange={e => set('notes', e.target.value)}
                   className="bg-secondary border-border"
                 />
               </div>
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">FC Média (opt)</label>
-                <Input
-                  type="number"
-                  placeholder="bpm"
-                  value={form.heart_rate_avg}
-                  onChange={e => set('heart_rate_avg', e.target.value)}
-                  className="bg-secondary border-border"
-                />
-              </div>
             </div>
 
-            {/* Notes */}
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Notas (opcional)</label>
-              <Input
-                placeholder="Como foi o treino?"
-                value={form.notes}
-                onChange={e => set('notes', e.target.value)}
-                className="bg-secondary border-border"
-              />
+            {/* Footer — fixo */}
+            <div className="p-5 pt-3 border-t border-border shrink-0">
+              <Button
+                type="submit"
+                className="w-full h-12 font-semibold"
+                disabled={mutation.isPending || !form.sport}
+              >
+                {mutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Calculando impacto fisiológico...
+                  </span>
+                ) : (
+                  'Registrar Treino'
+                )}
+              </Button>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full h-12 font-semibold"
-              disabled={mutation.isPending || !form.sport}
-            >
-              {mutation.isPending ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Calculando impacto fisiológico...
-                </span>
-              ) : (
-                'Registrar Treino'
-              )}
-            </Button>
           </form>
         )}
       </motion.div>

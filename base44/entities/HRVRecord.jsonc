@@ -1,0 +1,27 @@
+{
+  "name": "HRVRecord",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the HRV reading (YYYY-MM-DD)"
+    },
+    "hrv": {
+      "type": "number",
+      "description": "Heart rate variability in ms"
+    },
+    "resting_heart_rate": {
+      "type": "number",
+      "description": "Resting heart rate (bpm)"
+    },
+    "sp_o2": {
+      "type": "number",
+      "description": "Blood oxygen saturation (%)"
+    }
+  },
+  "required": [
+    "date",
+    "hrv"
+  ]
+}

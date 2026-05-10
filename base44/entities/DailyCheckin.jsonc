@@ -159,6 +159,38 @@
     "delayed_fatigue_alert": {
       "type": "string",
       "description": "Alert about delayed fatigue patterns detected from history"
+    },
+    "hrv_manual": {
+      "type": "number",
+      "description": "HRV in ms entered manually"
+    },
+    "resting_heart_rate": {
+      "type": "number",
+      "description": "Resting heart rate (alias for resting_hr)"
+    },
+    "sleep_quality": {
+      "type": "number",
+      "description": "Subjective sleep quality (1-5)"
+    },
+    "energy_level": {
+      "type": "number",
+      "description": "Energy level (1-5)"
+    },
+    "stress_level": {
+      "type": "number",
+      "description": "Stress level (1-5)"
+    },
+    "muscle_soreness_level": {
+      "type": "number",
+      "description": "Muscle soreness level (1-5)"
+    },
+    "mood_level": {
+      "type": "number",
+      "description": "Mood level (1-5)"
+    },
+    "hydration_liters": {
+      "type": "number",
+      "description": "Water intake in liters"
     }
   },
   "required": [
