@@ -5,6 +5,24 @@ import { Button } from '@/components/ui/button';
 import { getTimeOfDayLabel } from '@/lib/date-utils';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 
+function getStrainZone(strain) {
+  if (strain >= 18) return { label: 'Máximo', color: 'text-red-400' };
+  if (strain >= 14) return { label: 'Alto', color: 'text-orange-400' };
+  if (strain >= 10) return { label: 'Moderado', color: 'text-yellow-400' };
+  return { label: 'Leve', color: 'text-emerald-400' };
+}
+
+function StrainBadge({ strain }) {
+  const val = strain || 0;
+  const zone = getStrainZone(val);
+  return (
+    <div className="text-right">
+      <p className={`text-sm font-mono font-bold ${zone.color}`}>⚡ {val}</p>
+      <p className="text-[10px] text-muted-foreground">{zone.label}</p>
+    </div>
+  );
+}
+
 const INTENSITY_LABELS = {
   very_light: 'Muito Leve',
   light: 'Leve',
@@ -80,11 +98,7 @@ export default function TrainingSessionsList({ checkin, sessions, onUpdate }) {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <div className="flex items-center gap-1 text-amber-400">
-                  <Flame className="w-3.5 h-3.5" />
-                  <span className="text-sm font-mono font-bold">{s.strain_score || 0}</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground">strain</span>
+                <StrainBadge strain={s.strain_score} />
               </div>
             </motion.div>
           ))

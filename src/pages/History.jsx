@@ -99,7 +99,9 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
                     <span className="text-sm font-medium">{s.sport}</span>
                     <span className="text-xs text-muted-foreground">{s.duration_minutes}min</span>
                   </div>
-                  <span className="text-xs font-bold text-amber-400">strain {s.strain_score || 0}</span>
+                  <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-red-400' : (s.strain_score || 0) >= 14 ? 'text-orange-400' : (s.strain_score || 0) >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                    ⚡ strain {s.strain_score || 0}
+                  </span>
                 </div>
               ))}
             </div>
@@ -255,7 +257,9 @@ export default function History() {
                                     </span>
                                   )}
                                   {c.daily_strain_accumulated > 0 && (
-                                    <span className="text-amber-400">strain {c.daily_strain_accumulated}</span>
+                                    <span className={`${c.daily_strain_accumulated >= 18 ? 'text-red-400' : c.daily_strain_accumulated >= 14 ? 'text-orange-400' : c.daily_strain_accumulated >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                                      ⚡ strain {c.daily_strain_accumulated}
+                                    </span>
                                   )}
                                 </div>
                               </div>

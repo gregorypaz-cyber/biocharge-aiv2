@@ -31,6 +31,7 @@ export default function AppSettings() {
     sports: [],
     training_times: [],
     recovery_goal: 'health',
+    max_hr: 185,
   });
   const [customSport, setCustomSport] = useState('');
   const [saving, setSaving] = useState(false);
@@ -206,6 +207,30 @@ export default function AppSettings() {
             </button>
           ))}
         </div>
+      </motion.div>
+
+      {/* Max HR */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.17 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">FC Máxima Pessoal (bpm)</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Estimativa: 220 − sua idade. Use o valor real se já mediu num esforço máximo. Usado para calcular o Strain.
+        </p>
+        <Input
+          type="number"
+          min={120}
+          max={220}
+          value={prefs.max_hr || 185}
+          onChange={e => setPrefs(p => ({ ...p, max_hr: Number(e.target.value) }))}
+          className="bg-secondary border-border"
+        />
       </motion.div>
 
       {/* Recovery Goal */}

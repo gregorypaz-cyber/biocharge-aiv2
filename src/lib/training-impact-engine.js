@@ -5,57 +5,78 @@
  */
 import { base44 } from '@/api/base44Client';
 
-// Intensity multipliers for strain calculation
-const INTENSITY_FACTORS = {
-  very_light: 0.3,
-  light: 0.5,
-  moderate: 0.7,
-  hard: 0.9,
-  very_hard: 1.0,
+// Visual intensity factors mapped to FC zones (WHOOP methodology)
+const INTENSITY_FACTORS_VISUAL = {
+  very_light: 0.50,
+  light:      0.65,
+  moderate:   0.75,
+  hard:       0.87,
+  very_hard:  0.95,
 };
 
-// Sport cardiovascular demand factors
+// Sport cardiovascular demand factors (WHOOP scale 0-21)
 const SPORT_FACTORS = {
-  corrida: 1.2,
-  ciclismo: 1.1,
-  natação: 1.15,
-  futsal: 1.1,
-  futebol: 1.1,
-  basquete: 1.05,
-  musculação: 0.85,
-  crossfit: 1.1,
-  'jiu-jitsu': 1.0,
-  boxe: 1.1,
+  corrida: 1.0,
+  ciclismo: 0.9,
+  natação: 0.95,
+  futsal: 0.9,
+  futebol: 0.85,
+  basquete: 0.9,
+  musculação: 0.7,
+  crossfit: 1.05,
+  hiit: 1.1,
+  'jiu-jitsu': 0.85,
+  boxe: 1.0,
   yoga: 0.5,
   pilates: 0.6,
-  caminhada: 0.6,
-  hiit: 1.2,
-  default: 0.9,
+  caminhada: 0.4,
+  default: 0.8,
 };
 
+const DEFAULT_MAX_HR = 185;
+
 /**
- * Calculate strain score locally (fast, no AI needed)
+ * Calculate strain score on 0-21 scale (WHOOP methodology)
  */
-export function calculateStrainScore(session) {
-  const intensity = INTENSITY_FACTORS[session.intensity] || 0.7;
+export function calculateStrainScore(session, maxHr) {
+  const fcMedia = session.heart_rate_avg ? Number(session.heart_rate_avg) : 0;
+  const fcMaxima = session.heart_rate_max ? Number(session.heart_rate_max) : 0;
+  const personalMaxHr = maxHr || DEFAULT_MAX_HR;
+  const duration = session.duration_minutes || 30;
+  const effort = session.perceived_effort || 6;
+
+  // Determine intensity_final
+  let intensidadeFinal;
+  if (fcMedia > 0 && fcMaxima > 0) {
+    intensidadeFinal = fcMedia / fcMaxima;
+  } else if (fcMedia > 0) {
+    intensidadeFinal = fcMedia / personalMaxHr;
+  } else {
+    intensidadeFinal = INTENSITY_FACTORS_VISUAL[session.intensity] || 0.75;
+  }
+
   const sportKey = Object.keys(SPORT_FACTORS).find(k =>
     session.sport?.toLowerCase().includes(k)
   );
   const sportFactor = SPORT_FACTORS[sportKey] || SPORT_FACTORS.default;
-  const duration = session.duration_minutes || 30;
 
-  // Base formula: normalized to 0-100
-  const raw = (duration / 60) * intensity * sportFactor * 100 * 0.4;
-  return Math.min(100, Math.round(raw));
+  const raw = intensidadeFinal * (duration / 60) * sportFactor * 21;
+  return Math.min(21, Math.round(raw * 10) / 10);
 }
 
 /**
  * Determine body state from morning recovery and accumulated strain
  */
-export function calculateBodyState(morningRecovery, accumulatedStrain) {
-  const net = morningRecovery - accumulatedStrain;
+// Convert 0-21 strain to 0-100 scale for body state comparisons
+function strainTo100(strain) {
+  return Math.round((strain / 21) * 100);
+}
 
-  if (accumulatedStrain === 0 || accumulatedStrain == null) {
+export function calculateBodyState(morningRecovery, accumulatedStrain) {
+  const strain100 = strainTo100(accumulatedStrain || 0);
+  const net = morningRecovery - strain100;
+
+  if (!accumulatedStrain) {
     if (morningRecovery >= 80) return 'Recovered';
     if (morningRecovery >= 65) return 'Balanced';
     if (morningRecovery >= 50) return 'Loaded';
@@ -74,7 +95,8 @@ export function calculateBodyState(morningRecovery, accumulatedStrain) {
  * Determine remaining capacity
  */
 export function calculateRemainingCapacity(morningRecovery, accumulatedStrain) {
-  const net = morningRecovery - accumulatedStrain;
+  const strain100 = strainTo100(accumulatedStrain || 0);
+  const net = morningRecovery - strain100;
   if (net >= 40) return 'High';
   if (net >= 20) return 'Moderate';
   if (net >= 0) return 'Low';
@@ -82,21 +104,20 @@ export function calculateRemainingCapacity(morningRecovery, accumulatedStrain) {
 }
 
 /**
- * Calculate recovery demand for tonight
+ * Calculate recovery demand for tonight (strain on 0-21 scale)
  */
 export function calculateRecoveryDemand(accumulatedStrain, morningRecovery) {
-  // Base demand is the strain — but if morning was already low, demand is higher
-  const baseDemand = accumulatedStrain || 0;
+  const strain100 = strainTo100(accumulatedStrain || 0);
   const fatigueBonus = morningRecovery < 60 ? (60 - morningRecovery) * 0.3 : 0;
-  return Math.min(100, Math.round(baseDemand + fatigueBonus));
+  return Math.min(100, Math.round(strain100 + fatigueBonus));
 }
 
 /**
- * Calculate recommended sleep hours
+ * Calculate recommended sleep hours (strain on 0-21 scale)
  */
 export function calculateSleepNeed(accumulatedStrain, morningRecovery) {
   const base = 7.5;
-  const strainAdd = (accumulatedStrain || 0) > 60 ? 0.5 : (accumulatedStrain || 0) > 40 ? 0.25 : 0;
+  const strainAdd = (accumulatedStrain || 0) > 16 ? 0.5 : (accumulatedStrain || 0) > 10 ? 0.25 : 0;
   const fatigueAdd = morningRecovery < 60 ? 0.5 : 0;
   return Math.min(10, Math.round((base + strainAdd + fatigueAdd) * 2) / 2);
 }

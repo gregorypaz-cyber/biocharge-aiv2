@@ -26,6 +26,24 @@ const TIME_OF_DAY = [
 
 const COMMON_SPORTS = ['Corrida', 'Musculação', 'Ciclismo', 'Natação', 'Futsal', 'Futebol', 'Jiu-jitsu', 'CrossFit', 'HIIT', 'Yoga', 'Caminhada'];
 
+function getStrainZone(strain) {
+  if (strain >= 18) return { emoji: '🔴', label: 'Máximo — Requer 1-2 dias de recuperação', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' };
+  if (strain >= 14) return { emoji: '🟠', label: 'Alto — Estimula ganhos de performance', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' };
+  if (strain >= 10) return { emoji: '🟡', label: 'Moderado — Manutenção do condicionamento', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' };
+  return { emoji: '🟢', label: 'Leve — Recuperação ativa', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' };
+}
+
+function StrainPreview({ form, maxHr }) {
+  const strain = calculateStrainScore(form, maxHr);
+  const zone = getStrainZone(strain);
+  return (
+    <div className={`rounded-xl border p-3 ${zone.bg}`}>
+      <p className={`text-xs font-bold mb-0.5 ${zone.color}`}>⚡ Strain estimado: {strain}</p>
+      <p className="text-[11px] text-muted-foreground">{zone.emoji} {zone.label}</p>
+    </div>
+  );
+}
+
 export default function AddTrainingModal({ checkin, existingSessions, onClose, onAdded }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -36,6 +54,7 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
     time_of_day: 'afternoon',
     perceived_effort: 6,
     heart_rate_avg: '',
+    heart_rate_max: '',
     notes: '',
   });
   const [calculating, setCalculating] = useState(false);
@@ -43,14 +62,16 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
 
   const mutation = useMutation({
     mutationFn: async (data) => {
-      setCalculating(true);
-      const strainScore = calculateStrainScore(data);
+    setCalculating(true);
+    const maxHr = user?.preferences?.max_hr || 185;
+    const strainScore = calculateStrainScore(data, maxHr);
       const sessionData = {
         ...data,
         date: getTodayLocal(),
         checkin_id: checkin?.id,
         strain_score: strainScore,
         heart_rate_avg: data.heart_rate_avg ? Number(data.heart_rate_avg) : undefined,
+        heart_rate_max: data.heart_rate_max ? Number(data.heart_rate_max) : undefined,
         duration_minutes: Number(data.duration_minutes),
         perceived_effort: Number(data.perceived_effort),
       };
@@ -220,19 +241,21 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
                 </div>
               </div>
 
-              {/* Effort + HR */}
+              {/* Effort */}
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Esforço (1-10)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={form.perceived_effort}
+                  onChange={e => set('perceived_effort', e.target.value)}
+                  className="bg-secondary border-border"
+                />
+              </div>
+
+              {/* HR avg + max */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Esforço (1-10)</label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={form.perceived_effort}
-                    onChange={e => set('perceived_effort', e.target.value)}
-                    className="bg-secondary border-border"
-                  />
-                </div>
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">FC Média (opt)</label>
                   <Input
@@ -242,6 +265,18 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
                     onChange={e => set('heart_rate_avg', e.target.value)}
                     className="bg-secondary border-border"
                   />
+                  <p className="text-[10px] text-muted-foreground mt-1">Média — veja no Zepp</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">FC Máxima (opt)</label>
+                  <Input
+                    type="number"
+                    placeholder="bpm"
+                    value={form.heart_rate_max}
+                    onChange={e => set('heart_rate_max', e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Pico de FC — veja no Zepp</p>
                 </div>
               </div>
 
@@ -255,6 +290,9 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
                   className="bg-secondary border-border"
                 />
               </div>
+
+              {/* Strain preview */}
+              {form.sport && form.duration_minutes && <StrainPreview form={form} maxHr={user?.preferences?.max_hr} />}
             </div>
 
             {/* Footer — fixo */}
