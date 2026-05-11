@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Dumbbell, Clock, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,12 @@ const INTENSITY_COLORS = {
   very_hard: 'text-red-400',
 };
 
-export default function TrainingSessionsList({ checkin, sessions, onUpdate }) {
+export default function TrainingSessionsList({ checkin, sessions, onUpdate, openAddSignal }) {
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (openAddSignal > 0) setShowModal(true);
+  }, [openAddSignal]);
 
   return (
     <div className="space-y-3">
@@ -69,9 +73,15 @@ export default function TrainingSessionsList({ checkin, sessions, onUpdate }) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-6 text-muted-foreground text-sm rounded-2xl border border-dashed border-border"
+            className="flex flex-col items-center gap-3 py-7 rounded-2xl border border-dashed border-border"
           >
-            Nenhum treino registrado hoje
+            <p className="text-sm text-muted-foreground">Nenhum treino registrado hoje</p>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> Adicionar treino
+            </button>
           </motion.div>
         ) : (
           sessions.map((s, i) => (

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Plus, Zap } from 'lucide-react';
+import { Plus, Zap, Dumbbell } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } from '@/lib/training-impact-engine';
@@ -47,6 +47,16 @@ export default function Today() {
 
   const isLoading = loadingCheckins || loadingSessions;
 
+  // openAddSignal: incrementar para abrir modal no TrainingSessionsList
+  const [openAddSignal, setOpenAddSignal] = useState(0);
+
+  // Score único de prontidão com fallback
+  const displayedScore = checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
+  const readinessFaixa = displayedScore >= 67 ? 'Alta' : displayedScore >= 34 ? 'Moderada' : 'Baixa';
+
+  // Strain acumulado com cap 21
+  const cappedStrain = Math.min(21, totalStrain);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -67,13 +77,13 @@ export default function Today() {
         </div>
         <h2 className="text-xl font-black mb-2">Sem check-in hoje</h2>
         <p className="text-muted-foreground mb-6 text-sm">
-          Registre seu estado matinal para ativar o monitoramento fisiológico do dia.
+          Faça seu check-in para calcular sua prontidão e acompanhar o dia.
         </p>
         <Link
           to="/checkin"
           className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-2xl font-semibold hover:bg-primary/90 transition-all"
         >
-          <Plus className="w-4 h-4" /> Fazer Check-in Matinal
+          <Plus className="w-4 h-4" /> Fazer check-in
         </Link>
       </motion.div>
     );
@@ -83,9 +93,51 @@ export default function Today() {
     <div className="space-y-4 max-w-2xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Estado de Hoje</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Monitoramento fisiológico em tempo real</p>
+        <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Organize seu treino e recuperação</p>
       </div>
+
+      {/* Section 0 — Execução do dia (above the fold) */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-3xl border border-border bg-card p-5 space-y-4"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prontidão da manhã</span>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              displayedScore >= 67 ? 'bg-emerald-500/15 text-emerald-400' :
+              displayedScore >= 34 ? 'bg-yellow-500/15 text-yellow-400' :
+              'bg-red-500/15 text-red-400'
+            }`}>{readinessFaixa}</span>
+          </div>
+          <p className="text-3xl font-mono font-black">{displayedScore}</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Strain acumulado</p>
+            <p className={`text-xl font-mono font-bold ${
+              cappedStrain >= 18 ? 'text-red-400' :
+              cappedStrain >= 14 ? 'text-orange-400' :
+              cappedStrain >= 10 ? 'text-yellow-400' :
+              'text-emerald-400'
+            }`}>⚡ {cappedStrain}</p>
+          </div>
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Capacidade restante</p>
+            <p className="text-xl font-bold">{enrichedCheckin.remaining_capacity ?? '—'}</p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setOpenAddSignal(v => v + 1)}
+          className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
+        >
+          <Dumbbell className="w-4 h-4" /> Adicionar treino
+        </button>
+      </motion.div>
 
       {/* Section 1 — Morning Recovery (fixed) */}
       <MorningRecoveryCard checkin={enrichedCheckin} />
@@ -95,6 +147,7 @@ export default function Today() {
         <TrainingSessionsList
           checkin={enrichedCheckin}
           sessions={todaySessions}
+          openAddSignal={openAddSignal}
           onUpdate={() => {
             queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
             queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
@@ -114,10 +167,9 @@ export default function Today() {
         >
           <span className="text-xl">🚨</span>
           <div>
-            <p className="text-sm font-semibold text-red-400">Carga Excede Recuperação Disponível</p>
+            <p className="text-sm font-semibold text-red-400">Carga acima da recuperação disponível</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Demand: {enrichedCheckin.recovery_demand} vs Recovery: {morningRecovery}. 
-              Priorize descanso, sono e hidratação para não acumular fadiga residual.
+              Demanda: {enrichedCheckin.recovery_demand} vs Prontidão: {displayedScore}. Priorize descanso e sono para evitar fadiga acumulada.
             </p>
           </div>
         </motion.div>
