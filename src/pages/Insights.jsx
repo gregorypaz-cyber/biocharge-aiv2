@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
@@ -12,6 +12,153 @@ import { cn } from '@/lib/utils';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
+import DiscoveriesCard from '@/components/intelligence/DiscoveriesCard';
+
+function pearsonR(arrA, arrB) {
+  const n = Math.min(arrA.length, arrB.length);
+  if (n < 7) return null;
+  const meanA = arrA.slice(0, n).reduce((a, b) => a + b, 0) / n;
+  const meanB = arrB.slice(0, n).reduce((a, b) => a + b, 0) / n;
+  let num = 0, dA = 0, dB = 0;
+  for (let i = 0; i < n; i++) {
+    const a = arrA[i] - meanA, b = arrB[i] - meanB;
+    num += a * b; dA += a * a; dB += b * b;
+  }
+  if (dA === 0 || dB === 0) return null;
+  return num / Math.sqrt(dA * dB);
+}
+
+function getConfidence(n) {
+  if (n >= 20) return 'Alta';
+  if (n >= 12) return 'Média';
+  return 'Baixa';
+}
+
+function avg(arr) {
+  const valid = arr.filter(v => v != null && !isNaN(v));
+  return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
+}
+
+function calcDiscoveries(checkins) {
+  if (checkins.length < 10) return [];
+  const sorted = [...checkins].sort((a, b) => a.date > b.date ? 1 : -1);
+  const discoveries = [];
+
+  // Helper: get paired arrays (lagged or same day), filtering null values
+  function getPairs(getA, getB, lag = 0) {
+    const pairs = [];
+    for (let i = 0; i < sorted.length - lag; i++) {
+      const a = getA(sorted[i]);
+      const b = getB(sorted[i + lag]);
+      if (a != null && !isNaN(a) && b != null && !isNaN(b)) {
+        pairs.push([a, b]);
+      }
+    }
+    return pairs;
+  }
+
+  function tryAdd(pairs, threshold, buildDiscovery) {
+    if (pairs.length < 7) return;
+    const arrA = pairs.map(p => p[0]);
+    const arrB = pairs.map(p => p[1]);
+    const r = pearsonR(arrA, arrB);
+    if (r == null || Math.abs(r) < threshold) return;
+    const n = pairs.length;
+    const meanA = avg(arrA);
+    const meanB = avg(arrB);
+    if (meanA == null || meanB == null) return;
+    discoveries.push(buildDiscovery(r, n, meanA, meanB, arrA, arrB));
+  }
+
+  // A) sleep_hours[N] → hrv[N+1]
+  tryAdd(
+    getPairs(c => c.sleep_hours, c => c.hrv, 1), 0.4,
+    (r, n, mA, mB, arrA, arrB) => {
+      const high = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const low = arrA.filter((v, i) => v <= mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v <= mA && j === i2)]).filter(Boolean);
+      const delta = Math.round(Math.abs((avg(high) || mB) - (avg(low) || mB)));
+      return {
+        icon: '🌙', title: 'Sono impacta seu HRV',
+        text: `Noites com mais sono estão associadas a HRV ${delta > 0 ? '+' : ''}${delta}ms maior no dia seguinte.`,
+        sentiment: r > 0 ? 'positive' : 'negative', confidence: getConfidence(n), days: n,
+      };
+    }
+  );
+
+  // B) sleep_hours[N] → recovery_score[N+1]
+  tryAdd(
+    getPairs(c => c.sleep_hours, c => c.recovery_score, 1), 0.4,
+    (r, n, mA, mB) => ({
+      icon: '💤', title: 'Sono e recuperação',
+      text: `Cada hora extra de sono tende a elevar seu score de recuperação no dia seguinte. Média de recuperação: ${Math.round(mB)}.`,
+      sentiment: r > 0 ? 'positive' : 'neutral', confidence: getConfidence(n), days: n,
+    })
+  );
+
+  // C) stress_level[N] → sleep_score[N]
+  tryAdd(
+    getPairs(c => c.stress ?? c.stress_level, c => c.sleep_score, 0), 0.4,
+    (r, n, mA, mB, arrA, arrB) => {
+      const highStress = arrA.filter((v, i) => v >= 4).map((v, i) => arrB[arrA.findIndex((x, j) => x >= 4 && j >= i)]).filter(v => v != null);
+      const delta = Math.round(Math.abs(mB - (avg(highStress) || mB)));
+      return {
+        icon: '😰', title: 'Stress afeta seu sono',
+        text: `Dias com stress elevado reduzem sua qualidade de sono em média ${delta} pontos.`,
+        sentiment: 'negative', confidence: getConfidence(n), days: n,
+      };
+    }
+  );
+
+  // D) stress_level[N] → hrv[N+1]
+  tryAdd(
+    getPairs(c => c.stress ?? c.stress_level, c => c.hrv, 1), 0.4,
+    (r, n, mA, mB) => ({
+      icon: '📉', title: 'Stress impacta HRV',
+      text: `Dias estressantes tendem a reduzir seu HRV no dia seguinte. HRV médio: ${Math.round(mB)}ms.`,
+      sentiment: r < 0 ? 'negative' : 'positive', confidence: getConfidence(n), days: n,
+    })
+  );
+
+  // E) hydration_liters[N] → energy_level[N]
+  tryAdd(
+    getPairs(c => c.hydration_liters ?? c.hydration, c => c.energy ?? c.energy_level, 0), 0.4,
+    (r, n, mA, mB, arrA, arrB) => {
+      const goodHydration = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const delta = parseFloat(Math.abs((avg(goodHydration) || mB) - mB).toFixed(1));
+      return {
+        icon: '💧', title: 'Hidratação e energia',
+        text: `Dias com boa hidratação mostram energia ${delta > 0 ? '+' : ''}${delta} pontos acima da sua média.`,
+        sentiment: r > 0 ? 'positive' : 'neutral', confidence: getConfidence(n), days: n,
+      };
+    }
+  );
+
+  // F) daily_strain_accumulated[N] → resting_hr[N+1]
+  tryAdd(
+    getPairs(c => c.daily_strain_accumulated, c => c.resting_hr ?? c.resting_heart_rate, 1), 0.4,
+    (r, n, mA, mB, arrA, arrB) => {
+      const highStrain = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const delta = Math.round(Math.abs((avg(highStrain) || mB) - mB));
+      return {
+        icon: '⚡', title: 'Treino eleva sua FC',
+        text: `Após treinos intensos, sua FC de repouso fica ${delta}bpm acima do normal no dia seguinte.`,
+        sentiment: 'negative', confidence: getConfidence(n), days: n,
+      };
+    }
+  );
+
+  // G) muscle_soreness[N] → recovery_score[N+1]
+  tryAdd(
+    getPairs(c => c.muscle_soreness ?? c.muscle_soreness_level, c => c.recovery_score, 1), 0.4,
+    (r, n, mA, mB) => ({
+      icon: '💪', title: 'Dor muscular e recuperação',
+      text: `Dias com alta dor muscular impactam o seu score de recuperação no dia seguinte. Média: ${Math.round(mB)}.`,
+      sentiment: r < 0 ? 'negative' : 'neutral', confidence: getConfidence(n), days: n,
+    })
+  );
+
+  return discoveries;
+}
 
 export default function Insights() {
   const [aiInsight, setAiInsight] = useState('');
@@ -31,6 +178,8 @@ export default function Insights() {
   const perfLevel = getPerformanceLevel(avgRecovery);
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
   const messages = analysis?.actionableRecs?.map(r => `${r.icon} [${r.category}] ${r.text}`) || [];
+
+  const discoveries = useMemo(() => calcDiscoveries(computed), [computed.length]);
 
   const generateInsights = async () => {
     if (computed.length < 3) return;
@@ -270,6 +419,9 @@ Regras:
           )}
         </div>
       </motion.div>
+
+      {/* Discoveries */}
+      <DiscoveriesCard discoveries={discoveries} />
 
       {/* AI Coach Chat */}
       <motion.div
