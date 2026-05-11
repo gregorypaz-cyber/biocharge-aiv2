@@ -85,7 +85,7 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
 
       // Update checkin with new strain/state
       if (checkin?.id) {
-        const totalStrain = allSessions.reduce((s, t) => s + (t.strain_score || 0), 0);
+        const totalStrain = Math.min(21, allSessions.reduce((s, t) => s + (t.strain_score || 0), 0));
         const { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } = await import('@/lib/training-impact-engine');
         const morningRecovery = checkin.morning_recovery_score || checkin.recovery_score || 70;
         await base44.entities.DailyCheckin.update(checkin.id, {

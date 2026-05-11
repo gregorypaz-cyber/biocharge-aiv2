@@ -77,7 +77,7 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
             {[
               { label: 'Sono', val: checkin.sleep_hours ? `${checkin.sleep_hours}h` : '—' },
               { label: 'Fadiga', val: checkin.fatigue ?? '—' },
-              { label: 'Strain', val: checkin.daily_strain_accumulated ?? '—' },
+              { label: 'Strain', val: checkin.daily_strain_accumulated != null ? Math.min(21, checkin.daily_strain_accumulated) : '—' },
               { label: 'HRV', val: checkin.hrv ?? '—' },
               { label: 'RHR', val: checkin.resting_hr ?? '—' },
               { label: 'Humor', val: checkin.mood ?? '—' },
@@ -256,11 +256,14 @@ export default function History() {
                                       <Dumbbell className="w-3 h-3" /> {sessions.length} treino{sessions.length > 1 ? 's' : ''}
                                     </span>
                                   )}
-                                  {c.daily_strain_accumulated > 0 && (
-                                    <span className={`${c.daily_strain_accumulated >= 18 ? 'text-red-400' : c.daily_strain_accumulated >= 14 ? 'text-orange-400' : c.daily_strain_accumulated >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                                      ⚡ strain {c.daily_strain_accumulated}
-                                    </span>
-                                  )}
+                                  {c.daily_strain_accumulated > 0 && (() => {
+                    const displayStrain = Math.min(21, c.daily_strain_accumulated);
+                    return (
+                      <span className={`${displayStrain >= 18 ? 'text-red-400' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                        ⚡ strain {displayStrain}
+                      </span>
+                    );
+                  })()}
                                 </div>
                               </div>
 
