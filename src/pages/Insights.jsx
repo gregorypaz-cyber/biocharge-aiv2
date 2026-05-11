@@ -169,7 +169,7 @@ export default function Insights() {
 
   const { data: checkins = [] } = useUserCheckins(60);
 
-  const computed = checkins.map(computeCheckinScores);
+  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const streak = calculateStreak(checkins);
   const badges = getBadges(computed, streak);
   const avgRecovery = computed.length
