@@ -7,13 +7,48 @@ import { getTodayLocal } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Save, ArrowLeft, Moon, Activity, Heart, Scale } from 'lucide-react';
+import { Save, ArrowLeft, Moon, Activity, Heart, Scale, Info } from 'lucide-react';
 import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
+
+function HRVField({ value, onChange }) {
+  const [showTip, setShowTip] = useState(false);
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs text-muted-foreground flex items-center gap-1">
+        <Activity className="w-3 h-3" /> HRV (ms)
+        <button
+          type="button"
+          onClick={() => setShowTip(p => !p)}
+          className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Info className="w-3 h-3" />
+        </button>
+      </label>
+      {showTip && (
+        <div className="text-[10px] text-muted-foreground bg-secondary rounded-xl p-3 leading-relaxed border border-border/40">
+          <p className="font-semibold text-foreground mb-1">Onde encontrar no Zepp:</p>
+          Abra o Zepp → aba BioCharge →<br />
+          Variabilidade da Frequência Cardíaca<br />
+          Digite o valor em ms mostrado na tela.
+        </div>
+      )}
+      <Input
+        type="number"
+        step="1"
+        value={value || ''}
+        onChange={e => onChange(parseFloat(e.target.value) || null)}
+        placeholder="Ex: 48"
+        className="bg-secondary border-border/40 font-mono"
+      />
+      <p className="text-[10px] text-muted-foreground">Valor da manhã, antes de se levantar</p>
+    </div>
+  );
+}
 
 const DEFAULT_FORM = {
   date: getTodayLocal(),
@@ -83,9 +118,6 @@ export default function DailyCheckin() {
         <div className="w-16" />
       </div>
 
-      {/* Rest Day Toggle */}
-      <RestDayToggle value={isRestDay} onChange={v => update('rest_day', v)} />
-
       {/* Live Preview */}
       <LivePreview preview={preview} />
 
@@ -100,15 +132,28 @@ export default function DailyCheckin() {
         />
       </div>
 
-      {/* BioCharge */}
-      <CheckinStep title="BioCharge" emoji="⚡" delay={0.05}>
-        <SliderField label="Manhã" value={form.biocharge_morning} onChange={v => update('biocharge_morning', v)} />
-        {!isRestDay && (
-          <>
-            <SliderField label="Pré-Treino" value={form.biocharge_pre_workout ?? 0} onChange={v => update('biocharge_pre_workout', v)} />
-            <SliderField label="Pós-Treino" value={form.biocharge_post_workout ?? 0} onChange={v => update('biocharge_post_workout', v)} />
-          </>
-        )}
+      {/* BioCharge / Energia Percebida */}
+      <CheckinStep title="Energia Percebida" emoji="⚡" delay={0.05}>
+        <SliderField
+          label="Como você acordou? (0-100)"
+          hint="Sua percepção geral ao acordar"
+          value={form.biocharge_morning}
+          onChange={v => update('biocharge_morning', v)}
+        />
+        <div style={{ opacity: isRestDay ? 0.4 : 1 }} className="space-y-5 transition-opacity">
+          <SliderField
+            label="Energia antes do treino (0-100)"
+            hint="Deixe em 0 se não treinou hoje"
+            value={form.biocharge_pre_workout ?? 0}
+            onChange={v => update('biocharge_pre_workout', v)}
+          />
+          <SliderField
+            label="Como ficou após o treino? (0-100)"
+            hint="Deixe em 0 se não treinou hoje"
+            value={form.biocharge_post_workout ?? 0}
+            onChange={v => update('biocharge_post_workout', v)}
+          />
+        </div>
       </CheckinStep>
 
       {/* Sleep */}
@@ -149,25 +194,38 @@ export default function DailyCheckin() {
       {/* Body metrics */}
       <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
         <div className="grid grid-cols-2 gap-4">
-          {[
-            { label: 'FC Repouso', field: 'resting_hr', icon: Heart, unit: 'bpm' },
-            { label: 'HRV', field: 'hrv', icon: Activity, unit: 'ms' },
-            { label: 'Peso (kg)', field: 'body_weight', icon: Scale, step: '0.1' },
-          ].map(({ label, field, icon: Icon, unit, step }) => (
-            <div key={field} className="space-y-1.5">
-              <label className="text-xs text-muted-foreground flex items-center gap-1">
-                {Icon && <Icon className="w-3 h-3" />} {label}
-              </label>
-              <Input
-                type="number"
-                step={step || '1'}
-                value={form[field] || ''}
-                onChange={e => update(field, parseFloat(e.target.value) || null)}
-                placeholder="—"
-                className="bg-secondary border-border/40 font-mono"
-              />
-            </div>
-          ))}
+          {/* FC Repouso */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Heart className="w-3 h-3" /> FC Repouso
+            </label>
+            <Input
+              type="number"
+              step="1"
+              value={form.resting_hr || ''}
+              onChange={e => update('resting_hr', parseFloat(e.target.value) || null)}
+              placeholder="—"
+              className="bg-secondary border-border/40 font-mono"
+            />
+          </div>
+
+          {/* HRV with tooltip */}
+          <HRVField value={form.hrv} onChange={v => update('hrv', v)} />
+
+          {/* Peso */}
+          <div className="space-y-1.5">
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Scale className="w-3 h-3" /> Peso (kg)
+            </label>
+            <Input
+              type="number"
+              step="0.1"
+              value={form.body_weight || ''}
+              onChange={e => update('body_weight', parseFloat(e.target.value) || null)}
+              placeholder="—"
+              className="bg-secondary border-border/40 font-mono"
+            />
+          </div>
         </div>
       </CheckinStep>
 
@@ -180,6 +238,9 @@ export default function DailyCheckin() {
           className="bg-secondary border-border/40 min-h-[80px] resize-none"
         />
       </CheckinStep>
+
+      {/* Rest Day Toggle — at the end */}
+      <RestDayToggle value={isRestDay} onChange={v => update('rest_day', v)} />
 
       {/* Save */}
       <Button

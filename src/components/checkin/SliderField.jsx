@@ -1,13 +1,16 @@
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
-export default function SliderField({ label, value, onChange, min = 0, max = 100, step = 1, unit = '', icon: Icon }) {
+export default function SliderField({ label, hint, value, onChange, min = 0, max = 100, step = 1, unit = '', icon: Icon }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
-          <span className="text-sm font-medium text-foreground">{label}</span>
+          <div>
+            <span className="text-sm font-medium text-foreground">{label}</span>
+            {hint && <p className="text-[10px] text-muted-foreground leading-tight">{hint}</p>}
+          </div>
         </div>
         <span className="text-sm font-mono font-semibold text-primary">
           {value ?? '—'}{unit}
