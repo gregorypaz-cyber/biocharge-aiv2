@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { getTodayLocal } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Save, ArrowLeft, Moon, Activity, Heart, Scale, Info } from 'lucide-react';
+import { Save, ArrowLeft, Moon, Activity, Heart, Scale, Info, Zap, SkipForward } from 'lucide-react';
 import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
+import { useUserCheckins } from '@/hooks/useUserData';
 
 function HRVField({ value, onChange }) {
   const [showTip, setShowTip] = useState(false);
@@ -73,25 +74,46 @@ const DEFAULT_FORM = {
   notes: '',
 };
 
+const DEFAULT_POST_FORM = {
+  biocharge_post_workout: 0,
+  rpe: 0,
+  energy: 0,
+  muscle_soreness: 0,
+  notes: '',
+};
+
 export default function DailyCheckin() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode') || 'morning';
+  const isPostMode = mode === 'post';
+
   const editData = location.state?.editData;
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
+  // For post mode: fetch today's checkin
+  const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(30);
+  const todayDate = getTodayLocal();
+  const todayRecord = checkins.find(c => c.date === todayDate);
+
   const [form, setForm] = useState(editData ? { rest_day: false, ...editData } : DEFAULT_FORM);
+  const [postForm, setPostForm] = useState(DEFAULT_POST_FORM);
+
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const updatePost = (field, value) => setPostForm(prev => ({ ...prev, [field]: value }));
+
   const isRestDay = form.rest_day;
   const preview = computeCheckinScores(form);
 
-  const saveMutation = useMutation({
+  // Morning save mutation
+  const saveMorningMutation = useMutation({
     mutationFn: async (data) => {
       const payload = data.rest_day
         ? { ...data, rpe: 0, fatigue: 0, biocharge_pre_workout: null, biocharge_post_workout: null }
         : data;
       const scores = computeCheckinScores(payload);
-      // Set morning_recovery_score only on NEW check-ins (immutable after creation)
       if (!editData?.id) {
         scores.morning_recovery_score = scores.recovery_score;
       }
@@ -105,6 +127,169 @@ export default function DailyCheckin() {
     },
   });
 
+  // Post-workout save mutation
+  const savePostMutation = useMutation({
+    mutationFn: async (data) => {
+      const existing = todayRecord;
+      // Merge notes
+      const mergedNotes = data.notes
+        ? (existing.notes ? existing.notes + '\n\n[PÓS-TREINO] ' + data.notes : '[PÓS-TREINO] ' + data.notes)
+        : existing.notes || '';
+
+      // Compute delta_post
+      const deltaPost = (data.biocharge_post_workout > 0 && existing.biocharge_morning)
+        ? data.biocharge_post_workout - existing.biocharge_morning
+        : existing.delta_post ?? null;
+
+      const payload = {
+        ...existing,
+        biocharge_post_workout: data.biocharge_post_workout > 0 ? data.biocharge_post_workout : existing.biocharge_post_workout,
+        rpe: data.rpe > 0 ? data.rpe : existing.rpe,
+        energy: data.energy > 0 ? data.energy : existing.energy,
+        muscle_soreness: data.muscle_soreness > 0 ? data.muscle_soreness : existing.muscle_soreness,
+        delta_post: deltaPost,
+        notes: mergedNotes,
+      };
+
+      const scores = computeCheckinScores(payload);
+      return base44.entities.DailyCheckin.update(existing.id, scores);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+      toast.success('✅ Pós-treino salvo!');
+      navigate('/today');
+    },
+  });
+
+  // Post mode: no morning checkin guard
+  if (isPostMode && !loadingCheckins && !todayRecord) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6 max-w-sm mx-auto">
+        <div className="w-20 h-20 rounded-3xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-5">
+          <Zap className="w-10 h-10 text-yellow-400" />
+        </div>
+        <h2 className="text-xl font-black mb-2">Faça o check-in da manhã primeiro</h2>
+        <p className="text-muted-foreground mb-6 text-sm">
+          O pós-treino atualiza o seu check-in de hoje. Faça o check-in da manhã para habilitar.
+        </p>
+        <Link
+          to="/checkin"
+          className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-2xl font-semibold hover:bg-primary/90 transition-all mb-3"
+        >
+          Fazer check-in da manhã
+        </Link>
+        <button
+          onClick={() => navigate('/today')}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Voltar para Hoje
+        </button>
+      </div>
+    );
+  }
+
+  // Loading state for post mode
+  if (isPostMode && loadingCheckins) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // POST MODE UI
+  if (isPostMode) {
+    const handleSavePost = () => {
+      const { biocharge_post_workout, rpe, energy, muscle_soreness, notes } = postForm;
+      const hasData = biocharge_post_workout > 0 || rpe > 0 || energy > 0 || muscle_soreness > 0 || notes.trim().length > 0;
+      if (!hasData) {
+        toast.warning("Preencha ao menos um campo ou toque em 'Pular por agora'.");
+        return;
+      }
+      savePostMutation.mutate(postForm);
+    };
+
+    return (
+      <div className="space-y-4 max-w-xl mx-auto pb-8">
+        {/* Header */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={() => navigate('/today')}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </button>
+          <h1 className="text-base font-bold">Pós-treino</h1>
+          <div className="w-16" />
+        </div>
+
+        <div className="px-1">
+          <p className="text-sm text-muted-foreground">Leva ~30s e melhora seus insights</p>
+        </div>
+
+        {/* BioCharge pós-treino */}
+        <CheckinStep title="BioCharge pós-treino" emoji="⚡" delay={0.05}>
+          <SliderField
+            label="Como ficou após o treino? (0–100)"
+            hint="0 = deixe vazio se não quiser informar"
+            value={postForm.biocharge_post_workout}
+            onChange={v => updatePost('biocharge_post_workout', v)}
+          />
+        </CheckinStep>
+
+        {/* RPE */}
+        <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.1}>
+          <SliderField
+            label="RPE (1–10)"
+            hint="Como foi a intensidade do treino?"
+            value={postForm.rpe}
+            onChange={v => updatePost('rpe', v)}
+            min={0}
+            max={10}
+          />
+        </CheckinStep>
+
+        {/* Energia e Dor */}
+        <CheckinStep title="Sensações" emoji="🧠" delay={0.15}>
+          <EmojiSelector label="Energia agora" type="energy" value={postForm.energy} onChange={v => updatePost('energy', v)} />
+          <EmojiSelector label="Dor muscular" type="soreness" value={postForm.muscle_soreness} onChange={v => updatePost('muscle_soreness', v)} />
+        </CheckinStep>
+
+        {/* Notes */}
+        <CheckinStep title="Observação rápida" emoji="📝" delay={0.2}>
+          <Textarea
+            value={postForm.notes}
+            onChange={e => updatePost('notes', e.target.value)}
+            placeholder="Ex: pernas pesadas, ritmo bom..."
+            className="bg-secondary border-border/40 min-h-[70px] resize-none"
+          />
+        </CheckinStep>
+
+        {/* Buttons */}
+        <Button
+          onClick={handleSavePost}
+          disabled={savePostMutation.isPending}
+          className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all"
+        >
+          {savePostMutation.isPending ? (
+            <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <><Save className="w-4 h-4 mr-2" /> Salvar pós-treino</>
+          )}
+        </Button>
+
+        <button
+          onClick={() => navigate('/today')}
+          className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-border/60 transition-all"
+        >
+          <SkipForward className="w-4 h-4" /> Pular por agora
+        </button>
+      </div>
+    );
+  }
+
+  // MORNING MODE UI
   return (
     <div className="space-y-4 max-w-xl mx-auto pb-8">
       {/* Header */}
@@ -116,8 +301,12 @@ export default function DailyCheckin() {
           <ArrowLeft className="w-4 h-4" />
           Voltar
         </button>
-        <h1 className="text-base font-bold">{editData ? 'Editar' : 'Novo'} Check-in</h1>
+        <h1 className="text-base font-bold">Check-in da manhã</h1>
         <div className="w-16" />
+      </div>
+
+      <div className="px-1">
+        <p className="text-sm text-muted-foreground">Leva ~2 min e gera seu plano do dia</p>
       </div>
 
       {/* Live Preview */}
@@ -134,28 +323,14 @@ export default function DailyCheckin() {
         />
       </div>
 
-      {/* BioCharge / Energia Percebida */}
+      {/* BioCharge Manhã */}
       <CheckinStep title="Energia Percebida" emoji="⚡" delay={0.05}>
         <SliderField
-          label="Como você acordou? (0-100)"
+          label="Como você acordou? (0–100)"
           hint="Sua percepção geral ao acordar"
           value={form.biocharge_morning}
           onChange={v => update('biocharge_morning', v)}
         />
-        <div style={{ opacity: isRestDay ? 0.4 : 1 }} className="space-y-5 transition-opacity">
-          <SliderField
-            label="Energia antes do treino (0-100)"
-            hint="Deixe em 0 se não treinou hoje"
-            value={form.biocharge_pre_workout ?? 0}
-            onChange={v => update('biocharge_pre_workout', v)}
-          />
-          <SliderField
-            label="Como ficou após o treino? (0-100)"
-            hint="Deixe em 0 se não treinou hoje"
-            value={form.biocharge_post_workout ?? 0}
-            onChange={v => update('biocharge_post_workout', v)}
-          />
-        </div>
       </CheckinStep>
 
       {/* Sleep */}
@@ -196,7 +371,6 @@ export default function DailyCheckin() {
       {/* Body metrics */}
       <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
         <div className="grid grid-cols-2 gap-4">
-          {/* FC Repouso */}
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground flex items-center gap-1">
               <Heart className="w-3 h-3" /> FC Repouso
@@ -210,11 +384,7 @@ export default function DailyCheckin() {
               className="bg-secondary border-border/40 font-mono"
             />
           </div>
-
-          {/* HRV with tooltip */}
           <HRVField value={form.hrv} onChange={v => update('hrv', v)} />
-
-          {/* Peso */}
           <div className="space-y-1.5">
             <label className="text-xs text-muted-foreground flex items-center gap-1">
               <Scale className="w-3 h-3" /> Peso (kg)
@@ -241,19 +411,19 @@ export default function DailyCheckin() {
         />
       </CheckinStep>
 
-      {/* Rest Day Toggle — at the end */}
+      {/* Rest Day Toggle */}
       <RestDayToggle value={isRestDay} onChange={v => update('rest_day', v)} />
 
       {/* Save */}
       <Button
-        onClick={() => saveMutation.mutate(form)}
-        disabled={saveMutation.isPending}
+        onClick={() => saveMorningMutation.mutate(form)}
+        disabled={saveMorningMutation.isPending}
         className="w-full h-13 bg-primary text-primary-foreground font-bold rounded-2xl text-base py-4 hover:bg-primary/90 transition-all hover:scale-[1.01]"
       >
-        {saveMutation.isPending ? (
+        {saveMorningMutation.isPending ? (
           <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
         ) : (
-          <><Save className="w-5 h-5 mr-2" /> Salvar Check-in</>
+          <><Save className="w-5 h-5 mr-2" /> Salvar check-in da manhã</>
         )}
       </Button>
     </div>

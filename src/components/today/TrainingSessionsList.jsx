@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Dumbbell, Clock, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { getTimeOfDayLabel } from '@/lib/date-utils';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 
@@ -107,8 +108,14 @@ export default function TrainingSessionsList({ checkin, sessions, onUpdate, open
                   <span>{getTimeOfDayLabel(s.time_of_day)}</span>
                 </div>
               </div>
-              <div className="text-right shrink-0">
+              <div className="flex flex-col items-end gap-1 shrink-0">
                 <StrainBadge strain={s.strain_score} />
+                <Link
+                  to="/checkin?mode=post"
+                  className="text-[10px] text-primary/60 hover:text-primary transition-colors"
+                >
+                  pós-treino →
+                </Link>
               </div>
             </motion.div>
           ))

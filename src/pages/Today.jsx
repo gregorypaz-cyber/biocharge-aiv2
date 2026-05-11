@@ -175,6 +175,23 @@ export default function Today() {
         </motion.div>
       )}
 
+      {/* Section 4.5 — CTA pós-treino */}
+      {todaySessions.length > 0 && (
+        <Link
+          to="/checkin?mode=post"
+          className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">🏁</span>
+            <div>
+              <p className="text-sm font-semibold">Registrar pós-treino</p>
+              <p className="text-xs text-muted-foreground">~30s · melhora seus insights do dia</p>
+            </div>
+          </div>
+          <span className="text-primary text-sm font-bold">→</span>
+        </Link>
+      )}
+
       {/* Section 5 — Sleep Forecast */}
       <SleepForecastCard checkin={enrichedCheckin} />
     </div>
