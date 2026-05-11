@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 const STATE_CONFIG = {
   Recovered: {
-    label: 'Recovered',
+    label: 'Recuperado',
     emoji: '🟢',
     color: 'hsl(142,70%,50%)',
     bg: 'hsl(142,70%,50%)/8',
@@ -11,7 +11,7 @@ const STATE_CONFIG = {
     desc: 'Sistema nervoso e muscular prontos para carga alta',
   },
   Balanced: {
-    label: 'Balanced',
+    label: 'Equilibrado',
     emoji: '🔵',
     color: 'hsl(200,80%,55%)',
     bg: 'hsl(200,80%,55%)/8',
@@ -19,7 +19,7 @@ const STATE_CONFIG = {
     desc: 'Equilíbrio fisiológico estável — intensidade moderada',
   },
   Fatigued: {
-    label: 'Fatigued',
+    label: 'Fatigado',
     emoji: '🟡',
     color: 'hsl(45,93%,58%)',
     bg: 'hsl(45,93%,58%)/8',
@@ -27,7 +27,7 @@ const STATE_CONFIG = {
     desc: 'Fadiga acumulada — priorize recuperação ativa',
   },
   'High Stress': {
-    label: 'High Stress',
+    label: 'Alto Estresse',
     emoji: '🟠',
     color: 'hsl(25,90%,55%)',
     bg: 'hsl(25,90%,55%)/8',
@@ -35,7 +35,7 @@ const STATE_CONFIG = {
     desc: 'Sistema sob carga de stress elevada',
   },
   Overreached: {
-    label: 'Overreached',
+    label: 'Sobrecarregado',
     emoji: '🔴',
     color: 'hsl(0,72%,55%)',
     bg: 'hsl(0,72%,55%)/8',

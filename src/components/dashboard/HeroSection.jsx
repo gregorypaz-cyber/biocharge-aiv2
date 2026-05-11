@@ -2,13 +2,14 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Flame, AlertTriangle, Plus } from 'lucide-react';
+import { Flame, AlertTriangle, ChevronDown, Dumbbell, LayoutList } from 'lucide-react';
 import RecoveryRing from '@/components/ui-bio/RecoveryRing';
 import StatusBadge from '@/components/ui-bio/StatusBadge';
 import StreakBadge from '@/components/ui-bio/StreakBadge';
 
-export default function HeroSection({ today, streak }) {
+export default function HeroSection({ today, streak, displayedScore, onShowDetails, showDetails }) {
   const dateStr = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
+  const score = displayedScore ?? today.recovery_score;
 
   return (
     <motion.div
@@ -27,15 +28,16 @@ export default function HeroSection({ today, streak }) {
       <div className="flex flex-col sm:flex-row items-center gap-6">
         {/* Ring */}
         <div className="shrink-0">
-          <RecoveryRing value={today.recovery_score} zone={today.zone} size={180} />
+          <RecoveryRing value={score} zone={today.zone} size={180} />
         </div>
 
         {/* Info */}
         <div className="flex-1 text-center sm:text-left space-y-3">
           <div>
-            <h1 className="text-2xl font-black tracking-tight">Prontidão do Dia</h1>
+            <h1 className="text-2xl font-black tracking-tight">Plano de hoje</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              BioCharge manhã: <span className="text-foreground font-semibold font-mono">{today.biocharge_morning ?? '—'}</span>
+              Prontidão: <span className="text-foreground font-semibold font-mono">{score ?? '—'}</span>
+              <span className="text-muted-foreground">/100</span>
             </p>
           </div>
 
@@ -59,13 +61,36 @@ export default function HeroSection({ today, streak }) {
               animate={{ opacity: 1, scale: 1 }}
               className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold bg-[hsl(45,93%,58%)]/10 text-[hsl(45,93%,63%)] border border-[hsl(45,93%,58%)]/20"
             >
-              <AlertTriangle className="w-4 h-4" /> Atenção — Recuperação baixa
+              <AlertTriangle className="w-4 h-4" /> Atenção — Prontidão baixa
             </motion.div>
           )}
 
           <p className="text-sm text-muted-foreground font-medium">
-            Recomendação: <span className="text-foreground">{today.recommendation}</span>
+            Hoje: <span className="text-foreground">{today.recommendation}</span>
           </p>
+
+          {/* CTAs */}
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start pt-1">
+            <Link
+              to="/today"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all"
+            >
+              <LayoutList className="w-3.5 h-3.5" /> Ver treino sugerido
+            </Link>
+            <Link
+              to="/today"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-all"
+            >
+              <Dumbbell className="w-3.5 h-3.5" /> Registrar treino
+            </Link>
+            <button
+              onClick={onShowDetails}
+              className="flex items-center gap-1 px-3 py-2 text-xs text-muted-foreground font-semibold hover:text-foreground transition-colors"
+            >
+              Ver detalhes
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
         </div>
       </div>
 

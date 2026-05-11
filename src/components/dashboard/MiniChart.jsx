@@ -27,7 +27,7 @@ export default function MiniChart({ data }) {
       transition={{ delay: 0.3 }}
       className="rounded-2xl border border-border/60 bg-card p-5"
     >
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Recovery — 14 dias</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Prontidão — 14 dias</h3>
       <div className="h-32">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
@@ -49,7 +49,7 @@ export default function MiniChart({ data }) {
       </div>
       <div className="flex gap-4 mt-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <div className="w-2.5 h-2.5 rounded-full bg-[hsl(142,70%,50%)]" /> Recovery
+          <div className="w-2.5 h-2.5 rounded-full bg-[hsl(142,70%,50%)]" /> Prontidão
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <div className="w-2.5 h-2.5 rounded-full bg-[hsl(200,80%,55%)]" /> Sono
