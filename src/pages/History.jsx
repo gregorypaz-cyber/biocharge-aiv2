@@ -133,7 +133,7 @@ export default function History() {
   const { data: checkins = [], isLoading } = useUserCheckins(120);
   const { data: allSessions = [] } = useUserTrainingSessions(200);
 
-  const computed = checkins.map(computeCheckinScores);
+  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const weeks = groupByWeek(computed);
 
   const toggleWeek = (key) => setExpandedWeeks(prev => ({ ...prev, [key]: !prev[key] }));
