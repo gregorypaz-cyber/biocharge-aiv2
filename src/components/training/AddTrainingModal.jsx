@@ -24,13 +24,13 @@ const TIME_OF_DAY = [
   { value: 'night',     label: 'Madrugada',  emoji: '🌙' },
 ];
 
-const COMMON_SPORTS = ['Corrida', 'Musculação', 'Ciclismo', 'Natação', 'Futsal', 'Futebol', 'Jiu-jitsu', 'CrossFit', 'HIIT', 'Yoga', 'Caminhada'];
+const COMMON_SPORTS = ['Corrida', 'Musculação', 'Ciclismo', 'Natação', 'Futsal', 'Padel', 'Futebol', 'Jiu-jitsu', 'CrossFit', 'HIIT', 'Yoga', 'Caminhada'];
 
 function getStrainZone(strain) {
-  if (strain >= 18) return { emoji: '🔴', label: 'Máximo — Requer 1-2 dias de recuperação', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' };
-  if (strain >= 14) return { emoji: '🟠', label: 'Alto — Estimula ganhos de performance', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' };
-  if (strain >= 10) return { emoji: '🟡', label: 'Moderado — Manutenção do condicionamento', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' };
-  return { emoji: '🟢', label: 'Leve — Recuperação ativa', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' };
+  if (strain >= 18) return { emoji: '🔴', label: 'Máximo (18-21) — Requer 1-2 dias de recuperação', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' };
+  if (strain >= 14) return { emoji: '🟠', label: 'Alto (14-17) — Estimula ganhos de performance', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' };
+  if (strain >= 10) return { emoji: '🟡', label: 'Moderado (10-13) — Manutenção do condicionamento', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' };
+  return { emoji: '🟢', label: 'Leve (0-9) — Recuperação ativa', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' };
 }
 
 function StrainPreview({ form, maxHr }) {

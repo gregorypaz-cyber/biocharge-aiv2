@@ -8,29 +8,27 @@ import { base44 } from '@/api/base44Client';
 // Visual intensity factors mapped to FC zones (WHOOP methodology)
 const INTENSITY_FACTORS_VISUAL = {
   very_light: 0.50,
-  light:      0.65,
-  moderate:   0.75,
-  hard:       0.87,
-  very_hard:  0.95,
+  light:      0.63,
+  moderate:   0.74,
+  hard:       0.86,
+  very_hard:  0.93,
 };
 
 // Sport cardiovascular demand factors (WHOOP scale 0-21)
 const SPORT_FACTORS = {
-  corrida: 1.0,
-  ciclismo: 0.9,
-  natação: 0.95,
-  futsal: 0.9,
-  futebol: 0.85,
-  basquete: 0.9,
-  musculação: 0.7,
-  crossfit: 1.05,
-  hiit: 1.1,
-  'jiu-jitsu': 0.85,
-  boxe: 1.0,
-  yoga: 0.5,
-  pilates: 0.6,
-  caminhada: 0.4,
-  default: 0.8,
+  'Corrida':    1.00,
+  'Caminhada':  0.40,
+  'Musculação': 0.70,
+  'CrossFit':   1.05,
+  'Ciclismo':   0.90,
+  'Natação':    0.95,
+  'Yoga':       0.50,
+  'Jiu-jitsu':  0.85,
+  'Futsal':     0.88,
+  'Futebol':    0.85,
+  'Padel':      0.82,
+  'HIIT':       1.05,
+  'Outro':      0.80,
 };
 
 const DEFAULT_MAX_HR = 185;
@@ -56,9 +54,10 @@ export function calculateStrainScore(session, maxHr) {
   }
 
   const sportKey = Object.keys(SPORT_FACTORS).find(k =>
-    session.sport?.toLowerCase().includes(k)
+    session.sport?.toLowerCase() === k.toLowerCase() ||
+    session.sport?.toLowerCase().includes(k.toLowerCase())
   );
-  const sportFactor = SPORT_FACTORS[sportKey] || SPORT_FACTORS.default;
+  const sportFactor = sportKey ? SPORT_FACTORS[sportKey] : SPORT_FACTORS['Outro'];
 
   const raw = intensidadeFinal * (duration / 60) * sportFactor * 21;
   return Math.min(21, Math.round(raw * 10) / 10);
