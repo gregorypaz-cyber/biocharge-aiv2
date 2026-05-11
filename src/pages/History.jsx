@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useState, useEffect } from 'react';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell } from 'lucide-react';
