@@ -87,13 +87,16 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
       if (checkin?.id) {
         const totalStrain = Math.min(21, allSessions.reduce((s, t) => s + (t.strain_score || 0), 0));
         const { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } = await import('@/lib/training-impact-engine');
+        const { calcNextDayForecast } = await import('@/lib/biocharge-utils');
         const morningRecovery = checkin.morning_recovery_score || checkin.recovery_score || 70;
+        const sleepNeed = calculateSleepNeed(totalStrain, morningRecovery);
         await base44.entities.DailyCheckin.update(checkin.id, {
           daily_strain_accumulated: totalStrain,
           current_body_state: calculateBodyState(morningRecovery, totalStrain),
           remaining_capacity: calculateRemainingCapacity(morningRecovery, totalStrain),
           recovery_demand: calculateRecoveryDemand(totalStrain, morningRecovery),
-          sleep_need_tonight: calculateSleepNeed(totalStrain, morningRecovery),
+          sleep_need_tonight: sleepNeed,
+          next_day_forecast: calcNextDayForecast(morningRecovery, sleepNeed),
         });
       }
 

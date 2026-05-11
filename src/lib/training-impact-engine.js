@@ -93,13 +93,15 @@ export function calculateBodyState(morningRecovery, accumulatedStrain) {
 
 /**
  * Determine remaining capacity
+ * Uses ratio of strain used vs recovery score
  */
 export function calculateRemainingCapacity(morningRecovery, accumulatedStrain) {
+  if (!morningRecovery || morningRecovery <= 0) return 'Minimal';
   const strain100 = strainTo100(accumulatedStrain || 0);
-  const net = morningRecovery - strain100;
-  if (net >= 40) return 'High';
-  if (net >= 20) return 'Moderate';
-  if (net >= 0) return 'Low';
+  const capacidadeUsada = (strain100 / morningRecovery) * 100;
+  if (capacidadeUsada < 30) return 'High';
+  if (capacidadeUsada < 60) return 'Moderate';
+  if (capacidadeUsada < 85) return 'Low';
   return 'Minimal';
 }
 
@@ -116,10 +118,10 @@ export function calculateRecoveryDemand(accumulatedStrain, morningRecovery) {
  * Calculate recommended sleep hours (strain on 0-21 scale)
  */
 export function calculateSleepNeed(accumulatedStrain, morningRecovery) {
-  const base = 7.5;
-  const strainAdd = (accumulatedStrain || 0) > 16 ? 0.5 : (accumulatedStrain || 0) > 10 ? 0.25 : 0;
-  const fatigueAdd = morningRecovery < 60 ? 0.5 : 0;
-  return Math.min(10, Math.round((base + strainAdd + fatigueAdd) * 2) / 2);
+  let base = 7.5;
+  if (morningRecovery < 60) base += 1.0;
+  if ((accumulatedStrain || 0) > 12) base += 0.5;
+  return Math.min(10, Math.round(base * 2) / 2);
 }
 
 /**

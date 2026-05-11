@@ -14,8 +14,8 @@ import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
-import { computeCheckinScores } from '@/lib/biocharge-utils';
-import { useUserCheckins } from '@/hooks/useUserData';
+import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert } from '@/lib/biocharge-utils';
+import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 
 function HRVField({ value, onChange }) {
   const [showTip, setShowTip] = useState(false);
@@ -93,8 +93,9 @@ export default function DailyCheckin() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // For post mode: fetch today's checkin
+  // For post mode + delayed fatigue: fetch history
   const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(30);
+  const { data: allSessions = [] } = useUserTrainingSessions(100);
   const todayDate = getTodayLocal();
   const todayRecord = checkins.find(c => c.date === todayDate);
 
@@ -113,10 +114,17 @@ export default function DailyCheckin() {
       const payload = data.rest_day
         ? { ...data, rpe: 0, fatigue: 0, biocharge_pre_workout: null, biocharge_post_workout: null }
         : data;
-      const scores = computeCheckinScores(payload);
+      const recentCheckins = checkins.filter(c => c.date !== data.date).slice(0, 14);
+      const scores = computeCheckinScores(payload, recentCheckins, allSessions);
       if (!editData?.id) {
         scores.morning_recovery_score = scores.recovery_score;
       }
+      // Compute and save the three new fields
+      const strainAccumulated = payload.daily_strain_accumulated || 0;
+      const sleepNeed = calcSleepNeedTonight(scores.recovery_score, strainAccumulated, recentCheckins);
+      scores.sleep_need_tonight = sleepNeed;
+      scores.next_day_forecast = calcNextDayForecast(scores.recovery_score, sleepNeed);
+      scores.delayed_fatigue_alert = calcDelayedFatigueAlert(payload, recentCheckins, allSessions);
       if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
       return base44.entities.DailyCheckin.create(scores);
     },

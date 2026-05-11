@@ -103,9 +103,68 @@ export function getTrainingLoad(recoveryScore, deltaPost) {
   return 'Alto desgaste / reduzir carga';
 }
 
+// ─── Delayed Fatigue Alert ─────────────────────────────────────────────────
+
+export function calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions) {
+  if (!recentCheckins || recentCheckins.length < 2) return null;
+  const recoveryToday = calculateRecoveryScore(checkin);
+  const sorted = [...recentCheckins].sort((a, b) => b.date > a.date ? 1 : -1);
+  // Find checkin from 2 days ago
+  const twoDaysAgo = sorted.find((c, i) => i >= 1);
+  if (!twoDaysAgo) return null;
+  const recoveryTwoDaysAgo = twoDaysAgo.recovery_score || calculateRecoveryScore(twoDaysAgo);
+  if (recoveryToday >= recoveryTwoDaysAgo - 15) return null;
+
+  const soreness = checkin.muscle_soreness || checkin.muscle_soreness_level || 0;
+  if (soreness < 3) return null;
+
+  // Check last session was 1-2 days ago (not today)
+  if (!recentSessions || recentSessions.length === 0) return null;
+  const todayDate = checkin.date;
+  const sessionsNotToday = (recentSessions || []).filter(s => s.date !== todayDate);
+  if (sessionsNotToday.length === 0) return null;
+  const lastSession = sessionsNotToday.sort((a, b) => b.date > a.date ? 1 : -1)[0];
+  if (!lastSession) return null;
+
+  const daysDiff = Math.round(
+    (new Date(todayDate + 'T12:00:00') - new Date(lastSession.date + 'T12:00:00')) / (1000 * 60 * 60 * 24)
+  );
+  if (daysDiff < 1 || daysDiff > 2) return null;
+
+  return `Fadiga retardada detectada — seu corpo ainda está processando o treino de ${daysDiff} ${daysDiff === 1 ? 'dia' : 'dias'} atrás.`;
+}
+
+// ─── Sleep Need & Next Day Forecast ────────────────────────────────────────
+
+export function calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins) {
+  let base = 7.5;
+  if (recoveryScore < 60) base += 1.0;
+  if ((strainAccumulated || 0) > 12) base += 0.5;
+  // sleep_deficit_7d: sum of deficit below 7.5h over last 7 days
+  if (recentCheckins && recentCheckins.length >= 3) {
+    const sleepDeficit = recentCheckins.slice(0, 7).reduce((sum, c) => {
+      const h = c.sleep_hours || 0;
+      return sum + Math.max(0, 7.5 - h);
+    }, 0);
+    if (sleepDeficit > 3) base += 0.5;
+  }
+  // Round to nearest 0.5
+  return Math.min(10, Math.round(base * 2) / 2);
+}
+
+export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
+  if (recoveryScore >= 75 && sleepNeedTonight <= 7.5) {
+    return 'Com esse sono esta noite, seu recovery amanhã deve ser bom. Considere treino de qualidade.';
+  }
+  if (recoveryScore < 60 || sleepNeedTonight > 8) {
+    return 'Priorizando sono esta noite, seu corpo deve se recuperar melhor para amanhã.';
+  }
+  return `Recovery amanhã depende da qualidade do sono desta noite. Meta: ${sleepNeedTonight}h.`;
+}
+
 // ─── Main Compute Function ─────────────────────────────────────────────────
 
-export function computeCheckinScores(checkin) {
+export function computeCheckinScores(checkin, recentCheckins, recentSessions) {
   const recoveryScore = calculateRecoveryScore(checkin);
   const zone = getZone(recoveryScore);
   const deltaPre = getDeltaPre(checkin.biocharge_morning, checkin.biocharge_pre_workout);
@@ -117,6 +176,11 @@ export function computeCheckinScores(checkin) {
   const fatigueScore = calculateFatigueScore(checkin);
   const stressScore = calculateStressScore(checkin);
   const readinessScore = calculateReadinessScore(checkin);
+
+  const strainAccumulated = checkin.daily_strain_accumulated || 0;
+  const sleepNeedTonight = calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins);
+  const nextDayForecast = calcNextDayForecast(recoveryScore, sleepNeedTonight);
+  const delayedFatigueAlert = calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions);
 
   return {
     ...checkin,
@@ -131,6 +195,9 @@ export function computeCheckinScores(checkin) {
     alert,
     recommendation,
     training_load: trainingLoad,
+    sleep_need_tonight: checkin.sleep_need_tonight ?? sleepNeedTonight,
+    next_day_forecast: checkin.next_day_forecast || nextDayForecast,
+    delayed_fatigue_alert: checkin.delayed_fatigue_alert ?? delayedFatigueAlert,
   };
 }
 
