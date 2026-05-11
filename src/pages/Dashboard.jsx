@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [showDetails, setShowDetails] = useState(false);
   const { data: checkins = [], isLoading } = useUserCheckins(60);
 
-  const computed = checkins.map(computeCheckinScores);
+  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const today = computed[0];
   const streak = calculateStreak(checkins);
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
