@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { getTodayLocal } from '@/lib/date-utils';
@@ -77,6 +79,7 @@ export default function DailyCheckin() {
   const location = useLocation();
   const editData = location.state?.editData;
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [form, setForm] = useState(editData ? { rest_day: false, ...editData } : DEFAULT_FORM);
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -97,7 +100,7 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.create(scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins'] });
+      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
       toast.success('✅ Check-in salvo com sucesso!');
       navigate('/');
     },

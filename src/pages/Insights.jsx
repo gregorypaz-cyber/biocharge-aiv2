@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
 import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
@@ -20,10 +21,7 @@ export default function Insights() {
   const [coachResponse, setCoachResponse] = useState('');
   const [isCoachThinking, setIsCoachThinking] = useState(false);
 
-  const { data: checkins = [] } = useQuery({
-    queryKey: ['checkins'],
-    queryFn: () => base44.entities.DailyCheckin.list('-date', 60),
-  });
+  const { data: checkins = [] } = useUserCheckins(60);
 
   const computed = checkins.map(computeCheckinScores);
   const streak = calculateStreak(checkins);

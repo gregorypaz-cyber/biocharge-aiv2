@@ -1,6 +1,7 @@
 import React from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/lib/AuthContext';
+import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Plus, Zap } from 'lucide-react';
@@ -15,17 +16,11 @@ import SleepForecastCard from '@/components/today/SleepForecastCard';
 
 export default function Today() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const today = getTodayLocal();
 
-  const { data: checkins = [], isLoading: loadingCheckins } = useQuery({
-    queryKey: ['checkins'],
-    queryFn: () => base44.entities.DailyCheckin.list('-date', 30),
-  });
-
-  const { data: allSessions = [], isLoading: loadingSessions } = useQuery({
-    queryKey: ['training-sessions'],
-    queryFn: () => base44.entities.TrainingSession.list('-date', 100),
-  });
+  const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(30);
+  const { data: allSessions = [], isLoading: loadingSessions } = useUserTrainingSessions(100);
 
   const todayCheckins = checkins.filter(c => c.date === today);
   const rawCheckin = todayCheckins[0];
@@ -101,8 +96,8 @@ export default function Today() {
           checkin={enrichedCheckin}
           sessions={todaySessions}
           onUpdate={() => {
-            queryClient.invalidateQueries({ queryKey: ['checkins'] });
-            queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
+            queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+            queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
           }}
         />
       </div>

@@ -1,11 +1,10 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
+import { useUserCheckins } from '@/hooks/useUserData';
 
 import HeroSection from '@/components/dashboard/HeroSection';
 import ScoresGrid from '@/components/dashboard/ScoresGrid';
@@ -22,10 +21,7 @@ import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import ActionableRecsCard from '@/components/intelligence/ActionableRecsCard';
 
 export default function Dashboard() {
-  const { data: checkins = [], isLoading } = useQuery({
-    queryKey: ['checkins'],
-    queryFn: () => base44.entities.DailyCheckin.list('-date', 60),
-  });
+  const { data: checkins = [], isLoading } = useUserCheckins(60);
 
   const computed = checkins.map(computeCheckinScores);
   const today = computed[0];

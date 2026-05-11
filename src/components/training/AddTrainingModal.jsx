@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { getTodayLocal } from '@/lib/date-utils';
 import { calculateStrainScore, generateTrainingImpactMessage } from '@/lib/training-impact-engine';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/lib/AuthContext';
 
 const INTENSITIES = [
   { value: 'very_light', label: 'Muito Leve', emoji: '🟢' },
@@ -27,6 +28,7 @@ const COMMON_SPORTS = ['Corrida', 'Musculação', 'Ciclismo', 'Natação', 'Futs
 
 export default function AddTrainingModal({ checkin, existingSessions, onClose, onAdded }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [form, setForm] = useState({
     sport: '',
     intensity: 'moderate',
@@ -78,8 +80,8 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
     },
     onSuccess: () => {
       setCalculating(false);
-      queryClient.invalidateQueries({ queryKey: ['checkins'] });
-      queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
     },
     onError: () => setCalculating(false),
   });

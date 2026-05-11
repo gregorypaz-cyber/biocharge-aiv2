@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { useState } from 'react';
+import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import {
@@ -40,10 +40,7 @@ export default function Trends() {
   const [period, setPeriod] = useState(30);
   const [selectedMetric, setSelectedMetric] = useState('recovery_score');
 
-  const { data: checkins = [] } = useQuery({
-    queryKey: ['checkins'],
-    queryFn: () => base44.entities.DailyCheckin.list('-date', 365),
-  });
+  const { data: checkins = [] } = useUserCheckins(365);
 
   const computed = checkins.map(computeCheckinScores);
   const cutoff = new Date();

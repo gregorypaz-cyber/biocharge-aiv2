@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { useState, useEffect } from 'react';
+import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell } from 'lucide-react';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -126,19 +126,11 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
 }
 
 export default function History() {
-  const queryClient = useQueryClient();
   const [expandedWeeks, setExpandedWeeks] = useState({});
   const [selectedCheckin, setSelectedCheckin] = useState(null);
 
-  const { data: checkins = [], isLoading } = useQuery({
-    queryKey: ['checkins'],
-    queryFn: () => base44.entities.DailyCheckin.list('-date', 120),
-  });
-
-  const { data: allSessions = [] } = useQuery({
-    queryKey: ['training-sessions'],
-    queryFn: () => base44.entities.TrainingSession.list('-date', 200),
-  });
+  const { data: checkins = [], isLoading } = useUserCheckins(120);
+  const { data: allSessions = [] } = useUserTrainingSessions(200);
 
   const computed = checkins.map(computeCheckinScores);
   const weeks = groupByWeek(computed);
