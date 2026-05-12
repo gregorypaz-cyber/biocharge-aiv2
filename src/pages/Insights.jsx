@@ -13,6 +13,7 @@ import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import DiscoveriesCard from '@/components/intelligence/DiscoveriesCard';
+import { useUserTrainingSessions } from '@/hooks/useUserData';
 
 function pearsonR(arrA, arrB) {
   const n = Math.min(arrA.length, arrB.length);
@@ -168,6 +169,7 @@ export default function Insights() {
   const [isCoachThinking, setIsCoachThinking] = useState(false);
 
   const { data: checkins = [] } = useUserCheckins(60);
+  const { data: trainingSessions = [] } = useUserTrainingSessions(50);
 
   const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const streak = calculateStreak(checkins);
@@ -223,35 +225,94 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
   const askCoach = async () => {
     if (!coachQuestion.trim()) return;
     setIsCoachThinking(true);
-    const summary = computed.slice(0, 7).map(c => ({
-      date: c.date,
-      recovery: c.recovery_score,
-      readiness: c.readiness_score,
-      sleep: c.sleep_quality,
-      fatigue: c.fatigue_score,
-      hrv: c.hrv,
-      zone: c.zone,
-      rpe: c.rpe,
-      recommendation: c.recommendation,
-    }));
 
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Você é o BioCharge AI Coach, assistente de performance física e recuperação. Responda de forma humana, empática, específica e prática, em português brasileiro.
+    // Build real context from last 14 checkins
+    const last14 = computed.slice(0, 14);
+    const last7 = computed.slice(0, 7);
 
-Dados recentes do usuário (últimos 7 dias):
-${JSON.stringify(summary, null, 2)}
+    const validSleep = last7.map(c => c.sleep_hours).filter(v => v != null && v > 0 && v <= 12);
+    const validRecovery = last7.map(c => c.recovery_score).filter(v => v != null && v >= 0 && v <= 100);
+    const validSleepQuality = last7.map(c => c.sleep_quality ?? c.sleep_score).filter(v => v != null);
 
-Pergunta: "${coachQuestion}"
+    const avgSleep = validSleep.length ? parseFloat((validSleep.reduce((s, v) => s + v, 0) / validSleep.length).toFixed(1)) : null;
+    const avgRecovery7d = validRecovery.length ? Math.round(validRecovery.reduce((s, v) => s + v, 0) / validRecovery.length) : null;
+    const avgSleepQuality = validSleepQuality.length ? parseFloat((validSleepQuality.reduce((s, v) => s + v, 0) / validSleepQuality.length).toFixed(1)) : null;
+    const sleepDeficit = validSleep.length ? parseFloat(((7 * 7.5) - validSleep.reduce((s, v) => s + v, 0)).toFixed(1)) : null;
 
-Regras:
-- Cite os dados reais do usuário na resposta
-- Seja direto e prático
-- Use emojis quando apropriado
-- Máximo 3-4 parágrafos
-- Nunca seja genérico — personalize baseado nos dados`,
-    });
+    const latestCheckin = last14[0] || {};
+    const hrvLatest = last14.find(c => c.hrv != null)?.hrv ?? null;
+    const rhrLatest = last14.find(c => c.resting_hr != null)?.resting_hr ?? null;
+    const energyLatest = latestCheckin.energy ?? latestCheckin.energy_level ?? null;
+    const stressLatest = latestCheckin.stress ?? latestCheckin.stress_level ?? null;
+    const sorenessLatest = latestCheckin.muscle_soreness ?? latestCheckin.muscle_soreness_level ?? null;
 
-    setCoachResponse(result);
+    // Training sessions this week
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekSessions = trainingSessions.filter(s => s.date && new Date(s.date + 'T12:00:00') >= weekAgo);
+    const weekStrainTotal = weekSessions.reduce((s, t) => s + (t.strain_score || 0), 0);
+    const sessionsList = weekSessions.map(s => `${s.sport} ${s.duration_minutes}min (strain ${s.strain_score || 0})`).join(', ') || 'nenhum registrado';
+
+    const formatList = (arr) => arr.map(v => `${v}h`).join(', ');
+    const formatRecovery = (arr) => arr.filter(v => v != null).map(v => String(v)).join(', ');
+
+    const systemContext = `Você é o Coach do BioCharge AI — especialista em fisiologia do exercício, recuperação e performance.
+
+DADOS REAIS DO ATLETA (use APENAS estes números):
+━━━━━━━━━━━━━━━━━━━━━━
+Sono últimos 7 dias: ${validSleep.length ? formatList(validSleep) : 'sem dados'}
+Média de sono: ${avgSleep != null ? `${avgSleep}h/noite` : 'sem dados'}
+Qualidade do sono (média): ${avgSleepQuality != null ? `${avgSleepQuality}/100` : 'sem dados'}
+
+Recovery Score últimos 7 dias: ${validRecovery.length ? formatRecovery(validRecovery) : 'sem dados'}
+Média de Recovery: ${avgRecovery7d != null ? String(avgRecovery7d) : 'sem dados'}
+
+HRV mais recente: ${hrvLatest != null ? `${hrvLatest}ms` : 'sem dados'}
+FC de Repouso mais recente: ${rhrLatest != null ? `${rhrLatest}bpm` : 'sem dados'}
+Energia hoje: ${energyLatest != null ? `${energyLatest}/5` : 'sem dados'}
+Stress hoje: ${stressLatest != null ? `${stressLatest}/5` : 'sem dados'}
+Dor muscular: ${sorenessLatest != null ? `${sorenessLatest}/5` : 'sem dados'}
+
+Treinos esta semana: ${weekSessions.length} sessões
+Tipos: ${sessionsList}
+Strain total da semana: ${weekStrainTotal}
+${sleepDeficit != null ? `Déficit de sono acumulado (7 dias): ${sleepDeficit > 0 ? `+${sleepDeficit}h` : `${sleepDeficit}h`}` : ''}
+
+REGRAS OBRIGATÓRIAS:
+━━━━━━━━━━━━━━━━━━━━
+1. Use SOMENTE os números acima — nunca invente dados
+2. Se um dado estiver ausente, diga 'não tenho esse dado'
+3. Responda em português, direto e personalizado
+4. Máximo 4 parágrafos curtos
+5. Sempre baseie recomendações nos dados reais
+6. Se os dados mostrarem padrão positivo, reconheça
+7. Tom: coach experiente, não médico genérico
+
+Pergunta do atleta: "${coachQuestion}"`;
+
+    const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
+
+    // Validate response for impossible numbers
+    const impossibleSleep = /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) && (() => {
+      const m = result.match(/(\d+(?:\.\d+)?)\s*h(oras?)?\s*de\s*sono/gi) || [];
+      return m.some(match => {
+        const n = parseFloat(match);
+        return n > 12;
+      });
+    })();
+    const impossibleAvgSleep = /média\s*(de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/i.test(result) && (() => {
+      const m = result.match(/média\s*(?:de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/gi) || [];
+      return m.some(match => {
+        const n = parseFloat(match.replace(/[^\d.]/g, ''));
+        return n > 10;
+      });
+    })();
+
+    if (impossibleSleep || impossibleAvgSleep) {
+      setCoachResponse('Não tenho dados suficientes para responder com precisão. Continue fazendo check-ins diários para que eu possa te dar insights personalizados.');
+    } else {
+      setCoachResponse(result);
+    }
+
     setCoachQuestion('');
     setIsCoachThinking(false);
   };
