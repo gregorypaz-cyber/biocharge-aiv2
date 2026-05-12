@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Plus, ChevronDown } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
@@ -11,6 +11,7 @@ import ScoresGrid from '@/components/dashboard/ScoresGrid';
 import WeekStrip from '@/components/dashboard/WeekStrip';
 import MiniChart from '@/components/dashboard/MiniChart';
 import StreakCard from '@/components/dashboard/StreakCard';
+import DailyInsightsStrip from '@/components/dashboard/DailyInsightsStrip';
 
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
@@ -18,10 +19,8 @@ import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import BaselineInsightsRow from '@/components/intelligence/BaselineInsightsRow';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
-import ActionableRecsCard from '@/components/intelligence/ActionableRecsCard';
 
 export default function Dashboard() {
-  const [showDetails, setShowDetails] = useState(false);
   const { data: checkins = [], isLoading } = useUserCheckins(60);
 
   const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
@@ -74,6 +73,9 @@ export default function Dashboard() {
     );
   }
 
+  // Insights automáticos para a home
+  const homeRecs = analysis?.actionableRecs || [];
+
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
 
@@ -101,11 +103,12 @@ export default function Dashboard() {
         today={today}
         streak={streak}
         displayedScore={displayedScore}
-        onShowDetails={() => setShowDetails(v => !v)}
-        showDetails={showDetails}
       />
 
-      {/* BLOCO 2 — Por que hoje está assim? */}
+      {/* BLOCO 2 — Insights automáticos do dia */}
+      <DailyInsightsStrip recs={homeRecs} />
+
+      {/* BLOCO 3 — Por que hoje está assim? */}
       {drivers.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -126,65 +129,36 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
-          <button
-            onClick={() => setShowDetails(v => !v)}
-            className="mt-3 text-xs text-primary font-semibold hover:underline"
-          >
-            Ver mais
-          </button>
         </motion.div>
       )}
 
-      {/* BLOCO 3 — Tendência */}
+      {/* BLOCO 4 — Tendência */}
       <MiniChart data={computed} />
 
-      {/* DETALHES — colapsável */}
-      <AnimatePresence>
-        {showDetails && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.35 }}
-            className="overflow-hidden space-y-4"
-          >
-            {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
-            {analysis?.narrative && <NarrativeCard narrative={analysis.narrative} />}
-            {analysis?.whyScore?.length > 0 && (
-              <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={displayedScore} />
-            )}
-            {analysis?.baselineInsights?.length > 0 && (
-              <BaselineInsightsRow insights={analysis.baselineInsights} />
-            )}
-            <ScoresGrid today={today} />
-            {analysis?.actionableRecs?.length > 0 && (
-              <ActionableRecsCard recs={analysis.actionableRecs} />
-            )}
-            {analysis && (
-              <TrainingLoadCard
-                trainingLoad={analysis.trainingLoad}
-                sleepDebt={analysis.sleepDebt}
-              />
-            )}
-            <StreakCard streak={streak} />
-            {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
-              <CorrelationsCard
-                correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
-                laggedEffects={analysis.laggedEffects}
-              />
-            )}
-            <WeekStrip data={computed} />
-
-            {/* Botão fechar detalhes */}
-            <button
-              onClick={() => setShowDetails(false)}
-              className="w-full flex items-center justify-center gap-1.5 py-3 rounded-2xl border border-border/60 bg-card text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
-            >
-              <ChevronDown className="w-3.5 h-3.5 rotate-180" /> Recolher detalhes
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* BLOCO 5 — Cards de detalhe (sempre visíveis, não colapsáveis) */}
+      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
+      {analysis?.narrative && <NarrativeCard narrative={analysis.narrative} />}
+      {analysis && (
+        <TrainingLoadCard
+          trainingLoad={analysis.trainingLoad}
+          sleepDebt={analysis.sleepDebt}
+        />
+      )}
+      {analysis?.whyScore?.length > 0 && (
+        <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={displayedScore} />
+      )}
+      {analysis?.baselineInsights?.length > 0 && (
+        <BaselineInsightsRow insights={analysis.baselineInsights} />
+      )}
+      <ScoresGrid today={today} />
+      <StreakCard streak={streak} />
+      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
+        <CorrelationsCard
+          correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
+          laggedEffects={analysis.laggedEffects}
+        />
+      )}
+      <WeekStrip data={computed} />
 
     </div>
   );

@@ -2,12 +2,12 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Flame, AlertTriangle, ChevronDown, Dumbbell, LayoutList } from 'lucide-react';
+import { Flame, AlertTriangle, Dumbbell, LayoutList } from 'lucide-react';
 import RecoveryRing from '@/components/ui-bio/RecoveryRing';
 import StatusBadge from '@/components/ui-bio/StatusBadge';
 import StreakBadge from '@/components/ui-bio/StreakBadge';
 
-export default function HeroSection({ today, streak, displayedScore, onShowDetails, showDetails }) {
+export default function HeroSection({ today, streak, displayedScore }) {
   const dateStr = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
   const score = displayedScore ?? today.recovery_score;
 
@@ -75,7 +75,7 @@ export default function HeroSection({ today, streak, displayedScore, onShowDetai
               to="/today"
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all"
             >
-              <LayoutList className="w-3.5 h-3.5" /> Ver treino sugerido
+              <LayoutList className="w-3.5 h-3.5" /> Planejar dia
             </Link>
             <Link
               to="/today"
@@ -83,13 +83,6 @@ export default function HeroSection({ today, streak, displayedScore, onShowDetai
             >
               <Dumbbell className="w-3.5 h-3.5" /> Registrar treino
             </Link>
-            <button
-              onClick={onShowDetails}
-              className="flex items-center gap-1 px-3 py-2 text-xs text-muted-foreground font-semibold hover:text-foreground transition-colors"
-            >
-              Ver detalhes
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
-            </button>
           </div>
         </div>
       </div>

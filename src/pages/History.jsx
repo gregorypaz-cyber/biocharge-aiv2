@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell } from 'lucide-react';
+import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, Pencil } from 'lucide-react';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
+import { useNavigate } from 'react-router-dom';
 
 // Group checkins by week
 function groupByWeek(checkins) {
@@ -35,7 +36,7 @@ function WeekLabel({ weekStart }) {
   );
 }
 
-function DayDetailSheet({ checkin, sessions, onClose }) {
+function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
   const score = checkin.recovery_score || checkin.morning_recovery_score || 0;
 
   useEffect(() => {
@@ -67,9 +68,17 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
               <p className="text-lg font-black">{formatDateShort(checkin.date)}</p>
               {checkin.current_body_state && <BodyStateBadge state={checkin.current_body_state} size="sm" />}
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-black font-mono text-primary">{score}</p>
-              <p className="text-[10px] text-muted-foreground">recovery</p>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-2xl font-black font-mono text-primary">{score}</p>
+                <p className="text-[10px] text-muted-foreground">recovery</p>
+              </div>
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Editar
+              </button>
             </div>
           </div>
 
@@ -129,6 +138,7 @@ function DayDetailSheet({ checkin, sessions, onClose }) {
 export default function History() {
   const [expandedWeeks, setExpandedWeeks] = useState({});
   const [selectedCheckin, setSelectedCheckin] = useState(null);
+  const navigate = useNavigate();
 
   const { data: checkins = [], isLoading } = useUserCheckins(120);
   const { data: allSessions = [] } = useUserTrainingSessions(200);
@@ -296,6 +306,10 @@ export default function History() {
             checkin={selectedCheckin}
             sessions={allSessions.filter(s => s.date === selectedCheckin.date)}
             onClose={() => setSelectedCheckin(null)}
+            onEdit={() => {
+              setSelectedCheckin(null);
+              navigate('/checkin', { state: { editData: selectedCheckin } });
+            }}
           />
         )}
       </AnimatePresence>

@@ -8,11 +8,13 @@ import { Plus, Zap, Dumbbell } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } from '@/lib/training-impact-engine';
+import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
 import CurrentStateCard from '@/components/today/CurrentStateCard';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
+import WorkoutSuggestionCard from '@/components/today/WorkoutSuggestionCard';
 
 export default function Today() {
   const queryClient = useQueryClient();
@@ -24,7 +26,8 @@ export default function Today() {
 
   const todayCheckins = checkins.filter(c => c.date === today);
   const rawCheckin = todayCheckins[0];
-  const checkin = rawCheckin ? computeCheckinScores(rawCheckin) : null;
+  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
+  const checkin = rawCheckin ? computeCheckinScores(rawCheckin, checkins.slice(1), []) : null;
   const todaySessions = allSessions.filter(s => s.date === today);
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
@@ -46,6 +49,9 @@ export default function Today() {
   } : null;
 
   const isLoading = loadingCheckins || loadingSessions;
+
+  // Análise fisiológica para treino sugerido
+  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
 
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
@@ -127,7 +133,11 @@ export default function Today() {
           </div>
           <div className="rounded-2xl bg-secondary p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Capacidade restante</p>
-            <p className="text-xl font-bold">{enrichedCheckin.remaining_capacity ?? '—'}</p>
+            <p className="text-xl font-bold">
+              {enrichedCheckin.remaining_capacity
+                ? { High: 'Alta', Moderate: 'Moderada', Low: 'Baixa', Minimal: 'Mínima' }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity
+                : '—'}
+            </p>
           </div>
         </div>
 
@@ -138,6 +148,12 @@ export default function Today() {
           <Dumbbell className="w-4 h-4" /> Adicionar treino
         </button>
       </motion.div>
+
+      {/* Section 0.5 — Treino Sugerido */}
+      <WorkoutSuggestionCard
+        checkin={enrichedCheckin}
+        actionableRecs={analysis?.actionableRecs || []}
+      />
 
       {/* Section 1 — Morning Recovery (fixed) */}
       <MorningRecoveryCard checkin={enrichedCheckin} />
