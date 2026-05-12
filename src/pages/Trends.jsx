@@ -41,7 +41,7 @@ export default function Trends() {
 
   const { data: checkins = [] } = useUserCheckins(365);
 
-  const computed = checkins.map(computeCheckinScores);
+  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - period);
   const filtered = computed.filter(c => c.date && parseLocalDate(c.date) >= cutoff);
@@ -154,6 +154,18 @@ export default function Trends() {
           </motion.div>
         ))}
       </div>
+
+      {/* Empty state */}
+      {filtered.length < 5 && (
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6">
+          <span className="text-4xl mb-4">📊</span>
+          <p className="font-semibold mb-1">Dados insuficientes</p>
+          <p className="text-sm text-muted-foreground">
+            Continue fazendo check-ins diários. Os gráficos aparecem após{' '}
+            {5 - filtered.length} {5 - filtered.length === 1 ? 'dia' : 'dias'} mais no período selecionado.
+          </p>
+        </div>
+      )}
 
       {/* Main Area Chart */}
       {chartData.length >= 2 ? (
