@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
+import { computeCheckinScores, calculateStreak, getSmartMessage } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 
@@ -31,6 +31,7 @@ export default function Dashboard() {
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null;
   const [showDetails, setShowDetails] = useState(false);
   const sleepConsistency = calculateSleepConsistency(checkins);
+  const smartMessages = today ? getSmartMessage(today, computed.slice(1)) : [];
 
   // Score único exibido — prioriza readiness_score, fallback para recovery_score
   const displayedScore = today?.readiness_score ?? today?.recovery_score;
@@ -155,7 +156,32 @@ export default function Dashboard() {
       {/* BLOCO 4 — Tendência */}
       <MiniChart data={computed} />
 
-      {/* BLOCO 5 — Análise completa colapsável */}
+      {/* BLOCO 5 — Coach inteligente */}
+      {smartMessages.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-2xl border border-border/60 bg-card p-5"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">🧠</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              O Coach notou
+            </span>
+          </div>
+          <ul className="space-y-2">
+            {smartMessages.map((msg, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-sm">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                <span className="text-foreground/80 leading-snug">{msg}</span>
+              </li>
+            ))}
+          </ul>
+        </motion.div>
+      )}
+
+      {/* BLOCO 6 — Análise completa colapsável */}
       <Collapsible open={showDetails} onOpenChange={setShowDetails}>
         <CollapsibleTrigger asChild>
           <button className="w-full flex items-center justify-between p-4 rounded-2xl border border-border/50 bg-card/50 text-sm font-semibold hover:bg-card transition-colors">
