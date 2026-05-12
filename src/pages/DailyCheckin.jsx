@@ -363,7 +363,6 @@ export default function DailyCheckin() {
       {!isRestDay && (
         <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
           <SliderField label="Fadiga" value={form.fatigue} onChange={v => update('fatigue', v)} icon={Activity} />
-          <SliderField label="RPE (Esforço Percebido)" value={form.rpe} onChange={v => update('rpe', v)} min={1} max={10} />
         </CheckinStep>
       )}
 
@@ -411,10 +410,11 @@ export default function DailyCheckin() {
 
       {/* Notes */}
       <CheckinStep title="Observações" emoji="📝" delay={0.3}>
+        <p className="text-xs text-muted-foreground -mt-1 mb-2">Contexto da noite anterior — ajuda a IA a interpretar seus dados</p>
         <Textarea
           value={form.notes}
           onChange={e => update('notes', e.target.value)}
-          placeholder="Como foi seu dia? Algo relevante?"
+          placeholder="Como foi sua noite? Algo a registrar?"
           className="bg-secondary border-border/40 min-h-[80px] resize-none"
         />
       </CheckinStep>
