@@ -602,3 +602,47 @@ export function calculatePerformanceWindow(sessions, checkins) {
     },
   };
 }
+
+// ─── Sleep Consistency ────────────────────────────────────────────────────────
+
+export function calculateSleepConsistency(checkins) {
+  const withTimes = checkins
+    .slice(0, 14)
+    .filter(c => c.sleep_start_time)
+    .map(c => {
+      const [h, m] = c.sleep_start_time.split(':').map(Number);
+      return h * 60 + m;
+    });
+
+  if (withTimes.length < 5) return null;
+
+  const mean = withTimes.reduce((s, v) => s + v, 0) / withTimes.length;
+  const variance = withTimes.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / withTimes.length;
+  const stdDev = Math.sqrt(variance);
+
+  const consistencyScore = Math.max(0, Math.round(100 - (stdDev / 30) * 100));
+  const avgHour = Math.floor(mean / 60);
+  const avgMin = String(Math.round(mean % 60)).padStart(2, '0');
+
+  return {
+    stdDevMinutes: Math.round(stdDev),
+    consistencyScore,
+    avgBedtime: `${avgHour}:${avgMin}`,
+    isConsistent: stdDev < 30,
+    discovery: stdDev < 20 ? {
+      icon: '⏰',
+      title: 'Horário de sono consistente',
+      text: `Você dorme no mesmo horário com variação de apenas ${Math.round(stdDev)} minutos. Regularidade aumenta a qualidade do sono profundo.`,
+      sentiment: 'positive',
+      confidence: withTimes.length >= 10 ? 'Alta' : 'Média',
+      days: withTimes.length,
+    } : stdDev > 60 ? {
+      icon: '🌙',
+      title: 'Horário de sono irregular',
+      text: `Seu horário de dormir varia ${Math.round(stdDev)} minutos em média. Regularidade no sono melhora o HRV matinal.`,
+      sentiment: 'negative',
+      confidence: withTimes.length >= 10 ? 'Alta' : 'Média',
+      days: withTimes.length,
+    } : null,
+  };
+}

@@ -4,7 +4,7 @@ import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
 import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysis, calculateRunningEconomy } from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
@@ -40,7 +40,7 @@ function avg(arr) {
   return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
 }
 
-function calcDiscoveries(checkins) {
+function calcDiscoveries(checkins, trainingSessions = []) {
   if (checkins.length < 10) return [];
   const sorted = [...checkins].sort((a, b) => a.date > b.date ? 1 : -1);
   const discoveries = [];
@@ -158,6 +158,50 @@ function calcDiscoveries(checkins) {
     })
   );
 
+  // H) time_of_day → recovery_score do dia seguinte
+  const periodRecovery = {};
+  sorted.forEach((c, i) => {
+    if (i + 1 >= sorted.length) return;
+    const sessions = trainingSessions.filter(s => s.date === c.date);
+    sessions.forEach(s => {
+      if (!s.time_of_day) return;
+      if (!periodRecovery[s.time_of_day]) periodRecovery[s.time_of_day] = [];
+      const nextRecovery = sorted[i + 1]?.recovery_score;
+      if (nextRecovery) periodRecovery[s.time_of_day].push(nextRecovery);
+    });
+  });
+  const periods = Object.entries(periodRecovery).filter(([, arr]) => arr.length >= 2);
+  if (periods.length >= 2) {
+    const best = periods.sort((a, b) => avg(b[1]) - avg(a[1]))[0];
+    const periodLabels = { morning: 'manhã', afternoon: 'tarde', evening: 'noite', night: 'madrugada' };
+    discoveries.push({
+      icon: '⏰', title: 'Seu melhor horário de treino',
+      text: `Treinos de ${periodLabels[best[0]] || best[0]} geram recovery médio de ${Math.round(avg(best[1]))} no dia seguinte — seu período mais favorável.`,
+      sentiment: 'positive',
+      confidence: getConfidence(best[1].length),
+      days: best[1].length,
+    });
+  }
+
+  // I) deep_sleep_pct → hrv (mesmo dia)
+  tryAdd(
+    getPairs(c => c.deep_sleep_pct, c => c.hrv, 0), 0.35,
+    (r, n, mA, mB, arrA, arrB) => {
+      const highDeep = arrA.filter(v => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const delta = Math.round(Math.abs((avg(highDeep) || mB) - mB));
+      return {
+        icon: '🔬', title: 'Sono profundo e HRV',
+        text: `Noites com mais sono profundo estão associadas a HRV ${delta}ms maior pela manhã.`,
+        sentiment: r > 0 ? 'positive' : 'negative',
+        confidence: getConfidence(n), days: n,
+      };
+    }
+  );
+
+  // J) Running economy discovery (from engine)
+  const runEconomy = calculateRunningEconomy(trainingSessions);
+  if (runEconomy?.discovery) discoveries.push(runEconomy.discovery);
+
   return discoveries;
 }
 
@@ -181,7 +225,7 @@ export default function Insights() {
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
   const messages = analysis?.actionableRecs?.map(r => `${r.icon} [${r.category}] ${r.text}`) || [];
 
-  const discoveries = useMemo(() => calcDiscoveries(computed), [computed.length]);
+  const discoveries = useMemo(() => calcDiscoveries(computed, trainingSessions), [computed.length, trainingSessions.length]);
 
   const generateInsights = async () => {
     if (computed.length < 3) return;

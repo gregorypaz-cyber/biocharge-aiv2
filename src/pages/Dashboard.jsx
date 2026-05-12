@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Plus, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { useUserCheckins } from '@/hooks/useUserData';
 
 import HeroSection from '@/components/dashboard/HeroSection';
@@ -28,6 +28,7 @@ export default function Dashboard() {
   const today = computed[0];
   const streak = calculateStreak(checkins);
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
+  const sleepConsistency = calculateSleepConsistency(checkins);
 
   // Score único exibido — prioriza readiness_score, fallback para recovery_score
   const displayedScore = today?.readiness_score ?? today?.recovery_score;
@@ -147,9 +148,9 @@ export default function Dashboard() {
               />
             )}
             <StreakCard streak={streak} />
-            {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) && (
+            {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
               <CorrelationsCard
-                correlations={analysis.correlations}
+                correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
                 laggedEffects={analysis.laggedEffects}
               />
             )}

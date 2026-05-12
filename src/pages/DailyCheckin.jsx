@@ -68,6 +68,7 @@ const DEFAULT_FORM = {
   hydration: 3,
   muscle_soreness: 1,
   sleep_hours: 7,
+  sleep_start_time: null,
   resting_hr: null,
   hrv: null,
   body_weight: null,
@@ -356,6 +357,16 @@ export default function DailyCheckin() {
             onChange={e => update('sleep_hours', parseFloat(e.target.value) || null)}
             className="bg-secondary border-border/40 w-24 text-center font-mono"
           />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs text-muted-foreground">Hora de dormir (opcional)</label>
+          <Input
+            type="time"
+            value={form.sleep_start_time || ''}
+            onChange={e => update('sleep_start_time', e.target.value || null)}
+            className="bg-secondary border-border/40 font-mono w-36"
+          />
+          <p className="text-[10px] text-muted-foreground">Ex: 23:00 — encontre no Zepp → Sono</p>
         </div>
       </CheckinStep>
 
