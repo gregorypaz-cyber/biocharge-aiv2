@@ -4,7 +4,7 @@ import { Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
-import { useUserCheckins } from '@/hooks/useUserData';
+import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 
 import HeroSection from '@/components/dashboard/HeroSection';
 import ScoresGrid from '@/components/dashboard/ScoresGrid';
@@ -22,11 +22,12 @@ import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 
 export default function Dashboard() {
   const { data: checkins = [], isLoading } = useUserCheckins(60);
+  const { data: allSessions = [] } = useUserTrainingSessions(200);
 
   const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const today = computed[0];
   const streak = calculateStreak(checkins);
-  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
+  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null;
   const sleepConsistency = calculateSleepConsistency(checkins);
 
   // Score único exibido — prioriza readiness_score, fallback para recovery_score

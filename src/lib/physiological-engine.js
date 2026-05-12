@@ -23,9 +23,9 @@ export function buildBaseline(checkins) {
       d30: movingAvg(training, 'hrv', 30),
     },
     rhr: {
-      d7: movingAvg(training, 'resting_hr', 7),
-      d14: movingAvg(training, 'resting_hr', 14),
-      d30: movingAvg(training, 'resting_hr', 30),
+      d7: (() => { const vals = training.slice(0,7).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; })(),
+      d14: (() => { const vals = training.slice(0,14).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; })(),
+      d30: (() => { const vals = training.slice(0,30).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; })(),
     },
     sleep: {
       d7: movingAvg(checkins, 'sleep_hours', 7),
@@ -69,6 +69,10 @@ export function calculateSleepDebt(checkins, targetHours = 8) {
 // ─── Training Load Model ─────────────────────────────────────────────────────
 
 export function calculateTrainingLoad(checkins, sessions = []) {
+  if (checkins.length < 14) {
+    return { acute: null, chronic: null, ratio: null, risk: 'insufficient_data' };
+  }
+
   const getDailyLoad = (checkin) => {
     const dayStr = checkin.date;
     const daySessions = sessions.filter(s => s.date === dayStr);

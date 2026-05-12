@@ -9,7 +9,7 @@ const RISK_CONFIG = {
 };
 
 export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
-  if (!trainingLoad) return null;
+  if (!trainingLoad || trainingLoad.risk === 'insufficient_data' || trainingLoad.ratio === null) return null;
 
   const risk = RISK_CONFIG[trainingLoad.risk] || RISK_CONFIG.low;
 

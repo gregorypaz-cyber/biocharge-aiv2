@@ -51,7 +51,7 @@ export default function Today() {
   const isLoading = loadingCheckins || loadingSessions;
 
   // Análise fisiológica para treino sugerido
-  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
+  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null;
 
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);

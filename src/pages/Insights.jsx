@@ -98,7 +98,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
   // C) stress_level[N] → sleep_score[N]
   tryAdd(
-    getPairs(c => c.stress ?? c.stress_level, c => c.sleep_score, 0), 0.4,
+    getPairs(c => c.stress ?? c.stress_level ?? null, c => c.sleep_score, 0), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
       const highStress = arrA.filter((v, i) => v >= 4).map((v, i) => arrB[arrA.findIndex((x, j) => x >= 4 && j >= i)]).filter(v => v != null);
       const delta = Math.round(Math.abs(mB - (avg(highStress) || mB)));
@@ -112,7 +112,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
   // D) stress_level[N] → hrv[N+1]
   tryAdd(
-    getPairs(c => c.stress ?? c.stress_level, c => c.hrv, 1), 0.4,
+    getPairs(c => c.stress ?? c.stress_level ?? null, c => c.hrv, 1), 0.4,
     (r, n, mA, mB) => ({
       icon: '📉', title: 'Stress impacta HRV',
       text: `Dias estressantes tendem a reduzir seu HRV no dia seguinte. HRV médio: ${Math.round(mB)}ms.`,
@@ -122,7 +122,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
   // E) hydration_liters[N] → energy_level[N]
   tryAdd(
-    getPairs(c => c.hydration_liters ?? c.hydration, c => c.energy ?? c.energy_level, 0), 0.4,
+    getPairs(c => c.hydration_liters ?? c.hydration ?? null, c => c.energy ?? c.energy_level ?? null, 0), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
       const goodHydration = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
       const delta = parseFloat(Math.abs((avg(goodHydration) || mB) - mB).toFixed(1));
@@ -136,7 +136,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
   // F) daily_strain_accumulated[N] → resting_hr[N+1]
   tryAdd(
-    getPairs(c => c.daily_strain_accumulated, c => c.resting_hr ?? c.resting_heart_rate, 1), 0.4,
+    getPairs(c => c.daily_strain_accumulated ?? c.strain_accumulated ?? null, c => c.resting_hr ?? c.resting_heart_rate ?? null, 1), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
       const highStrain = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
       const delta = Math.round(Math.abs((avg(highStrain) || mB) - mB));
@@ -150,7 +150,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
   // G) muscle_soreness[N] → recovery_score[N+1]
   tryAdd(
-    getPairs(c => c.muscle_soreness ?? c.muscle_soreness_level, c => c.recovery_score, 1), 0.4,
+    getPairs(c => c.muscle_soreness ?? c.muscle_soreness_level ?? null, c => c.recovery_score, 1), 0.4,
     (r, n, mA, mB) => ({
       icon: '💪', title: 'Dor muscular e recuperação',
       text: `Dias com alta dor muscular impactam o seu score de recuperação no dia seguinte. Média: ${Math.round(mB)}.`,
