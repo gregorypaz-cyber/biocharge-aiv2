@@ -68,28 +68,39 @@ export function calculateSleepDebt(checkins, targetHours = 8) {
 
 // ─── Training Load Model ─────────────────────────────────────────────────────
 
-export function calculateTrainingLoad(checkins) {
-  // Acute load = weighted avg RPE last 7 days
-  // Chronic load = weighted avg RPE last 42 days
-  const rpeToLoad = (c) => {
-    if (!c.rpe || c.rest_day) return 0;
-    return c.rpe * 10; // arbitrary units per session
+export function calculateTrainingLoad(checkins, sessions = []) {
+  const getDailyLoad = (checkin) => {
+    const dayStr = checkin.date;
+    const daySessions = sessions.filter(s => s.date === dayStr);
+    if (daySessions.length > 0) {
+      return daySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
+    }
+    if (checkin.daily_strain_accumulated > 0) {
+      return checkin.daily_strain_accumulated;
+    }
+    if (!checkin.rpe || checkin.rest_day) return 0;
+    return checkin.rpe * 1.5; // normalized to ~0-21 scale
   };
 
-  const acute = checkins.slice(0, 7).reduce((s, c) => s + rpeToLoad(c), 0);
-  const chronic7 = checkins.slice(0, 42).reduce((s, c) => s + rpeToLoad(c), 0);
-  const chronicAvg = chronic7 / Math.max(1, Math.min(checkins.length, 42) / 7);
-  const acutePerWeek = acute;
-  const ratio = chronicAvg > 0 ? acutePerWeek / chronicAvg : 1;
+  const last7 = checkins.slice(0, 7);
+  const last42 = checkins.slice(0, 42);
+
+  const acute = last7.reduce((s, c) => s + getDailyLoad(c), 0);
+  const chronic42Total = last42.reduce((s, c) => s + getDailyLoad(c), 0);
+  const chronicAvg = chronic42Total / Math.max(1, Math.min(last42.length, 42) / 7);
+
+  const ratio = chronicAvg > 0
+    ? Math.round((acute / chronicAvg) * 100) / 100
+    : 1;
 
   let risk = 'low';
   if (ratio > 1.5) risk = 'high';
   else if (ratio > 1.3) risk = 'moderate';
 
   return {
-    acute: Math.round(acutePerWeek),
+    acute: Math.round(acute),
     chronic: Math.round(chronicAvg),
-    ratio: Math.round(ratio * 100) / 100,
+    ratio,
     risk,
   };
 }
@@ -444,12 +455,12 @@ export function getActionableRecs(today, state, sleepDebt, trainingLoad) {
 
 // ─── Master Analysis ──────────────────────────────────────────────────────────
 
-export function runPhysiologicalAnalysis(checkins) {
+export function runPhysiologicalAnalysis(checkins, sessions = []) {
   if (!checkins || checkins.length === 0) return null;
 
   const today = checkins[0];
   const baseline = buildBaseline(checkins);
-  const trainingLoad = calculateTrainingLoad(checkins);
+  const trainingLoad = calculateTrainingLoad(checkins, sessions);
   const sleepDebt = calculateSleepDebt(checkins);
   const physioState = getPhysiologicalState(today, baseline, trainingLoad, sleepDebt);
   const whyScore = explainRecoveryScore(today, baseline);
@@ -458,6 +469,8 @@ export function runPhysiologicalAnalysis(checkins) {
   const correlations = detectCorrelations(checkins);
   const laggedEffects = detectLaggedEffects(checkins);
   const actionableRecs = getActionableRecs(today, physioState, sleepDebt, trainingLoad);
+  const runningEconomy = calculateRunningEconomy(sessions);
+  const performanceWindow = calculatePerformanceWindow(sessions, checkins);
 
   return {
     today,
@@ -471,5 +484,121 @@ export function runPhysiologicalAnalysis(checkins) {
     correlations,
     laggedEffects,
     actionableRecs,
+    runningEconomy,
+    performanceWindow,
+  };
+}
+
+// ─── Running Economy Engine ───────────────────────────────────────────────────
+
+export function calculateRunningEconomy(sessions) {
+  const runningSessions = sessions
+    .filter(s =>
+      (s.sport === 'Corrida' || s.sport?.toLowerCase().includes('corrida')) &&
+      s.heart_rate_avg > 0 &&
+      s.avg_pace_min_per_km > 0
+    )
+    .sort((a, b) => a.date > b.date ? 1 : -1);
+
+  if (runningSessions.length < 4) return null;
+
+  const ratios = runningSessions.map(s => ({
+    date: s.date,
+    ratio: s.heart_rate_avg / (60 / s.avg_pace_min_per_km),
+    fc: s.heart_rate_avg,
+    pace: s.avg_pace_min_per_km,
+  }));
+
+  const mid = Math.floor(ratios.length / 2);
+  const older = ratios.slice(0, mid);
+  const recent = ratios.slice(mid);
+
+  const avgOld = older.reduce((s, r) => s + r.ratio, 0) / older.length;
+  const avgRecent = recent.reduce((s, r) => s + r.ratio, 0) / recent.length;
+
+  const improvement = Math.round(((avgOld - avgRecent) / avgOld) * 100);
+  const isImproving = improvement > 0;
+
+  if (Math.abs(improvement) < 2) return null;
+
+  return {
+    improvement,
+    isImproving,
+    sessionsAnalyzed: runningSessions.length,
+    latestFC: ratios[ratios.length - 1].fc,
+    latestPace: ratios[ratios.length - 1].pace,
+    discovery: isImproving
+      ? {
+          icon: '🏃',
+          title: 'Economia de corrida melhorou',
+          text: `Você está ${improvement}% mais eficiente. Mesmo pace, menos esforço cardíaco nas últimas ${recent.length} corridas.`,
+          sentiment: 'positive',
+          confidence: runningSessions.length >= 8 ? 'Alta' : 'Média',
+          days: runningSessions.length,
+        }
+      : {
+          icon: '📉',
+          title: 'Eficiência de corrida caindo',
+          text: `Seu coração está trabalhando ${Math.abs(improvement)}% mais para o mesmo pace. Pode indicar fadiga acumulada ou necessidade de base aeróbica.`,
+          sentiment: 'negative',
+          confidence: runningSessions.length >= 8 ? 'Alta' : 'Média',
+          days: runningSessions.length,
+        },
+  };
+}
+
+// ─── Performance Window Analysis ─────────────────────────────────────────────
+
+export function calculatePerformanceWindow(sessions, checkins) {
+  if (sessions.length < 6 || checkins.length < 6) return null;
+
+  const periods = ['morning', 'afternoon', 'evening', 'night'];
+  const periodData = {};
+
+  periods.forEach(period => {
+    const periodSessions = sessions.filter(s => s.time_of_day === period);
+    if (periodSessions.length < 2) return;
+
+    const nextDayRecoveries = periodSessions.map(s => {
+      const sessionDate = s.date;
+      const nextDay = checkins.find(c => {
+        const d1 = new Date(sessionDate + 'T12:00:00');
+        const d2 = new Date(c.date + 'T12:00:00');
+        return Math.round((d2 - d1) / 86400000) === 1;
+      });
+      return nextDay?.recovery_score ?? null;
+    }).filter(v => v != null);
+
+    if (nextDayRecoveries.length >= 2) {
+      periodData[period] = {
+        avgRecovery: Math.round(
+          nextDayRecoveries.reduce((s, v) => s + v, 0) / nextDayRecoveries.length
+        ),
+        count: nextDayRecoveries.length,
+      };
+    }
+  });
+
+  if (Object.keys(periodData).length < 2) return null;
+
+  const best = Object.entries(periodData)
+    .sort((a, b) => b[1].avgRecovery - a[1].avgRecovery)[0];
+
+  const labels = {
+    morning: 'manhã', afternoon: 'tarde',
+    evening: 'noite', night: 'madrugada',
+  };
+
+  return {
+    bestPeriod: best[0],
+    avgRecovery: best[1].avgRecovery,
+    discovery: {
+      icon: '⏰',
+      title: 'Melhor janela de treino identificada',
+      text: `Treinos de ${labels[best[0]]} geram recovery médio de ${best[1].avgRecovery} no dia seguinte — seu melhor horário com base em ${best[1].count} sessões.`,
+      sentiment: 'positive',
+      confidence: best[1].count >= 5 ? 'Alta' : 'Média',
+      days: best[1].count,
+    },
   };
 }
