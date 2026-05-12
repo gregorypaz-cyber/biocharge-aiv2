@@ -85,7 +85,10 @@ const INTENSITY_MAP = {
   },
 };
 
-export default function WorkoutSuggestionCard({ checkin, actionableRecs = [] }) {
+const STRAIN_ZONE = (v) =>
+  v <= 9 ? '🟢 Leve' : v <= 13 ? '🟡 Moderado' : v <= 17 ? '🟠 Alto' : '🔴 Máximo';
+
+export default function WorkoutSuggestionCard({ checkin, actionableRecs = [], strainTarget, currentStrain = 0 }) {
   const bodyState = checkin?.current_body_state || 'default';
   const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
 
@@ -121,6 +124,25 @@ export default function WorkoutSuggestionCard({ checkin, actionableRecs = [] }) 
 
       {/* Detail text */}
       <p className="text-sm text-foreground/85 leading-relaxed">{cfg.detail}</p>
+
+      {strainTarget != null && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Strain alvo hoje</p>
+            <p className="text-lg font-mono font-bold" style={{ color: cfg.color }}>até {strainTarget}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{STRAIN_ZONE(strainTarget)}</p>
+          </div>
+          {currentStrain > 0 && (
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Acumulado</p>
+              <p className={`text-lg font-mono font-bold ${currentStrain >= strainTarget ? 'text-red-400' : 'text-emerald-400'}`}>
+                {currentStrain}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{STRAIN_ZONE(currentStrain)}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tips from state config */}
       <ul className="space-y-1.5">

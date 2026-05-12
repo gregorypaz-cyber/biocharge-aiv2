@@ -63,6 +63,12 @@ export default function Today() {
   // Strain acumulado com cap 21
   const cappedStrain = Math.min(21, totalStrain);
 
+  const strainTarget =
+    displayedScore >= 80 ? 16 :
+    displayedScore >= 67 ? 13 :
+    displayedScore >= 50 ? 10 :
+    7;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -153,6 +159,8 @@ export default function Today() {
       <WorkoutSuggestionCard
         checkin={enrichedCheckin}
         actionableRecs={analysis?.actionableRecs || []}
+        strainTarget={strainTarget}
+        currentStrain={cappedStrain}
       />
 
       {/* Section 1 — Morning Recovery (fixed) */}
