@@ -80,6 +80,23 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
 
+      {/* ALERTA Cardiac Drift */}
+      {analysis?.cardiacDrift?.discovery && (
+        <div
+          className="rounded-2xl border p-4 flex gap-3"
+          style={{
+            borderColor: 'hsla(45,93%,58%,0.3)',
+            background: 'hsla(45,93%,58%,0.05)',
+          }}
+        >
+          <span className="text-2xl">{analysis.cardiacDrift.discovery.icon}</span>
+          <div>
+            <p className="text-sm font-bold">{analysis.cardiacDrift.discovery.title}</p>
+            <p className="text-xs text-muted-foreground mt-1">{analysis.cardiacDrift.discovery.text}</p>
+          </div>
+        </div>
+      )}
+
       {/* ALERTA HRV — maior prioridade visual */}
       {analysis?.hrvAnomaly?.alert && (
         <div

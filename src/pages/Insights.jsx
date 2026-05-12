@@ -4,7 +4,7 @@ import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
 import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysis, calculateRunningEconomy } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysis, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift } from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
@@ -199,8 +199,16 @@ function calcDiscoveries(checkins, trainingSessions = []) {
   );
 
   // J) Running economy discovery (from engine)
-  const runEconomy = calculateRunningEconomy(trainingSessions);
+  const runEconomy = calculateRunningEconomy(trainingSessions || []);
   if (runEconomy?.discovery) discoveries.push(runEconomy.discovery);
+
+  // K) Performance window discovery (from engine)
+  const perfWindow = calculatePerformanceWindow(trainingSessions || [], checkins);
+  if (perfWindow?.discovery) discoveries.push(perfWindow.discovery);
+
+  // L) Cardiac drift discovery (from engine)
+  const drift = detectCardiacDrift(trainingSessions || []);
+  if (drift?.discovery) discoveries.push(drift.discovery);
 
   return discoveries;
 }
