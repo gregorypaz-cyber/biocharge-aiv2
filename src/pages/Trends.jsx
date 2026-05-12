@@ -3,7 +3,7 @@ import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area, BarChart, Bar, ScatterChart, Scatter, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -243,6 +243,95 @@ export default function Trends() {
           </div>
         </motion.div>
       )}
+
+      {/* Sleep × Next-day Recovery Scatter */}
+      {(() => {
+        const last30 = computed.filter(c => c.date && parseLocalDate(c.date) >= (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d; })());
+        const sorted = [...last30].sort((a, b) => a.date < b.date ? -1 : 1);
+        const scatterPoints = sorted.slice(0, -1).reduce((acc, c, i) => {
+          const nextDay = sorted[i + 1];
+          const sleepH = c.sleep_hours;
+          const nextRecovery = nextDay?.recovery_score;
+          if (sleepH != null && nextRecovery != null) {
+            acc.push({ x: sleepH, y: nextRecovery, date: c.date });
+          }
+          return acc;
+        }, []);
+
+        // Simple linear regression
+        let trendLine = [];
+        if (scatterPoints.length >= 3) {
+          const n = scatterPoints.length;
+          const sumX = scatterPoints.reduce((s, p) => s + p.x, 0);
+          const sumY = scatterPoints.reduce((s, p) => s + p.y, 0);
+          const sumXY = scatterPoints.reduce((s, p) => s + p.x * p.y, 0);
+          const sumX2 = scatterPoints.reduce((s, p) => s + p.x * p.x, 0);
+          const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+          const intercept = (sumY - slope * sumX) / n;
+          const xVals = [Math.min(...scatterPoints.map(p => p.x)), Math.max(...scatterPoints.map(p => p.x))];
+          trendLine = xVals.map(x => ({ x, trend: Math.round(slope * x + intercept) }));
+        }
+
+        if (scatterPoints.length < 3) return null;
+
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-2xl border border-border/60 bg-card p-5"
+          >
+            <h3 className="text-sm font-semibold mb-0.5">Impacto do Sono no Recovery</h3>
+            <p className="text-xs text-muted-foreground mb-4">Cada ponto = um dia dos seus dados</p>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
+                  <XAxis
+                    type="number" dataKey="x" name="Sono"
+                    domain={['auto', 'auto']}
+                    tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }}
+                    axisLine={false} tickLine={false}
+                    label={{ value: 'Horas de sono', position: 'insideBottom', offset: -2, fill: 'hsl(215,15%,45%)', fontSize: 10 }}
+                  />
+                  <YAxis
+                    type="number" dataKey="y" name="Recovery"
+                    domain={[0, 100]}
+                    tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }}
+                    axisLine={false} tickLine={false} width={30}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(val, name) => name === 'Recovery' ? [`${val}`, 'Recovery no dia seguinte'] : [`${val}h`, 'Horas de sono']}
+                    cursor={{ strokeDasharray: '3 3' }}
+                  />
+                  <Scatter
+                    name="dias"
+                    data={scatterPoints}
+                    fill="hsl(200,80%,55%)"
+                    fillOpacity={0.8}
+                    r={4}
+                  />
+                  {trendLine.length === 2 && (
+                    <Line
+                      data={trendLine}
+                      dataKey="trend"
+                      stroke="hsl(142,70%,50%)"
+                      strokeWidth={1.5}
+                      strokeDasharray="5 3"
+                      dot={false}
+                      name="Tendência"
+                    />
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Linha verde = tendência. Pontos mais à direita = mais sono.
+            </p>
+          </motion.div>
+        );
+      })()}
     </div>
   );
 }

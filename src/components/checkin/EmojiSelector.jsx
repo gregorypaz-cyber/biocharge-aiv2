@@ -1,4 +1,36 @@
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const MICRO_INTERPRETATIONS = {
+  energy: {
+    1: '⚠️ Energia baixa — considere treino leve hoje',
+    2: '⚠️ Energia baixa — considere treino leve hoje',
+    3: 'Energia dentro do padrão',
+    4: '✅ Boa energia — favorável para treino intenso',
+    5: '✅ Boa energia — favorável para treino intenso',
+  },
+  stress: {
+    1: '✅ Baixo stress favorece recuperação',
+    2: '✅ Baixo stress favorece recuperação',
+    3: null,
+    4: '⚠️ Stress elevado reduz qualidade do sono',
+    5: '⚠️ Stress elevado reduz qualidade do sono',
+  },
+  soreness: {
+    1: '✅ Musculatura recuperada',
+    2: null,
+    3: null,
+    4: '🔴 Dor intensa — evite sobrecarga muscular',
+    5: '🔴 Dor intensa — evite sobrecarga muscular',
+  },
+  mood: {
+    1: 'Humor baixo pode indicar fadiga acumulada',
+    2: 'Humor baixo pode indicar fadiga acumulada',
+    3: null,
+    4: 'Humor elevado — bom sinal de recuperação mental',
+    5: 'Humor elevado — bom sinal de recuperação mental',
+  },
+};
 
 const emojiSets = {
   mood:      { emojis: ['😤', '😔', '😐', '🙂', '😄'],   labels: ['Muito ruim', 'Baixo', 'Normal', 'Bom', 'Excelente'] },
@@ -37,6 +69,20 @@ export default function EmojiSelector({ label, type, value, onChange }) {
           );
         })}
       </div>
+      <AnimatePresence mode="wait">
+        {value && MICRO_INTERPRETATIONS[type]?.[value] && (
+          <motion.p
+            key={`${type}-${value}`}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-[11px] text-muted-foreground mt-1 pl-0.5"
+          >
+            {MICRO_INTERPRETATIONS[type][value]}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
