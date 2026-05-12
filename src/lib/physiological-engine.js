@@ -471,6 +471,8 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
   const actionableRecs = getActionableRecs(today, physioState, sleepDebt, trainingLoad);
   const runningEconomy = calculateRunningEconomy(sessions);
   const performanceWindow = calculatePerformanceWindow(sessions, checkins);
+  const cardiacDrift = detectCardiacDrift(sessions);
+  const hrvAnomaly = detectHRVAnomaly(checkins, baseline);
 
   return {
     today,
@@ -486,6 +488,8 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
     actionableRecs,
     runningEconomy,
     performanceWindow,
+    cardiacDrift,
+    hrvAnomaly,
   };
 }
 
@@ -599,6 +603,91 @@ export function calculatePerformanceWindow(sessions, checkins) {
       sentiment: 'positive',
       confidence: best[1].count >= 5 ? 'Alta' : 'Média',
       days: best[1].count,
+    },
+  };
+}
+
+// ─── Cardiac Drift Detector ───────────────────────────────────────────────────
+
+export function detectCardiacDrift(sessions) {
+  const longRuns = sessions.filter(s =>
+    s.sport === 'Corrida' &&
+    s.heart_rate_avg > 0 &&
+    s.heart_rate_max > 0 &&
+    s.duration_minutes >= 30
+  );
+
+  if (longRuns.length < 3) return null;
+
+  const driftRatios = longRuns.map(s => ({
+    date: s.date,
+    drift: (s.heart_rate_max - s.heart_rate_avg) / s.heart_rate_avg,
+    duration: s.duration_minutes,
+  }));
+
+  const recent = driftRatios.slice(-3);
+  const recentAvgDrift = recent.reduce((s, r) => s + r.drift, 0) / recent.length;
+
+  if (recentAvgDrift <= 0.15) return null;
+
+  return {
+    avgDrift: Math.round(recentAvgDrift * 100),
+    discovery: {
+      icon: '🌡️',
+      title: 'Deriva cardíaca detectada nas corridas',
+      text: `Sua FC sobe ${Math.round(recentAvgDrift * 100)}% acima da média no final dos treinos longos. Isso pode indicar desidratação ou estresse térmico. Hidrate-se melhor durante o treino.`,
+      sentiment: 'negative',
+      confidence: longRuns.length >= 5 ? 'Alta' : 'Média',
+      days: longRuns.length,
+    },
+  };
+}
+
+// ─── HRV Anomaly Detector ─────────────────────────────────────────────────────
+
+export function detectHRVAnomaly(checkins, baseline) {
+  if (checkins.length < 5) return null;
+
+  const today = checkins[0];
+  const yesterday = checkins[1];
+
+  if (!today.hrv || !yesterday?.hrv) return null;
+
+  const baseHrv = baseline?.hrv?.d14 || baseline?.hrv?.d7;
+  if (!baseHrv) return null;
+
+  const recentHrv = checkins
+    .slice(0, 14)
+    .map(c => c.hrv)
+    .filter(v => v != null && v > 0);
+
+  if (recentHrv.length < 5) return null;
+
+  const mean = recentHrv.reduce((s, v) => s + v, 0) / recentHrv.length;
+  const stdDev = Math.sqrt(
+    recentHrv.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / recentHrv.length
+  );
+
+  const zScore = (today.hrv - mean) / stdDev;
+  const drop = Math.round(((mean - today.hrv) / mean) * 100);
+
+  if (zScore > -1.5) return null;
+
+  const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
+  const rhrElevated = today.resting_hr && baseRhr &&
+    today.resting_hr > baseRhr * 1.07;
+
+  return {
+    zScore: Math.round(zScore * 10) / 10,
+    drop,
+    rhrElevated,
+    alert: {
+      icon: rhrElevated ? '🚨' : '⚠️',
+      title: rhrElevated ? 'Sinais vitais fora do padrão' : 'Queda abrupta de HRV',
+      text: rhrElevated
+        ? `HRV caiu ${drop}% e sua FC de repouso está elevada. Seu corpo pode estar combatendo algo ou sob sobrecarga severa. Priorize descanso e hidratação.`
+        : `HRV ${drop}% abaixo do seu padrão pessoal — queda de ${Math.abs(Math.round(today.hrv - mean))}ms. Reduza a intensidade hoje.`,
+      type: rhrElevated ? 'critical' : 'warning',
     },
   };
 }

@@ -526,7 +526,10 @@ Pergunta do atleta: "${coachQuestion}"`;
       </motion.div>
 
       {/* Discoveries */}
-      <DiscoveriesCard discoveries={discoveries} />
+      <DiscoveriesCard discoveries={[
+        ...discoveries,
+        ...(analysis?.cardiacDrift?.discovery ? [analysis.cardiacDrift.discovery] : []),
+      ]} />
 
       {/* AI Coach Chat */}
       <motion.div

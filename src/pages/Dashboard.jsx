@@ -77,6 +77,25 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
 
+      {/* ALERTA HRV — maior prioridade visual */}
+      {analysis?.hrvAnomaly?.alert && (
+        <div
+          className="rounded-2xl border p-4 flex gap-3"
+          style={{
+            borderColor: analysis.hrvAnomaly.alert.type === 'critical'
+              ? 'hsla(0,72%,55%,0.4)' : 'hsla(45,93%,58%,0.4)',
+            background: analysis.hrvAnomaly.alert.type === 'critical'
+              ? 'hsla(0,72%,55%,0.06)' : 'hsla(45,93%,58%,0.06)',
+          }}
+        >
+          <span className="text-2xl">{analysis.hrvAnomaly.alert.icon}</span>
+          <div>
+            <p className="text-sm font-bold">{analysis.hrvAnomaly.alert.title}</p>
+            <p className="text-xs text-muted-foreground mt-1">{analysis.hrvAnomaly.alert.text}</p>
+          </div>
+        </div>
+      )}
+
       {/* BLOCO 1 — Plano de hoje */}
       <HeroSection
         today={today}
