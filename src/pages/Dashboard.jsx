@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import HeroSection from '@/components/dashboard/HeroSection';
 import ScoresGrid from '@/components/dashboard/ScoresGrid';
 import WeekStrip from '@/components/dashboard/WeekStrip';
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const today = computed[0];
   const streak = calculateStreak(checkins);
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null;
+  const [showDetails, setShowDetails] = useState(false);
   const sleepConsistency = calculateSleepConsistency(checkins);
 
   // Score único exibido — prioriza readiness_score, fallback para recovery_score
@@ -153,30 +155,42 @@ export default function Dashboard() {
       {/* BLOCO 4 — Tendência */}
       <MiniChart data={computed} />
 
-      {/* BLOCO 5 — Cards de detalhe (sempre visíveis, não colapsáveis) */}
-      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
-      {analysis?.narrative && <NarrativeCard narrative={analysis.narrative} />}
-      {analysis && (
-        <TrainingLoadCard
-          trainingLoad={analysis.trainingLoad}
-          sleepDebt={analysis.sleepDebt}
-        />
-      )}
-      {analysis?.whyScore?.length > 0 && (
-        <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={displayedScore} />
-      )}
-      {analysis?.baselineInsights?.length > 0 && (
-        <BaselineInsightsRow insights={analysis.baselineInsights} />
-      )}
-      <ScoresGrid today={today} />
-      <StreakCard streak={streak} />
-      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
-        <CorrelationsCard
-          correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
-          laggedEffects={analysis.laggedEffects}
-        />
-      )}
-      <WeekStrip data={computed} />
+      {/* BLOCO 5 — Análise completa colapsável */}
+      <Collapsible open={showDetails} onOpenChange={setShowDetails}>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between p-4 rounded-2xl border border-border/50 bg-card/50 text-sm font-semibold hover:bg-card transition-colors">
+            <span>Análise fisiológica completa</span>
+            <span className="text-muted-foreground text-xs">
+              {showDetails ? '↑ Fechar' : '↓ Ver detalhes'}
+            </span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 mt-4">
+          {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
+          {analysis?.narrative && <NarrativeCard narrative={analysis.narrative} />}
+          {analysis && (
+            <TrainingLoadCard
+              trainingLoad={analysis.trainingLoad}
+              sleepDebt={analysis.sleepDebt}
+            />
+          )}
+          {analysis?.whyScore?.length > 0 && (
+            <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={displayedScore} />
+          )}
+          {analysis?.baselineInsights?.length > 0 && (
+            <BaselineInsightsRow insights={analysis.baselineInsights} />
+          )}
+          <ScoresGrid today={today} />
+          <StreakCard streak={streak} />
+          {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
+            <CorrelationsCard
+              correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
+              laggedEffects={analysis.laggedEffects}
+            />
+          )}
+          <WeekStrip data={computed} />
+        </CollapsibleContent>
+      </Collapsible>
 
     </div>
   );

@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Flame, AlertTriangle, Dumbbell, LayoutList } from 'lucide-react';
+import { Flame, AlertTriangle, LayoutList } from 'lucide-react';
 import RecoveryRing from '@/components/ui-bio/RecoveryRing';
 import StatusBadge from '@/components/ui-bio/StatusBadge';
 import StreakBadge from '@/components/ui-bio/StreakBadge';
@@ -69,19 +69,13 @@ export default function HeroSection({ today, streak, displayedScore }) {
             Hoje: <span className="text-foreground">{today.recommendation}</span>
           </p>
 
-          {/* CTAs */}
-          <div className="flex flex-wrap gap-2 justify-center sm:justify-start pt-1">
+          {/* CTA */}
+          <div className="flex pt-1">
             <Link
               to="/today"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all"
             >
-              <LayoutList className="w-3.5 h-3.5" /> Planejar dia
-            </Link>
-            <Link
-              to="/today"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-all"
-            >
-              <Dumbbell className="w-3.5 h-3.5" /> Registrar treino
+              <LayoutList className="w-4 h-4" /> Ver plano do dia →
             </Link>
           </div>
         </div>

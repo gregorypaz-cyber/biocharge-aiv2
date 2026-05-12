@@ -7,10 +7,12 @@ import { Link } from 'react-router-dom';
  * com link para a aba Hoje para detalhes de treino.
  */
 export default function DailyInsightsStrip({ recs = [] }) {
-  if (!recs || recs.length === 0) return null;
+  const recoveryRecs = (recs || []).filter(r =>
+    ['Sono', 'Recuperação', 'Hidratação', 'Stress', 'Carga'].includes(r.category)
+  );
+  if (recoveryRecs.length === 0) return null;
 
-  // Mostrar no máximo 3 na home para não poluir
-  const topRecs = recs.slice(0, 3);
+  const topRecs = recoveryRecs.slice(0, 3);
 
   return (
     <motion.div
