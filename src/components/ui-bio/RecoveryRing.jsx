@@ -48,7 +48,7 @@ export default function RecoveryRing({ value = 0, zone = 'yellow', size = 200, s
           <span className="block text-5xl font-black font-mono tracking-tight" style={{ color }}>
             {Math.round(value)}
           </span>
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Recovery</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mt-1">Prontidão</span>
         </motion.div>
       </div>
     </div>
