@@ -22,7 +22,7 @@ export default function WeekStrip({ data }) {
       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Últimos 7 dias</h3>
       <div className="grid grid-cols-7 gap-1.5">
         {days.map(({ date, dayLabel, checkin }, i) => {
-          const score = checkin?.recovery_score;
+          const score = checkin?.readiness_score ?? checkin?.recovery_score;
           const zone = checkin?.zone;
           const color = zone ? getZoneColor(zone) : null;
           const isToday = i === 6;
@@ -41,7 +41,7 @@ export default function WeekStrip({ data }) {
               <div
                 className={cn(
                   'w-full aspect-square rounded-xl flex items-center justify-center text-xs font-bold font-mono transition-all',
-                  isToday && 'ring-2 ring-offset-1 ring-offset-background',
+                  isToday && '',
                   !checkin && 'bg-secondary/50'
                 )}
                 style={
@@ -49,10 +49,11 @@ export default function WeekStrip({ data }) {
                     ? {
                         backgroundColor: `${color}18`,
                         color,
-                        borderColor: `${color}30`,
-                        border: '1px solid',
-                        ...(isToday && { ringColor: color }),
+                        border: `1px solid ${color}30`,
+                        ...(isToday && { boxShadow: `0 0 0 2px ${color}55, 0 0 0 4px hsl(var(--background))` }),
                       }
+                    : isToday
+                    ? { boxShadow: '0 0 0 2px hsl(var(--border)), 0 0 0 4px hsl(var(--background))' }
                     : {}
                 }
                 title={score ? `Prontidão: ${score}/100` : 'Sem dados'}
