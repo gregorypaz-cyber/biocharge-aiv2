@@ -1,14 +1,19 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function CorrelationsCard({ correlations, laggedEffects }) {
+  const [expanded, setExpanded] = useState(false);
+
   const all = [
     ...(correlations || []).map(c => ({ ...c, source: 'correlation' })),
     ...(laggedEffects || []).map(e => ({ icon: e.icon, text: e.text, type: 'lagged', source: 'lagged' })),
   ];
 
   if (all.length === 0) return null;
+
+  const visible = expanded ? all : all.slice(0, 3);
 
   return (
     <motion.div
@@ -22,7 +27,7 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Padrões Detectados</span>
       </div>
       <div className="space-y-3">
-        {all.map((item, i) => (
+        {visible.map((item, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -10 }}
@@ -38,10 +43,26 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
             )}
           >
             <span className="text-base mt-0.5 shrink-0">{item.icon}</span>
-            <span className="text-foreground/85">{item.text}</span>
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              <span className="text-foreground/85">{item.text}</span>
+              {item.source === 'lagged' && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
+                  Amanhã
+                </span>
+              )}
+            </div>
           </motion.div>
         ))}
       </div>
+
+      {all.length > 3 && (
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="mt-3 text-xs text-primary hover:underline"
+        >
+          {expanded ? 'Mostrar menos' : `Ver todos (${all.length})`}
+        </button>
+      )}
     </motion.div>
   );
 }
