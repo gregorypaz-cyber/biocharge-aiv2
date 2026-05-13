@@ -216,6 +216,8 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 export default function Insights() {
   const [aiInsight, setAiInsight] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [analysisGeneratedAt, setAnalysisGeneratedAt] = useState(null);
+  const [coachInput, setCoachInput] = useState('');
   const [coachQuestion, setCoachQuestion] = useState('');
   const [coachResponse, setCoachResponse] = useState('');
   const [isCoachThinking, setIsCoachThinking] = useState(false);
@@ -231,7 +233,7 @@ export default function Insights() {
     : 0;
   const perfLevel = getPerformanceLevel(avgRecovery);
   const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
-  const messages = analysis?.actionableRecs?.map(r => `${r.icon} [${r.category}] ${r.text}`) || [];
+  const actionableRecs = analysis?.actionableRecs || [];
 
   const discoveries = useMemo(() => calcDiscoveries(computed, trainingSessions), [computed.length, trainingSessions.length]);
 
@@ -271,11 +273,14 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
     });
 
     setAiInsight(result);
+    setAnalysisGeneratedAt(new Date());
     setIsGenerating(false);
   };
 
   const askCoach = async () => {
-    if (!coachQuestion.trim()) return;
+    const question = coachInput.trim() || coachQuestion.trim();
+    if (!question) return;
+    setCoachQuestion(question);
     setIsCoachThinking(true);
 
     // Build real context from last 14 checkins
@@ -343,7 +348,7 @@ REGRAS OBRIGATÓRIAS:
 5. Tom: coach experiente e humano, não médico genérico
 6. Sempre baseie recomendações nos dados reais fornecidos
 
-Pergunta do atleta: "${coachQuestion}"`;
+Pergunta do atleta: "${question}"`;
 
     const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
 
@@ -369,6 +374,7 @@ Pergunta do atleta: "${coachQuestion}"`;
       setCoachResponse(result);
     }
 
+    setCoachInput('');
     setCoachQuestion('');
     setIsCoachThinking(false);
   };
@@ -381,11 +387,11 @@ Pergunta do atleta: "${coachQuestion}"`;
     const recentFatigue = avg(computed.slice(0, 3).map(c => c.fatigue_score || 0));
     const recentSleep = avg(computed.slice(0, 3).map(c => c.sleep_quality || 0));
 
-    if (recentRecovery >= 75) patterns.push({ icon: TrendingUp, color: 'hsl(142,70%,55%)', bg: 'hsl(142,70%,50%)/8', text: `Recovery médio de ${Math.round(recentRecovery)} nos últimos 3 dias — Excelente tendência` });
-    else if (recentRecovery < 60) patterns.push({ icon: TrendingDown, color: 'hsl(0,72%,60%)', bg: 'hsl(0,72%,55%)/8', text: `Recovery médio baixo: ${Math.round(recentRecovery)} — Priorize recuperação esta semana` });
-    if (recentFatigue > 55) patterns.push({ icon: AlertTriangle, color: 'hsl(45,93%,63%)', bg: 'hsl(45,93%,58%)/8', text: `Fadiga elevada detectada: ${Math.round(recentFatigue)}/100 — Considere reduzir intensidade` });
-    if (recentSleep < 60) patterns.push({ icon: TrendingDown, color: 'hsl(0,72%,60%)', bg: 'hsl(0,72%,55%)/8', text: `Sono em queda: ${Math.round(recentSleep)} pts — Impacto direto no Recovery` });
-    else if (recentSleep >= 80) patterns.push({ icon: TrendingUp, color: 'hsl(142,70%,55%)', bg: 'hsl(142,70%,50%)/8', text: `Sono de alta qualidade: ${Math.round(recentSleep)} pts — Continue o protocolo atual` });
+    if (recentRecovery >= 75) patterns.push({ icon: TrendingUp, color: 'hsl(142,70%,55%)', negative: false, text: `Recovery médio de ${Math.round(recentRecovery)} nos últimos 3 dias — Excelente tendência` });
+    else if (recentRecovery < 60) patterns.push({ icon: TrendingDown, color: 'hsl(0,72%,60%)', negative: true, text: `Recovery médio baixo: ${Math.round(recentRecovery)} — Priorize recuperação esta semana` });
+    if (recentFatigue > 55) patterns.push({ icon: AlertTriangle, color: 'hsl(45,93%,63%)', negative: true, text: `Fadiga elevada detectada: ${Math.round(recentFatigue)}/100 — Considere reduzir intensidade` });
+    if (recentSleep < 60) patterns.push({ icon: TrendingDown, color: 'hsl(0,72%,60%)', negative: true, text: `Sono em queda: ${Math.round(recentSleep)} pts — Impacto direto no Recovery` });
+    else if (recentSleep >= 80) patterns.push({ icon: TrendingUp, color: 'hsl(142,70%,55%)', negative: false, text: `Sono de alta qualidade: ${Math.round(recentSleep)} pts — Continue o protocolo atual` });
   }
 
   return (
@@ -457,21 +463,30 @@ Pergunta do atleta: "${coachQuestion}"`;
       )}
 
       {/* AI Smart Messages */}
-      {messages.length > 0 && (
+      {actionableRecs.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Insights Automáticos</h3>
-          {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/15"
-            >
-              <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <p className="text-sm">{msg}</p>
-            </motion.div>
-          ))}
+          {actionableRecs.map((rec, i) => {
+            const categoryMeta = rec.category === 'Treino'
+              ? { badge: '🏋️ Treino', badgeClass: 'bg-emerald-500/15 text-emerald-400' }
+              : rec.category === 'Sono'
+              ? { badge: '🌙 Sono', badgeClass: 'bg-blue-500/15 text-blue-400' }
+              : { badge: `${rec.icon || '⚡'} ${rec.category || ''}`, badgeClass: 'bg-primary/10 text-primary' };
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.08 }}
+                className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/10"
+              >
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${categoryMeta.badgeClass}`}>
+                  {categoryMeta.badge}
+                </span>
+                <p className="text-sm text-foreground/85">{rec.text}</p>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
@@ -495,8 +510,8 @@ Pergunta do atleta: "${coachQuestion}"`;
               initial={{ opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.08 }}
-              className="flex items-start gap-3 p-4 rounded-xl border border-border/40"
-              style={{ backgroundColor: p.bg }}
+              className={`flex items-start gap-3 p-4 rounded-xl border ${p.negative ? 'bg-red-500/6 border-red-500/25' : 'border-border/40'}`}
+              style={p.negative ? {} : { backgroundColor: `hsl(142,70%,50%,0.06)` }}
             >
               <p.icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: p.color }} />
               <span className="text-sm">{p.text}</span>
@@ -529,9 +544,16 @@ Pergunta do atleta: "${coachQuestion}"`;
           {computed.length < 3 ? (
             <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
           ) : aiInsight ? (
-            <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
-              <ReactMarkdown>{aiInsight}</ReactMarkdown>
-            </div>
+            <>
+              <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
+                <ReactMarkdown>{aiInsight}</ReactMarkdown>
+              </div>
+              {analysisGeneratedAt && (
+                <p className="text-[10px] text-muted-foreground mt-3 text-right">
+                  Gerado em {analysisGeneratedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">Clique em "Gerar Análise" para receber insights personalizados baseados nos seus dados reais.</p>
           )}
@@ -565,22 +587,31 @@ Pergunta do atleta: "${coachQuestion}"`;
               <ReactMarkdown>{coachResponse}</ReactMarkdown>
             </motion.div>
           )}
-          <p className="text-xs text-muted-foreground">Ex: "Devo treinar hoje?" · "Por que meu HRV caiu?" · "O que melhorar no sono?"</p>
-          <div className="flex gap-2">
+          <div className="space-y-2">
             <Input
               placeholder="Pergunte ao seu coach..."
-              value={coachQuestion}
-              onChange={e => setCoachQuestion(e.target.value)}
+              value={coachInput}
+              onChange={e => setCoachInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && askCoach()}
               className="bg-secondary border-border/40 flex-1"
             />
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {['Devo treinar hoje?', 'Por que meu HRV caiu?', 'Como melhorar meu sono?'].map(q => (
+                <button
+                  key={q}
+                  onClick={() => setCoachInput(q)}
+                  className="px-3 py-1.5 rounded-xl bg-secondary border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors whitespace-nowrap shrink-0"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
             <Button
               onClick={askCoach}
-              disabled={isCoachThinking || !coachQuestion.trim()}
-              size="icon"
-              className="bg-primary text-primary-foreground shrink-0 w-10 h-10 rounded-xl"
+              disabled={isCoachThinking || !coachInput.trim()}
+              className="w-full bg-primary text-primary-foreground h-9 text-xs rounded-xl"
             >
-              {isCoachThinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {isCoachThinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Enviar</>}
             </Button>
           </div>
         </div>
