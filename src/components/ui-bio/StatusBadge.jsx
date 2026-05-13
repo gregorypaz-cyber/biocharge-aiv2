@@ -7,9 +7,9 @@ const zoneStyles = {
 };
 
 const zoneLabels = {
-  green: 'Alta Recuperação',
-  yellow: 'Moderado',
-  red: 'Baixa Recuperação',
+  green: 'Prontidão alta',
+  yellow: 'Prontidão moderada',
+  red: 'Prontidão baixa',
 };
 
 export default function StatusBadge({ zone, className }) {
