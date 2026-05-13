@@ -17,9 +17,19 @@ export default function WeekStrip({ data }) {
     };
   });
 
+  const scores = days.filter(d => d.checkin).map(d => d.checkin?.readiness_score ?? d.checkin?.recovery_score ?? 0).filter(v => v > 0);
+  const avg7 = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-5">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Últimos 7 dias</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Últimos 7 dias</h3>
+        {avg7 != null && (
+          <span className="text-xs font-mono font-bold text-muted-foreground">
+            média {avg7}
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-7 gap-1.5">
         {days.map(({ date, dayLabel, checkin }, i) => {
           const score = checkin?.readiness_score ?? checkin?.recovery_score;

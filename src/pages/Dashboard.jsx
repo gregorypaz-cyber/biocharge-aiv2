@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [rangeDays, setRangeDays] = useState(14);
   const [showSleep, setShowSleep] = useState(true);
   const [showFatigue, setShowFatigue] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const streak = calculateStreak(checkins);
@@ -130,24 +132,35 @@ export default function Dashboard() {
       {/* WeekStrip — últimos 7 dias */}
       <WeekStrip data={computed} />
 
-      {/* Estado fisiológico */}
-      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
-
-      {/* Carga de treino */}
-      {analysis && (
-        <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
-      )}
-
-      {/* Correlações */}
-      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
-        <CorrelationsCard
-          correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
-          laggedEffects={analysis.laggedEffects}
-        />
-      )}
-
       {/* Streak motivacional */}
       <StreakCard streak={streak} />
+
+      {/* Análise fisiológica detalhada — colapsível */}
+      {analysis && (
+        <Collapsible open={showDetails} onOpenChange={setShowDetails}>
+          <CollapsibleTrigger asChild>
+            <button className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-border/40 bg-card/60 text-sm font-semibold hover:bg-card transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🔬</span>
+                <span>Análise fisiológica detalhada</span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {showDetails ? '↑ Fechar' : '↓ Expandir'}
+              </span>
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-4 mt-2">
+            {analysis.physioState && <PhysioStateCard physioState={analysis.physioState} />}
+            <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
+            {(analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0 || sleepConsistency?.discovery) && (
+              <CorrelationsCard
+                correlations={[...(analysis.correlations || []), ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : [])]}
+                laggedEffects={analysis.laggedEffects}
+              />
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
 
     </div>
   );

@@ -55,6 +55,15 @@ export default function StreakCard({ streak }) {
               transition={{ duration: 0.8, ease: 'easeOut' }}
             />
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {streak < 7
+              ? `Faltam ${7 - streak} dia${7 - streak !== 1 ? 's' : ''} para completar a semana`
+              : streak < 14
+              ? `Faltam ${14 - streak} dia${14 - streak !== 1 ? 's' : ''} para 2 semanas`
+              : streak < 30
+              ? `Faltam ${30 - streak} dia${30 - streak !== 1 ? 's' : ''} para 1 mês`
+              : `Incrível — ${streak} dias de consistência! 🏆`}
+          </p>
         </div>
       )}
     </motion.div>
