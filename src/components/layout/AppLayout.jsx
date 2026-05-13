@@ -4,10 +4,10 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Home' },
   { path: '/today', icon: Activity, label: 'Hoje' },
+  { path: '/insights', icon: Brain, label: 'Insights' },
   { path: '/checkin', icon: PlusCircle, label: 'Check-in', primary: true },
-  { path: '/insights', icon: Brain, label: 'IA' },
+  { path: '/summary', icon: LayoutDashboard, label: 'Resumo' },
   { path: '/history', icon: Clock, label: 'Timeline' },
 ];
 
@@ -19,7 +19,7 @@ export default function AppLayout() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/today" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center">
               <span className="text-primary font-black text-xs">B</span>
             </div>
