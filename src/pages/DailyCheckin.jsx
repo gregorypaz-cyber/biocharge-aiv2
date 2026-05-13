@@ -157,8 +157,8 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.create(scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins'] });
-      queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
       toast.success('✅ Check-in salvo com sucesso!');
       navigate('/');
     },
@@ -192,8 +192,8 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.update(existing.id, scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins'] });
-      queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
       toast.success('✅ Pós-treino salvo!');
       navigate('/today');
     },
