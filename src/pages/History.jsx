@@ -107,6 +107,9 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
                     <Dumbbell className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-sm font-medium">{s.sport}</span>
                     <span className="text-xs text-muted-foreground">{s.duration_minutes}min</span>
+                    {s.intensity && (
+                      <span className="text-xs text-muted-foreground opacity-70">· {s.intensity}</span>
+                    )}
                   </div>
                   <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-red-400' : (s.strain_score || 0) >= 14 ? 'text-orange-400' : (s.strain_score || 0) >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
                     ⚡ strain {s.strain_score || 0}
@@ -178,6 +181,8 @@ export default function History() {
           const trend = weekTrend(items);
           const weekAvg = Math.round(items.reduce((s, c) => s + (c.recovery_score || 0), 0) / items.length);
           const hasAlert = items.some(c => c.current_body_state === 'Overreached' || c.recovery_score < 50);
+          const weekDates = new Set(items.map(c => c.date));
+          const weekStrain = allSessions.filter(s => weekDates.has(s.date)).reduce((acc, t) => acc + (t.strain_score || 0), 0);
 
           return (
             <motion.div
@@ -196,7 +201,11 @@ export default function History() {
                   {hasAlert && <AlertTriangle className="w-3.5 h-3.5 text-red-400" />}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">avg {weekAvg}</span>
+                  <span className="text-sm font-bold">avg {weekAvg}</span>
+                  {weekStrain > 0 && (
+                    <span className="text-xs text-muted-foreground">⚡ {Math.round(weekStrain)} strain</span>
+                  )}
+                  <span className="text-xs text-muted-foreground">{items.length}d</span>
                   {trend !== null && (
                     trend > 3 ? <TrendingUp className="w-4 h-4 text-emerald-400" /> :
                     trend < -3 ? <TrendingDown className="w-4 h-4 text-red-400" /> :
@@ -267,24 +276,29 @@ export default function History() {
                                     </span>
                                   )}
                                   {c.daily_strain_accumulated > 0 && (() => {
-                    const displayStrain = Math.min(21, c.daily_strain_accumulated);
-                    return (
-                      <span className={`${displayStrain >= 18 ? 'text-red-400' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                        ⚡ strain {displayStrain}
-                      </span>
-                    );
-                  })()}
+                                const displayStrain = Math.min(21, c.daily_strain_accumulated);
+                                return (
+                                <span className={`${displayStrain >= 18 ? 'text-red-400' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                                ⚡ strain {displayStrain}
+                                </span>
+                                );
+                                })()}
                                 </div>
+                                {c.notes && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[160px] italic">
+                                    "{c.notes.slice(0, 40)}{c.notes.length > 40 ? '...' : ''}"
+                                  </p>
+                                )}
                               </div>
 
                               {/* Trend arrow */}
                               <div className="shrink-0">
                                 {i < items.length - 1 ? (
                                   score > (items[i + 1]?.recovery_score || 0) + 3
-                                    ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                                    ? <TrendingUp className="w-4 h-4 text-emerald-400" title="Prontidão subindo" />
                                     : score < (items[i + 1]?.recovery_score || 0) - 3
-                                    ? <TrendingDown className="w-3.5 h-3.5 text-red-400" />
-                                    : <Minus className="w-3.5 h-3.5 text-muted-foreground" />
+                                    ? <TrendingDown className="w-4 h-4 text-red-400" title="Prontidão caindo" />
+                                    : <Minus className="w-4 h-4 text-muted-foreground" title="Prontidão estável" />
                                 ) : null}
                               </div>
                             </motion.button>
