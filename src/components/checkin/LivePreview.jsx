@@ -27,7 +27,7 @@ export default function LivePreview({ preview }) {
     >
       <div className="flex items-center justify-between mb-3">
         <div>
-          <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Recovery Score</span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Prontidão</span>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-3xl font-black font-mono" style={{ color }}>
               {preview.recovery_score}
@@ -36,7 +36,7 @@ export default function LivePreview({ preview }) {
           </div>
         </div>
         <div className="text-right">
-          <span className="text-xs text-muted-foreground">Readiness</span>
+          <span className="text-xs text-muted-foreground">Prontidão geral</span>
           <p className="text-xl font-bold font-mono text-foreground">{preview.readiness_score}</p>
         </div>
       </div>
