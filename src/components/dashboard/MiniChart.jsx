@@ -42,7 +42,7 @@ export default function MiniChart({ data }) {
               </linearGradient>
             </defs>
             <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: 'hsl(215,15%,55%)' }} />
-            <Area type="monotone" dataKey="recovery" stroke="hsl(142,70%,50%)" fill="url(#recGrad)" strokeWidth={2} dot={false} name="Recovery" />
+            <Area type="monotone" dataKey="recovery" stroke="hsl(142,70%,50%)" fill="url(#recGrad)" strokeWidth={2} dot={false} name="Prontidão" />
             <Area type="monotone" dataKey="sleep" stroke="hsl(200,80%,55%)" fill="url(#sleepGrad)" strokeWidth={1.5} dot={false} name="Sono" />
           </AreaChart>
         </ResponsiveContainer>
