@@ -23,7 +23,7 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
       >
         <div className="flex items-center gap-2">
           <HelpCircle className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold">Por que seu Recovery é {recoveryScore}?</span>
+          <span className="text-sm font-semibold">Por que sua Prontidão é {recoveryScore}?</span>
         </div>
         <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
