@@ -16,7 +16,7 @@ export default function SleepForecastCard({ checkin }) {
     >
       <div className="flex items-center gap-2">
         <Moon className="w-4 h-4 text-blue-400" />
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sono & Previsão</span>
+        <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wide">Sono & Previsão</span>
       </div>
 
       {sleepNeed && (

@@ -1,4 +1,4 @@
-import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
+import { AreaChart, Area, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
@@ -29,7 +29,18 @@ export default function MiniChart({ data, days = 14, showSleep = true, showFatig
     >
       <div className="h-36">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData}>
+          <AreaChart data={chartData} margin={{ bottom: 4 }}>
+              <XAxis
+                dataKey="date"
+                tickFormatter={(d) => {
+                  const dt = new Date(d + 'T12:00:00');
+                  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                }}
+                tick={{ fontSize: 9, fill: 'hsl(210,20%,45%)' }}
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+              />
             <defs>
               <linearGradient id="recGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(142,70%,50%)" stopOpacity={0.3} />

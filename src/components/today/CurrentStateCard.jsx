@@ -29,7 +29,7 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
     >
       <div className="flex items-center gap-2 mb-1">
         <Activity className="w-4 h-4 text-primary" />
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado Atual</span>
+        <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wide">Estado Atual</span>
       </div>
 
       {/* State + Capacity */}

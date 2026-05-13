@@ -284,7 +284,7 @@ export default function DailyCheckin() {
         <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.1}>
           <SliderField
             label="RPE (1–10)"
-            hint="Como foi a intensidade do treino?"
+            hint="RPE — Escala de esforço percebido (1 = muito leve, 10 = máximo)"
             value={postForm.rpe}
             onChange={v => updatePost('rpe', v)}
             min={0}
@@ -377,7 +377,7 @@ export default function DailyCheckin() {
 
       {/* Sleep */}
       <CheckinStep title="Sono" emoji="🌙" delay={0.1}>
-        <SliderField label="Sleep Score" value={form.sleep_score} onChange={v => update('sleep_score', v)} icon={Moon} />
+        <SliderField label="Pontuação do Sono (Zepp)" hint="Valor de 0-100 do app Zepp → Sono" value={form.sleep_score} onChange={v => update('sleep_score', v)} icon={Moon} />
         <SliderField label="Sono Profundo" value={form.deep_sleep_pct} onChange={v => update('deep_sleep_pct', v)} unit="%" max={60} />
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-foreground flex-1">Horas de Sono</label>

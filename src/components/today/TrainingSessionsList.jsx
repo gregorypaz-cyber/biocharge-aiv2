@@ -52,7 +52,7 @@ export default function TrainingSessionsList({ checkin, sessions, onUpdate, open
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Dumbbell className="w-4 h-4 text-primary" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Treinos Hoje</span>
+          <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wide">Treinos Hoje</span>
           {sessions.length > 0 && (
             <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center">
               {sessions.length}

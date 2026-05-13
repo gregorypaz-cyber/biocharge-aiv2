@@ -126,6 +126,17 @@ export default function Today() {
             }`}>{readinessFaixa}</span>
           </div>
           <p className="text-3xl font-mono font-black">{displayedScore}</p>
+          <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${displayedScore}%`,
+                backgroundColor: displayedScore >= 67 ? 'hsl(142,70%,50%)' :
+                                 displayedScore >= 34 ? 'hsl(45,93%,58%)' :
+                                 'hsl(0,72%,55%)'
+              }}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
