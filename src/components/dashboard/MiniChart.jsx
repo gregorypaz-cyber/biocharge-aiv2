@@ -50,7 +50,7 @@ export default function MiniChart({ data, days = 14, showSleep = true, showFatig
               <Area type="monotone" dataKey="sleep" stroke="hsl(200,80%,55%)" fill="url(#sleepGrad)" strokeWidth={1.5} dot={false} name="Sono" />
             )}
             {showFatigue && (
-              <Area type="monotone" dataKey="fatigue" stroke="hsl(45,93%,58%)" fill="url(#fatigueGrad)" strokeWidth={1.5} dot={false} name="Fadiga" />
+              <Area type="monotone" dataKey="fatigue" stroke="hsl(45,93%,58%)" fill="url(#fatigueGrad)" strokeWidth={1.5} dot={false} name="Fadiga (desgaste)" />
             )}
           </AreaChart>
         </ResponsiveContainer>
@@ -66,10 +66,13 @@ export default function MiniChart({ data, days = 14, showSleep = true, showFatig
         )}
         {showFatigue && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <div className="w-2.5 h-2.5 rounded-full bg-[hsl(45,93%,58%)]" /> Fadiga
+            <div className="w-2.5 h-2.5 rounded-full bg-[hsl(45,93%,58%)]" /> Fadiga (desgaste)
           </div>
         )}
       </div>
+      {showFatigue && (
+        <p className="text-[10px] text-muted-foreground mt-1.5">Fadiga: valores altos = mais desgaste</p>
+      )}
     </motion.div>
   );
 }

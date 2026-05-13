@@ -17,6 +17,30 @@ import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert } from '@/lib/biocharge-utils';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 
+function parseSleepDurationToHours(str) {
+  if (!str || str.toString().trim() === '') return null;
+  const s = str.toString().trim().replace(',', '.');
+  // "7:45" or "7h45" or "7h 45"
+  const colonMatch = s.match(/^(\d{1,2})[h:][\s]?(\d{2})$/i);
+  if (colonMatch) {
+    const h = parseInt(colonMatch[1], 10);
+    const m = parseInt(colonMatch[2], 10);
+    if (h < 0 || h > 12 || m < 0 || m > 59) return null;
+    return parseFloat((h + m / 60).toFixed(4));
+  }
+  // "7.5" or "8"
+  const num = parseFloat(s);
+  if (!isNaN(num) && num >= 0 && num <= 12) return num;
+  return null;
+}
+
+function formatHoursToSleepDuration(hoursFloat) {
+  if (hoursFloat == null || isNaN(hoursFloat)) return '';
+  const h = Math.floor(hoursFloat);
+  const m = Math.round((hoursFloat - h) * 60);
+  return `${h}:${m.toString().padStart(2, '0')}`;
+}
+
 function HRVField({ value, onChange }) {
   const [showTip, setShowTip] = useState(false);
   return (
@@ -102,6 +126,9 @@ export default function DailyCheckin() {
 
   const [form, setForm] = useState(editData ? { rest_day: false, ...editData } : DEFAULT_FORM);
   const [postForm, setPostForm] = useState(DEFAULT_POST_FORM);
+  const [sleepHoursText, setSleepHoursText] = useState(
+    formatHoursToSleepDuration(editData?.sleep_hours ?? DEFAULT_FORM.sleep_hours)
+  );
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
   const updatePost = (field, value) => setPostForm(prev => ({ ...prev, [field]: value }));
@@ -130,7 +157,8 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.create(scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['checkins'] });
+      queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
       toast.success('✅ Check-in salvo com sucesso!');
       navigate('/');
     },
@@ -164,7 +192,8 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.update(existing.id, scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['checkins'] });
+      queryClient.invalidateQueries({ queryKey: ['training-sessions'] });
       toast.success('✅ Pós-treino salvo!');
       navigate('/today');
     },
@@ -349,15 +378,18 @@ export default function DailyCheckin() {
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-foreground flex-1">Horas de Sono</label>
           <Input
-            type="number"
-            step="0.5"
-            min="0"
-            max="12"
-            value={form.sleep_hours || ''}
-            onChange={e => update('sleep_hours', parseFloat(e.target.value) || null)}
+            type="text"
+            inputMode="numeric"
+            placeholder="Ex: 7:45"
+            value={sleepHoursText}
+            onChange={e => {
+              setSleepHoursText(e.target.value);
+              update('sleep_hours', parseSleepDurationToHours(e.target.value));
+            }}
             className="bg-secondary border-border/40 w-24 text-center font-mono"
           />
         </div>
+        <p className="text-[10px] text-muted-foreground -mt-1">Use 7:45 (ou 7.5). Encontre no Zepp → Sono.</p>
         <div className="space-y-1.5">
           <label className="text-xs text-muted-foreground">Hora de dormir (opcional)</label>
           <Input
