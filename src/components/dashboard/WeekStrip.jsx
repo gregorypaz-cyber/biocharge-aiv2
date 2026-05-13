@@ -55,7 +55,7 @@ export default function WeekStrip({ data }) {
                       }
                     : {}
                 }
-                title={score ? `Recovery: ${score}` : 'Sem dados'}
+                title={score ? `Prontidão: ${score}/100` : 'Sem dados'}
               >
                 {score ?? '·'}
               </div>
