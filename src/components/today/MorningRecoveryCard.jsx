@@ -15,7 +15,7 @@ const recoveryLabel = (score) => {
 export default function MorningRecoveryCard({ checkin }) {
   const score = checkin.morning_recovery_score || checkin.recovery_score || 0;
   const zone = checkin.zone || 'yellow';
-  const color = getZoneColor(zone);
+  const color = getZoneColor(zone) || 'hsl(45,93%,58%)';
 
   return (
     <motion.div
@@ -25,7 +25,7 @@ export default function MorningRecoveryCard({ checkin }) {
     >
       <div className="flex items-center gap-2 mb-3">
         <Moon className="w-4 h-4 text-blue-400" />
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recovery Matinal</span>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prontidão Matinal</span>
         <span className="ml-auto text-[10px] text-muted-foreground flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {formatDateFull(checkin.date)}

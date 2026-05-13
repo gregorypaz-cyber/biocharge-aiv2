@@ -424,8 +424,9 @@ Pergunta do atleta: "${coachQuestion}"`;
           </div>
           {streak >= 2 && (
             <div className="text-center">
-              <span className="text-3xl">🔥</span>
-              <p className="text-xs font-bold text-orange-400 mt-1">{streak} dias</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Sequência</p>
+              <span className="text-2xl">🔥</span>
+              <p className="text-xs font-bold text-orange-400 mt-0.5">{streak} dias seguidos</p>
             </div>
           )}
         </div>

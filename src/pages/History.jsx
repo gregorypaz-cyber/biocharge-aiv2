@@ -71,7 +71,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-2xl font-black font-mono text-primary">{score}</p>
-                <p className="text-[10px] text-muted-foreground">recovery</p>
+                <p className="text-[10px] text-muted-foreground">prontidão</p>
               </div>
               <button
                 onClick={onEdit}

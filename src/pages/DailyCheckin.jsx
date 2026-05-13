@@ -156,11 +156,15 @@ export default function DailyCheckin() {
       if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
       return base44.entities.DailyCheckin.create(scores);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
-      queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
-      toast.success('✅ Check-in salvo com sucesso!');
-      navigate('/');
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['checkins', user?.email] });
+      await queryClient.refetchQueries({ queryKey: ['training-sessions', user?.email] });
+      toast.success(editData?.id ? '✅ Check-in atualizado!' : '✅ Check-in salvo!');
+      if (editData?.id) {
+        navigate('/history');
+      } else {
+        navigate('/today');
+      }
     },
   });
 

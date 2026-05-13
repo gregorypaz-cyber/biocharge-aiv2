@@ -24,7 +24,7 @@ export default function WeekStrip({ data }) {
         {days.map(({ date, dayLabel, checkin }, i) => {
           const score = checkin?.readiness_score ?? checkin?.recovery_score;
           const zone = checkin?.zone;
-          const color = zone ? getZoneColor(zone) : null;
+          const color = zone ? getZoneColor(zone) : 'hsl(210,20%,60%)';
           const isToday = i === 6;
 
           return (
