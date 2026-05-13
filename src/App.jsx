@@ -54,7 +54,9 @@ const AuthenticatedApp = () => {
       {/* Protected routes */}
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Navigate to="/today" replace />} />
+          <Route path="/summary" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/summary" replace />} />
           <Route path="/checkin" element={<DailyCheckin />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/today" element={<Today />} />
