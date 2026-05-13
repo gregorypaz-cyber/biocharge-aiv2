@@ -27,7 +27,8 @@ export default function Today() {
   const todayCheckins = checkins.filter(c => c.date === today);
   const rawCheckin = todayCheckins[0];
   const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
-  const checkin = rawCheckin ? computeCheckinScores(rawCheckin, checkins.slice(1), []) : null;
+  // Use saved scores from DB; only recalculate fields not yet persisted
+  const checkin = rawCheckin ? { ...computeCheckinScores(rawCheckin, checkins.slice(1), []), ...rawCheckin } : null;
   const todaySessions = allSessions.filter(s => s.date === today);
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
