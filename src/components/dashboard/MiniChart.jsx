@@ -13,7 +13,7 @@ const tooltipStyle = {
 
 export default function MiniChart({ data, days = 14, showSleep = true, showFatigue = true }) {
   const chartData = [...data].reverse().slice(-days).map(c => ({
-    date: c.date ? format(new Date(c.date), 'dd/MM') : '',
+    date: c.date || '',
     readiness: c.readiness_score ?? c.recovery_score ?? null,
     sleep: c.sleep_quality ?? null,
     fatigue: c.fatigue_score ?? null,
@@ -33,8 +33,15 @@ export default function MiniChart({ data, days = 14, showSleep = true, showFatig
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => {
-                  const dt = new Date(d + 'T12:00:00');
-                  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                  if (!d || d === 'auto') return '';
+                  try {
+                    const raw = String(d).slice(0, 10);
+                    const dt = new Date(raw + 'T12:00:00');
+                    if (isNaN(dt.getTime())) return '';
+                    return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                  } catch {
+                    return '';
+                  }
                 }}
                 tick={{ fontSize: 9, fill: 'hsl(210,20%,45%)' }}
                 tickLine={false}
