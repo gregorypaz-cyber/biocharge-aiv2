@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
@@ -15,6 +15,8 @@ import TrainingSessionsList from '@/components/today/TrainingSessionsList';
 import CurrentStateCard from '@/components/today/CurrentStateCard';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutSuggestionCard from '@/components/today/WorkoutSuggestionCard';
+import NarrativeCard from '@/components/intelligence/NarrativeCard';
+import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 
 export default function Today() {
   const queryClient = useQueryClient();
@@ -26,7 +28,7 @@ export default function Today() {
 
   const todayCheckins = checkins.filter(c => c.date === today);
   const rawCheckin = todayCheckins[0];
-  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
+  const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   // Use saved scores from DB; only recalculate fields not yet persisted
   const checkin = rawCheckin ? { ...computeCheckinScores(rawCheckin, checkins.slice(1), []), ...rawCheckin } : null;
   const todaySessions = allSessions.filter(s => s.date === today);
@@ -52,7 +54,7 @@ export default function Today() {
   const isLoading = loadingCheckins || loadingSessions;
 
   // Análise fisiológica para treino sugerido
-  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null;
+  const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null, [computed.length, allSessions.length]);
 
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
@@ -139,7 +141,7 @@ export default function Today() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-secondary p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Strain acumulado</p>
             <p className={`text-xl font-mono font-bold ${
@@ -156,6 +158,28 @@ export default function Today() {
                 ? { High: 'Alta', Moderate: 'Moderada', Low: 'Baixa', Minimal: 'Mínima' }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity
                 : '—'}
             </p>
+          </div>
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">ACWR</p>
+            {analysis?.trainingLoad?.risk === 'insufficient_data' || analysis?.trainingLoad?.ratio == null ? (
+              <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
+            ) : (
+              <>
+                <p className={`text-xl font-mono font-bold ${
+                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
+                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
+                  'text-emerald-400'
+                }`}>{analysis.trainingLoad.ratio.toFixed(2)}</p>
+                <p className={`text-[10px] mt-0.5 ${
+                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
+                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
+                  'text-emerald-400'
+                }`}>
+                  {analysis.trainingLoad.ratio > 1.5 ? 'Alto risco' :
+                   analysis.trainingLoad.ratio > 1.3 ? 'Moderado' : 'Seguro'}
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -177,6 +201,35 @@ export default function Today() {
 
       {/* Section 1 — Morning Recovery (fixed) */}
       <MorningRecoveryCard checkin={enrichedCheckin} />
+
+      {/* HRV Anomaly Alert */}
+      {analysis?.hrvAnomaly && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`rounded-2xl border p-4 flex gap-3 ${
+            analysis.hrvAnomaly.alert.type === 'critical'
+              ? 'border-red-500/40 bg-red-500/8'
+              : 'border-yellow-500/40 bg-yellow-500/8'
+          }`}
+        >
+          <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
+          <div>
+            <p className={`text-sm font-semibold ${
+              analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
+            }`}>{analysis.hrvAnomaly.alert.title}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Physiological Narrative */}
+      {analysis?.narrative && <NarrativeCard narrative={analysis.narrative} />}
+
+      {/* Why Score */}
+      {analysis?.whyScore && analysis.whyScore.length > 0 && (
+        <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={displayedScore} />
+      )}
 
       {/* Section 2 — Training Sessions */}
       <div className="rounded-2xl border border-border bg-card p-4">
