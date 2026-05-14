@@ -29,8 +29,17 @@ export default function Today() {
   const todayCheckins = checkins.filter(c => c.date === today);
   const rawCheckin = todayCheckins[0];
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
-  // Use saved scores from DB; only recalculate fields not yet persisted
-  const checkin = rawCheckin ? { ...computeCheckinScores(rawCheckin, checkins.slice(1), []), ...rawCheckin } : null;
+  // Scores frescos da engine sobrepõem o DB para readiness/fatigue
+  const checkin = rawCheckin ? (() => {
+    const dbCheckin = rawCheckin;
+    const engineScores = computeCheckinScores(rawCheckin, checkins.slice(1), todaySessions);
+    return {
+      ...engineScores,
+      ...dbCheckin,
+      readiness_score: engineScores.readiness_score,
+      fatigue_score: engineScores.fatigue_score,
+    };
+  })() : null;
   const todaySessions = allSessions.filter(s => s.date === today);
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
