@@ -172,7 +172,32 @@ Esperado:
 
 ---
 
-## 6. formatPrescriptionText
+## 6. WorkoutSuggestionCard UI
+
+### Renderização com prescrição
+- [ ] Ao passar `analysis` válido como prop → bloco "Plano de Treino de Hoje" aparece abaixo do card legado
+- [ ] Sem `analysis` (undefined) → apenas card legado é exibido, sem erros
+- [ ] `workoutPrescription` prop tem prioridade sobre `analysis` prop
+
+### Interação com opções
+- [ ] Clicar em opção B/C muda detalhes da seção inferior (warmup/main/cooldown)
+- [ ] Badge de confiança (Alta/Média/Baixa) exibe cor correta (verde/amarelo/cinza)
+- [ ] `aria-live` na área de detalhes é detectado por leitores de tela
+
+### CTAs
+- [ ] Sem `onScheduleOption` e `onSchedule` → botão "Agendar" não renderiza
+- [ ] Com `onScheduleOption` definido → clique em "Agendar" chama callback com objeto da opção
+- [ ] Com `onCompleteOption` definido → clique em "Marcar como feito" chama callback
+- [ ] Sem callbacks definidos → sem botões CTA, sem erros
+
+### Responsivo mobile
+- [ ] Grid de 3 opções não quebra em viewport 375px
+- [ ] Textos não transbordam nos cards de opção
+- [ ] Disclaimer de segurança visível no scroll
+
+---
+
+## 7. formatPrescriptionText
 
 - [ ] Retorna string não-vazia para prescrição válida
 - [ ] Retorna `''` para `null` sem lançar exceção
