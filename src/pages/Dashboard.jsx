@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -23,10 +23,11 @@ export default function Dashboard() {
   const [showFatigue, setShowFatigue] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
-  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
+  const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   const streak = calculateStreak(checkins);
-  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null;
-  const sleepConsistency = calculateSleepConsistency(checkins);
+  const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null, [computed.length, allSessions.length]);
+  const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
+  const [hrvAlertDismissed, setHrvAlertDismissed] = useState(false);
 
   if (isLoading) {
     return (
@@ -96,6 +97,31 @@ export default function Dashboard() {
           </button>
         ))}
       </motion.div>
+
+      {/* HRV Anomaly Banner */}
+      {analysis?.hrvAnomaly && !hrvAlertDismissed && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`rounded-2xl border p-4 flex gap-3 items-start ${
+            analysis.hrvAnomaly.alert.type === 'critical'
+              ? 'border-red-500/40 bg-red-500/8'
+              : 'border-yellow-500/40 bg-yellow-500/8'
+          }`}
+        >
+          <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
+          <div className="flex-1">
+            <p className={`text-sm font-semibold ${
+              analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
+            }`}>{analysis.hrvAnomaly.alert.title}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
+          </div>
+          <button
+            onClick={() => setHrvAlertDismissed(true)}
+            className="text-muted-foreground hover:text-foreground transition-colors text-sm leading-none shrink-0"
+          >✕</button>
+        </motion.div>
+      )}
 
       {/* Gráfico de tendência */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}

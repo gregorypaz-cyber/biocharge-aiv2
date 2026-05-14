@@ -4,7 +4,7 @@ import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
 import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysis, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysis, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
@@ -14,6 +14,7 @@ import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import DiscoveriesCard from '@/components/intelligence/DiscoveriesCard';
 import { useUserTrainingSessions } from '@/hooks/useUserData';
+import BaselineInsightsRow from '@/components/intelligence/BaselineInsightsRow';
 
 function pearsonR(arrA, arrB) {
   const n = Math.min(arrA.length, arrB.length);
@@ -227,17 +228,33 @@ export default function Insights() {
   const { data: checkins = [] } = useUserCheckins(60);
   const { data: trainingSessions = [] } = useUserTrainingSessions(50);
 
-  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
+  const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
+  const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, trainingSessions) : null, [computed.length, trainingSessions.length]);
+  const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
+
   const streak = calculateStreak(checkins);
   const badges = getBadges(computed, streak);
   const avgRecovery = computed.length
     ? Math.round(computed.reduce((s, c) => s + (c.recovery_score || 0), 0) / computed.length)
     : 0;
   const perfLevel = getPerformanceLevel(avgRecovery);
-  const analysis = computed.length > 0 ? runPhysiologicalAnalysis(computed) : null;
   const actionableRecs = analysis?.actionableRecs || [];
 
   const discoveries = useMemo(() => calcDiscoveries(computed, trainingSessions), [computed.length, trainingSessions.length]);
+
+  const suggestedQuestions = useMemo(() => {
+    const state = analysis?.physioState?.state;
+    const sleepDebt = analysis?.sleepDebt?.debt;
+    const loadRisk = analysis?.trainingLoad?.risk;
+    const questions = [];
+    if (state === 'Overreached' || state === 'Fatigued') questions.push('Por que estou sobrecarregado?');
+    else questions.push('Devo treinar hoje?');
+    if (sleepDebt > 3) questions.push(`Como recuperar ${sleepDebt}h de déficit de sono?`);
+    else questions.push('Como melhorar meu sono?');
+    if (loadRisk === 'high' || loadRisk === 'moderate') questions.push('Como reduzir o risco de lesão agora?');
+    else questions.push('Por que meu HRV caiu?');
+    return questions.slice(0, 3);
+  }, [analysis]);
 
   const generateInsights = async () => {
     if (computed.length < 3) return;
@@ -522,6 +539,11 @@ Pergunta do atleta: "${question}"`;
         </div>
       )}
 
+      {/* Baseline Insights */}
+      {analysis?.baselineInsights?.length > 0 && (
+        <BaselineInsightsRow insights={analysis.baselineInsights} />
+      )}
+
       {/* AI Deep Analysis */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -565,7 +587,7 @@ Pergunta do atleta: "${question}"`;
       {/* Discoveries */}
       <DiscoveriesCard discoveries={[
         ...discoveries,
-        ...(analysis?.cardiacDrift?.discovery ? [analysis.cardiacDrift.discovery] : []),
+        ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : []),
       ]} />
 
       {/* AI Coach Chat */}
@@ -598,7 +620,7 @@ Pergunta do atleta: "${question}"`;
               className="bg-secondary border-border/40 flex-1"
             />
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {['Devo treinar hoje?', 'Por que meu HRV caiu?', 'Como melhorar meu sono?'].map(q => (
+              {suggestedQuestions.map(q => (
                 <button
                   key={q}
                   onClick={() => setCoachInput(q)}
