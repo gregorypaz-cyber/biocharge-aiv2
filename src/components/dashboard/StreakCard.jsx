@@ -1,9 +1,12 @@
 import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
+import { useMotionSafe } from '@/hooks/use-motion-safe';
 
 const milestones = [3, 7, 14, 30, 60, 100];
 
 export default function StreakCard({ streak }) {
+  const { initial, transition: reducedTransition } = useMotionSafe();
+
   if (!streak || streak < 1) return null;
 
   const nextMilestone = milestones.find(m => m > streak) || null;
@@ -23,9 +26,9 @@ export default function StreakCard({ streak }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={initial ?? { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
+      transition={reducedTransition ?? { delay: 0.1 }}
       className="rounded-2xl border border-orange-500/25 bg-orange-500/5 p-4"
     >
       <div className="flex items-center justify-between mb-3">

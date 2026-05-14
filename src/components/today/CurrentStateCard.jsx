@@ -40,6 +40,7 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
           <p className="text-xl font-black font-mono" style={{ color: strain > 60 ? '#ef4444' : '#eab308' }}>
             {strain}
           </p>
+          <span className="text-[10px] text-muted-foreground">(menor é melhor)</span>
         </div>
       </div>
 

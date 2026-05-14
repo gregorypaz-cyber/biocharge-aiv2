@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Dumbbell } from 'lucide-react';
+import { useMotionSafe } from '@/hooks/use-motion-safe';
 
 const INTENSITY_MAP = {
   Recovered: {
@@ -91,6 +92,7 @@ const STRAIN_ZONE = (v) =>
 export default function WorkoutSuggestionCard({ checkin, actionableRecs = [], strainTarget, currentStrain = 0 }) {
   const bodyState = checkin?.current_body_state || 'default';
   const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
+  const { initial, transition: reducedTransition } = useMotionSafe();
 
   // Filtrar recs de treino/mobilidade/recuperação do engine
   const trainingRecs = actionableRecs.filter(r =>
@@ -99,9 +101,9 @@ export default function WorkoutSuggestionCard({ checkin, actionableRecs = [], st
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={initial ?? { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
+      transition={reducedTransition ?? { delay: 0.1 }}
       className="rounded-2xl border p-5 space-y-4"
       style={{ background: cfg.bg, borderColor: cfg.border }}
     >

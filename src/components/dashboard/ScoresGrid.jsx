@@ -24,7 +24,7 @@ export default function ScoresGrid({ today }) {
       value: today.fatigue_score,
       icon: Battery,
       color: 'hsl(45,93%,58%)',
-      sublabel: 'Índice de desgaste',
+      sublabel: 'Índice de desgaste · menor é melhor',
       delay: 0.1,
       invertedScale: true,
     },

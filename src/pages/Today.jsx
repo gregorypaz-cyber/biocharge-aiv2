@@ -5,6 +5,7 @@ import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -69,6 +70,9 @@ export default function Today() {
   // Análise fisiológica para treino sugerido
   const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null, [computed.length, allSessions.length]);
 
+  const recoveryDelta = analysis?.baselineInsights?.find(i => i.label === 'Recovery')?.delta ?? null;
+  const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
+
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
 
@@ -126,11 +130,27 @@ export default function Today() {
   }
 
   return (
-    <div className="space-y-4 max-w-2xl mx-auto">
+    <div className={cn("space-y-4 max-w-2xl mx-auto transition-all duration-500", isSilentMode && "opacity-90")}>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Organize seu treino e recuperação</p>
+        {checkin?.created_at ? (
+          <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+            <span>Check-in registrado às</span>
+            <span className="font-medium text-foreground/60">
+              {new Date(checkin.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </p>
+        ) : checkin?.date ? (
+          <p className="text-[10px] text-muted-foreground mt-0.5">Check-in de hoje registrado</p>
+        ) : null}
+        {isSilentMode && (
+          <p className="text-xs text-amber-400/80 flex items-center gap-1.5 mt-1">
+            <span aria-label="Atenção">⚠️</span>
+            Modo recuperação — priorize descanso hoje
+          </p>
+        )}
       </div>
 
       {/* Section 0 — Execução do dia (above the fold) */}
@@ -221,7 +241,7 @@ export default function Today() {
       />
 
       {/* Section 1 — Morning Recovery (fixed) */}
-      <MorningRecoveryCard checkin={enrichedCheckin} />
+      <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
 
       {/* HRV Anomaly Alert */}
       {analysis?.hrvAnomaly && (

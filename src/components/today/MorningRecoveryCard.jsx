@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Moon, Clock } from 'lucide-react';
 import { getZoneColor } from '@/lib/biocharge-utils';
 import { formatDateFull } from '@/lib/date-utils';
+import { useMotionSafe } from '@/hooks/use-motion-safe';
 
 const recoveryLabel = (score) => {
   if (score >= 85) return 'Excelente — Corpo totalmente recuperado';
@@ -12,15 +13,19 @@ const recoveryLabel = (score) => {
   return 'Crítico — Corpo necessita descanso';
 };
 
-export default function MorningRecoveryCard({ checkin }) {
+export default function MorningRecoveryCard({ checkin, delta = null }) {
   const score = checkin.morning_recovery_score || checkin.recovery_score || 0;
   const zone = checkin.zone || 'yellow';
   const color = getZoneColor(zone) || 'hsl(45,93%,58%)';
+  const { initial, transition: reducedTransition } = useMotionSafe();
+
+  const showDelta = delta !== null && Math.abs(delta) > 5;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={initial ?? { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={reducedTransition}
       className="rounded-2xl border border-border bg-card p-4"
     >
       <div className="flex items-center gap-2 mb-3">
@@ -41,6 +46,11 @@ export default function MorningRecoveryCard({ checkin }) {
         </div>
         <div>
           <p className="text-sm font-semibold leading-snug">{recoveryLabel(score)}</p>
+          {showDelta && (
+            <p className={`text-xs mt-0.5 font-medium ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {delta > 0 ? `↑ ${delta}% acima do seu normal` : `↓ ${Math.abs(delta)}% abaixo do seu normal`}
+            </p>
+          )}
           {checkin.delayed_fatigue_alert && (
             <p className="text-xs text-amber-400 mt-1">⚠️ {checkin.delayed_fatigue_alert}</p>
           )}

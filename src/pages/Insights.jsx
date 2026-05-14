@@ -541,15 +541,34 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
           <h2 className="text-sm font-semibold">Coach IA</h2>
         </div>
         <div className="p-5 space-y-4">
-          {coachResponse && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
-            >
-              <ReactMarkdown>{coachResponse}</ReactMarkdown>
-            </motion.div>
-          )}
+          {coachResponse && (() => {
+            const last7 = computed.slice(0, 7);
+            const hasHrv = last7.some(c => c.hrv);
+            const hasSleep = last7.some(c => c.sleep_hours);
+            const hasSession = trainingSessions.length > 0;
+            const sources = [
+              `${Math.min(last7.length, 7)} dias de dados`,
+              hasHrv && 'HRV',
+              hasSleep && 'Sono',
+              hasSession && 'Treinos',
+            ].filter(Boolean).join(' · ');
+
+            return (
+              <>
+                <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/50"></span>
+                  Baseado em: {sources}
+                </p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
+                >
+                  <ReactMarkdown>{coachResponse}</ReactMarkdown>
+                </motion.div>
+              </>
+            );
+          })()}
           <p className="text-[10px] text-muted-foreground mt-1">
             As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
           </p>
