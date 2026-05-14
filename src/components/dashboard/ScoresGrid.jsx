@@ -26,6 +26,7 @@ export default function ScoresGrid({ today }) {
       color: 'hsl(45,93%,58%)',
       sublabel: 'Índice de desgaste',
       delay: 0.1,
+      invertedScale: true,
     },
     {
       label: 'Estresse',
@@ -34,6 +35,7 @@ export default function ScoresGrid({ today }) {
       color: 'hsl(280,65%,60%)',
       sublabel: 'Carga mental',
       delay: 0.15,
+      invertedScale: true,
     },
     {
       label: 'HRV',

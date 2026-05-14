@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export default function ScoreCard({ label, value, icon: Icon, color, unit = '', delay = 0, sublabel }) {
+export default function ScoreCard({ label, value, icon: Icon, color, unit = '', delay = 0, sublabel, invertedScale = false }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -25,6 +25,9 @@ export default function ScoreCard({ label, value, icon: Icon, color, unit = '', 
         {unit && <span className="text-sm text-muted-foreground mb-0.5">{unit}</span>}
       </div>
       {sublabel && <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>}
+      {invertedScale && value != null && (
+        <p className="text-[10px] text-muted-foreground/70 mt-0.5">quanto menor, melhor</p>
+      )}
       {/* Subtle glow */}
       <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full opacity-10 blur-xl" style={{ backgroundColor: color }} />
     </motion.div>

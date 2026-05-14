@@ -174,7 +174,12 @@ export default function Trends() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-border/60 bg-card p-5"
         >
-          <h3 className="text-sm font-semibold mb-1">{metricConfig?.label}</h3>
+          <div className="flex items-baseline gap-2 mb-1">
+            <h3 className="text-sm font-semibold">{metricConfig?.label}</h3>
+            {(selectedMetric === 'fatigue_score' || selectedMetric === 'stress_score') && (
+              <span className="text-[10px] text-muted-foreground">(quanto menor, melhor)</span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground mb-4">Área + média móvel 3 dias</p>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
