@@ -1,6 +1,13 @@
 // ─── Physiological Intelligence Engine ───────────────────────────────────────
 // All analysis compares the user to THEMSELVES — no generic population averages.
 
+import { ensureNormalized } from './physio-normalize.js';
+
+function _ensure(checkins) {
+  try { return ensureNormalized(checkins); }
+  catch (e) { console.warn('physio normalize failed', e); return Array.isArray(checkins) ? checkins : []; }
+}
+
 // ─── Moving Averages & Baseline ──────────────────────────────────────────────
 
 export function movingAvg(checkins, key, days) {
@@ -18,6 +25,7 @@ function movingAvgRhr(checkins, days) {
 }
 
 export function buildBaseline(checkins) {
+  checkins = _ensure(checkins);
   // Use training days only for performance metrics
   const training = checkins.filter(c => !c.rest_day);
 
@@ -56,13 +64,14 @@ export function buildBaseline(checkins) {
 }
 
 export function pctDelta(current, baseline) {
-  if (!baseline || baseline === 0 || current == null) return null;
+  if (baseline == null || baseline <= 0 || current == null) return null;
   return Math.round(((current - baseline) / baseline) * 100);
 }
 
 // ─── Sleep Debt ───────────────────────────────────────────────────────────────
 
 export function calculateSleepDebt(checkins, targetHours = 8) {
+  checkins = _ensure(checkins);
   const last7 = checkins.slice(0, 7);
   if (!last7.length) return null;
   const totalSleep = last7.reduce((s, c) => s + (c.sleep_hours || 0), 0);
@@ -74,6 +83,7 @@ export function calculateSleepDebt(checkins, targetHours = 8) {
 // ─── Training Load Model ─────────────────────────────────────────────────────
 
 export function calculateTrainingLoad(checkins, sessions = []) {
+  checkins = _ensure(checkins);
   if (checkins.length < 14) {
     return { acute: null, chronic: null, ratio: null, risk: 'insufficient_data' };
   }
@@ -301,6 +311,7 @@ export function getBaselineInsights(today, baseline) {
 // ─── Correlation Engine ───────────────────────────────────────────────────────
 
 export function detectCorrelations(checkins) {
+  checkins = _ensure(checkins);
   const insights = [];
   if (checkins.length < 7) return insights;
 
@@ -376,6 +387,7 @@ export function detectCorrelations(checkins) {
 // ─── Lagged Effect Analysis ───────────────────────────────────────────────────
 
 export function detectLaggedEffects(checkins) {
+  checkins = _ensure(checkins);
   const effects = [];
   if (checkins.length < 5) return effects;
 
@@ -465,6 +477,7 @@ export function getActionableRecs(today, state, sleepDebt, trainingLoad) {
 // ─── Master Analysis ──────────────────────────────────────────────────────────
 
 export function runPhysiologicalAnalysis(checkins, sessions = []) {
+  checkins = _ensure(checkins);
   if (!checkins || checkins.length === 0) return null;
 
   const today = checkins[0];
@@ -655,6 +668,7 @@ export function detectCardiacDrift(sessions) {
 // ─── HRV Anomaly Detector ─────────────────────────────────────────────────────
 
 export function detectHRVAnomaly(checkins, baseline) {
+  checkins = _ensure(checkins);
   if (checkins.length < 5) return null;
 
   const today = checkins[0];
@@ -676,6 +690,8 @@ export function detectHRVAnomaly(checkins, baseline) {
   const stdDev = Math.sqrt(
     recentHrv.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / recentHrv.length
   );
+
+  if (!stdDev || stdDev === 0) return null;
 
   const zScore = (today.hrv - mean) / stdDev;
   const drop = Math.round(((mean - today.hrv) / mean) * 100);
@@ -704,6 +720,7 @@ export function detectHRVAnomaly(checkins, baseline) {
 // ─── Sleep Consistency ────────────────────────────────────────────────────────
 
 export function calculateSleepConsistency(checkins) {
+  checkins = _ensure(checkins);
   const withTimes = checkins
     .slice(0, 14)
     .filter(c => c.sleep_start_time)
