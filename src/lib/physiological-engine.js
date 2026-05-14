@@ -82,46 +82,70 @@ export function calculateSleepDebt(checkins, targetHours = 8) {
 
 // ─── Training Load Model ─────────────────────────────────────────────────────
 
+// BACKUP (original logic, kept for quick rollback):
+// const getDailyLoadOld = (checkin) => {
+//   const daySessions = sessions.filter(s => s.date === checkin.date);
+//   if (daySessions.length > 0) return daySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
+//   if (checkin.daily_strain_accumulated > 0) return checkin.daily_strain_accumulated;
+//   if (!checkin.rpe || checkin.rest_day) return 0;
+//   return checkin.rpe * 1.5;
+// };
+// chronicAvg = chronic42Total / Math.max(1, Math.min(last42.length, 42) / 7);
+
 export function calculateTrainingLoad(checkins, sessions = []) {
   checkins = _ensure(checkins);
   if (checkins.length < 14) {
     return { acute: null, chronic: null, ratio: null, risk: 'insufficient_data' };
   }
 
-  const getDailyLoad = (checkin) => {
-    const dayStr = checkin.date;
-    const daySessions = sessions.filter(s => s.date === dayStr);
-    if (daySessions.length > 0) {
-      return daySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
-    }
-    if (checkin.daily_strain_accumulated > 0) {
-      return checkin.daily_strain_accumulated;
-    }
-    if (!checkin.rpe || checkin.rest_day) return 0;
-    return checkin.rpe * 1.5; // normalized to ~0-21 scale
-  };
+  try {
+    // Priority: a) sessions strain sum, b) daily_strain_accumulated, c) rpe proxy, d) 0
+    const getDailyLoad = (checkin) => {
+      const dayStr = checkin.date;
+      const daySessions = sessions.filter(s => s.date === dayStr);
+      if (daySessions.length > 0) {
+        // a) Sum strain_score from sessions for this day
+        return daySessions.reduce((s, t) => s + (Number(t.strain_score) || 0), 0);
+      }
+      const dsa = Number(checkin.daily_strain_accumulated);
+      if (dsa > 0) {
+        // b) Use accumulated strain saved on checkin
+        return dsa;
+      }
+      const rpe = Number(checkin.rpe);
+      if (rpe > 0 && checkin.rest_day !== true) {
+        // c) RPE proxy — rpe * 2 maps RPE 1-10 to ~2-20 load units (approximate, not clinical)
+        return rpe * 2;
+      }
+      // d) No load data
+      return 0;
+    };
 
-  const last7 = checkins.slice(0, 7);
-  const last42 = checkins.slice(0, 42);
+    const last7  = checkins.slice(0, 7);
+    const last42 = checkins.slice(0, 42);
 
-  const acute = last7.reduce((s, c) => s + getDailyLoad(c), 0);
-  const chronic42Total = last42.reduce((s, c) => s + getDailyLoad(c), 0);
-  const chronicAvg = chronic42Total / Math.max(1, Math.min(last42.length, 42) / 7);
+    const acuteSum      = last7.reduce((s, c)  => s + getDailyLoad(c), 0);
+    const chronic42Sum  = last42.reduce((s, c) => s + getDailyLoad(c), 0);
+    const weeks         = Math.max(1, last42.length / 7);
+    const chronicWeeklyAvg = chronic42Sum / weeks;
 
-  const ratio = chronicAvg > 0
-    ? Math.round((acute / chronicAvg) * 100) / 100
-    : 1;
+    const round2 = v => Math.round(v * 100) / 100;
+    const ratio = chronicWeeklyAvg > 0 ? round2(acuteSum / chronicWeeklyAvg) : 1;
 
-  let risk = 'low';
-  if (ratio > 1.5) risk = 'high';
-  else if (ratio > 1.3) risk = 'moderate';
+    let risk = 'low';
+    if (ratio > 1.5) risk = 'high';
+    else if (ratio > 1.3) risk = 'moderate';
 
-  return {
-    acute: Math.round(acute),
-    chronic: Math.round(chronicAvg),
-    ratio,
-    risk,
-  };
+    return {
+      acute:   Math.round(acuteSum),
+      chronic: Math.round(chronicWeeklyAvg),
+      ratio,
+      risk,
+    };
+  } catch (e) {
+    console.warn('calculateTrainingLoad error, falling back:', e);
+    return { acute: null, chronic: null, ratio: null, risk: 'insufficient_data' };
+  }
 }
 
 // ─── Physiological State Engine ──────────────────────────────────────────────
