@@ -1,301 +1,180 @@
-# Manual Test Checklist — physio-normalize
+# Manual Test Checklist — BioCharge AI Physiological Engine
 
-No test runner detected in this project. Run these cases manually via browser console or a quick `node` script.
+Run these tests manually in the browser console or via unit test runner.
+Import helpers: `import { runPhysiologicalAnalysis } from '@/lib/physiological-engine'`
+Import: `import { prescribeWorkout, formatPrescriptionText } from '@/lib/workout-prescription'`
 
 ---
 
-## Case 1 — Empty / invalid input
+## 1. Data Normalization (physio-normalize)
 
+- [ ] Empty array input → returns `[]` without throwing
+- [ ] Alias resolution: `resting_heart_rate` → normalized to `resting_hr`
+- [ ] Records sorted descending by `date` (newest first)
+- [ ] Records with invalid/null `date` are dropped gracefully
+
+---
+
+## 2. Training Load Engine
+
+- [ ] `< 14` check-ins → returns `{ risk: 'insufficient_data' }`
+- [ ] Sessions strain sum takes priority over `daily_strain_accumulated`
+- [ ] `daily_strain_accumulated` used as fallback when no sessions
+- [ ] RPE proxy (`rpe * 2`) used when both strain and accumulated are zero
+- [ ] All-zero / null RPE check-ins → `acute: 0`, no crash
+- [ ] `ratio` rounds to 2 decimal places; risk thresholds: `>1.5` high, `>1.3` moderate
+
+---
+
+## 3. Recommendation Confidence
+
+- [ ] `trainingRisk === 'insufficient_data'` → confidence `'Baixa'`
+- [ ] `recovery == null` → confidence `'Baixa'`
+- [ ] `trainingRisk moderate + fatigue > 50` → confidence `'Alta'`
+- [ ] Null `analysis` → `prescribeWorkout(null)` returns `null` without throwing
+
+---
+
+## 4. Async Analysis & Caching
+
+- [ ] `runPhysiologicalAnalysisAsync` returns same shape as sync version
+- [ ] Second call with same data returns from cache (no recalculation)
+- [ ] Cache TTL expiry: mock `Date.now()` forward 16min → cache miss
+- [ ] Worker timeout (8s) → falls back to sync gracefully
+- [ ] Invalid data (empty array) → returns `null`, no crash
+
+---
+
+## 5. prescribeWorkout — 6 Scenarios
+
+### 5.1 Cenário Crítico (Sobrecarga)
+Input:
 ```js
-import { normalizeCheckins } from '../lib/physio-normalize.js';
-
-normalizeCheckins([]);       // expected: []
-normalizeCheckins(null);     // expected: []
-normalizeCheckins(undefined);// expected: []
+const analysis = {
+  today: { recovery_score: 35, fatigue_score: 80, resting_hr: 68 },
+  trainingLoad: { risk: 'high', ratio: 1.8 },
+  physioState: { state: 'Overreached' },
+  sleepDebt: { debt: 4 },
+  baselineInsights: [],
+  runningEconomy: null,
+  hrvAnomaly: { alert: { type: 'critical' } },
+};
+prescribeWorkout(analysis, {});
 ```
-
-**Expected:** returns `[]` without throwing.
+Esperado:
+- [ ] `summary.confidence === 'Alta'`
+- [ ] Todas as 3 opções são conservadoras (modality: `'Recuperação'` ou `'Mobilidade'`)
+- [ ] Nenhuma opção tem `intensity.range[1] > 9` se do tipo `'strain'`
+- [ ] `options.length === 3`
 
 ---
 
-## Case 2 — Alias resolution (`resting_heart_rate → resting_hr`)
-
+### 5.2 Recovery Alto (≥ 80) com foco em corrida
+Input:
 ```js
-const result = normalizeCheckins([
-  { date: '2026-05-10', resting_heart_rate: 58, hrv: 65 },
-]);
-
-console.assert(result[0].resting_hr === 58, 'resting_hr should be 58');
-console.assert(result._normalized === true, 'should be marked normalized');
+const analysis = {
+  today: { recovery_score: 85, fatigue_score: 20, date: '2026-05-14' },
+  trainingLoad: { risk: 'low', ratio: 0.9 },
+  physioState: { state: 'Recovered' },
+  sleepDebt: { debt: 0 },
+  baselineInsights: [{ label: 'HRV', delta: 12 }],
+  runningEconomy: { sessionsAnalyzed: 6 },
+  hrvAnomaly: null,
+};
+prescribeWorkout(analysis, { preferred_sports: ['Corrida'], level: 'intermediate' });
 ```
-
-**Expected:** `resting_hr` is populated from `resting_heart_rate`; `_normalized === true`.
+Esperado:
+- [ ] `summary.confidence === 'Média'` ou `'Alta'`
+- [ ] Opção A: `modality === 'Corrida'`, `intensity.range[1] >= 12`
+- [ ] Opção B: `modality === 'Corrida'`, strain range inclui `[8, 12]`
+- [ ] `options.length === 3`
+- [ ] `evidence.recovery === 85`
+- [ ] `safetyWarnings.length === 3`
 
 ---
 
-## Case 3 — DESC ordering
-
+### 5.3 Recovery Moderado (65–79)
+Input:
 ```js
-const result = normalizeCheckins([
-  { date: '2026-05-08', hrv: 60 },
-  { date: '2026-05-10', hrv: 70 },
-  { date: '2026-05-09', hrv: 65 },
-], { ensureDesc: true });
-
-console.assert(result[0].date === '2026-05-10', 'first should be most recent');
-console.assert(result[2].date === '2026-05-08', 'last should be oldest');
+const analysis = {
+  today: { recovery_score: 72, fatigue_score: 40 },
+  trainingLoad: { risk: 'moderate', ratio: 1.35 },
+  physioState: { state: 'Balanced' },
+  sleepDebt: { debt: 1.5 },
+  baselineInsights: [],
+  runningEconomy: null,
+  hrvAnomaly: null,
+};
+prescribeWorkout(analysis, {});
 ```
-
-**Expected:** array sorted newest → oldest.
+Esperado:
+- [ ] Opção A: `modality === 'Corrida'`, strain `[8, 12]`
+- [ ] Opção B: `modality === 'Força'`, RPE `[5, 7]`
+- [ ] Opção C: `modality === 'Misto'` ou `'Mobilidade'`
+- [ ] `summary.confidence === 'Alta'` (moderate risk + fatigue > 0 > 50? check logic)
 
 ---
 
-## Bonus — Invalid date removal (physio-normalize)
-
+### 5.4 Recovery Baixo (50–64) / Dívida de sono ≥ 3
+Input:
 ```js
-const result = normalizeCheckins([
-  { date: 'not-a-date', hrv: 50 },
-  { date: '2026-05-10', hrv: 70 },
-]);
-// console.warn should fire once
-console.assert(result.length === 1, 'invalid date entry should be removed');
+const analysis = {
+  today: { recovery_score: 55, fatigue_score: 60 },
+  trainingLoad: { risk: 'low', ratio: 1.0 },
+  physioState: { state: 'Fatigued' },
+  sleepDebt: { debt: 3.5 },
+  baselineInsights: [],
+  runningEconomy: null,
+  hrvAnomaly: null,
+};
+prescribeWorkout(analysis, { available_time_minutes: 45 });
 ```
+Esperado:
+- [ ] Opção A: `modality === 'Corrida'`, `intensity.range[1] <= 9`
+- [ ] Opção B: `modality === 'Mobilidade'`
+- [ ] Opção C: `modality === 'Recuperação'`, `intensity === null`
+- [ ] `evidence.sleepDebtHours === 3.5`
 
 ---
 
----
-
-# Manual Test Checklist — calculateTrainingLoad
-
-`fix(physio): correct training load acute/chronic ratio + robust daily load`
-
----
-
-## Case 1 — Sessions priority (load from strain_score)
-
+### 5.5 Dados Insuficientes
+Input:
 ```js
-import { calculateTrainingLoad } from '../lib/physiological-engine.js';
-
-const checkins = Array.from({ length: 20 }, (_, i) => ({
-  date: `2026-04-${String(25 - i).padStart(2, '0')}`,
-  rpe: 7,
-  daily_strain_accumulated: 10,
-  rest_day: false,
-}));
-
-const sessions = [
-  { date: checkins[0].date, strain_score: 15 },
-  { date: checkins[0].date, strain_score: 8 },  // same day — should sum to 23
-];
-
-const result = calculateTrainingLoad(checkins, sessions);
-// acute should reflect 23 for today + rpe*2 for remaining 6 days of last7
-console.assert(typeof result.ratio === 'number', 'ratio should be a number');
-console.assert(result.risk !== 'insufficient_data', 'should have enough data');
-console.log('sessions priority:', result);
+prescribeWorkout({ today: {}, trainingLoad: { risk: 'insufficient_data' }, sleepDebt: {}, physioState: {}, baselineInsights: [], runningEconomy: null, hrvAnomaly: null }, {});
 ```
+Esperado:
+- [ ] `summary.confidence === 'Baixa'`
+- [ ] `options.length === 3`
+- [ ] `rationale` de cada opção menciona "poucos dados"
+- [ ] `provenance === 'heuristic'`
 
 ---
 
-## Case 2 — daily_strain_accumulated fallback
-
+### 5.6 userPrefs com available_time_minutes = 20
+Input:
 ```js
-const checkins = Array.from({ length: 20 }, (_, i) => ({
-  date: `2026-04-${String(25 - i).padStart(2, '0')}`,
-  daily_strain_accumulated: 12,
-  rpe: null,
-}));
-
-const result = calculateTrainingLoad(checkins, []);
-// Every day load = 12 → uniform distribution → ratio ≈ 1.00
-console.assert(result.ratio !== null, 'ratio must not be null');
-console.log('daily_strain fallback:', result);
+const analysis = {
+  today: { recovery_score: 70, fatigue_score: 35 },
+  trainingLoad: { risk: 'low', ratio: 1.1 },
+  physioState: { state: 'Balanced' },
+  sleepDebt: { debt: 0 },
+  baselineInsights: [],
+  runningEconomy: null,
+  hrvAnomaly: null,
+};
+prescribeWorkout(analysis, { available_time_minutes: 20 });
 ```
+Esperado:
+- [ ] Todas as opções com `duration_min != null` devem ter `duration_min <= 20`
+- [ ] Nenhuma opção com `duration_min < 15`
+- [ ] `id` presente e começa com `'rx_'`
+- [ ] `date` no formato `YYYY-MM-DD`
 
 ---
 
-## Case 3 — RPE proxy fallback (rpe * 2)
+## 6. formatPrescriptionText
 
-```js
-const checkins = Array.from({ length: 20 }, (_, i) => ({
-  date: `2026-04-${String(25 - i).padStart(2, '0')}`,
-  rpe: 8,
-  rest_day: false,
-  daily_strain_accumulated: 0,
-}));
-
-const result = calculateTrainingLoad(checkins, []);
-// load per day = rpe * 2 = 16; uniform distribution → ratio ≈ 1.00
-console.assert(result.risk === 'low', 'uniform load should be low risk');
-console.log('rpe proxy:', result);
-```
-
----
-
-## Case 4 — insufficient_data guard
-
-```js
-const checkins = Array.from({ length: 13 }, (_, i) => ({
-  date: `2026-05-${String(13 - i).padStart(2, '0')}`,
-  rpe: 6,
-}));
-
-const result = calculateTrainingLoad(checkins, []);
-console.assert(result.risk === 'insufficient_data', 'should return insufficient_data');
-console.assert(result.ratio === null, 'ratio should be null');
-console.log('insufficient_data:', result);
-```
-
----
-
-## Case 5 — Zero / null robustness
-
-```js
-const checkins = Array.from({ length: 20 }, (_, i) => ({
-  date: `2026-04-${String(25 - i).padStart(2, '0')}`,
-  rpe: null,
-  daily_strain_accumulated: null,
-  rest_day: true,
-}));
-
-const result = calculateTrainingLoad(checkins, []);
-// All loads = 0 → chronicWeeklyAvg = 0 → ratio defaults to 1
-console.assert(result.ratio === 1, 'all-zero load should yield ratio 1');
-console.log('zero robustness:', result);
-```
-
----
-
----
-
-# Manual Test Checklist — getActionableRecs confidence badges
-
-`feat(ui): confidence badges + CTAs + narrative hooks (non-breaking)`
-
----
-
-## Case 1 — confidence Alta (load + debt)
-
-```js
-import { getActionableRecs } from '../lib/physiological-engine.js';
-
-const today = { recovery_score: 80, hrv: 55 };
-const state = { state: 'Recovered' };
-const sleepDebt = { debt: 4 };
-const trainingLoad = { risk: 'low', ratio: 1.1 };
-
-const recs = getActionableRecs(today, state, sleepDebt, trainingLoad);
-console.assert(recs[0].confidence === 'Alta', 'should be Alta');
-console.assert(Array.isArray(recs[0].provenance), 'provenance should be array');
-```
-
----
-
-## Case 2 — confidence Média (load only, no debt)
-
-```js
-const recs = getActionableRecs(
-  { recovery_score: 70 },
-  { state: 'Balanced' },
-  { debt: 0 },
-  { risk: 'low', ratio: 1.0 }
-);
-console.assert(recs[0].confidence === 'Média', 'should be Média');
-```
-
----
-
-## Case 3 — confidence Baixa (no load data)
-
-```js
-const recs = getActionableRecs(
-  { recovery_score: 60 },
-  { state: 'Balanced' },
-  null,
-  null
-);
-console.assert(recs[0].confidence === 'Baixa', 'should be Baixa');
-```
-
----
-
-## Case 4 — insufficient_data trainingLoad → Média, not Alta
-
-```js
-const recs = getActionableRecs(
-  { recovery_score: 60 },
-  { state: 'Balanced' },
-  { debt: 5 },
-  { risk: 'insufficient_data', ratio: null }
-);
-// hasLoad = false (risk === 'insufficient_data'), hasDebt = true → Média
-console.assert(recs[0].confidence === 'Média', 'insufficient_data should not yield Alta');
-```
-
----
-
-## Case 5 — no recs crash (today/state null)
-
-```js
-const recs = getActionableRecs(null, null, null, null);
-console.assert(recs.length === 0, 'should return empty array without throwing');
-```
-
----
-
----
-
-# Manual Test Checklist — runPhysiologicalAnalysisAsync
-
-`perf(physio): async analysis via worker + safe cache (non-breaking)`
-
-Arquivos: `lib/physiological-engine.js`, `lib/physio-worker.js`
-
----
-
-## Case 1 — happy path, fallback síncrono
-
-```js
-import { runPhysiologicalAnalysisAsync } from './physiological-engine.js';
-const checkins = /* array com ≥14 registros normalizados */;
-const result = await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false });
-console.assert(result !== null, 'deve retornar resultado');
-console.assert('physioState' in result, 'deve ter physioState');
-console.assert('actionableRecs' in result, 'deve ter actionableRecs');
-```
-
-## Case 2 — cache hit acelera segundo call
-
-```js
-const t1 = performance.now();
-await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false });
-const t2 = performance.now();
-await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false }); // cache hit
-const t3 = performance.now();
-console.assert((t3 - t2) < (t2 - t1) / 2, 'segundo call deve ser mais rápido (cache)');
-```
-
-## Case 3 — retorna null sem throw em dados inválidos
-
-```js
-const result = await runPhysiologicalAnalysisAsync(null, null, { useWorker: false });
-console.assert(result === null, 'deve retornar null sem lançar exceção');
-```
-
-## Case 4 — djb2 hash não usa btoa (safe com emojis)
-
-```js
-const c = [{ date: '2026-05-14', notes: 'Treino 🏃‍♂️ incrível!', recovery_score: 72 }];
-// Não deve lançar InvalidCharacterError
-const r = await runPhysiologicalAnalysisAsync(c, [], { useWorker: false });
-console.log('hash emoji safe: ok, result =', r === null ? 'null (< 14 checkins)' : 'object');
-```
-
-## Case 5 — TTL 0 sempre recomputa
-
-```js
-await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false, cacheTTLMinutes: 0 });
-await new Promise(res => setTimeout(res, 5));
-const r = await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false, cacheTTLMinutes: 0 });
-console.assert(r !== null, 'deve recomputar após TTL expirar');
-``
+- [ ] Retorna string não-vazia para prescrição válida
+- [ ] Retorna `''` para `null` sem lançar exceção
+- [ ] Output contém as chaves `[A]`, `[B]`, `[C]`
+- [ ] Output contém a data da prescrição

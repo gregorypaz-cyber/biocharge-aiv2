@@ -3,6 +3,7 @@
 
 import { ensureNormalized } from './physio-normalize.js';
 import * as C from './physio-constants.js';
+import { prescribeWorkout } from './workout-prescription.js';
 
 // ─── Constants aliases (nullish fallback protects against undefined imports) ──
 const TRAINING_LOAD_MIN_CHECKINS              = C.TRAINING_LOAD_MIN_CHECKINS              ?? 14;
@@ -666,7 +667,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
   const cardiacDrift = detectCardiacDrift(sessions);
   const hrvAnomaly = detectHRVAnomaly(checkins, baseline);
 
-  return {
+  const result = {
     today,
     baseline,
     trainingLoad,
@@ -683,6 +684,10 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
     cardiacDrift,
     hrvAnomaly,
   };
+
+  result.workoutPrescription = prescribeWorkout(result, { preferred_sports: ['Corrida'] });
+
+  return result;
 }
 
 // ─── Running Economy Engine ───────────────────────────────────────────────────
