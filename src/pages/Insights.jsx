@@ -275,8 +275,9 @@ export default function Insights() {
       sleep_hours: c.sleep_hours,
     }));
 
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Você é o BioCharge AI Coach, especialista em performance e recuperação física. Analise os dados abaixo em português brasileiro.
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Você é o BioCharge AI Coach, especialista em performance e recuperação física. Analise os dados abaixo em português brasileiro.
 
 Dados dos últimos ${summary.length} dias:
 ${JSON.stringify(summary, null, 2)}
@@ -289,11 +290,14 @@ Forneça uma análise detalhada e personalizada incluindo:
 5. **📈 Próximos 7 dias** — estratégia sugerida
 
 Seja específico, cite os números reais do usuário. Evite insights genéricos. Use emojis para tornar mais visual.`,
-    });
-
-    setAiInsight(result);
-    setAnalysisGeneratedAt(new Date());
-    setIsGenerating(false);
+      });
+      setAiInsight(result);
+      setAnalysisGeneratedAt(new Date());
+    } catch {
+      setAiInsight('Não foi possível gerar análise agora. Tente novamente.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const askCoach = async () => {
@@ -369,33 +373,31 @@ REGRAS OBRIGATÓRIAS:
 
 Pergunta do atleta: "${question}"`;
 
-    const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
 
-    // Validate response for impossible numbers
-    const impossibleSleep = /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) && (() => {
-      const m = result.match(/(\d+(?:\.\d+)?)\s*h(oras?)?\s*de\s*sono/gi) || [];
-      return m.some(match => {
-        const n = parseFloat(match);
-        return n > 12;
-      });
-    })();
-    const impossibleAvgSleep = /média\s*(de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/i.test(result) && (() => {
-      const m = result.match(/média\s*(?:de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/gi) || [];
-      return m.some(match => {
-        const n = parseFloat(match.replace(/[^\d.]/g, ''));
-        return n > 10;
-      });
-    })();
+      // Validate response for impossible numbers
+      const impossibleSleep = /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) && (() => {
+        const m = result.match(/(\d+(?:\.\d+)?)\s*h(oras?)?\s*de\s*sono/gi) || [];
+        return m.some(match => parseFloat(match) > 12);
+      })();
+      const impossibleAvgSleep = /média\s*(de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/i.test(result) && (() => {
+        const m = result.match(/média\s*(?:de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/gi) || [];
+        return m.some(match => parseFloat(match.replace(/[^\d.]/g, '')) > 10);
+      })();
 
-    if (impossibleSleep || impossibleAvgSleep) {
-      setCoachResponse('Não tenho dados suficientes para responder com precisão. Continue fazendo check-ins diários para que eu possa te dar insights personalizados.');
-    } else {
-      setCoachResponse(result);
+      if (impossibleSleep || impossibleAvgSleep) {
+        setCoachResponse('Não tenho dados suficientes para responder com precisão. Continue fazendo check-ins diários para que eu possa te dar insights personalizados.');
+      } else {
+        setCoachResponse(result);
+      }
+    } catch {
+      setCoachResponse('Não foi possível conectar ao coach agora. Tente novamente.');
+    } finally {
+      setCoachInput('');
+      setCoachQuestion('');
+      setIsCoachThinking(false);
     }
-
-    setCoachInput('');
-    setCoachQuestion('');
-    setIsCoachThinking(false);
   };
 
   // Pattern cards
