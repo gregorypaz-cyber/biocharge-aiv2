@@ -8,6 +8,47 @@ function _ensure(checkins) {
   catch (e) { console.warn('physio normalize failed', e); return Array.isArray(checkins) ? checkins : []; }
 }
 
+// ─── Unit / Conversion Utils ──────────────────────────────────────────────────
+
+/** Returns a finite Number or null. Never returns NaN/Infinity. */
+function toNumber(v) {
+  const n = Number(v);
+  return isFinite(n) ? n : null;
+}
+
+/**
+ * Normalises any date-like value to 'YYYY-MM-DD' string, or null if invalid.
+ * Uses !isNaN(dt.getTime()) for validity — safe across all JS engines.
+ */
+function toDateKey(d) {
+  if (d == null) return null;
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const dt = d instanceof Date ? d : new Date(d);
+  if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+  return null;
+}
+
+/**
+ * Derives speed in km/h from a session using the best available field.
+ * Priority: avg_pace_min_per_km > avg_pace_seconds_per_km > speed_mps > speed_kmh
+ * Returns speed rounded to 2 decimal places, or null if no valid source found.
+ */
+function parseSpeedFromSession(s) {
+  const pace_min  = toNumber(s.avg_pace_min_per_km);
+  const pace_sec  = toNumber(s.avg_pace_seconds_per_km);
+  const mps       = toNumber(s.speed_mps);
+  const kmh_raw   = toNumber(s.speed_kmh);
+
+  let speed = null;
+  if (pace_min  != null && pace_min  > 0) { speed = 60   / pace_min; }
+  else if (pace_sec != null && pace_sec > 0) { speed = 3600 / pace_sec; }
+  else if (mps  != null && mps  > 0) { speed = mps   * 3.6; }
+  else if (kmh_raw != null && kmh_raw > 0) { speed = kmh_raw; }
+
+  if (speed == null || !isFinite(speed) || speed <= 0) return null;
+  return Math.round(speed * 100) / 100;
+}
+
 // ─── Moving Averages & Baseline ──────────────────────────────────────────────
 
 export function movingAvg(checkins, key, days) {
@@ -562,59 +603,92 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
 }
 
 // ─── Running Economy Engine ───────────────────────────────────────────────────
+// economy = bpm / (km/h) — lower is better (heart works less per unit of speed)
 
 export function calculateRunningEconomy(sessions) {
-  const runningSessions = sessions
-    .filter(s =>
-      (s.sport === 'Corrida' || s.sport?.toLowerCase().includes('corrida')) &&
-      s.heart_rate_avg > 0 &&
-      s.avg_pace_min_per_km > 0
-    )
-    .sort((a, b) => a.date > b.date ? 1 : -1);
+  // 1. Normalise dates and discard invalid
+  const withValidDate = (sessions || []).filter(s => {
+    const dk = toDateKey(s.date);
+    if (!dk) { console.warn('physio: calculateRunningEconomy — skipping session with invalid date', s.date); return false; }
+    s._dateKey = dk;
+    return true;
+  });
 
-  if (runningSessions.length < 4) return null;
+  // 2. Filter running sessions robustly (covers 'Corrida', 'corrida', 'corrida leve', etc.)
+  const runCandidates = withValidDate.filter(s => s.sport && s.sport.toLowerCase().includes('corr'));
 
-  const ratios = runningSessions.map(s => ({
-    date: s.date,
-    ratio: s.heart_rate_avg / (60 / s.avg_pace_min_per_km),
-    fc: s.heart_rate_avg,
-    pace: s.avg_pace_min_per_km,
-  }));
+  // 3. Build ratio entries — normalise units via parseSpeedFromSession
+  let skippedCount = 0;
+  const ratios = [];
+  for (const s of runCandidates) {
+    const hr = toNumber(s.heart_rate_avg);
+    let speed = parseSpeedFromSession(s);
 
+    // Legacy fallback: if parseSpeedFromSession returns null but pace field exists, try it directly
+    if (speed == null && toNumber(s.avg_pace_min_per_km) != null && toNumber(s.avg_pace_min_per_km) > 0) {
+      console.warn('physio: using legacy running economy fallback for session', s._dateKey);
+      speed = Math.round((60 / s.avg_pace_min_per_km) * 100) / 100;
+    }
+
+    if (!hr || hr <= 0 || !speed || speed <= 0) { skippedCount++; continue; }
+
+    // economy = bpm per km/h — lower value means heart works less for the same speed
+    const economy = hr / speed;
+    if (!isFinite(economy)) { skippedCount++; continue; }
+
+    ratios.push({
+      date: s._dateKey,
+      ratio: economy,       // kept as 'ratio' for shape compatibility
+      fc: hr,
+      pace: toNumber(s.avg_pace_min_per_km) ?? null,
+    });
+  }
+
+  if (skippedCount > 0) console.warn(`physio: calculateRunningEconomy — skipped ${skippedCount} sessions (missing hr or speed)`);
+
+  // 4. Sort ASC by date, require ≥4 valid sessions
+  ratios.sort((a, b) => (a.date > b.date ? 1 : -1));
+  if (ratios.length < 4) return null;
+
+  // 5. Split old / recent
   const mid = Math.floor(ratios.length / 2);
   const older = ratios.slice(0, mid);
   const recent = ratios.slice(mid);
 
-  const avgOld = older.reduce((s, r) => s + r.ratio, 0) / older.length;
+  const avgOld    = older.reduce((s, r)  => s + r.ratio, 0) / older.length;
   const avgRecent = recent.reduce((s, r) => s + r.ratio, 0) / recent.length;
+
+  if (!isFinite(avgOld) || avgOld <= 0) return null;
 
   const improvement = Math.round(((avgOld - avgRecent) / avgOld) * 100);
   const isImproving = improvement > 0;
 
   if (Math.abs(improvement) < 2) return null;
 
+  const last = ratios[ratios.length - 1];
+
   return {
     improvement,
     isImproving,
-    sessionsAnalyzed: runningSessions.length,
-    latestFC: ratios[ratios.length - 1].fc,
-    latestPace: ratios[ratios.length - 1].pace,
+    sessionsAnalyzed: ratios.length,
+    latestFC: last.fc,
+    latestPace: last.pace,
     discovery: isImproving
       ? {
           icon: '🏃',
           title: 'Economia de corrida melhorou',
-          text: `Você está ${improvement}% mais eficiente. Mesmo pace, menos esforço cardíaco nas últimas ${recent.length} corridas.`,
+          text: `Você está ${improvement}% mais eficiente nas últimas ${recent.length} corridas — mesma velocidade com menos esforço cardíaco. Continue mantendo o volume de treino.`,
           sentiment: 'positive',
-          confidence: runningSessions.length >= 8 ? 'Alta' : 'Média',
-          days: runningSessions.length,
+          confidence: ratios.length >= 8 ? 'Alta' : 'Média',
+          days: ratios.length,
         }
       : {
           icon: '📉',
           title: 'Eficiência de corrida caindo',
-          text: `Seu coração está trabalhando ${Math.abs(improvement)}% mais para o mesmo pace. Pode indicar fadiga acumulada ou necessidade de base aeróbica.`,
+          text: `Seu coração está trabalhando ${Math.abs(improvement)}% mais para a mesma velocidade nas últimas ${recent.length} corridas. Isso pode indicar fadiga acumulada, calor ou necessidade de mais base aeróbica.`,
           sentiment: 'negative',
-          confidence: runningSessions.length >= 8 ? 'Alta' : 'Média',
-          days: runningSessions.length,
+          confidence: ratios.length >= 8 ? 'Alta' : 'Média',
+          days: ratios.length,
         },
   };
 }
@@ -678,32 +752,57 @@ export function calculatePerformanceWindow(sessions, checkins) {
 // ─── Cardiac Drift Detector ───────────────────────────────────────────────────
 
 export function detectCardiacDrift(sessions) {
-  const longRuns = sessions.filter(s =>
-    s.sport === 'Corrida' &&
-    s.heart_rate_avg > 0 &&
-    s.heart_rate_max > 0 &&
-    s.duration_minutes >= 30
-  );
+  // 1. Normalise dates; discard invalid
+  const withValidDate = (sessions || []).filter(s => {
+    const dk = toDateKey(s.date);
+    if (!dk) return false;
+    s._dateKey = dk;
+    return true;
+  });
+
+  // 2. Filter long running sessions robustly
+  const longRuns = withValidDate.filter(s => {
+    if (!s.sport || !s.sport.toLowerCase().includes('corr')) return false;
+    const hr_avg  = toNumber(s.heart_rate_avg);
+    const hr_max  = toNumber(s.heart_rate_max);
+    const dur     = toNumber(s.duration_minutes);
+    return hr_avg != null && hr_avg > 0 &&
+           hr_max != null && hr_max > 0 &&
+           dur    != null && dur >= 30;
+  });
 
   if (longRuns.length < 3) return null;
 
-  const driftRatios = longRuns.map(s => ({
-    date: s.date,
-    drift: (s.heart_rate_max - s.heart_rate_avg) / s.heart_rate_avg,
-    duration: s.duration_minutes,
-  }));
+  // 3. Sort ASC by date
+  longRuns.sort((a, b) => (a._dateKey > b._dateKey ? 1 : -1));
 
-  const recent = driftRatios.slice(-3);
-  const recentAvgDrift = recent.reduce((s, r) => s + r.drift, 0) / recent.length;
+  // 4. Compute drift entries
+  const driftEntries = longRuns.map(s => {
+    const hrStart = toNumber(s.heart_rate_avg);
+    const hrMax   = toNumber(s.heart_rate_max);
+    const denom   = Math.max(1, hrStart);      // guard: avoid /0
+    const driftRel = (hrMax - hrStart) / denom;
+    return { date: s._dateKey, drift: driftRel, duration: s.duration_minutes };
+  }).filter(e => isFinite(e.drift));
 
-  if (recentAvgDrift <= 0.15) return null;
+  if (driftEntries.length < 3) return null;
+
+  // 5. Use last 3 sessions
+  const recent = driftEntries.slice(-3);
+  const validDrifts = recent.map(r => r.drift).filter(isFinite);
+  if (!validDrifts.length) return null;
+
+  const recentAvgDrift = validDrifts.reduce((s, v) => s + v, 0) / validDrifts.length;
+  if (!isFinite(recentAvgDrift) || recentAvgDrift <= 0.15) return null;
+
+  const avgDriftPct = Math.round(recentAvgDrift * 100);
 
   return {
-    avgDrift: Math.round(recentAvgDrift * 100),
+    avgDrift: avgDriftPct,                    // integer percentage — same scale as before
     discovery: {
       icon: '🌡️',
       title: 'Deriva cardíaca detectada nas corridas',
-      text: `Sua FC sobe ${Math.round(recentAvgDrift * 100)}% acima da média no final dos treinos longos. Isso pode indicar desidratação ou estresse térmico. Hidrate-se melhor durante o treino.`,
+      text: `Sua frequência cardíaca sobe em média ${avgDriftPct}% acima da FC média durante os treinos longos. Isso pode indicar desidratação, estresse térmico ou fadiga cardiovascular. Hidrate-se regularmente ao longo da corrida e monitore a evolução nas próximas sessões.`,
       sentiment: 'negative',
       confidence: longRuns.length >= 5 ? 'Alta' : 'Média',
       days: longRuns.length,
