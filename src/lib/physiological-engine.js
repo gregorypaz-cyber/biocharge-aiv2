@@ -2,6 +2,89 @@
 // All analysis compares the user to THEMSELVES — no generic population averages.
 
 import { ensureNormalized } from './physio-normalize.js';
+import * as C from './physio-constants.js';
+
+// ─── Constants aliases (nullish fallback protects against undefined imports) ──
+const TRAINING_LOAD_MIN_CHECKINS              = C.TRAINING_LOAD_MIN_CHECKINS              ?? 14;
+const TRAINING_RATIO_HIGH                     = C.TRAINING_RATIO_HIGH                     ?? 1.5;
+const TRAINING_RATIO_MODERATE                 = C.TRAINING_RATIO_MODERATE                 ?? 1.3;
+const RPE_LOAD_MULTIPLIER                     = C.RPE_LOAD_MULTIPLIER                     ?? 2;
+const HRV_POSITIVE_DELTA_PCT                  = C.HRV_POSITIVE_DELTA_PCT                  ?? 10;
+const HRV_NEGATIVE_DELTA_PCT                  = C.HRV_NEGATIVE_DELTA_PCT                  ?? -10;
+const RHR_HIGH_DELTA_PCT                      = C.RHR_HIGH_DELTA_PCT                      ?? 8;
+const RHR_LOW_DELTA_PCT                       = C.RHR_LOW_DELTA_PCT                       ?? -5;
+const STRESS_HIGH_THRESHOLD                   = C.STRESS_HIGH_THRESHOLD                   ?? 4;
+const STRESS_LOW_THRESHOLD                    = C.STRESS_LOW_THRESHOLD                    ?? 2;
+const RECOVERY_HIGH_THRESHOLD                 = C.RECOVERY_HIGH_THRESHOLD                 ?? 80;
+const RECOVERY_LOW_THRESHOLD                  = C.RECOVERY_LOW_THRESHOLD                  ?? 55;
+const FATIGUE_HIGH_THRESHOLD                  = C.FATIGUE_HIGH_THRESHOLD                  ?? 65;
+const FATIGUE_STATE_THRESHOLD                 = C.FATIGUE_STATE_THRESHOLD                 ?? 60;
+const SLEEP_DEBT_HIGH_HOURS                   = C.SLEEP_DEBT_HIGH_HOURS                   ?? 5;
+const PHYSIO_SCORE_RECOVERED                  = C.PHYSIO_SCORE_RECOVERED                  ?? 4;
+const PHYSIO_SCORE_BALANCED                   = C.PHYSIO_SCORE_BALANCED                   ?? 2;
+const PHYSIO_SCORE_OVERREACHED                = C.PHYSIO_SCORE_OVERREACHED                ?? -4;
+const PHYSIO_SCORE_STRESSED                   = C.PHYSIO_SCORE_STRESSED                   ?? -2;
+const WHY_HRV_NEGATIVE_PCT                    = C.WHY_HRV_NEGATIVE_PCT                    ?? -8;
+const WHY_HRV_POSITIVE_PCT                    = C.WHY_HRV_POSITIVE_PCT                    ?? 8;
+const WHY_RHR_HIGH_PCT                        = C.WHY_RHR_HIGH_PCT                        ?? 8;
+const WHY_SLEEP_NEGATIVE_PCT                  = C.WHY_SLEEP_NEGATIVE_PCT                  ?? -10;
+const WHY_SLEEP_POSITIVE_PCT                  = C.WHY_SLEEP_POSITIVE_PCT                  ?? 10;
+const WHY_STRESS_HIGH                         = C.WHY_STRESS_HIGH                         ?? 4;
+const WHY_FATIGUE_HIGH                        = C.WHY_FATIGUE_HIGH                        ?? 65;
+const WHY_SORENESS_HIGH                       = C.WHY_SORENESS_HIGH                       ?? 4;
+const WHY_ENERGY_HIGH                         = C.WHY_ENERGY_HIGH                         ?? 4;
+const WHY_MOOD_HIGH                           = C.WHY_MOOD_HIGH                           ?? 4;
+const NARRATIVE_HRV_POSITIVE_PCT              = C.NARRATIVE_HRV_POSITIVE_PCT              ?? 8;
+const NARRATIVE_HRV_NEGATIVE_PCT              = C.NARRATIVE_HRV_NEGATIVE_PCT              ?? -8;
+const NARRATIVE_SLEEP_MORE_PCT                = C.NARRATIVE_SLEEP_MORE_PCT                ?? 10;
+const NARRATIVE_SLEEP_LESS_PCT                = C.NARRATIVE_SLEEP_LESS_PCT                ?? -10;
+const NARRATIVE_RECOVERY_HIGH                 = C.NARRATIVE_RECOVERY_HIGH                 ?? 80;
+const NARRATIVE_RECOVERY_MODERATE             = C.NARRATIVE_RECOVERY_MODERATE             ?? 65;
+const NARRATIVE_RECOVERY_LIGHT                = C.NARRATIVE_RECOVERY_LIGHT                ?? 50;
+const BASELINE_INSIGHT_MIN_DELTA_PCT          = C.BASELINE_INSIGHT_MIN_DELTA_PCT          ?? 5;
+const CORRELATION_MIN_CHECKINS                = C.CORRELATION_MIN_CHECKINS                ?? 7;
+const SLEEP_HIGH_HOURS                        = C.SLEEP_HIGH_HOURS                        ?? 7.5;
+const SLEEP_LOW_HOURS                         = C.SLEEP_LOW_HOURS                         ?? 6.5;
+const SLEEP_RECOVERY_DIFF_MIN                 = C.SLEEP_RECOVERY_DIFF_MIN                 ?? 8;
+const RPE_HIGH_THRESHOLD                      = C.RPE_HIGH_THRESHOLD                      ?? 8;
+const RPE_RECOVERY_DROP_MIN                   = C.RPE_RECOVERY_DROP_MIN                   ?? 8;
+const STRESS_HIGH_CORR                        = C.STRESS_HIGH_CORR                        ?? 4;
+const STRESS_LOW_CORR                         = C.STRESS_LOW_CORR                         ?? 2;
+const STRESS_HRV_DIFF_MIN                     = C.STRESS_HRV_DIFF_MIN                     ?? 5;
+const HYDRATION_GOOD_THRESHOLD                = C.HYDRATION_GOOD_THRESHOLD                ?? 4;
+const HYDRATION_POOR_THRESHOLD                = C.HYDRATION_POOR_THRESHOLD                ?? 2;
+const HYDRATION_RECOVERY_DIFF_MIN             = C.HYDRATION_RECOVERY_DIFF_MIN             ?? 6;
+const LAGGED_MIN_CHECKINS                     = C.LAGGED_MIN_CHECKINS                     ?? 5;
+const LAGGED_RECOVERY_DROP_MIN                = C.LAGGED_RECOVERY_DROP_MIN                ?? 8;
+const LAGGED_SLEEP_DROP_MIN                   = C.LAGGED_SLEEP_DROP_MIN                   ?? 0.5;
+const REC_RECOVERY_HIGH                       = C.REC_RECOVERY_HIGH                       ?? 80;
+const REC_RECOVERY_MODERATE                   = C.REC_RECOVERY_MODERATE                   ?? 65;
+const REC_RECOVERY_LOW                        = C.REC_RECOVERY_LOW                        ?? 55;
+const REC_SLEEP_DEBT_MIN                      = C.REC_SLEEP_DEBT_MIN                      ?? 3;
+const REC_HYDRATION_LOW                       = C.REC_HYDRATION_LOW                       ?? 2;
+const REC_STRESS_HIGH                         = C.REC_STRESS_HIGH                         ?? 4;
+const REC_MAX_COUNT                           = C.REC_MAX_COUNT                           ?? 4;
+const RUNNING_ECONOMY_MIN_SESSIONS            = C.RUNNING_ECONOMY_MIN_SESSIONS            ?? 4;
+const RUNNING_ECONOMY_IMPROVEMENT_MIN_PCT     = C.RUNNING_ECONOMY_IMPROVEMENT_MIN_PCT     ?? 2;
+const RUNNING_ECONOMY_HIGH_CONFIDENCE_SESSIONS= C.RUNNING_ECONOMY_HIGH_CONFIDENCE_SESSIONS?? 8;
+const CARDIAC_DRIFT_MIN_RUNS                  = C.CARDIAC_DRIFT_MIN_RUNS                  ?? 3;
+const CARDIAC_DRIFT_THRESHOLD                 = C.CARDIAC_DRIFT_THRESHOLD                 ?? 0.15;
+const CARDIAC_DRIFT_MIN_DURATION_MINUTES      = C.CARDIAC_DRIFT_MIN_DURATION_MINUTES      ?? 30;
+const CARDIAC_DRIFT_HIGH_CONFIDENCE_RUNS      = C.CARDIAC_DRIFT_HIGH_CONFIDENCE_RUNS      ?? 5;
+const CARDIAC_DRIFT_RECENT_N                  = C.CARDIAC_DRIFT_RECENT_N                  ?? 3;
+const HRV_ANOMALY_MIN_CHECKINS                = C.HRV_ANOMALY_MIN_CHECKINS                ?? 5;
+const HRV_ANOMALY_MIN_READINGS                = C.HRV_ANOMALY_MIN_READINGS                ?? 5;
+const HRV_ANOMALY_ZSCORE_THRESHOLD            = C.HRV_ANOMALY_ZSCORE_THRESHOLD            ?? -1.5;
+const HRV_ANOMALY_RHR_ELEVATED_PCT            = C.HRV_ANOMALY_RHR_ELEVATED_PCT            ?? 1.07;
+const SLEEP_CONSISTENCY_MIN_ENTRIES           = C.SLEEP_CONSISTENCY_MIN_ENTRIES           ?? 5;
+const SLEEP_CONSISTENCY_GOOD_STDDEV           = C.SLEEP_CONSISTENCY_GOOD_STDDEV           ?? 20;
+const SLEEP_CONSISTENCY_BAD_STDDEV            = C.SLEEP_CONSISTENCY_BAD_STDDEV            ?? 60;
+const SLEEP_CONSISTENCY_THRESHOLD             = C.SLEEP_CONSISTENCY_THRESHOLD             ?? 30;
+const SLEEP_CONSISTENCY_HIGH_CONFIDENCE       = C.SLEEP_CONSISTENCY_HIGH_CONFIDENCE       ?? 10;
+const PERF_WINDOW_MIN_DATA                    = C.PERF_WINDOW_MIN_DATA                    ?? 6;
+const PERF_WINDOW_MIN_PER_PERIOD              = C.PERF_WINDOW_MIN_PER_PERIOD              ?? 2;
+const PERF_WINDOW_MIN_PERIODS                 = C.PERF_WINDOW_MIN_PERIODS                 ?? 2;
+const PERF_WINDOW_HIGH_CONFIDENCE_COUNT       = C.PERF_WINDOW_HIGH_CONFIDENCE_COUNT       ?? 5;
 
 function _ensure(checkins) {
   try { return ensureNormalized(checkins); }
@@ -135,7 +218,7 @@ export function calculateSleepDebt(checkins, targetHours = 8) {
 
 export function calculateTrainingLoad(checkins, sessions = []) {
   checkins = _ensure(checkins);
-  if (checkins.length < 14) {
+  if (checkins.length < TRAINING_LOAD_MIN_CHECKINS) {
     return { acute: null, chronic: null, ratio: null, risk: 'insufficient_data' };
   }
 
@@ -156,7 +239,7 @@ export function calculateTrainingLoad(checkins, sessions = []) {
       const rpe = Number(checkin.rpe);
       if (rpe > 0 && checkin.rest_day !== true) {
         // c) RPE proxy — rpe * 2 maps RPE 1-10 to ~2-20 load units (approximate, not clinical)
-        return rpe * 2;
+        return rpe * RPE_LOAD_MULTIPLIER;
       }
       // d) No load data
       return 0;
@@ -174,8 +257,8 @@ export function calculateTrainingLoad(checkins, sessions = []) {
     const ratio = chronicWeeklyAvg > 0 ? round2(acuteSum / chronicWeeklyAvg) : 1;
 
     let risk = 'low';
-    if (ratio > 1.5) risk = 'high';
-    else if (ratio > 1.3) risk = 'moderate';
+    if (ratio > TRAINING_RATIO_HIGH) risk = 'high';
+    else if (ratio > TRAINING_RATIO_MODERATE) risk = 'moderate';
 
     return {
       acute:   Math.round(acuteSum),
@@ -208,30 +291,30 @@ export function getPhysiologicalState(today, baseline, trainingLoad, sleepDebt) 
   // HRV signal
   if (hrv && baseHrv) {
     const delta = pctDelta(hrv, baseHrv);
-    if (delta > 10) { score += 2; signals.push({ type: 'positive', text: 'HRV acima do baseline' }); }
-    else if (delta < -10) { score -= 2; signals.push({ type: 'negative', text: 'HRV abaixo do baseline' }); }
+    if (delta > HRV_POSITIVE_DELTA_PCT) { score += 2; signals.push({ type: 'positive', text: 'HRV acima do baseline' }); }
+    else if (delta < HRV_NEGATIVE_DELTA_PCT) { score -= 2; signals.push({ type: 'negative', text: 'HRV abaixo do baseline' }); }
   }
 
   // RHR signal
   if (rhr && baseRhr) {
     const delta = pctDelta(rhr, baseRhr);
-    if (delta > 8) { score -= 2; signals.push({ type: 'negative', text: 'FC de repouso elevada' }); }
-    else if (delta < -5) { score += 1; signals.push({ type: 'positive', text: 'FC de repouso baixa' }); }
+    if (delta > RHR_HIGH_DELTA_PCT) { score -= 2; signals.push({ type: 'negative', text: 'FC de repouso elevada' }); }
+    else if (delta < RHR_LOW_DELTA_PCT) { score += 1; signals.push({ type: 'positive', text: 'FC de repouso baixa' }); }
   }
 
   // Stress signal
-  if (stress >= 4) { score -= 2; signals.push({ type: 'negative', text: 'Stress elevado' }); }
-  else if (stress <= 2) { score += 1; signals.push({ type: 'positive', text: 'Stress controlado' }); }
+  if (stress >= STRESS_HIGH_THRESHOLD) { score -= 2; signals.push({ type: 'negative', text: 'Stress elevado' }); }
+  else if (stress <= STRESS_LOW_THRESHOLD) { score += 1; signals.push({ type: 'positive', text: 'Stress controlado' }); }
 
   // Recovery signal
-  if (recovery >= 80) score += 2;
-  else if (recovery < 55) score -= 2;
+  if (recovery >= RECOVERY_HIGH_THRESHOLD) score += 2;
+  else if (recovery < RECOVERY_LOW_THRESHOLD) score -= 2;
 
   // Fatigue
-  if (fatigueScore > 65) { score -= 2; signals.push({ type: 'negative', text: 'Fadiga acumulada alta' }); }
+  if (fatigueScore > FATIGUE_HIGH_THRESHOLD) { score -= 2; signals.push({ type: 'negative', text: 'Fadiga acumulada alta' }); }
 
   // Sleep debt
-  if (sleepDebt?.debt > 5) { score -= 2; signals.push({ type: 'negative', text: 'Déficit de sono acumulado' }); }
+  if (sleepDebt?.debt > SLEEP_DEBT_HIGH_HOURS) { score -= 2; signals.push({ type: 'negative', text: 'Déficit de sono acumulado' }); }
 
   // Training load spike
   if (trainingLoad?.risk === 'high') { score -= 2; signals.push({ type: 'negative', text: 'Spike de carga de treino' }); }
@@ -239,11 +322,11 @@ export function getPhysiologicalState(today, baseline, trainingLoad, sleepDebt) 
 
   // Determine state
   let state;
-  if (score >= 4) state = 'Recovered';
-  else if (score >= 2) state = 'Balanced';
-  else if (score <= -4) state = 'Overreached';
-  else if (score <= -2) {
-    state = fatigueScore > 60 ? 'Fatigued' : 'High Stress';
+  if (score >= PHYSIO_SCORE_RECOVERED) state = 'Recovered';
+  else if (score >= PHYSIO_SCORE_BALANCED) state = 'Balanced';
+  else if (score <= PHYSIO_SCORE_OVERREACHED) state = 'Overreached';
+  else if (score <= PHYSIO_SCORE_STRESSED) {
+    state = fatigueScore > FATIGUE_STATE_THRESHOLD ? 'Fatigued' : 'High Stress';
   } else {
     state = 'Balanced';
   }
@@ -263,26 +346,26 @@ export function explainRecoveryScore(today, baseline) {
 
   if (today.hrv && baseHrv) {
     const d = pctDelta(today.hrv, baseHrv);
-    if (d != null && d < -8) reasons.push({ impact: 'negative', text: `HRV reduzido (${d}% abaixo do seu baseline de ${Math.round(baseHrv)}ms)` });
-    else if (d != null && d > 8) reasons.push({ impact: 'positive', text: `HRV elevado (${d}% acima do seu baseline)` });
+    if (d != null && d < WHY_HRV_NEGATIVE_PCT) reasons.push({ impact: 'negative', text: `HRV reduzido (${d}% abaixo do seu baseline de ${Math.round(baseHrv)}ms)` });
+    else if (d != null && d > WHY_HRV_POSITIVE_PCT) reasons.push({ impact: 'positive', text: `HRV elevado (${d}% acima do seu baseline)` });
   }
 
   if (today.resting_hr && baseRhr) {
     const d = pctDelta(today.resting_hr, baseRhr);
-    if (d != null && d > 8) reasons.push({ impact: 'negative', text: `FC em repouso acima do normal (+${d}% vs. baseline de ${Math.round(baseRhr)} bpm)` });
+    if (d != null && d > WHY_RHR_HIGH_PCT) reasons.push({ impact: 'negative', text: `FC em repouso acima do normal (+${d}% vs. baseline de ${Math.round(baseRhr)} bpm)` });
   }
 
   if (today.sleep_quality && baseSleep) {
     const d = pctDelta(today.sleep_quality, baseSleep);
-    if (d != null && d < -10) reasons.push({ impact: 'negative', text: `Qualidade do sono abaixo do seu padrão (${d}%)` });
-    else if (d != null && d > 10) reasons.push({ impact: 'positive', text: `Sono de boa qualidade (${d}% acima do normal)` });
+    if (d != null && d < WHY_SLEEP_NEGATIVE_PCT) reasons.push({ impact: 'negative', text: `Qualidade do sono abaixo do seu padrão (${d}%)` });
+    else if (d != null && d > WHY_SLEEP_POSITIVE_PCT) reasons.push({ impact: 'positive', text: `Sono de boa qualidade (${d}% acima do normal)` });
   }
 
-  if ((today.stress || 0) >= 4) reasons.push({ impact: 'negative', text: 'Nível de stress elevado impactando recuperação' });
-  if ((today.fatigue_score || 0) > 65) reasons.push({ impact: 'negative', text: 'Fadiga muscular acumulada acima do limiar' });
-  if ((today.muscle_soreness || 0) >= 4) reasons.push({ impact: 'negative', text: 'Soreness muscular significativo' });
-  if ((today.energy || 0) >= 4) reasons.push({ impact: 'positive', text: 'Energia subjetiva elevada' });
-  if ((today.mood || 0) >= 4) reasons.push({ impact: 'positive', text: 'Mood e disposição positivos' });
+  if ((today.stress || 0) >= WHY_STRESS_HIGH) reasons.push({ impact: 'negative', text: 'Nível de stress elevado impactando recuperação' });
+  if ((today.fatigue_score || 0) > WHY_FATIGUE_HIGH) reasons.push({ impact: 'negative', text: 'Fadiga muscular acumulada acima do limiar' });
+  if ((today.muscle_soreness || 0) >= WHY_SORENESS_HIGH) reasons.push({ impact: 'negative', text: 'Soreness muscular significativo' });
+  if ((today.energy || 0) >= WHY_ENERGY_HIGH) reasons.push({ impact: 'positive', text: 'Energia subjetiva elevada' });
+  if ((today.mood || 0) >= WHY_MOOD_HIGH) reasons.push({ impact: 'positive', text: 'Mood e disposição positivos' });
 
   return reasons;
 }
@@ -313,22 +396,22 @@ export function buildRecoveryNarrative(today, baseline, state) {
 
   // HRV part
   if (today.hrv && baseHrv && hrvDelta != null) {
-    if (hrvDelta > 8) hrv_part = ` Seu HRV está ${hrvDelta}% acima do seu baseline — sinal de boa adaptação ao treino.`;
-    else if (hrvDelta < -8) hrv_part = ` Seu HRV está ${Math.abs(hrvDelta)}% abaixo do seu baseline — o sistema nervoso ainda está se recuperando.`;
+    if (hrvDelta > NARRATIVE_HRV_POSITIVE_PCT) hrv_part = ` Seu HRV está ${hrvDelta}% acima do seu baseline — sinal de boa adaptação ao treino.`;
+    else if (hrvDelta < NARRATIVE_HRV_NEGATIVE_PCT) hrv_part = ` Seu HRV está ${Math.abs(hrvDelta)}% abaixo do seu baseline — o sistema nervoso ainda está se recuperando.`;
     else hrv_part = ` Seu HRV está dentro do seu padrão habitual.`;
   }
 
   // Sleep part
   if (sleepDelta != null) {
-    if (sleepDelta > 10) sleep_part = ' O sono desta noite foi mais longo que o usual.';
-    else if (sleepDelta < -10) sleep_part = ' Você dormiu menos que o seu padrão — isso impacta a recuperação.';
+    if (sleepDelta > NARRATIVE_SLEEP_MORE_PCT) sleep_part = ' O sono desta noite foi mais longo que o usual.';
+    else if (sleepDelta < NARRATIVE_SLEEP_LESS_PCT) sleep_part = ' Você dormiu menos que o seu padrão — isso impacta a recuperação.';
     else sleep_part = ' O sono foi consistente com seu padrão.';
   }
 
   // Action
-  if (recovery >= 80) action = 'É um bom dia para treino de alta intensidade.';
-  else if (recovery >= 65) action = 'Intensidade moderada é recomendada hoje.';
-  else if (recovery >= 50) action = 'Prefira atividades leves ou recuperação ativa.';
+  if (recovery >= NARRATIVE_RECOVERY_HIGH) action = 'É um bom dia para treino de alta intensidade.';
+  else if (recovery >= NARRATIVE_RECOVERY_MODERATE) action = 'Intensidade moderada é recomendada hoje.';
+  else if (recovery >= NARRATIVE_RECOVERY_LIGHT) action = 'Prefira atividades leves ou recuperação ativa.';
   else action = 'Priorize descanso, hidratação e sono de qualidade hoje.';
 
   return `${intro}${hrv_part}${sleep_part} ${action}`;
@@ -353,7 +436,7 @@ export function getBaselineInsights(today, baseline) {
     const base = baseline[baseKey]?.d14 || baseline[baseKey]?.d7 || baseline[baseKey]?.d30;
     if (current == null || !base) continue;
     const delta = pctDelta(current, base);
-    if (delta == null || Math.abs(delta) < 5) continue;
+    if (delta == null || Math.abs(delta) < BASELINE_INSIGHT_MIN_DELTA_PCT) continue;
 
     const isPositive = higherIsBetter ? delta > 0 : delta < 0;
     const absDelta = Math.abs(delta);
@@ -378,16 +461,16 @@ export function getBaselineInsights(today, baseline) {
 export function detectCorrelations(checkins) {
   checkins = _ensure(checkins);
   const insights = [];
-  if (checkins.length < 7) return insights;
+  if (checkins.length < CORRELATION_MIN_CHECKINS) return insights;
 
   // Sleep hours → Recovery correlation
-  const sleepHigh = checkins.filter(c => (c.sleep_hours || 0) >= 7.5);
-  const sleepLow = checkins.filter(c => c.sleep_hours > 0 && c.sleep_hours < 6.5);
+  const sleepHigh = checkins.filter(c => (c.sleep_hours || 0) >= SLEEP_HIGH_HOURS);
+  const sleepLow = checkins.filter(c => c.sleep_hours > 0 && c.sleep_hours < SLEEP_LOW_HOURS);
   if (sleepHigh.length >= 3 && sleepLow.length >= 2) {
     const avgHigh = sleepHigh.reduce((s, c) => s + (c.recovery_score || 0), 0) / sleepHigh.length;
     const avgLow = sleepLow.reduce((s, c) => s + (c.recovery_score || 0), 0) / sleepLow.length;
     const diff = avgHigh - avgLow;
-    if (diff > 8) {
+    if (diff > SLEEP_RECOVERY_DIFF_MIN) {
       insights.push({
         icon: '🌙',
         type: 'positive',
@@ -397,7 +480,7 @@ export function detectCorrelations(checkins) {
   }
 
   // High RPE → Next day recovery (checkins are DESC, so "next day" = idx - 1)
-  const highRpeDays = checkins.filter((c, i) => c.rpe >= 8 && i - 1 >= 0);
+  const highRpeDays = checkins.filter((c, i) => c.rpe >= RPE_HIGH_THRESHOLD && i - 1 >= 0);
   if (highRpeDays.length >= 2) {
     const afterHighRpe = highRpeDays.map((_, i) => {
       const idx = checkins.indexOf(highRpeDays[i]);
@@ -406,7 +489,7 @@ export function detectCorrelations(checkins) {
     if (afterHighRpe.length >= 2) {
       const avgAfter = afterHighRpe.reduce((s, c) => s + (c.recovery_score || 0), 0) / afterHighRpe.length;
       const avgAll = checkins.reduce((s, c) => s + (c.recovery_score || 0), 0) / checkins.length;
-      if (avgAll - avgAfter > 8) {
+      if (avgAll - avgAfter > RPE_RECOVERY_DROP_MIN) {
         insights.push({
           icon: '⚡',
           type: 'warning',
@@ -417,12 +500,12 @@ export function detectCorrelations(checkins) {
   }
 
   // High stress → Low HRV
-  const highStressDays = checkins.filter(c => (c.stress || 0) >= 4 && c.hrv);
-  const lowStressDays = checkins.filter(c => (c.stress || 0) <= 2 && c.hrv);
+  const highStressDays = checkins.filter(c => (c.stress || 0) >= STRESS_HIGH_CORR && c.hrv);
+  const lowStressDays = checkins.filter(c => (c.stress || 0) <= STRESS_LOW_CORR && c.hrv);
   if (highStressDays.length >= 2 && lowStressDays.length >= 2) {
     const avgHrvHigh = highStressDays.reduce((s, c) => s + c.hrv, 0) / highStressDays.length;
     const avgHrvLow = lowStressDays.reduce((s, c) => s + c.hrv, 0) / lowStressDays.length;
-    if (avgHrvLow - avgHrvHigh > 5) {
+    if (avgHrvLow - avgHrvHigh > STRESS_HRV_DIFF_MIN) {
       insights.push({
         icon: '🧠',
         type: 'warning',
@@ -432,12 +515,12 @@ export function detectCorrelations(checkins) {
   }
 
   // Hydration → Recovery
-  const goodHydration = checkins.filter(c => (c.hydration || 0) >= 4);
-  const poorHydration = checkins.filter(c => c.hydration > 0 && c.hydration <= 2);
+  const goodHydration = checkins.filter(c => (c.hydration || 0) >= HYDRATION_GOOD_THRESHOLD);
+  const poorHydration = checkins.filter(c => c.hydration > 0 && c.hydration <= HYDRATION_POOR_THRESHOLD);
   if (goodHydration.length >= 2 && poorHydration.length >= 2) {
     const avgGood = goodHydration.reduce((s, c) => s + (c.recovery_score || 0), 0) / goodHydration.length;
     const avgPoor = poorHydration.reduce((s, c) => s + (c.recovery_score || 0), 0) / poorHydration.length;
-    if (avgGood - avgPoor > 6) {
+    if (avgGood - avgPoor > HYDRATION_RECOVERY_DIFF_MIN) {
       insights.push({
         icon: '💧',
         type: 'positive',
@@ -454,10 +537,10 @@ export function detectCorrelations(checkins) {
 export function detectLaggedEffects(checkins) {
   checkins = _ensure(checkins);
   const effects = [];
-  if (checkins.length < 5) return effects;
+  if (checkins.length < LAGGED_MIN_CHECKINS) return effects;
 
   // Check 48h effect (checkins are DESC, so "48h after" = i - 2)
-  const intenseDays = checkins.map((c, i) => ({ c, i })).filter(({ c, i }) => c.rpe >= 8 && !c.rest_day && i - 2 >= 0);
+  const intenseDays = checkins.map((c, i) => ({ c, i })).filter(({ c, i }) => c.rpe >= RPE_HIGH_THRESHOLD && !c.rest_day && i - 2 >= 0);
 
   if (intenseDays.length >= 2) {
     const recoveries48 = intenseDays
@@ -468,7 +551,7 @@ export function detectLaggedEffects(checkins) {
     if (recoveries48.length >= 2) {
       const avg48 = recoveries48.reduce((s, v) => s + v, 0) / recoveries48.length;
       const avgAll = checkins.reduce((s, c) => s + (c.recovery_score || 0), 0) / checkins.length;
-      if (avgAll - avg48 > 8) {
+      if (avgAll - avg48 > LAGGED_RECOVERY_DROP_MIN) {
         effects.push({
           icon: '⏱️',
           text: `Treinos intensos afetam seu Recovery com pico de queda ~48h depois (média: −${Math.round(avgAll - avg48)} pts)`,
@@ -482,7 +565,7 @@ export function detectLaggedEffects(checkins) {
   if (afterIntense.length >= 2) {
     const avgSleep = afterIntense.reduce((s, c) => s + (c.sleep_hours || 0), 0) / afterIntense.length;
     const baseAvgSleep = checkins.reduce((s, c) => s + (c.sleep_hours || 0), 0) / checkins.length;
-    if (baseAvgSleep - avgSleep > 0.5) {
+    if (baseAvgSleep - avgSleep > LAGGED_SLEEP_DROP_MIN) {
       effects.push({
         icon: '😴',
         text: `Treinos intensos reduzem seu sono na noite seguinte em ~${Math.round((baseAvgSleep - avgSleep) * 10) / 10}h`,
@@ -504,11 +587,11 @@ export function getActionableRecs(today, state, sleepDebt, trainingLoad) {
   const fatigue = today.fatigue_score || 50;
 
   // Training recommendation
-  if (physiState === 'Recovered' && recovery >= 80) {
+  if (physiState === 'Recovered' && recovery >= REC_RECOVERY_HIGH) {
     recs.push({ id: 'train_high', icon: '🏋️', category: 'Treino', text: 'Dia ideal para alta intensidade — seu corpo está pronto para desafio.' });
-  } else if (physiState === 'Balanced' || recovery >= 65) {
+  } else if (physiState === 'Balanced' || recovery >= REC_RECOVERY_MODERATE) {
     recs.push({ id: 'train_moderate', icon: '🚴', category: 'Treino', text: 'Intensidade moderada recomendada. Monitore como se sente durante o esforço.' });
-  } else if (physiState === 'Fatigued' || recovery < 55) {
+  } else if (physiState === 'Fatigued' || recovery < REC_RECOVERY_LOW) {
     recs.push({ id: 'mobility', icon: '🧘', category: 'Mobilidade', text: 'Priorize mobilidade e alongamento. Evite cargas altas hoje.' });
   }
 
@@ -517,17 +600,17 @@ export function getActionableRecs(today, state, sleepDebt, trainingLoad) {
   }
 
   // Sleep debt
-  if (sleepDebt?.debt > 3) {
+  if (sleepDebt?.debt > REC_SLEEP_DEBT_MIN) {
     recs.push({ id: 'sleep_debt', icon: '🌙', category: 'Sono', text: `Déficit de ${sleepDebt.debt}h detectado esta semana. Antecipe o horário de dormir esta noite.` });
   }
 
   // Hydration
-  if ((today.hydration || 3) <= 2) {
+  if ((today.hydration || 3) <= REC_HYDRATION_LOW) {
     recs.push({ id: 'hydration', icon: '💧', category: 'Hidratação', text: 'Seu padrão de hidratação está abaixo — mire em 35ml/kg de peso corporal hoje.' });
   }
 
   // Stress
-  if ((today.stress || 3) >= 4) {
+  if ((today.stress || 3) >= REC_STRESS_HIGH) {
     recs.push({ id: 'stress', icon: '🧠', category: 'Stress', text: 'Stress elevado — 10 minutos de respiração diafragmática ou meditação podem ajudar o HRV.' });
   }
 
@@ -554,10 +637,10 @@ export function getActionableRecs(today, state, sleepDebt, trainingLoad) {
       today.recovery_score ? 'recovery_score' : null,
     ].filter(Boolean);
 
-    return recs.slice(0, 4).map(r => ({ ...r, confidence, provenance }));
+    return recs.slice(0, REC_MAX_COUNT).map(r => ({ ...r, confidence, provenance }));
   } catch (e) {
     console.warn('getActionableRecs: failed to attach confidence', e);
-    return recs.slice(0, 4);
+    return recs.slice(0, REC_MAX_COUNT);
   }
 }
 
@@ -648,7 +731,7 @@ export function calculateRunningEconomy(sessions) {
 
   // 4. Sort ASC by date, require ≥4 valid sessions
   ratios.sort((a, b) => (a.date > b.date ? 1 : -1));
-  if (ratios.length < 4) return null;
+  if (ratios.length < RUNNING_ECONOMY_MIN_SESSIONS) return null;
 
   // 5. Split old / recent
   const mid = Math.floor(ratios.length / 2);
@@ -663,7 +746,7 @@ export function calculateRunningEconomy(sessions) {
   const improvement = Math.round(((avgOld - avgRecent) / avgOld) * 100);
   const isImproving = improvement > 0;
 
-  if (Math.abs(improvement) < 2) return null;
+  if (Math.abs(improvement) < RUNNING_ECONOMY_IMPROVEMENT_MIN_PCT) return null;
 
   const last = ratios[ratios.length - 1];
 
@@ -679,7 +762,7 @@ export function calculateRunningEconomy(sessions) {
           title: 'Economia de corrida melhorou',
           text: `Você está ${improvement}% mais eficiente nas últimas ${recent.length} corridas — mesma velocidade com menos esforço cardíaco. Continue mantendo o volume de treino.`,
           sentiment: 'positive',
-          confidence: ratios.length >= 8 ? 'Alta' : 'Média',
+          confidence: ratios.length >= RUNNING_ECONOMY_HIGH_CONFIDENCE_SESSIONS ? 'Alta' : 'Média',
           days: ratios.length,
         }
       : {
@@ -687,7 +770,7 @@ export function calculateRunningEconomy(sessions) {
           title: 'Eficiência de corrida caindo',
           text: `Seu coração está trabalhando ${Math.abs(improvement)}% mais para a mesma velocidade nas últimas ${recent.length} corridas. Isso pode indicar fadiga acumulada, calor ou necessidade de mais base aeróbica.`,
           sentiment: 'negative',
-          confidence: ratios.length >= 8 ? 'Alta' : 'Média',
+          confidence: ratios.length >= RUNNING_ECONOMY_HIGH_CONFIDENCE_SESSIONS ? 'Alta' : 'Média',
           days: ratios.length,
         },
   };
@@ -696,14 +779,14 @@ export function calculateRunningEconomy(sessions) {
 // ─── Performance Window Analysis ─────────────────────────────────────────────
 
 export function calculatePerformanceWindow(sessions, checkins) {
-  if (sessions.length < 6 || checkins.length < 6) return null;
+  if (sessions.length < PERF_WINDOW_MIN_DATA || checkins.length < PERF_WINDOW_MIN_DATA) return null;
 
   const periods = ['morning', 'afternoon', 'evening', 'night'];
   const periodData = {};
 
   periods.forEach(period => {
     const periodSessions = sessions.filter(s => s.time_of_day === period);
-    if (periodSessions.length < 2) return;
+    if (periodSessions.length < PERF_WINDOW_MIN_PER_PERIOD) return;
 
     const nextDayRecoveries = periodSessions.map(s => {
       const sessionDate = s.date;
@@ -715,7 +798,7 @@ export function calculatePerformanceWindow(sessions, checkins) {
       return nextDay?.recovery_score ?? null;
     }).filter(v => v != null);
 
-    if (nextDayRecoveries.length >= 2) {
+    if (nextDayRecoveries.length >= PERF_WINDOW_MIN_PER_PERIOD) {
       periodData[period] = {
         avgRecovery: Math.round(
           nextDayRecoveries.reduce((s, v) => s + v, 0) / nextDayRecoveries.length
@@ -725,7 +808,7 @@ export function calculatePerformanceWindow(sessions, checkins) {
     }
   });
 
-  if (Object.keys(periodData).length < 2) return null;
+  if (Object.keys(periodData).length < PERF_WINDOW_MIN_PERIODS) return null;
 
   const best = Object.entries(periodData)
     .sort((a, b) => b[1].avgRecovery - a[1].avgRecovery)[0];
@@ -743,7 +826,7 @@ export function calculatePerformanceWindow(sessions, checkins) {
       title: 'Melhor janela de treino identificada',
       text: `Treinos de ${labels[best[0]]} geram recovery médio de ${best[1].avgRecovery} no dia seguinte — seu melhor horário com base em ${best[1].count} sessões.`,
       sentiment: 'positive',
-      confidence: best[1].count >= 5 ? 'Alta' : 'Média',
+      confidence: best[1].count >= PERF_WINDOW_HIGH_CONFIDENCE_COUNT ? 'Alta' : 'Média',
       days: best[1].count,
     },
   };
@@ -768,10 +851,10 @@ export function detectCardiacDrift(sessions) {
     const dur     = toNumber(s.duration_minutes);
     return hr_avg != null && hr_avg > 0 &&
            hr_max != null && hr_max > 0 &&
-           dur    != null && dur >= 30;
+           dur    != null && dur >= CARDIAC_DRIFT_MIN_DURATION_MINUTES;
   });
 
-  if (longRuns.length < 3) return null;
+  if (longRuns.length < CARDIAC_DRIFT_MIN_RUNS) return null;
 
   // 3. Sort ASC by date
   longRuns.sort((a, b) => (a._dateKey > b._dateKey ? 1 : -1));
@@ -785,15 +868,15 @@ export function detectCardiacDrift(sessions) {
     return { date: s._dateKey, drift: driftRel, duration: s.duration_minutes };
   }).filter(e => isFinite(e.drift));
 
-  if (driftEntries.length < 3) return null;
+  if (driftEntries.length < CARDIAC_DRIFT_MIN_RUNS) return null;
 
-  // 5. Use last 3 sessions
-  const recent = driftEntries.slice(-3);
+  // 5. Use last N sessions
+  const recent = driftEntries.slice(-CARDIAC_DRIFT_RECENT_N);
   const validDrifts = recent.map(r => r.drift).filter(isFinite);
   if (!validDrifts.length) return null;
 
   const recentAvgDrift = validDrifts.reduce((s, v) => s + v, 0) / validDrifts.length;
-  if (!isFinite(recentAvgDrift) || recentAvgDrift <= 0.15) return null;
+  if (!isFinite(recentAvgDrift) || recentAvgDrift <= CARDIAC_DRIFT_THRESHOLD) return null;
 
   const avgDriftPct = Math.round(recentAvgDrift * 100);
 
@@ -804,7 +887,7 @@ export function detectCardiacDrift(sessions) {
       title: 'Deriva cardíaca detectada nas corridas',
       text: `Sua frequência cardíaca sobe em média ${avgDriftPct}% acima da FC média durante os treinos longos. Isso pode indicar desidratação, estresse térmico ou fadiga cardiovascular. Hidrate-se regularmente ao longo da corrida e monitore a evolução nas próximas sessões.`,
       sentiment: 'negative',
-      confidence: longRuns.length >= 5 ? 'Alta' : 'Média',
+      confidence: longRuns.length >= CARDIAC_DRIFT_HIGH_CONFIDENCE_RUNS ? 'Alta' : 'Média',
       days: longRuns.length,
     },
   };
@@ -814,7 +897,7 @@ export function detectCardiacDrift(sessions) {
 
 export function detectHRVAnomaly(checkins, baseline) {
   checkins = _ensure(checkins);
-  if (checkins.length < 5) return null;
+  if (checkins.length < HRV_ANOMALY_MIN_CHECKINS) return null;
 
   const today = checkins[0];
   const yesterday = checkins[1];
@@ -829,7 +912,7 @@ export function detectHRVAnomaly(checkins, baseline) {
     .map(c => c.hrv)
     .filter(v => v != null && v > 0);
 
-  if (recentHrv.length < 5) return null;
+  if (recentHrv.length < HRV_ANOMALY_MIN_READINGS) return null;
 
   const mean = recentHrv.reduce((s, v) => s + v, 0) / recentHrv.length;
   const stdDev = Math.sqrt(
@@ -841,11 +924,11 @@ export function detectHRVAnomaly(checkins, baseline) {
   const zScore = (today.hrv - mean) / stdDev;
   const drop = Math.round(((mean - today.hrv) / mean) * 100);
 
-  if (zScore > -1.5) return null;
+  if (zScore > HRV_ANOMALY_ZSCORE_THRESHOLD) return null;
 
   const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
   const rhrElevated = today.resting_hr && baseRhr &&
-    today.resting_hr > baseRhr * 1.07;
+    today.resting_hr > baseRhr * HRV_ANOMALY_RHR_ELEVATED_PCT;
 
   return {
     zScore: Math.round(zScore * 10) / 10,
@@ -1013,7 +1096,7 @@ export function calculateSleepConsistency(checkins) {
       return mins;
     });
 
-  if (withTimes.length < 5) return null;
+  if (withTimes.length < SLEEP_CONSISTENCY_MIN_ENTRIES) return null;
 
   const mean = withTimes.reduce((s, v) => s + v, 0) / withTimes.length;
   const variance = withTimes.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / withTimes.length;
@@ -1027,20 +1110,20 @@ export function calculateSleepConsistency(checkins) {
     stdDevMinutes: Math.round(stdDev),
     consistencyScore,
     avgBedtime: `${avgHour}:${avgMin}`,
-    isConsistent: stdDev < 30,
-    discovery: stdDev < 20 ? {
+    isConsistent: stdDev < SLEEP_CONSISTENCY_THRESHOLD,
+    discovery: stdDev < SLEEP_CONSISTENCY_GOOD_STDDEV ? {
       icon: '⏰',
       title: 'Horário de sono consistente',
       text: `Você dorme no mesmo horário com variação de apenas ${Math.round(stdDev)} minutos. Regularidade aumenta a qualidade do sono profundo.`,
       sentiment: 'positive',
-      confidence: withTimes.length >= 10 ? 'Alta' : 'Média',
+      confidence: withTimes.length >= SLEEP_CONSISTENCY_HIGH_CONFIDENCE ? 'Alta' : 'Média',
       days: withTimes.length,
-    } : stdDev > 60 ? {
+    } : stdDev > SLEEP_CONSISTENCY_BAD_STDDEV ? {
       icon: '🌙',
       title: 'Horário de sono irregular',
       text: `Seu horário de dormir varia ${Math.round(stdDev)} minutos em média. Regularidade no sono melhora o HRV matinal.`,
       sentiment: 'negative',
-      confidence: withTimes.length >= 10 ? 'Alta' : 'Média',
+      confidence: withTimes.length >= SLEEP_CONSISTENCY_HIGH_CONFIDENCE ? 'Alta' : 'Média',
       days: withTimes.length,
     } : null,
   };
