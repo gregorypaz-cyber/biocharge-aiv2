@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useReducer } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -115,6 +115,23 @@ const DEFAULT_POST_FORM = {
   notes: '',
 };
 
+const checkinReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, form: { ...state.form, [action.field]: action.value } };
+    case 'SET_POST_FIELD':
+      return { ...state, postForm: { ...state.postForm, [action.field]: action.value } };
+    case 'RESET':
+      return { form: DEFAULT_FORM, postForm: DEFAULT_POST_FORM };
+    case 'LOAD_EDIT':
+      return { ...state, form: { rest_day: false, ...action.data } };
+    case 'SET_REST_DAY':
+      return { ...state, form: { ...state.form, rest_day: action.value } };
+    default:
+      return state;
+  }
+};
+
 export default function DailyCheckin() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,14 +149,18 @@ export default function DailyCheckin() {
   const todayDate = getTodayLocal();
   const todayRecord = checkins.find(c => c.date === todayDate);
 
-  const [form, setForm] = useState(editData ? { rest_day: false, ...editData } : DEFAULT_FORM);
-  const [postForm, setPostForm] = useState(DEFAULT_POST_FORM);
+  const [checkinState, dispatch] = useReducer(checkinReducer, {
+    form: editData ? { rest_day: false, ...editData } : DEFAULT_FORM,
+    postForm: DEFAULT_POST_FORM,
+  });
+  const { form, postForm } = checkinState;
+
   const [sleepHoursText, setSleepHoursText] = useState(
     formatHoursToSleepDuration(editData?.sleep_hours ?? DEFAULT_FORM.sleep_hours)
   );
 
-  const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-  const updatePost = (field, value) => setPostForm(prev => ({ ...prev, [field]: value }));
+  const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
+  const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
 
   const isRestDay = form.rest_day;
   const preview = computeCheckinScores(form);
@@ -167,6 +188,7 @@ export default function DailyCheckin() {
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+      if (navigator.vibrate) navigator.vibrate(40);
       toast.success(editData?.id ? '✅ Check-in atualizado!' : '✅ Check-in salvo!');
       if (editData?.id) {
         navigate('/history');
@@ -206,6 +228,7 @@ export default function DailyCheckin() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+      if (navigator.vibrate) navigator.vibrate(40);
       toast.success('✅ Pós-treino salvo!');
       navigate('/today');
     },
@@ -475,7 +498,7 @@ export default function DailyCheckin() {
       </CheckinStep>
 
       {/* Rest Day Toggle */}
-      <RestDayToggle value={isRestDay} onChange={v => update('rest_day', v)} />
+      <RestDayToggle value={isRestDay} onChange={v => dispatch({ type: 'SET_REST_DAY', value: v })} />
 
       {/* Save */}
       <Button

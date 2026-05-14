@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Zap, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Link } from 'react-router-dom';
@@ -31,11 +32,15 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-muted-foreground">Carregando dados...</span>
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <Skeleton className="h-8 w-32 rounded-xl" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-16 rounded-full" />
+          <Skeleton className="h-8 w-16 rounded-full" />
+          <Skeleton className="h-8 w-16 rounded-full" />
         </div>
+        <Skeleton className="h-56 w-full rounded-2xl" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
       </div>
     );
   }

@@ -27,7 +27,7 @@ export default function MiniChart({ data, days = 14, showSleep = true, showFatig
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
-      <div className="h-36">
+      <div role="img" aria-label="Gráfico de tendência de prontidão, sono e fadiga" className="h-36">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ bottom: 4 }}>
               <XAxis

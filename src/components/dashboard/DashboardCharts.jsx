@@ -21,7 +21,7 @@ export default function DashboardCharts({ data = [] }) {
       className="rounded-2xl border border-border bg-card p-5"
     >
       <h3 className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Tendência — Últimos 7 dias</h3>
-      <div className="h-48">
+      <div role="img" aria-label="Gráfico de evolução dos scores" className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
             <defs>

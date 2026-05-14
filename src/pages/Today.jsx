@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Zap, Dumbbell } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -86,8 +87,16 @@ export default function Today() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <Skeleton className="h-8 w-40 rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-3xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+        </div>
+        <Skeleton className="h-16 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }

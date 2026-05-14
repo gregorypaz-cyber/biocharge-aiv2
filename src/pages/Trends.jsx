@@ -181,7 +181,7 @@ export default function Trends() {
             )}
           </div>
           <p className="text-xs text-muted-foreground mb-4">Área + média móvel 3 dias</p>
-          <div className="h-56">
+          <div role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={movingAvg}>
                 <defs>
@@ -235,7 +235,7 @@ export default function Trends() {
         >
           <h3 className="text-sm font-semibold mb-1">Recovery vs Fadiga</h3>
           <p className="text-xs text-muted-foreground mb-4">Equilíbrio carga-recuperação diário</p>
-          <div className="h-44">
+          <div role="img" aria-label="Gráfico de barras comparando Recovery e Fadiga diários" className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} barGap={2}>
                 <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
@@ -300,7 +300,7 @@ export default function Trends() {
           >
             <h3 className="text-sm font-semibold mb-0.5">Impacto do Sono no Recovery</h3>
             <p className="text-xs text-muted-foreground mb-4">Cada ponto = um dia dos seus dados</p>
-            <div className="h-56">
+            <div role="img" aria-label="Gráfico de dispersão mostrando relação entre horas de sono e recovery do dia seguinte" className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
