@@ -29,6 +29,7 @@ export default function Today() {
   const todayCheckins = checkins.filter(c => c.date === today);
   const rawCheckin = todayCheckins[0];
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
+  const todaySessions = allSessions.filter(s => s.date === today);
   // Scores frescos da engine sobrepõem o DB para readiness/fatigue
   const checkin = rawCheckin ? (() => {
     const dbCheckin = rawCheckin;
@@ -40,7 +41,6 @@ export default function Today() {
       fatigue_score: engineScores.fatigue_score,
     };
   })() : null;
-  const todaySessions = allSessions.filter(s => s.date === today);
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
