@@ -568,6 +568,7 @@ Pergunta do atleta: '${sanitizedQuestion}'`;
           </Button>
         </div>
         <div className="p-5">
+          <p className="text-[10px] text-muted-foreground mb-3">Seus dados são enviados ao modelo de IA para gerar análise personalizada.</p>
           {computed.length < 3 ? (
             <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
           ) : aiInsight ? (
@@ -614,6 +615,7 @@ Pergunta do atleta: '${sanitizedQuestion}'`;
               <ReactMarkdown>{coachResponse}</ReactMarkdown>
             </motion.div>
           )}
+          <p className="text-[10px] text-muted-foreground">Seus dados são enviados ao modelo de IA para gerar análise personalizada.</p>
           <div className="space-y-2">
             <Input
               placeholder="Pergunte ao seu coach..."
