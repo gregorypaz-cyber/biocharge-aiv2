@@ -239,4 +239,63 @@ console.assert(recs[0].confidence === 'Média', 'insufficient_data should not yi
 ```js
 const recs = getActionableRecs(null, null, null, null);
 console.assert(recs.length === 0, 'should return empty array without throwing');
+```
+
+---
+
+---
+
+# Manual Test Checklist — runPhysiologicalAnalysisAsync
+
+`perf(physio): async analysis via worker + safe cache (non-breaking)`
+
+Arquivos: `lib/physiological-engine.js`, `lib/physio-worker.js`
+
+---
+
+## Case 1 — happy path, fallback síncrono
+
+```js
+import { runPhysiologicalAnalysisAsync } from './physiological-engine.js';
+const checkins = /* array com ≥14 registros normalizados */;
+const result = await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false });
+console.assert(result !== null, 'deve retornar resultado');
+console.assert('physioState' in result, 'deve ter physioState');
+console.assert('actionableRecs' in result, 'deve ter actionableRecs');
+```
+
+## Case 2 — cache hit acelera segundo call
+
+```js
+const t1 = performance.now();
+await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false });
+const t2 = performance.now();
+await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false }); // cache hit
+const t3 = performance.now();
+console.assert((t3 - t2) < (t2 - t1) / 2, 'segundo call deve ser mais rápido (cache)');
+```
+
+## Case 3 — retorna null sem throw em dados inválidos
+
+```js
+const result = await runPhysiologicalAnalysisAsync(null, null, { useWorker: false });
+console.assert(result === null, 'deve retornar null sem lançar exceção');
+```
+
+## Case 4 — djb2 hash não usa btoa (safe com emojis)
+
+```js
+const c = [{ date: '2026-05-14', notes: 'Treino 🏃‍♂️ incrível!', recovery_score: 72 }];
+// Não deve lançar InvalidCharacterError
+const r = await runPhysiologicalAnalysisAsync(c, [], { useWorker: false });
+console.log('hash emoji safe: ok, result =', r === null ? 'null (< 14 checkins)' : 'object');
+```
+
+## Case 5 — TTL 0 sempre recomputa
+
+```js
+await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false, cacheTTLMinutes: 0 });
+await new Promise(res => setTimeout(res, 5));
+const r = await runPhysiologicalAnalysisAsync(checkins, [], { useWorker: false, cacheTTLMinutes: 0 });
+console.assert(r !== null, 'deve recomputar após TTL expirar');
 ``

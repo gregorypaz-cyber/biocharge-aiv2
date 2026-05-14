@@ -763,6 +763,142 @@ export function detectHRVAnomaly(checkins, baseline) {
   };
 }
 
+// ─── Async Analysis Wrapper ───────────────────────────────────────────────────
+// perf(physio): async analysis via worker + safe cache (non-breaking)
+//
+// MIGRATION NOTE for call-sites (gradual opt-in):
+//   Before: const analysis = runPhysiologicalAnalysis(checkins, sessions);
+//   After:  const analysis = await runPhysiologicalAnalysisAsync(checkins, sessions);
+//   The sync version is still exported and unchanged — no call-site changes required.
+
+// djb2 hash — no btoa, no TextEncoder, safe in all environments
+function _djb2(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+    hash = hash >>> 0; // keep unsigned 32-bit
+  }
+  return hash.toString(36);
+}
+
+function _cacheKey(checkins, sessions) {
+  try {
+    const c = JSON.stringify(checkins.slice(0, 15).map(c => ({ d: c.date, r: c.recovery_score, h: c.hrv })));
+    const s = JSON.stringify((sessions || []).slice(0, 10).map(s => ({ d: s.date, st: s.strain_score })));
+    return 'physio_v1_' + _djb2(c + s);
+  } catch {
+    return null;
+  }
+}
+
+// In-memory fallback when localStorage is unavailable
+const _memCache = new Map();
+
+function _readCache(key, ttlMinutes) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > ttlMinutes * 60 * 1000) { localStorage.removeItem(key); return null; }
+    return data;
+  } catch {
+    const entry = _memCache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.ts > ttlMinutes * 60 * 1000) { _memCache.delete(key); return null; }
+    return entry.data;
+  }
+}
+
+function _writeCache(key, data, ttlMinutes) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // localStorage full or unavailable — fall back to memory, cap at 20 entries
+    if (_memCache.size >= 20) _memCache.delete(_memCache.keys().next().value);
+    _memCache.set(key, { ts: Date.now(), data });
+  }
+}
+
+function _runInWorker(checkins, sessions, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    let worker;
+    try {
+      worker = new Worker(new URL('./physio-worker.js', import.meta.url), { type: 'module' });
+    } catch (e) {
+      return reject(e);
+    }
+    const timer = setTimeout(() => {
+      worker.terminate();
+      reject(new Error('worker_timeout'));
+    }, timeoutMs);
+
+    worker.onmessage = (e) => {
+      clearTimeout(timer);
+      worker.terminate();
+      const { ok, result, error } = e.data || {};
+      if (ok) resolve(result);
+      else reject(new Error(error || 'worker_error'));
+    };
+    worker.onerror = (e) => {
+      clearTimeout(timer);
+      worker.terminate();
+      reject(new Error(e.message || 'worker_onerror'));
+    };
+    worker.postMessage({ checkins, sessions });
+  });
+}
+
+/**
+ * Async version of runPhysiologicalAnalysis.
+ * Uses a Web Worker (with 8s timeout) and localStorage cache (TTL: 15 min by default).
+ * Falls back to synchronous execution if Worker is unavailable or times out.
+ * Never throws — returns null on total failure.
+ *
+ * @param {Array} checkins
+ * @param {Array} [sessions=[]]
+ * @param {{ useWorker?: boolean, cacheTTLMinutes?: number }} [options]
+ * @returns {Promise<object|null>}
+ */
+export async function runPhysiologicalAnalysisAsync(
+  checkins,
+  sessions = [],
+  options = {}
+) {
+  const { useWorker = true, cacheTTLMinutes = 15 } = options;
+
+  const key = _cacheKey(checkins, sessions);
+  if (key) {
+    const cached = _readCache(key, cacheTTLMinutes);
+    if (cached) return cached;
+  }
+
+  let result = null;
+
+  if (useWorker && typeof Worker !== 'undefined') {
+    try {
+      result = await _runInWorker(checkins, sessions, 8000);
+    } catch (workerErr) {
+      console.warn('physio-worker failed, falling back to sync:', workerErr?.message);
+      try {
+        result = runPhysiologicalAnalysis(checkins, sessions);
+      } catch (syncErr) {
+        console.warn('runPhysiologicalAnalysis sync fallback failed:', syncErr?.message);
+        return null;
+      }
+    }
+  } else {
+    try {
+      result = runPhysiologicalAnalysis(checkins, sessions);
+    } catch (e) {
+      console.warn('runPhysiologicalAnalysis failed:', e?.message);
+      return null;
+    }
+  }
+
+  if (result && key) _writeCache(key, result, cacheTTLMinutes);
+  return result;
+}
+
 // ─── Sleep Consistency ────────────────────────────────────────────────────────
 
 export function calculateSleepConsistency(checkins) {
