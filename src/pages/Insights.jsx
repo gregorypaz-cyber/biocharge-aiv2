@@ -100,7 +100,8 @@ function calcDiscoveries(checkins, trainingSessions = []) {
   tryAdd(
     getPairs(c => c.stress ?? c.stress_level ?? null, c => c.sleep_score, 0), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
-      const highStress = arrA.filter((v, i) => v >= 4).map((v, i) => arrB[arrA.findIndex((x, j) => x >= 4 && j >= i)]).filter(v => v != null);
+      const highIdxs = arrA.map((v, i) => v >= 4 ? i : -1).filter(i => i !== -1);
+      const highStress = highIdxs.map(i => arrB[i]).filter(v => v != null);
       const delta = Math.round(Math.abs(mB - (avg(highStress) || mB)));
       return {
         icon: '😰', title: 'Stress afeta seu sono',
@@ -124,7 +125,8 @@ function calcDiscoveries(checkins, trainingSessions = []) {
   tryAdd(
     getPairs(c => c.hydration_liters ?? c.hydration ?? null, c => c.energy ?? c.energy_level ?? null, 0), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
-      const goodHydration = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const highIdxs = arrA.map((v, i) => v > mA ? i : -1).filter(i => i !== -1);
+      const goodHydration = highIdxs.map(i => arrB[i]).filter(v => v != null);
       const delta = parseFloat(Math.abs((avg(goodHydration) || mB) - mB).toFixed(1));
       return {
         icon: '💧', title: 'Hidratação e energia',

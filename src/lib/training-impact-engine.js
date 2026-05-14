@@ -174,7 +174,7 @@ export async function analyzeDelayedFatigue(checkins, sessions, todayCheckin) {
     const prevDay = sortedCheckins[i + 1];
     if (!nextDay.date || !prevDay.date) continue;
 
-    const prevSessions = sessions.filter(s => s.date === prevDay.date && s.intensity === 'hard' || s.intensity === 'very_hard');
+    const prevSessions = sessions.filter(s => s.date === prevDay.date && (s.intensity === 'hard' || s.intensity === 'very_hard'));
     if (prevSessions.length > 0 && nextDay.recovery_score < 65) {
       patterns.push({
         sport: prevSessions[0].sport,

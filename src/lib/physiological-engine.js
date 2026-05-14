@@ -12,6 +12,11 @@ export function movingAvg(checkins, key, days) {
   return vals.reduce((s, v) => s + v, 0) / vals.length;
 }
 
+function movingAvgRhr(checkins, days) {
+  const vals = checkins.slice(0, days).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0);
+  return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+}
+
 export function buildBaseline(checkins) {
   // Use training days only for performance metrics
   const training = checkins.filter(c => !c.rest_day);
@@ -23,9 +28,9 @@ export function buildBaseline(checkins) {
       d30: movingAvg(training, 'hrv', 30),
     },
     rhr: {
-      d7: (() => { const vals = training.slice(0,7).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; })(),
-      d14: (() => { const vals = training.slice(0,14).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; })(),
-      d30: (() => { const vals = training.slice(0,30).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0); return vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null; })(),
+      d7: movingAvgRhr(training, 7),
+      d14: movingAvgRhr(training, 14),
+      d30: movingAvgRhr(training, 30),
     },
     sleep: {
       d7: movingAvg(checkins, 'sleep_hours', 7),
@@ -315,12 +320,12 @@ export function detectCorrelations(checkins) {
     }
   }
 
-  // High RPE → Next day recovery
-  const highRpeDays = checkins.filter((c, i) => c.rpe >= 8 && i + 1 < checkins.length);
+  // High RPE → Next day recovery (checkins are DESC, so "next day" = idx - 1)
+  const highRpeDays = checkins.filter((c, i) => c.rpe >= 8 && i - 1 >= 0);
   if (highRpeDays.length >= 2) {
     const afterHighRpe = highRpeDays.map((_, i) => {
       const idx = checkins.indexOf(highRpeDays[i]);
-      return checkins[idx + 1];
+      return checkins[idx - 1];
     }).filter(Boolean);
     if (afterHighRpe.length >= 2) {
       const avgAfter = afterHighRpe.reduce((s, c) => s + (c.recovery_score || 0), 0) / afterHighRpe.length;
@@ -374,12 +379,12 @@ export function detectLaggedEffects(checkins) {
   const effects = [];
   if (checkins.length < 5) return effects;
 
-  // Check 48h effect (index i+2 in sorted desc array)
-  const intenseDays = checkins.map((c, i) => ({ c, i })).filter(({ c }) => c.rpe >= 8 && !c.rest_day);
+  // Check 48h effect (checkins are DESC, so "48h after" = i - 2)
+  const intenseDays = checkins.map((c, i) => ({ c, i })).filter(({ c, i }) => c.rpe >= 8 && !c.rest_day && i - 2 >= 0);
 
   if (intenseDays.length >= 2) {
     const recoveries48 = intenseDays
-      .map(({ i }) => checkins[i + 2])
+      .map(({ i }) => checkins[i - 2])
       .filter(Boolean)
       .map(c => c.recovery_score || 0);
 
@@ -395,8 +400,8 @@ export function detectLaggedEffects(checkins) {
     }
   }
 
-  // Night sleep after high RPE
-  const afterIntense = intenseDays.map(({ i }) => checkins[i + 1]).filter(Boolean);
+  // Night sleep after high RPE (checkins are DESC, so "next day" = i - 1)
+  const afterIntense = intenseDays.map(({ i }) => checkins[i - 1]).filter(Boolean);
   if (afterIntense.length >= 2) {
     const avgSleep = afterIntense.reduce((s, c) => s + (c.sleep_hours || 0), 0) / afterIntense.length;
     const baseAvgSleep = checkins.reduce((s, c) => s + (c.sleep_hours || 0), 0) / checkins.length;
@@ -704,7 +709,10 @@ export function calculateSleepConsistency(checkins) {
     .filter(c => c.sleep_start_time)
     .map(c => {
       const [h, m] = c.sleep_start_time.split(':').map(Number);
-      return h * 60 + m;
+      let mins = h * 60 + m;
+      // Normalize midnight wraparound: times after noon treated as negative (yesterday)
+      if (mins > 12 * 60) mins -= 24 * 60;
+      return mins;
     });
 
   if (withTimes.length < 5) return null;
