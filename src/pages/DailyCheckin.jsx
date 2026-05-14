@@ -16,6 +16,7 @@ import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert } from '@/lib/biocharge-utils';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
+import { QUERY_KEYS } from '@/lib/query-keys';
 
 function parseSleepDurationToHours(str) {
   if (!str || str.toString().trim() === '') return null;
@@ -66,11 +67,18 @@ function HRVField({ value, onChange }) {
       <Input
         type="number"
         step="1"
+        min={0}
+        max={250}
         value={value || ''}
         onChange={e => onChange(parseFloat(e.target.value) || null)}
+        onBlur={(e) => {
+          const v = parseFloat(e.target.value);
+          if (!isNaN(v) && (v < 0 || v > 250)) onChange(null);
+        }}
         placeholder="Ex: 48"
         className="bg-secondary border-border/40 font-mono"
       />
+      <p className="text-[10px] text-muted-foreground">Valor válido: 0–250 ms</p>
       <p className="text-[10px] text-muted-foreground">Valor da manhã, antes de se levantar</p>
     </div>
   );
@@ -157,8 +165,8 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.create(scores);
     },
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ['checkins', user?.email] });
-      await queryClient.refetchQueries({ queryKey: ['training-sessions', user?.email] });
+      await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+      await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
       toast.success(editData?.id ? '✅ Check-in atualizado!' : '✅ Check-in salvo!');
       if (editData?.id) {
         navigate('/history');
@@ -196,8 +204,8 @@ export default function DailyCheckin() {
       return base44.entities.DailyCheckin.update(existing.id, scores);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
-      queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
       toast.success('✅ Pós-treino salvo!');
       navigate('/today');
     },

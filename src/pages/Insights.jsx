@@ -8,6 +8,7 @@ import { runPhysiologicalAnalysis, calculateRunningEconomy, calculatePerformance
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
+import { buildCoachContext } from '@/lib/coach-context-builder';
 import { cn } from '@/lib/utils';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
@@ -303,76 +304,10 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
   const askCoach = async () => {
     const question = coachInput.trim() || coachQuestion.trim();
     if (!question) return;
-    const sanitizedQuestion = question.replace(/["""]/g, '').slice(0, 300);
     setCoachQuestion(question);
     setIsCoachThinking(true);
 
-    // Build real context from last 14 checkins
-    const last14 = computed.slice(0, 14);
-    const last7 = computed.slice(0, 7);
-
-    const validSleep = last7.map(c => c.sleep_hours).filter(v => v != null && v > 0 && v <= 12);
-    const validRecovery = last7.map(c => c.recovery_score).filter(v => v != null && v >= 0 && v <= 100);
-    const validSleepQuality = last7.map(c => c.sleep_quality ?? c.sleep_score).filter(v => v != null);
-
-    const avgSleep = validSleep.length ? parseFloat((validSleep.reduce((s, v) => s + v, 0) / validSleep.length).toFixed(1)) : null;
-    const avgRecovery7d = validRecovery.length ? Math.round(validRecovery.reduce((s, v) => s + v, 0) / validRecovery.length) : null;
-    const avgSleepQuality = validSleepQuality.length ? parseFloat((validSleepQuality.reduce((s, v) => s + v, 0) / validSleepQuality.length).toFixed(1)) : null;
-    const sleepDeficit = validSleep.length ? parseFloat(((7 * 7.5) - validSleep.reduce((s, v) => s + v, 0)).toFixed(1)) : null;
-
-    const latestCheckin = last14[0] || {};
-    const hrvLatest = last14.find(c => c.hrv != null)?.hrv ?? null;
-    const rhrLatest = last14.find(c => c.resting_hr != null)?.resting_hr ?? null;
-    const energyLatest = latestCheckin.energy ?? latestCheckin.energy_level ?? null;
-    const stressLatest = latestCheckin.stress ?? latestCheckin.stress_level ?? null;
-    const sorenessLatest = latestCheckin.muscle_soreness ?? latestCheckin.muscle_soreness_level ?? null;
-
-    // Training sessions this week
-    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-    const weekSessions = trainingSessions.filter(s => s.date && new Date(s.date + 'T12:00:00') >= weekAgo);
-    const weekStrainTotal = weekSessions.reduce((s, t) => s + (t.strain_score || 0), 0);
-    const sessionsList = weekSessions.map(s => `${s.sport} ${s.duration_minutes}min (strain ${s.strain_score || 0})`).join(', ') || 'nenhum registrado';
-
-    const formatList = (arr) => arr.map(v => `${v}h`).join(', ');
-    const formatRecovery = (arr) => arr.filter(v => v != null).map(v => String(v)).join(', ');
-
-    const last7Sessions = (trainingSessions || [])
-      .filter(s => { const d = new Date(s.date + 'T12:00:00'); const w = new Date(); w.setDate(w.getDate() - 7); return d >= w; })
-      .map(s => `${s.sport} ${s.duration_minutes}min strain:${s.strain_score || '?'}`)
-      .join(', ');
-
-    const systemContext = `Você é o Coach do BioCharge AI — especialista em fisiologia do exercício, recuperação e performance esportiva.
-
-DADOS REAIS DO ATLETA (use SOMENTE estes — nunca invente):
-━━━━━━━━━━━━━━━━━━━━━━
-Sono últimos 7 dias: ${computed.slice(0,7).map(c => `${c.sleep_hours||'?'}h`).join(', ')}
-Média de sono: ${avgSleep != null ? `${avgSleep}h/noite` : 'sem dados'}
-
-Recovery últimos 7 dias: ${validRecovery.length ? formatRecovery(validRecovery) : 'sem dados'}
-Média de recovery: ${avgRecovery7d != null ? String(avgRecovery7d) : 'sem dados'}
-
-HRV mais recente: ${hrvLatest != null ? `${hrvLatest}ms` : 'não informado'}
-FC de Repouso: ${rhrLatest != null ? `${rhrLatest}bpm` : 'não informado'}
-Energia hoje: ${energyLatest != null ? `${energyLatest}/5` : 'não informado'}
-Stress hoje: ${stressLatest != null ? `${stressLatest}/5` : 'não informado'}
-Dor muscular: ${sorenessLatest != null ? `${sorenessLatest}/5` : 'não informado'}
-
-Treinos últimos 7 dias: ${last7Sessions || 'nenhum registrado'}
-Strain total da semana: ${weekStrainTotal}
-Estado fisiológico: ${analysis?.physioState?.state ?? 'sem dados'}
-ACWR (risco de carga): ${analysis?.trainingLoad?.ratio ?? 'sem dados'}
-${sleepDeficit != null ? `Déficit de sono acumulado (7 dias): ${sleepDeficit > 0 ? `+${sleepDeficit}h` : `${sleepDeficit}h`}` : ''}
-
-REGRAS OBRIGATÓRIAS:
-━━━━━━━━━━━━━━━━━━━━
-1. Use SOMENTE os números acima — NUNCA invente dados
-2. Se um dado estiver ausente, diga "não tenho esse dado registrado"
-3. Responda em português brasileiro, direto e personalizado
-4. Máximo 4 parágrafos curtos
-5. Tom: coach experiente e humano, não médico genérico
-6. Sempre baseie recomendações nos dados reais fornecidos
-
-Pergunta do atleta: '${sanitizedQuestion}'`;
+    const systemContext = buildCoachContext({ checkins: computed, sessions: trainingSessions, analysis, question });
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
@@ -568,7 +503,7 @@ Pergunta do atleta: '${sanitizedQuestion}'`;
           </Button>
         </div>
         <div className="p-5">
-          <p className="text-[10px] text-muted-foreground mb-3">Seus dados são enviados ao modelo de IA para gerar análise personalizada.</p>
+          <p className="text-[10px] text-muted-foreground mb-3">Seus dados de saúde são enviados ao modelo de IA para gerar análise personalizada.</p>
           {computed.length < 3 ? (
             <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
           ) : aiInsight ? (
@@ -615,7 +550,9 @@ Pergunta do atleta: '${sanitizedQuestion}'`;
               <ReactMarkdown>{coachResponse}</ReactMarkdown>
             </motion.div>
           )}
-          <p className="text-[10px] text-muted-foreground">Seus dados são enviados ao modelo de IA para gerar análise personalizada.</p>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
+          </p>
           <div className="space-y-2">
             <Input
               placeholder="Pergunte ao seu coach..."

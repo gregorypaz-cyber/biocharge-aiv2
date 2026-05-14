@@ -9,6 +9,7 @@ import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } from '@/lib/training-impact-engine';
 import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
+import { QUERY_KEYS } from '@/lib/query-keys';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
@@ -31,16 +32,18 @@ export default function Today() {
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   const todaySessions = allSessions.filter(s => s.date === today);
   // Scores frescos da engine sobrepõem o DB para readiness/fatigue
-  const checkin = rawCheckin ? (() => {
-    const dbCheckin = rawCheckin;
-    const engineScores = computeCheckinScores(rawCheckin, checkins.slice(1), todaySessions);
-    return {
-      ...engineScores,
-      ...dbCheckin,
-      readiness_score: engineScores.readiness_score,
-      fatigue_score: engineScores.fatigue_score,
-    };
-  })() : null;
+  const engineScores = rawCheckin
+    ? computeCheckinScores(rawCheckin, checkins.slice(1), todaySessions)
+    : null;
+
+  const checkin = rawCheckin ? {
+    ...engineScores,
+    ...rawCheckin,
+    readiness_score: engineScores.readiness_score,
+    fatigue_score: engineScores.fatigue_score,
+    stress_score: engineScores.stress_score,
+    sleep_quality: engineScores.sleep_quality,
+  } : null;
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
@@ -247,8 +250,8 @@ export default function Today() {
           sessions={todaySessions}
           openAddSignal={openAddSignal}
           onUpdate={() => {
-            queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
-            queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
           }}
         />
       </div>
