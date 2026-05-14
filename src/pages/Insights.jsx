@@ -303,6 +303,7 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
   const askCoach = async () => {
     const question = coachInput.trim() || coachQuestion.trim();
     if (!question) return;
+    const sanitizedQuestion = question.replace(/["""]/g, '').slice(0, 300);
     setCoachQuestion(question);
     setIsCoachThinking(true);
 
@@ -371,7 +372,7 @@ REGRAS OBRIGATÓRIAS:
 5. Tom: coach experiente e humano, não médico genérico
 6. Sempre baseie recomendações nos dados reais fornecidos
 
-Pergunta do atleta: "${question}"`;
+Pergunta do atleta: '${sanitizedQuestion}'`;
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
