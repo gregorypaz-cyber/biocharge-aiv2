@@ -162,4 +162,81 @@ const result = calculateTrainingLoad(checkins, []);
 // All loads = 0 → chronicWeeklyAvg = 0 → ratio defaults to 1
 console.assert(result.ratio === 1, 'all-zero load should yield ratio 1');
 console.log('zero robustness:', result);
+```
+
+---
+
+---
+
+# Manual Test Checklist — getActionableRecs confidence badges
+
+`feat(ui): confidence badges + CTAs + narrative hooks (non-breaking)`
+
+---
+
+## Case 1 — confidence Alta (load + debt)
+
+```js
+import { getActionableRecs } from '../lib/physiological-engine.js';
+
+const today = { recovery_score: 80, hrv: 55 };
+const state = { state: 'Recovered' };
+const sleepDebt = { debt: 4 };
+const trainingLoad = { risk: 'low', ratio: 1.1 };
+
+const recs = getActionableRecs(today, state, sleepDebt, trainingLoad);
+console.assert(recs[0].confidence === 'Alta', 'should be Alta');
+console.assert(Array.isArray(recs[0].provenance), 'provenance should be array');
+```
+
+---
+
+## Case 2 — confidence Média (load only, no debt)
+
+```js
+const recs = getActionableRecs(
+  { recovery_score: 70 },
+  { state: 'Balanced' },
+  { debt: 0 },
+  { risk: 'low', ratio: 1.0 }
+);
+console.assert(recs[0].confidence === 'Média', 'should be Média');
+```
+
+---
+
+## Case 3 — confidence Baixa (no load data)
+
+```js
+const recs = getActionableRecs(
+  { recovery_score: 60 },
+  { state: 'Balanced' },
+  null,
+  null
+);
+console.assert(recs[0].confidence === 'Baixa', 'should be Baixa');
+```
+
+---
+
+## Case 4 — insufficient_data trainingLoad → Média, not Alta
+
+```js
+const recs = getActionableRecs(
+  { recovery_score: 60 },
+  { state: 'Balanced' },
+  { debt: 5 },
+  { risk: 'insufficient_data', ratio: null }
+);
+// hasLoad = false (risk === 'insufficient_data'), hasDebt = true → Média
+console.assert(recs[0].confidence === 'Média', 'insufficient_data should not yield Alta');
+```
+
+---
+
+## Case 5 — no recs crash (today/state null)
+
+```js
+const recs = getActionableRecs(null, null, null, null);
+console.assert(recs.length === 0, 'should return empty array without throwing');
 ``

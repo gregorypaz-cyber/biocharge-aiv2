@@ -464,38 +464,60 @@ export function getActionableRecs(today, state, sleepDebt, trainingLoad) {
 
   // Training recommendation
   if (physiState === 'Recovered' && recovery >= 80) {
-    recs.push({ icon: '🏋️', category: 'Treino', text: 'Dia ideal para alta intensidade — seu corpo está pronto para desafio.' });
+    recs.push({ id: 'train_high', icon: '🏋️', category: 'Treino', text: 'Dia ideal para alta intensidade — seu corpo está pronto para desafio.' });
   } else if (physiState === 'Balanced' || recovery >= 65) {
-    recs.push({ icon: '🚴', category: 'Treino', text: 'Intensidade moderada recomendada. Monitore como se sente durante o esforço.' });
+    recs.push({ id: 'train_moderate', icon: '🚴', category: 'Treino', text: 'Intensidade moderada recomendada. Monitore como se sente durante o esforço.' });
   } else if (physiState === 'Fatigued' || recovery < 55) {
-    recs.push({ icon: '🧘', category: 'Mobilidade', text: 'Priorize mobilidade e alongamento. Evite cargas altas hoje.' });
+    recs.push({ id: 'mobility', icon: '🧘', category: 'Mobilidade', text: 'Priorize mobilidade e alongamento. Evite cargas altas hoje.' });
   }
 
   if (physiState === 'Overreached') {
-    recs.push({ icon: '🛌', category: 'Recuperação', text: 'Descanso ativo necessário. Considere pelo menos 48h sem intensidade.' });
+    recs.push({ id: 'rest', icon: '🛌', category: 'Recuperação', text: 'Descanso ativo necessário. Considere pelo menos 48h sem intensidade.' });
   }
 
   // Sleep debt
   if (sleepDebt?.debt > 3) {
-    recs.push({ icon: '🌙', category: 'Sono', text: `Déficit de ${sleepDebt.debt}h detectado esta semana. Antecipe o horário de dormir esta noite.` });
+    recs.push({ id: 'sleep_debt', icon: '🌙', category: 'Sono', text: `Déficit de ${sleepDebt.debt}h detectado esta semana. Antecipe o horário de dormir esta noite.` });
   }
 
   // Hydration
   if ((today.hydration || 3) <= 2) {
-    recs.push({ icon: '💧', category: 'Hidratação', text: 'Seu padrão de hidratação está abaixo — mire em 35ml/kg de peso corporal hoje.' });
+    recs.push({ id: 'hydration', icon: '💧', category: 'Hidratação', text: 'Seu padrão de hidratação está abaixo — mire em 35ml/kg de peso corporal hoje.' });
   }
 
   // Stress
   if ((today.stress || 3) >= 4) {
-    recs.push({ icon: '🧠', category: 'Stress', text: 'Stress elevado — 10 minutos de respiração diafragmática ou meditação podem ajudar o HRV.' });
+    recs.push({ id: 'stress', icon: '🧠', category: 'Stress', text: 'Stress elevado — 10 minutos de respiração diafragmática ou meditação podem ajudar o HRV.' });
   }
 
   // Training load spike
   if (trainingLoad?.risk === 'high') {
-    recs.push({ icon: '⚠️', category: 'Carga', text: `Ratio aguda/crônica em ${trainingLoad.ratio} — risco de overreaching. Reduza o volume esta semana.` });
+    recs.push({ id: 'load_spike', icon: '⚠️', category: 'Carga', text: `Ratio aguda/crônica em ${trainingLoad.ratio} — risco de overreaching. Reduza o volume esta semana.` });
   }
 
-  return recs.slice(0, 4);
+  // Attach confidence + provenance to each rec (non-breaking, best-effort)
+  try {
+    const hasLoad = trainingLoad && trainingLoad.risk && trainingLoad.risk !== 'insufficient_data';
+    const hasDebt = sleepDebt && (sleepDebt.debt || 0) > 0;
+    const hasRatio = hasLoad && trainingLoad.ratio != null;
+
+    const confidence =
+      (hasLoad && (hasDebt || hasRatio)) ? 'Alta' :
+      (hasLoad || sleepDebt) ? 'Média' :
+      'Baixa';
+
+    const provenance = [
+      hasLoad ? 'training_load' : null,
+      hasDebt ? 'sleep_debt' : null,
+      today.hrv ? 'hrv' : null,
+      today.recovery_score ? 'recovery_score' : null,
+    ].filter(Boolean);
+
+    return recs.slice(0, 4).map(r => ({ ...r, confidence, provenance }));
+  } catch (e) {
+    console.warn('getActionableRecs: failed to attach confidence', e);
+    return recs.slice(0, 4);
+  }
 }
 
 // ─── Master Analysis ──────────────────────────────────────────────────────────
