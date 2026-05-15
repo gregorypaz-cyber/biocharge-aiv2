@@ -1,8 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, ChevronDown, ChevronUp, Check, Calendar } from 'lucide-react';
+import { Dumbbell, Check, Calendar, TrendingUp } from 'lucide-react';
 import { useMotionSafe } from '@/hooks/use-motion-safe';
 import { prescribeWorkout } from '../../lib/workout-prescription.js';
+import {
+  getUserIdOrDeviceId,
+  upsertDailySelection,
+  upsertDailyCompletion,
+  getFeedbackByDate,
+  getRecentFeedback,
+} from '../../services/workoutFeedbackService.js';
 
 // ─── Legacy body-state config (unchanged) ────────────────────────────────────
 const INTENSITY_MAP = {
@@ -56,7 +63,6 @@ const INTENSITY_MAP = {
 const STRAIN_ZONE = (v) =>
   v <= 9 ? '🟢 Leve' : v <= 13 ? '🟡 Moderado' : v <= 17 ? '🟠 Alto' : '🔴 Máximo';
 
-// ─── Confidence badge ─────────────────────────────────────────────────────────
 const CONF_STYLE = {
   Alta:  { bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
   Média: { bg: 'bg-yellow-500/15',  text: 'text-yellow-400'  },
@@ -67,19 +73,201 @@ const MODALITY_EMOJI = {
   Corrida: '🏃', Força: '🏋️', Mobilidade: '🧘', Recuperação: '🛌', Misto: '🔄',
 };
 
-// ─── Prescription block ───────────────────────────────────────────────────────
-function PrescriptionBlock({ presc, onScheduleOption, onCompleteOption, onSchedule }) {
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+function yesterdayKey() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+// ─── Yesterday Impact Banner ──────────────────────────────────────────────────
+function YesterdayImpact({ analysis }) {
+  const checkins = analysis?.checkins || [];
+  const today = checkins[0];
+  const yesterday = checkins[1];
+  if (!today || !yesterday) return null;
+
+  const parts = [];
+  if (today.recovery_score != null && yesterday.recovery_score != null) {
+    const d = Math.round(today.recovery_score - yesterday.recovery_score);
+    parts.push(`Recovery ${d >= 0 ? '+' : ''}${d}`);
+  }
+  if (today.hrv != null && yesterday.hrv != null && yesterday.hrv > 0) {
+    const d = Math.round(((today.hrv - yesterday.hrv) / yesterday.hrv) * 100);
+    parts.push(`HRV ${d >= 0 ? '+' : ''}${d}%`);
+  }
+  if (today.sleep_hours != null && yesterday.sleep_hours != null) {
+    const d = Math.round((today.sleep_hours - yesterday.sleep_hours) * 10) / 10;
+    parts.push(`Sono ${d >= 0 ? '+' : ''}${d}h`);
+  }
+  if (!parts.length) return null;
+
+  return (
+    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-primary/6 border border-primary/15">
+      <TrendingUp className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+      <p className="text-xs text-foreground/80">
+        <span className="font-semibold text-primary">Impacto de ontem:</span>{' '}
+        {parts.join(' · ')}
+      </p>
+    </div>
+  );
+}
+
+// ─── Completion Form ──────────────────────────────────────────────────────────
+function CompletionForm({ optKey, onSave, onCancel, saving }) {
+  const [rpe, setRpe] = useState(6);
+  const [notes, setNotes] = useState('');
+
+  return (
+    <div className="rounded-xl bg-secondary/50 border border-border/40 p-3 space-y-3">
+      <p className="text-xs font-semibold">Como foi o treino {optKey}?</p>
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] text-muted-foreground">RPE percebido</span>
+          <span className="text-xs font-bold text-primary">{rpe}/10</span>
+        </div>
+        <input
+          type="range" min={1} max={10} value={rpe}
+          onChange={e => setRpe(Number(e.target.value))}
+          className="w-full accent-primary h-1.5"
+          aria-label="RPE percebido"
+        />
+        <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+          <span>Fácil</span><span>Máximo</span>
+        </div>
+      </div>
+      <textarea
+        value={notes}
+        onChange={e => setNotes(e.target.value.slice(0, 140))}
+        placeholder="Notas opcionais... (máx 140)"
+        rows={2}
+        className="w-full text-xs bg-background/50 border border-border/40 rounded-lg p-2 resize-none text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40"
+        aria-label="Notas do treino"
+      />
+      <div className="flex gap-2">
+        <button
+          disabled={saving}
+          onClick={() => onSave(rpe, notes)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50 transition-all"
+        >
+          <Check className="w-3 h-3" /> {saving ? 'Salvando...' : 'Salvar'}
+        </button>
+        <button
+          onClick={onCancel}
+          className="px-3 py-1.5 rounded-lg bg-secondary border border-border text-xs text-muted-foreground hover:text-foreground transition-all"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Prescription Block ───────────────────────────────────────────────────────
+function PrescriptionBlock({
+  presc, analysis,
+  onScheduleOption, onCompleteOption, onSchedule,
+}) {
   const [selected, setSelected] = useState('A');
+  const [savingSelect, setSavingSelect] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
+  const [savingComplete, setSavingComplete] = useState(false);
+  const [savedToday, setSavedToday] = useState(false);
+  const [dbError, setDbError] = useState(false);
+  const [yesterdayFeedback, setYesterdayFeedback] = useState(null);
+  const [adaptHints, setAdaptHints] = useState([]);
+  const debounceRef = useRef(null);
+
   const opt = presc.options.find(o => o.key === selected) || presc.options[0];
   const conf = presc.summary.confidence;
   const confStyle = CONF_STYLE[conf] || CONF_STYLE.Baixa;
 
+  // Load yesterday feedback + recent for adaptation hints
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const userId = await getUserIdOrDeviceId();
+      const [yFb, recent] = await Promise.all([
+        getFeedbackByDate(userId, yesterdayKey()),
+        getRecentFeedback(userId, 14),
+      ]);
+      if (cancelled) return;
+
+      setYesterdayFeedback(yFb);
+
+      // Lightweight adaptation hints
+      const hints = [];
+      if (recent.length >= 3) {
+        const cCount = recent.filter(r => r.selected_option === 'C').length;
+        if (cCount / recent.length > 0.5) {
+          hints.push('Você costuma preferir treinos curtos — opção C pode ser a melhor escolha.');
+        }
+        const completed = recent.filter(r => r.completed && r.perceived_rpe != null);
+        if (completed.length >= 3) {
+          const avgRpe = completed.reduce((s, r) => s + r.perceived_rpe, 0) / completed.length;
+          if (avgRpe > 8) {
+            hints.push('RPE médio acima de 8 — considere reduzir a intensidade 1 nível.');
+          }
+        }
+      }
+      setAdaptHints(hints);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const persistSelection = async (key, option) => {
+    if (debounceRef.current) return;
+    setSavingSelect(true);
+    setDbError(false);
+    debounceRef.current = setTimeout(() => { debounceRef.current = null; }, 800);
+    const userId = await getUserIdOrDeviceId();
+    const evidence = analysis ? {
+      recovery: analysis.today?.recovery_score ?? null,
+      sleepDebtHours: analysis.sleepDebt?.debt ?? null,
+      trainingRatio: analysis.trainingLoad?.ratio ?? null,
+      trainingRisk: analysis.trainingLoad?.risk ?? null,
+      fatigue: analysis.today?.fatigue_score ?? null,
+      hrvDeltaPct: null,
+    } : null;
+    const result = await upsertDailySelection(userId, todayKey(), {
+      selected_option: key,
+      planned_duration_min: option.duration_min ?? null,
+      planned_intensity_type: option.intensity?.type ?? null,
+      planned_intensity_min: option.intensity?.range?.[0] ?? null,
+      planned_intensity_max: option.intensity?.range?.[1] ?? null,
+      evidence_snapshot: evidence,
+    });
+    if (!result) setDbError(true);
+    setSavingSelect(false);
+  };
+
+  const handleSelectOption = (key) => {
+    setSelected(key);
+    const opt = presc.options.find(o => o.key === key);
+    if (opt) persistSelection(key, opt);
+  };
+
+  const handleSaveCompletion = async (rpe, notes) => {
+    setSavingComplete(true);
+    setDbError(false);
+    const userId = await getUserIdOrDeviceId();
+    const result = await upsertDailyCompletion(userId, todayKey(), {
+      completed: true,
+      perceived_rpe: rpe,
+      notes: notes || null,
+    });
+    if (!result) setDbError(true);
+    else setSavedToday(true);
+    setSavingComplete(false);
+    setShowCompletion(false);
+    if (onCompleteOption) onCompleteOption(opt);
+  };
+
   const handleSchedule = () => {
     if (onScheduleOption) onScheduleOption(opt);
     else if (onSchedule) onSchedule(presc);
-  };
-  const handleComplete = () => {
-    if (onCompleteOption) onCompleteOption(opt);
   };
 
   return (
@@ -94,6 +282,14 @@ function PrescriptionBlock({ presc, onScheduleOption, onCompleteOption, onSchedu
         </span>
       </div>
 
+      {/* Yesterday impact */}
+      {yesterdayFeedback?.completed && <YesterdayImpact analysis={analysis} />}
+
+      {/* Adaptation hints */}
+      {adaptHints.map((hint, i) => (
+        <p key={i} className="text-[10px] text-yellow-400/80 italic px-1">💡 {hint}</p>
+      ))}
+
       {/* Option tabs */}
       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Opções de treino">
         {presc.options.map(o => {
@@ -104,8 +300,9 @@ function PrescriptionBlock({ presc, onScheduleOption, onCompleteOption, onSchedu
               role="radio"
               aria-checked={isActive}
               aria-label={`Opção ${o.key}: ${o.title}`}
-              onClick={() => setSelected(o.key)}
-              className={`rounded-xl p-2.5 text-left transition-all border ${
+              disabled={savingSelect}
+              onClick={() => handleSelectOption(o.key)}
+              className={`rounded-xl p-2.5 text-left transition-all border disabled:opacity-60 ${
                 isActive
                   ? 'border-primary/50 bg-primary/8'
                   : 'border-border/50 bg-secondary/50 hover:bg-secondary'
@@ -146,17 +343,14 @@ function PrescriptionBlock({ presc, onScheduleOption, onCompleteOption, onSchedu
               </span>
             )}
           </div>
-
-          {(opt.structure.warmup || opt.structure.main || opt.structure.cooldown) && (
+          {(opt.structure?.warmup || opt.structure?.main || opt.structure?.cooldown) && (
             <div className="space-y-1 text-xs text-muted-foreground">
               {opt.structure.warmup && <p>🔥 <span className="font-medium text-foreground/70">Aquecimento:</span> {opt.structure.warmup}</p>}
               {opt.structure.main && <p>💪 <span className="font-medium text-foreground/70">Principal:</span> {opt.structure.main}</p>}
               {opt.structure.cooldown && <p>🧊 <span className="font-medium text-foreground/70">Volta à calma:</span> {opt.structure.cooldown}</p>}
             </div>
           )}
-
           <p className="text-xs text-muted-foreground italic">{opt.rationale}</p>
-
           {opt.riskNote && (
             <p className="text-xs text-amber-400/90 flex items-center gap-1">
               <span>⚠️</span> {opt.riskNote}
@@ -165,8 +359,27 @@ function PrescriptionBlock({ presc, onScheduleOption, onCompleteOption, onSchedu
         </motion.div>
       </AnimatePresence>
 
+      {/* Completion form inline */}
+      <AnimatePresence>
+        {showCompletion && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <CompletionForm
+              optKey={selected}
+              saving={savingComplete}
+              onSave={handleSaveCompletion}
+              onCancel={() => setShowCompletion(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* CTAs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         {(onScheduleOption || onSchedule) && (
           <button
             onClick={handleSchedule}
@@ -176,16 +389,24 @@ function PrescriptionBlock({ presc, onScheduleOption, onCompleteOption, onSchedu
             <Calendar className="w-3.5 h-3.5" /> Agendar
           </button>
         )}
-        {onCompleteOption && (
+        {!savedToday && !showCompletion && (
           <button
-            onClick={handleComplete}
+            onClick={() => setShowCompletion(true)}
             aria-label={`Marcar opção ${opt.key} como feito`}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-all"
           >
             <Check className="w-3.5 h-3.5" /> Marcar como feito
           </button>
         )}
+        {savedToday && (
+          <span className="text-xs text-emerald-400 font-semibold">Salvo ✅</span>
+        )}
       </div>
+
+      {/* DB error notice */}
+      {dbError && (
+        <p className="text-[10px] text-amber-400/80">Não foi possível salvar agora. Tente novamente.</p>
+      )}
 
       {/* Safety disclaimer */}
       <p className="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/20 pt-2">
@@ -201,7 +422,7 @@ export default function WorkoutSuggestionCard({
   actionableRecs = [],
   strainTarget,
   currentStrain = 0,
-  // New optional props
+  // Prescription props
   analysis,
   workoutPrescription,
   userPrefs,
@@ -295,6 +516,7 @@ export default function WorkoutSuggestionCard({
         <div className="pt-3 border-t border-border/30">
           <PrescriptionBlock
             presc={presc}
+            analysis={analysis}
             onScheduleOption={onScheduleOption}
             onCompleteOption={onCompleteOption}
             onSchedule={onSchedule}

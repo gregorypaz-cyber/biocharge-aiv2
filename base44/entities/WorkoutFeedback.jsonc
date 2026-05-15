@@ -1,0 +1,80 @@
+{
+  "name": "WorkoutFeedback",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User ID or device ID"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the workout feedback (YYYY-MM-DD)"
+    },
+    "selected_option": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C"
+      ],
+      "description": "Chosen prescription option"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the workout was completed"
+    },
+    "perceived_rpe": {
+      "type": "number",
+      "description": "Perceived exertion (1-10)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Short user notes (max 140 chars)"
+    },
+    "planned_duration_min": {
+      "type": "number",
+      "description": "Planned duration in minutes"
+    },
+    "planned_intensity_type": {
+      "type": "string",
+      "enum": [
+        "strain",
+        "RPE"
+      ],
+      "description": "Intensity metric type"
+    },
+    "planned_intensity_min": {
+      "type": "number",
+      "description": "Intensity range min"
+    },
+    "planned_intensity_max": {
+      "type": "number",
+      "description": "Intensity range max"
+    },
+    "evidence_snapshot": {
+      "type": "string",
+      "description": "JSON snapshot of physiological evidence at selection time"
+    }
+  },
+  "required": [
+    "user_id",
+    "date",
+    "selected_option"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
