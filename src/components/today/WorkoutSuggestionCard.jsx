@@ -7,6 +7,7 @@ import {
   getUserIdOrDeviceId,
   upsertDailySelection,
   upsertDailyCompletion,
+  upsertDailyCommitment,
   getFeedbackByDate,
   getRecentFeedback,
 } from '../../services/workoutFeedbackService.js';
@@ -76,6 +77,16 @@ const MODALITY_EMOJI = {
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
+
+const SLOT_LABELS = { now: 'Agora', morning: 'Manhã', afternoon: 'Tarde', evening: 'Noite' };
+function humanizeSlot(slot) { return SLOT_LABELS[slot] || slot; }
+
+const SLOT_COPY = {
+  high:    'Janela aberta. Execute e evolua.',
+  medium:  'Consistência hoje. Vitória amanhã.',
+  low:     'Disciplina é recuar hoje para atacar amanhã.',
+};
+
 function yesterdayKey() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
@@ -280,6 +291,13 @@ function PrescriptionBlock({
   const [adaptHints, setAdaptHints] = useState([]);
   const debounceRef = useRef(null);
 
+  // Commitment states
+  const [showCommitmentPicker, setShowCommitmentPicker] = useState(false);
+  const [commitmentSlot, setCommitmentSlot] = useState(null);
+  const [commitmentStatus, setCommitmentStatus] = useState(null);
+  const [commitmentMsg, setCommitmentMsg] = useState(null);
+  const [commitmentSaving, setCommitmentSaving] = useState(false);
+
   const opt = presc.options.find(o => o.key === selected) || presc.options[0];
   const conf = presc.summary.confidence;
   const confStyle = CONF_STYLE[conf] || CONF_STYLE.Baixa;
@@ -341,12 +359,50 @@ function PrescriptionBlock({
     });
     if (!result) setDbError(true);
     setSavingSelect(false);
+    // Always open commitment picker after selection (even if DB failed)
+    setShowCommitmentPicker(true);
+    setCommitmentMsg(null);
   };
 
   const handleSelectOption = (key) => {
     setSelected(key);
     const opt = presc.options.find(o => o.key === key);
     if (opt) persistSelection(key, opt);
+  };
+
+  const handleCommitSlot = async (slot) => {
+    if (!['now', 'morning', 'afternoon', 'evening'].includes(slot)) return;
+    setCommitmentSaving(true);
+    try {
+      const userId = await getUserIdOrDeviceId();
+      await upsertDailyCommitment(userId, todayKey(), {
+        commitment_slot: slot,
+        commitment_status: 'committed',
+        committed_at: new Date().toISOString(),
+      });
+      setCommitmentSlot(slot);
+      setCommitmentStatus('committed');
+      setCommitmentMsg(`Compromisso marcado: ${humanizeSlot(slot)}. Agora execute.`);
+    } catch (err) {
+      console.warn('WorkoutSuggestionCard: handleCommitSlot error', err);
+      setCommitmentMsg('Não foi possível salvar agora — continue mesmo assim.');
+    }
+    setCommitmentSaving(false);
+    setShowCommitmentPicker(false);
+  };
+
+  const handleCancelCommitment = async () => {
+    try {
+      const userId = await getUserIdOrDeviceId();
+      await upsertDailyCommitment(userId, todayKey(), {
+        commitment_slot: commitmentSlot,
+        commitment_status: 'cancelled',
+      });
+    } catch (err) {
+      console.warn('WorkoutSuggestionCard: handleCancelCommitment error', err);
+    }
+    setCommitmentStatus('cancelled');
+    setCommitmentMsg('Cancelado. Replaneje quando estiver pronto.');
   };
 
   const handleSaveCompletion = async (rpe, notes) => {
@@ -359,7 +415,11 @@ function PrescriptionBlock({
       notes: notes || null,
     });
     if (!result) setDbError(true);
-    else setSavedToday(true);
+    else {
+      setSavedToday(true);
+      if (commitmentSlot) setCommitmentStatus('completed');
+      setCommitmentMsg('Executado. Bom trabalho. Volte amanhã para ver o impacto.');
+    }
     setSavingComplete(false);
     setShowCompletion(false);
     if (onCompleteOption) onCompleteOption(opt);
@@ -396,6 +456,69 @@ function PrescriptionBlock({
       {adaptHints.map((hint, i) => (
         <p key={i} className="text-[10px] text-yellow-400/80 italic px-1">💡 {hint}</p>
       ))}
+
+      {/* Commitment Picker */}
+      <AnimatePresence>
+        {showCommitmentPicker && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="rounded-xl border border-primary/25 bg-primary/5 p-3.5 space-y-3"
+          >
+            <p className="text-xs font-bold">
+              Compromisso rápido: quando você vai executar?
+            </p>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              {(() => {
+                const r = analysis?.today?.recovery_score ?? analysis?.today?.readiness_score ?? 50;
+                return r >= 70 ? SLOT_COPY.high : r >= 50 ? SLOT_COPY.medium : SLOT_COPY.low;
+              })()}
+            </p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[['now','Agora'],['morning','Manhã'],['afternoon','Tarde'],['evening','Noite']].map(([slot, label]) => (
+                <button
+                  key={slot}
+                  disabled={commitmentSaving}
+                  onClick={() => handleCommitSlot(slot)}
+                  className="px-2 py-2 rounded-lg bg-secondary border border-border text-[11px] font-semibold hover:bg-primary/10 hover:border-primary/40 disabled:opacity-50 transition-all"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              disabled={commitmentSaving}
+              onClick={() => setShowCommitmentPicker(false)}
+              className="text-[10px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              Pular
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Commitment status */}
+      {!showCommitmentPicker && commitmentStatus === 'committed' && commitmentSlot && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-secondary/60 border border-border/40">
+          <span className="text-[11px] text-foreground/80">
+            🎯 Compromisso: Opção {selected} · {humanizeSlot(commitmentSlot)}
+          </span>
+          <button
+            onClick={handleCancelCommitment}
+            className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+      {commitmentStatus === 'completed' && (
+        <p className="text-xs font-semibold text-emerald-400">Executado ✅ Consistência +1</p>
+      )}
+      {commitmentMsg && commitmentStatus !== 'completed' && commitmentStatus !== 'committed' && (
+        <p className="text-[10px] text-muted-foreground/80 italic">{commitmentMsg}</p>
+      )}
 
       {/* Option tabs */}
       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Opções de treino">
