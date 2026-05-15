@@ -411,7 +411,7 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
                 transition={{ type: 'spring', bounce: 0.5 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary border border-border/60 text-sm"
               >
-                <span>{b.icon}</span>
+                <span className="text-sm leading-none">{b.icon}</span>
                 <span className="text-xs font-medium">{b.label}</span>
               </motion.div>
             ))}

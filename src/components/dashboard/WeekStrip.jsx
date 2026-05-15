@@ -1,5 +1,15 @@
 import { motion } from 'framer-motion';
 import { format, subDays } from 'date-fns';
+
+function toHSLA(colorStr, alpha = 0.18) {
+  try {
+    if (!colorStr) return undefined;
+    const s = String(colorStr);
+    if (s.startsWith('hsl(')) return s.replace(/^hsl\(/, 'hsla(').replace(/\)$/, `, ${alpha})`);
+    if (s.startsWith('hsla(')) return s;
+    return s;
+  } catch { return colorStr; }
+}
 import { ptBR } from 'date-fns/locale';
 import { getZoneColor } from '@/lib/biocharge-utils';
 import { cn } from '@/lib/utils';
@@ -32,10 +42,13 @@ export default function WeekStrip({ data }) {
       </div>
       <div className="grid grid-cols-7 gap-1.5">
         {days.map(({ date, dayLabel, checkin }, i) => {
-          const score = checkin?.readiness_score ?? checkin?.recovery_score;
+          const score = checkin?.readiness_score ?? checkin?.recovery_score ?? null;
           const zone = checkin?.zone;
           const color = zone ? getZoneColor(zone) : 'hsl(210,20%,60%)';
           const isToday = i === 6;
+          const bgColor = toHSLA(color, 0.12);
+          const borderColor = toHSLA(color, 0.22);
+          const todayRing = isToday ? `0 0 0 2px ${toHSLA(color, 0.34)}` : undefined;
 
           return (
             <motion.div
@@ -51,24 +64,17 @@ export default function WeekStrip({ data }) {
               <div
                 className={cn(
                   'w-full aspect-square rounded-xl flex items-center justify-center text-xs font-bold font-mono transition-all',
-                  isToday && '',
                   !checkin && 'bg-secondary/50'
                 )}
-                style={
-                  color
-                    ? {
-                        backgroundColor: `${color}18`,
-                        color,
-                        border: `1px solid ${color}30`,
-                        ...(isToday && { boxShadow: `0 0 0 2px ${color}55, 0 0 0 4px hsl(var(--background))` }),
-                      }
-                    : isToday
-                    ? { boxShadow: '0 0 0 2px hsl(var(--border)), 0 0 0 4px hsl(var(--background))' }
-                    : {}
-                }
-                title={score ? `Prontidão: ${score}/100` : 'Sem dados'}
+                style={{
+                  backgroundColor: checkin ? bgColor : undefined,
+                  color: checkin ? color : undefined,
+                  border: checkin ? `1px solid ${borderColor}` : undefined,
+                  ...(isToday && todayRing ? { boxShadow: todayRing } : {}),
+                }}
+                title={checkin ? `Prontidão: ${score}/100` : 'Sem dados'}
               >
-                {score ?? '·'}
+                {(typeof score === 'number') ? score : '·'}
               </div>
             </motion.div>
           );

@@ -13,6 +13,16 @@ const recoveryLabel = (score) => {
   return 'Crítico — Corpo necessita descanso';
 };
 
+function toHSLA(colorStr, alpha = 0.18) {
+  try {
+    if (!colorStr) return undefined;
+    const s = String(colorStr);
+    if (s.startsWith('hsl(')) return s.replace(/^hsl\(/, 'hsla(').replace(/\)$/, `, ${alpha})`);
+    if (s.startsWith('hsla(')) return s;
+    return s;
+  } catch { return colorStr; }
+}
+
 export default function MorningRecoveryCard({ checkin, delta = null }) {
   const score = checkin.morning_recovery_score || checkin.recovery_score || 0;
   const zone = checkin.zone || 'yellow';
@@ -40,7 +50,7 @@ export default function MorningRecoveryCard({ checkin, delta = null }) {
       <div className="flex items-center gap-4">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center font-mono font-black text-2xl shrink-0"
-          style={{ backgroundColor: `${color}20`, color }}
+          style={{ backgroundColor: toHSLA(color, 0.20), color }}
         >
           {score}
         </div>

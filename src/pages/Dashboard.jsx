@@ -71,9 +71,19 @@ export default function Dashboard() {
 
   const RANGE_OPTIONS = [7, 14, 30];
 
+  function toHSLA(colorStr, alpha = 0.18) {
+    try {
+      if (!colorStr) return undefined;
+      const s = String(colorStr);
+      if (s.startsWith('hsl(')) return s.replace(/^hsl\(/, 'hsla(').replace(/\)$/, `, ${alpha})`);
+      if (s.startsWith('hsla(')) return s;
+      return s;
+    } catch { return colorStr; }
+  }
+
   const SERIES_TOGGLES = [
     { key: 'sleep', label: 'Sono', color: 'hsl(200,80%,55%)', active: showSleep, toggle: () => setShowSleep(v => !v) },
-    { key: 'fatigue', label: 'Fadiga', color: 'hsl(0,72%,55%)', active: showFatigue, toggle: () => setShowFatigue(v => !v) },
+    { key: 'fatigue', label: 'Fadiga', color: 'hsl(45,93%,58%)', active: showFatigue, toggle: () => setShowFatigue(v => !v) },
   ];
 
   return (
@@ -149,7 +159,7 @@ export default function Dashboard() {
                     ? 'border-white/20 text-foreground'
                     : 'border-border/30 text-muted-foreground opacity-50'
                 }`}
-                style={s.active ? { backgroundColor: s.color + '18', borderColor: s.color + '40', color: s.color } : {}}
+                style={s.active ? { backgroundColor: toHSLA(s.color, 0.12), borderColor: toHSLA(s.color, 0.28), color: s.color } : {}}
               >
                 <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: s.color }} />
                 {s.label}
