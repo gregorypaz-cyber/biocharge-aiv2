@@ -238,6 +238,8 @@ export default function Today() {
         actionableRecs={analysis?.actionableRecs || []}
         strainTarget={strainTarget}
         currentStrain={cappedStrain}
+        analysis={analysis}
+        userPrefs={user?.preferences || {}}
       />
 
       {/* Section 1 — Morning Recovery (fixed) */}
