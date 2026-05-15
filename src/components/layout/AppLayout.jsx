@@ -1,5 +1,4 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { LayoutDashboard, PlusCircle, Brain, Clock, Activity, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -16,7 +15,6 @@ export default function AppLayout() {
   const location = useLocation();
 
   return (
-    <TooltipProvider>
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
@@ -77,6 +75,5 @@ export default function AppLayout() {
         </div>
       </nav>
     </div>
-    </TooltipProvider>
   );
 }
