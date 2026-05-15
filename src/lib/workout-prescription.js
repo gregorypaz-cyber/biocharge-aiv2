@@ -306,9 +306,57 @@ function _insufficientDataOptions(time) {
   ];
 }
 
+// ─── Option scoring ───────────────────────────────────────────────────────────
+
+function scoreOptions(options, analysis, userPrefs, adaptationHint) {
+  const runFocus = _runFocus(userPrefs, analysis);
+  const freqC = adaptationHint?.freqC ?? 0;
+  const avgRPE = adaptationHint?.avgPerceivedRPE ?? null;
+  const recovery = analysis?.today?.recovery_score ?? analysis?.today?.readiness_score ?? null;
+  const ratio = analysis?.trainingLoad?.ratio ?? null;
+
+  return options.map(opt => {
+    let score = 50;
+    const explain = [];
+
+    // +20 if modality matches run focus
+    if (runFocus && ['Corrida', 'Misto'].includes(opt.modality)) {
+      score += 20;
+      explain.push({ feature: 'run_focus', impact: +20 });
+    }
+
+    // -25 if high intensity but avg RPE >= 8 historically
+    const maxIntensity = opt.intensity?.range?.[1];
+    if (avgRPE != null && avgRPE >= 8 && maxIntensity != null && maxIntensity >= 12) {
+      score -= 25;
+      explain.push({ feature: 'high_rpe_history', impact: -25 });
+    }
+
+    // +10 if shorter option preferred (freqC > 0.5) and this is option C or short
+    if (freqC > 0.5 && (opt.key === 'C' || (opt.duration_min != null && opt.duration_min <= 30))) {
+      score += 10;
+      explain.push({ feature: 'prefers_short', impact: +10 });
+    }
+
+    // +15 if high recovery and option is quality/competitive
+    if (recovery != null && recovery >= 80 && ['Corrida', 'Força'].includes(opt.modality) && opt.key === 'A') {
+      score += 15;
+      explain.push({ feature: 'high_recovery_quality', impact: +15 });
+    }
+
+    // +15 if high ratio and option is protective (Recuperação/Mobilidade)
+    if (ratio != null && ratio > 1.3 && ['Recuperação', 'Mobilidade'].includes(opt.modality)) {
+      score += 15;
+      explain.push({ feature: 'high_ratio_protective', impact: +15 });
+    }
+
+    return { ...opt, _score: Math.max(0, Math.min(100, score)), _explain: explain.slice(0, 3) };
+  });
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export function prescribeWorkout(analysis, userPrefs = {}) {
+export function prescribeWorkout(analysis, userPrefs = {}, opts = {}) {
   try {
     if (!analysis) return null;
 
@@ -358,6 +406,8 @@ export function prescribeWorkout(analysis, userPrefs = {}) {
     const stateTag = physioState.state || null;
     const riskTag = trainingRisk || null;
 
+    const adaptationHint = opts.adaptationHint ?? null;
+
     // ── Choose options ────────────────────────────────────────────────────────
     let options;
 
@@ -393,11 +443,40 @@ export function prescribeWorkout(analysis, userPrefs = {}) {
       }
     }
 
+    // ── Score options + apply adaptation ─────────────────────────────────────
+    options = scoreOptions(options, analysis, userPrefs, adaptationHint);
+
+    // Apply soft adaptation cap (15%) if adaptationHint provided
+    if (adaptationHint) {
+      options = options.map(opt => {
+        let adapted = { ...opt };
+        if (adapted.duration_min != null) {
+          adapted.duration_min = Math.max(15, Math.round(adapted.duration_min * 0.85));
+        }
+        if (adapted.intensity?.range) {
+          adapted.intensity = {
+            ...adapted.intensity,
+            range: adapted.intensity.range.map(v => Math.max(1, Math.round(v * 0.85))),
+          };
+        }
+        adapted.adaptationApplied = true;
+        adapted.adaptationReason = 'historic_adherence';
+        return adapted;
+      });
+    }
+
+    // Determine recommendedKey by highest score (stable sort, keep original order for ties)
+    const sorted = [...options].sort((a, b) => b._score - a._score);
+    const recommendedKey = sorted[0]?.key ?? 'A';
+    const explainTop = (sorted[0]?._explain || []).slice(0, 3);
+
     const result = {
       id: _uid(),
       date: today.date || _todayStr(),
       summary: { confidence, stateTag, riskTag },
       options,
+      recommendedKey,
+      explainTop,
       evidence: {
         recovery,
         fatigue,
