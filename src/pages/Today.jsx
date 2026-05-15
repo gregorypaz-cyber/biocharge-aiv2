@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
@@ -10,7 +10,7 @@ import { Plus, Zap, Dumbbell } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } from '@/lib/training-impact-engine';
-import { runPhysiologicalAnalysis } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysisAsync } from '@/lib/physiological-engine';
 import { QUERY_KEYS } from '@/lib/query-keys';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
@@ -67,8 +67,31 @@ export default function Today() {
 
   const isLoading = loadingCheckins || loadingSessions;
 
-  // Análise fisiológica para treino sugerido
-  const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null, [computed.length, allSessions.length]);
+  // Análise fisiológica async
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
+
+  const computedKey = computed.length + ':' + (computed[0]?.date || '');
+  const sessionsKey = allSessions.length + ':' + (allSessions[0]?.date || '');
+
+  useEffect(() => {
+    if (computed.length === 0) { setAnalysis(null); return; }
+    let cancelled = false;
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    runPhysiologicalAnalysisAsync(computed, allSessions, { useWorker: true, cacheTTLMinutes: 15 })
+      .then(result => { if (!cancelled) setAnalysis(result); })
+      .catch(err => {
+        if (!cancelled) {
+          console.warn('Today: analysis failed', err);
+          setAnalysisError(err?.message || 'analysis_failed');
+          setAnalysis(null);
+        }
+      })
+      .finally(() => { if (!cancelled) setAnalysisLoading(false); });
+    return () => { cancelled = true; };
+  }, [computedKey, sessionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const recoveryDelta = analysis?.baselineInsights?.find(i => i.label === 'Recovery')?.delta ?? null;
   const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
