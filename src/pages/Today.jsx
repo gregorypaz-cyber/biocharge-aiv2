@@ -6,7 +6,8 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } from '@/lib/training-impact-engine';
@@ -99,17 +100,20 @@ export default function Today() {
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
 
-  // Score único de prontidão com fallback
+  // Número grande exibido: "Prontidão" (readiness), com fallback
   const displayedScore = checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
-  const readinessFaixa = displayedScore >= 67 ? 'Alta' : displayedScore >= 34 ? 'Moderada' : 'Baixa';
+  // Para decisões de treino/targets, priorizar recovery_score quando disponível (alinha com prescribeWorkout)
+  const prescriptionScore = checkin?.recovery_score ?? displayedScore;
+  // Alinhado com a prescrição: Alta >=80, Moderada >=65, Baixa <65
+  const readinessFaixa = prescriptionScore >= 80 ? 'Alta' : prescriptionScore >= 65 ? 'Moderada' : 'Baixa';
 
   // Strain acumulado com cap 21
   const cappedStrain = Math.min(21, totalStrain);
 
   const strainTarget =
-    displayedScore >= 80 ? 16 :
-    displayedScore >= 67 ? 13 :
-    displayedScore >= 50 ? 10 :
+    prescriptionScore >= 80 ? 16 :
+    prescriptionScore >= 65 ? 13 :
+    prescriptionScore >= 50 ? 10 :
     7;
 
   if (isLoading) {
@@ -186,19 +190,47 @@ export default function Today() {
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prontidão da manhã</span>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              displayedScore >= 67 ? 'bg-emerald-500/15 text-emerald-400' :
-              displayedScore >= 34 ? 'bg-yellow-500/15 text-yellow-400' :
+              prescriptionScore >= 80 ? 'bg-emerald-500/15 text-emerald-400' :
+              prescriptionScore >= 65 ? 'bg-yellow-500/15 text-yellow-400' :
               'bg-red-500/15 text-red-400'
             }`}>{readinessFaixa}</span>
           </div>
-          <p className="text-3xl font-mono font-black">{displayedScore}</p>
+          <p className="text-3xl font-mono font-black flex items-center gap-2">
+            <span>{displayedScore}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button aria-label="Sobre Prontidão" className="text-muted-foreground">
+                  <Info className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Decisão do treino hoje: combina recuperação + sono + fadiga.
+              </TooltipContent>
+            </Tooltip>
+            {checkin?.recovery_score != null && (
+              <span className="text-sm font-medium text-muted-foreground ml-3 flex items-center gap-1">
+                (Recuperação {checkin.recovery_score}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button aria-label="Sobre Recuperação" className="text-muted-foreground">
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    Estado do corpo ao acordar (sono + sinais fisiológicos).
+                  </TooltipContent>
+                </Tooltip>
+                )
+              </span>
+            )}
+          </p>
           <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
                 width: `${displayedScore}%`,
-                backgroundColor: displayedScore >= 67 ? 'hsl(142,70%,50%)' :
-                                 displayedScore >= 34 ? 'hsl(45,93%,58%)' :
+                backgroundColor: prescriptionScore >= 80 ? 'hsl(142,70%,50%)' :
+                                 prescriptionScore >= 65 ? 'hsl(45,93%,58%)' :
                                  'hsl(0,72%,55%)'
               }}
             />
