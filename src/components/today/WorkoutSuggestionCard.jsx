@@ -165,6 +165,106 @@ function CompletionForm({ optKey, onSave, onCancel, saving }) {
   );
 }
 
+// ─── Daily Insight Block ──────────────────────────────────────────────────────
+function DailyInsightBlock({ presc, analysis, onMarkDone }) {
+  if (!presc || !analysis) return null;
+
+  try {
+    const recovery = analysis.today?.recovery_score ?? analysis.today?.readiness_score ?? null;
+    const hrvDelta = (() => {
+      const ins = analysis.baselineInsights?.find(i => i.label === 'HRV');
+      return ins?.delta ?? null;
+    })();
+    const sleepDebt = analysis.sleepDebt?.debt ?? null;
+    const ratio = analysis.trainingLoad?.ratio ?? null;
+    const risk = analysis.trainingLoad?.risk ?? null;
+    const state = analysis.physioState?.state ?? null;
+    const recommendedKey = presc.recommendedKey ?? null;
+
+    // Confidence badge recalculated locally
+    const hasLoad = risk && risk !== 'insufficient_data';
+    const hasHRV = hrvDelta != null;
+    const hasSleep = sleepDebt != null;
+    const conf = hasLoad && (hasHRV || hasSleep) ? 'Alta' : hasLoad || hasSleep ? 'Média' : 'Baixa';
+    const confStyle = CONF_STYLE[conf] || CONF_STYLE.Baixa;
+
+    // Headline
+    const isLowRecovery = recovery != null && recovery < 55;
+    const headline = recommendedKey && !isLowRecovery
+      ? `Hoje o plano é ${recommendedKey}. Execute e some pontos.`
+      : 'Hoje é disciplina: recuar para atacar amanhã.';
+
+    // Evidence bullets (only available data)
+    const bullets = [];
+    if (recovery != null) bullets.push(`Recovery: ${recovery} pts`);
+    if (hrvDelta != null) bullets.push(`HRV delta: ${hrvDelta >= 0 ? '+' : ''}${hrvDelta}%`);
+    if (sleepDebt != null && sleepDebt > 0) bullets.push(`Dívida sono: ${sleepDebt}h`);
+    if (ratio != null && ratio > 0) bullets.push(`ACWR: ${ratio.toFixed(2)}`);
+
+    if (!bullets.length) return null;
+
+    // Micro-ação
+    const microAction = (() => {
+      if (state === 'Overreached' || risk === 'high') return '1 min: deite, respire fundo 4-4-4-4, libere tensão.';
+      if (state === 'Fatigued' || isLowRecovery) return '1 min: hidrate-se agora — 500ml antes do treino.';
+      if (recovery != null && recovery >= 80) return '1 min: ative o core com 10 dead bugs para preparar o sistema.';
+      return '1 min: faça 5 respirações profundas e defina a intenção do treino.';
+    })();
+
+    // Contrafactual
+    const counterfactual = (() => {
+      if (ratio != null && ratio > 1.3) return 'Se escolher C hoje, tende a proteger o recovery (+3~6 pts em 48h).';
+      if (recovery != null && recovery >= 80) return 'Se fizer A e dormir +30min, tende a manter a janela verde amanhã.';
+      return null;
+    })();
+
+    return (
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary">Insight do Dia</span>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>{conf}</span>
+        </div>
+
+        {/* Headline */}
+        <p className="text-sm font-bold leading-snug">{headline}</p>
+
+        {/* Evidence bullets */}
+        <ul className="space-y-0.5">
+          {bullets.map((b, i) => (
+            <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="w-1 h-1 rounded-full bg-primary/50 shrink-0" />
+              {b}
+            </li>
+          ))}
+        </ul>
+
+        {/* Counterfactual */}
+        {counterfactual && (
+          <p className="text-[11px] text-foreground/60 italic border-l-2 border-primary/30 pl-2">{counterfactual}</p>
+        )}
+
+        {/* Micro-ação */}
+        <p className="text-[11px] text-foreground/70">⚡ {microAction}</p>
+
+        {/* Trigger + CTA */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
+          <p className="text-[10px] text-muted-foreground/70">Marque o RPE depois. Amanhã você vê o impacto.</p>
+          <button
+            onClick={onMarkDone}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold whitespace-nowrap hover:bg-primary/90 transition-all"
+          >
+            <Check className="w-3 h-3" /> Marcar feito
+          </button>
+        </div>
+      </div>
+    );
+  } catch (e) {
+    console.warn('DailyInsightBlock render error', e);
+    return null;
+  }
+}
+
 // ─── Prescription Block ───────────────────────────────────────────────────────
 function PrescriptionBlock({
   presc, analysis,
@@ -272,6 +372,13 @@ function PrescriptionBlock({
 
   return (
     <div className="space-y-4">
+      {/* Daily Insight Block */}
+      <DailyInsightBlock
+        presc={presc}
+        analysis={analysis}
+        onMarkDone={() => setShowCompletion(true)}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
