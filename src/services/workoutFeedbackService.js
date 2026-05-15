@@ -85,6 +85,8 @@ export async function upsertDailySelection(userId, dateKey, payload) {
 export async function upsertDailyCompletion(userId, dateKey, payload) {
   try {
     const existing = await findRecord(userId, dateKey);
+    const isCompleting = payload.completed === true;
+    const currentCommitmentStatus = existing?.commitment_status ?? null;
     const data = {
       user_id: userId,
       date: dateKey,
@@ -93,6 +95,11 @@ export async function upsertDailyCompletion(userId, dateKey, payload) {
       notes: payload.notes ?? null,
       // preserve selected_option if already set
       ...(existing?.selected_option ? { selected_option: existing.selected_option } : { selected_option: 'A' }),
+      // mark commitment as completed (unless already cancelled)
+      ...(isCompleting && {
+        commitment_status: currentCommitmentStatus === 'cancelled' ? 'cancelled' : 'completed',
+        completed_at: new Date().toISOString(),
+      }),
     };
     if (existing?.id) {
       return await base44.entities.WorkoutFeedback.update(existing.id, data);
@@ -100,6 +107,39 @@ export async function upsertDailyCompletion(userId, dateKey, payload) {
     return await base44.entities.WorkoutFeedback.create(data);
   } catch (err) {
     console.warn('workoutFeedbackService: upsertDailyCompletion error', err);
+    return null;
+  }
+}
+
+// ─── Upsert: commitment ───────────────────────────────────────────────────────
+
+const VALID_SLOTS = ['now', 'morning', 'afternoon', 'evening'];
+
+/**
+ * Set or update the user's training commitment slot for the day.
+ * payload: { commitment_slot, commitment_status?, committed_at? }
+ */
+export async function upsertDailyCommitment(userId, dateKey, payload) {
+  try {
+    if (!VALID_SLOTS.includes(payload.commitment_slot)) {
+      console.warn('workoutFeedbackService: invalid commitment_slot', payload.commitment_slot);
+      return null;
+    }
+    const existing = await findRecord(userId, dateKey);
+    const data = {
+      user_id: userId,
+      date: dateKey,
+      commitment_slot: payload.commitment_slot,
+      commitment_status: payload.commitment_status ?? 'committed',
+      committed_at: payload.committed_at ?? new Date().toISOString(),
+      ...(existing?.selected_option ? { selected_option: existing.selected_option } : { selected_option: 'A' }),
+    };
+    if (existing?.id) {
+      return await base44.entities.WorkoutFeedback.update(existing.id, data);
+    }
+    return await base44.entities.WorkoutFeedback.create(data);
+  } catch (err) {
+    console.warn('workoutFeedbackService: upsertDailyCommitment error', err);
     return null;
   }
 }
