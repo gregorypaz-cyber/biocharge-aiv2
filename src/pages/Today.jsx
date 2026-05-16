@@ -22,6 +22,9 @@ import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutSuggestionCard from '@/components/today/WorkoutSuggestionCard';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
+import SecondaryMetrics from '@/components/today/SecondaryMetrics';
+import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
+import { buildCardLayout, resolveWorkoutIntensity } from '@/utils/priorityEngine';
 
 export default function Today() {
   const queryClient = useQueryClient();
@@ -186,6 +189,254 @@ export default function Today() {
   // Paleta fria quando em modo recuperação/sobrecarga
   const isRestMode = phase === 'OVERLOAD' || phase === 'RECOVERY_DAY';
 
+  // ── Priority Engine ────────────────────────────────────────────────────────
+  const workoutIntensity = useMemo(
+    () => resolveWorkoutIntensity(analysis, null),
+    [analysis]
+  );
+  const scheduledSport = todaySessions[0]?.sport ?? enrichedCheckin?.current_body_state ?? undefined;
+
+  const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
+    if (!enrichedCheckin) return { primary: [], secondary: [] };
+    return buildCardLayout({
+      phase,
+      workoutIntensity,
+      scheduledSport,
+      hasWorkoutSessions: todaySessions.length > 0,
+      hasAnalysis: !!analysis,
+      hasHrvAnomaly: !!analysis?.hrvAnomaly,
+      hasNarrative: !!analysis?.narrative,
+      hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
+    });
+  }, [phase, workoutIntensity, scheduledSport, todaySessions.length, analysis, enrichedCheckin, morningRecovery]); // eslint-disable-line
+
+  /** Renderiza um card pelo seu id, usando o descriptor para mutações */
+  function renderCard(desc) {
+    if (!desc || desc.action === 'exclude') return null;
+
+    const workoutProps = {
+      checkin: enrichedCheckin,
+      actionableRecs: analysis?.actionableRecs || [],
+      strainTarget,
+      currentStrain: cappedStrain,
+      analysis,
+      userPrefs: user?.preferences || {},
+    };
+
+    switch (desc.id) {
+      case 'execution':
+        return <ExecutionCard key="execution" />;
+      case 'workout':
+        return desc.action === 'mutate'
+          ? <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
+          : <WorkoutSuggestionCard key="workout" {...workoutProps} />;
+      case 'morning_recovery':
+        return <MorningRecoveryCard key="morning_recovery" checkin={enrichedCheckin} delta={recoveryDelta} />;
+      case 'sleep_forecast':
+        return <SleepForecastCard key="sleep_forecast" checkin={enrichedCheckin} />;
+      case 'training_sessions':
+        return (
+          <div key="training_sessions" className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}>
+            <TrainingSessionsList
+              checkin={enrichedCheckin}
+              sessions={todaySessions}
+              openAddSignal={openAddSignal}
+              onUpdate={() => {
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+              }}
+            />
+          </div>
+        );
+      case 'narrative':
+        return analysis?.narrative ? <NarrativeCard key="narrative" narrative={analysis.narrative} /> : null;
+      case 'why_score':
+        return (analysis?.whyScore?.length > 0)
+          ? <WhyScoreCard key="why_score" whyScore={analysis.whyScore} recoveryScore={displayedScore} />
+          : null;
+      case 'current_state':
+        return <CurrentStateCard key="current_state" checkin={enrichedCheckin} totalStrain={totalStrain} />;
+      case 'hrv_anomaly':
+        return analysis?.hrvAnomaly ? (
+          <motion.div
+            key="hrv_anomaly"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-2xl border p-4 flex gap-3 ${
+              analysis.hrvAnomaly.alert.type === 'critical'
+                ? 'border-red-500/40 bg-red-500/8'
+                : 'border-yellow-500/40 bg-yellow-500/8'
+            }`}
+          >
+            <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
+            <div>
+              <p className={`text-sm font-semibold ${
+                analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
+              }`}>{analysis.hrvAnomaly.alert.title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
+            </div>
+          </motion.div>
+        ) : null;
+      case 'recovery_demand':
+        return (enrichedCheckin.recovery_demand || 0) > morningRecovery ? (
+          <motion.div
+            key="recovery_demand"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
+          >
+            <span className="text-xl">🚨</span>
+            <div>
+              <p className="text-sm font-semibold text-red-400">Carga acima da recuperação disponível</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Demanda: {enrichedCheckin.recovery_demand} vs Prontidão: {displayedScore}. Priorize descanso e sono.
+              </p>
+            </div>
+          </motion.div>
+        ) : null;
+      case 'post_workout_cta':
+        return todaySessions.length > 0 ? (
+          <Link
+            key="post_workout_cta"
+            to="/checkin?mode=post"
+            className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">🏁</span>
+              <div>
+                <p className="text-sm font-semibold">Registrar pós-treino</p>
+                <p className="text-xs text-muted-foreground">~30s · melhora seus insights do dia</p>
+              </div>
+            </div>
+            <span className="text-primary text-sm font-bold">→</span>
+          </Link>
+        ) : null;
+      default:
+        return null;
+    }
+  }
+
+  // ── ExecutionCard (inline sub-component — usa closure do escopo acima) ───
+  function ExecutionCard() {
+    return (
+      <motion.div
+        key={phase + '-card'}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
+      >
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prontidão da manhã</span>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              prescriptionScore >= 80 ? 'bg-emerald-500/15 text-emerald-400' :
+              prescriptionScore >= 65 ? 'bg-yellow-500/15 text-yellow-400' :
+              'bg-red-500/15 text-red-400'
+            }`}>{readinessFaixa}</span>
+          </div>
+          <p className="text-3xl font-mono font-black flex items-center gap-2">
+            <span>{displayedScore}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button aria-label="Sobre Prontidão" className="text-muted-foreground">
+                  <Info className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Decisão do treino hoje: combina recuperação + sono + fadiga.
+              </TooltipContent>
+            </Tooltip>
+            {checkin?.recovery_score != null && (
+              <span className="text-sm font-medium text-muted-foreground ml-3 flex items-center gap-1">
+                (Recuperação {checkin.recovery_score}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button aria-label="Sobre Recuperação" className="text-muted-foreground">
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    Estado do corpo ao acordar (sono + sinais fisiológicos).
+                  </TooltipContent>
+                </Tooltip>
+                )
+              </span>
+            )}
+          </p>
+          <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${displayedScore}%`,
+                backgroundColor: isRestMode
+                  ? 'hsl(215,30%,45%)'
+                  : prescriptionScore >= 80 ? 'hsl(142,70%,50%)'
+                  : prescriptionScore >= 65 ? 'hsl(45,93%,58%)'
+                  : 'hsl(0,72%,55%)'
+              }}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Strain acumulado</p>
+            <p className={`text-xl font-mono font-bold ${
+              cappedStrain >= 18 ? 'text-red-400' :
+              cappedStrain >= 14 ? 'text-orange-400' :
+              cappedStrain >= 10 ? 'text-yellow-400' :
+              'text-emerald-400'
+            }`}>⚡ {cappedStrain}</p>
+          </div>
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Capacidade restante</p>
+            <p className="text-xl font-bold">
+              {enrichedCheckin.remaining_capacity
+                ? { High: 'Alta', Moderate: 'Moderada', Low: 'Baixa', Minimal: 'Mínima' }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity
+                : '—'}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">ACWR</p>
+            {analysis?.trainingLoad?.risk === 'insufficient_data' || analysis?.trainingLoad?.ratio == null ? (
+              <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
+            ) : (
+              <>
+                <p className={`text-xl font-mono font-bold ${
+                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
+                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
+                  'text-emerald-400'
+                }`}>{analysis.trainingLoad.ratio.toFixed(2)}</p>
+                <p className={`text-[10px] mt-0.5 ${
+                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
+                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
+                  'text-emerald-400'
+                }`}>
+                  {analysis.trainingLoad.ratio > 1.5 ? 'Alto risco' :
+                   analysis.trainingLoad.ratio > 1.3 ? 'Moderado' : 'Seguro'}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+        {phaseCfg.showCta ? (
+          <button
+            onClick={() => setOpenAddSignal(v => v + 1)}
+            className={cn('w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all', phaseCfg.ctaClass)}
+          >
+            <CtaIcon className="w-4 h-4" /> {phaseCfg.ctaLabel}
+          </button>
+        ) : (
+          <button
+            onClick={() => setOpenAddSignal(v => v + 1)}
+            className={cn('w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60', phaseCfg.ctaClass)}
+          >
+            <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
+          </button>
+        )}
+      </motion.div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-4 max-w-2xl mx-auto">
@@ -275,237 +526,13 @@ export default function Today() {
         </span>
       </div>
 
-      {/* ── Section 0 — Execution card (above the fold) ───────────────────── */}
-      <motion.div
-        key={phase + '-card'}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
-      >
-        {/* Readiness row */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prontidão da manhã</span>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              prescriptionScore >= 80 ? 'bg-emerald-500/15 text-emerald-400' :
-              prescriptionScore >= 65 ? 'bg-yellow-500/15 text-yellow-400' :
-              'bg-red-500/15 text-red-400'
-            }`}>{readinessFaixa}</span>
-          </div>
-          <p className="text-3xl font-mono font-black flex items-center gap-2">
-            <span>{displayedScore}</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button aria-label="Sobre Prontidão" className="text-muted-foreground">
-                  <Info className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                Decisão do treino hoje: combina recuperação + sono + fadiga.
-              </TooltipContent>
-            </Tooltip>
-            {checkin?.recovery_score != null && (
-              <span className="text-sm font-medium text-muted-foreground ml-3 flex items-center gap-1">
-                (Recuperação {checkin.recovery_score}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button aria-label="Sobre Recuperação" className="text-muted-foreground">
-                      <Info className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    Estado do corpo ao acordar (sono + sinais fisiológicos).
-                  </TooltipContent>
-                </Tooltip>
-                )
-              </span>
-            )}
-          </p>
-          <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${displayedScore}%`,
-                backgroundColor: isRestMode
-                  ? 'hsl(215,30%,45%)'
-                  : prescriptionScore >= 80 ? 'hsl(142,70%,50%)'
-                  : prescriptionScore >= 65 ? 'hsl(45,93%,58%)'
-                  : 'hsl(0,72%,55%)'
-              }}
-            />
-          </div>
-        </div>
+      {/* ── Primary cards (máx 3) — renderizados pela Priority Engine ───── */}
+      {primaryCards.map(desc => renderCard(desc))}
 
-        {/* Metrics grid */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl bg-secondary p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Strain acumulado</p>
-            <p className={`text-xl font-mono font-bold ${
-              cappedStrain >= 18 ? 'text-red-400' :
-              cappedStrain >= 14 ? 'text-orange-400' :
-              cappedStrain >= 10 ? 'text-yellow-400' :
-              'text-emerald-400'
-            }`}>⚡ {cappedStrain}</p>
-          </div>
-          <div className="rounded-2xl bg-secondary p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Capacidade restante</p>
-            <p className="text-xl font-bold">
-              {enrichedCheckin.remaining_capacity
-                ? { High: 'Alta', Moderate: 'Moderada', Low: 'Baixa', Minimal: 'Mínima' }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity
-                : '—'}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-secondary p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">ACWR</p>
-            {analysis?.trainingLoad?.risk === 'insufficient_data' || analysis?.trainingLoad?.ratio == null ? (
-              <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
-            ) : (
-              <>
-                <p className={`text-xl font-mono font-bold ${
-                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
-                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
-                  'text-emerald-400'
-                }`}>{analysis.trainingLoad.ratio.toFixed(2)}</p>
-                <p className={`text-[10px] mt-0.5 ${
-                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
-                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
-                  'text-emerald-400'
-                }`}>
-                  {analysis.trainingLoad.ratio > 1.5 ? 'Alto risco' :
-                   analysis.trainingLoad.ratio > 1.3 ? 'Moderado' : 'Seguro'}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* ── CTA primário — transmutado por DayPhase ──────────────────────── */}
-        {phaseCfg.showCta ? (
-          <button
-            onClick={() => setOpenAddSignal(v => v + 1)}
-            className={cn('w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all', phaseCfg.ctaClass)}
-          >
-            <CtaIcon className="w-4 h-4" /> {phaseCfg.ctaLabel}
-          </button>
-        ) : (
-          <button
-            onClick={() => setOpenAddSignal(v => v + 1)}
-            className={cn('w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60', phaseCfg.ctaClass)}
-          >
-            <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
-          </button>
-        )}
-      </motion.div>
-
-      {/* ── Section 0.5 — Workout Suggestion + Morning Recovery ──────────── */}
-      {isRestMode ? (
-        <>
-          <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
-          <SleepForecastCard checkin={enrichedCheckin} />
-          <WorkoutSuggestionCard
-            checkin={enrichedCheckin}
-            actionableRecs={analysis?.actionableRecs || []}
-            strainTarget={strainTarget}
-            currentStrain={cappedStrain}
-            analysis={analysis}
-            userPrefs={user?.preferences || {}}
-          />
-        </>
-      ) : (
-        <>
-          <WorkoutSuggestionCard
-            checkin={enrichedCheckin}
-            actionableRecs={analysis?.actionableRecs || []}
-            strainTarget={strainTarget}
-            currentStrain={cappedStrain}
-            analysis={analysis}
-            userPrefs={user?.preferences || {}}
-          />
-          <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
-        </>
-      )}
-
-      {/* HRV Anomaly Alert */}
-      {analysis?.hrvAnomaly && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`rounded-2xl border p-4 flex gap-3 ${
-            analysis.hrvAnomaly.alert.type === 'critical'
-              ? 'border-red-500/40 bg-red-500/8'
-              : 'border-yellow-500/40 bg-yellow-500/8'
-          }`}
-        >
-          <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
-          <div>
-            <p className={`text-sm font-semibold ${
-              analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
-            }`}>{analysis.hrvAnomaly.alert.title}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Physiological Narrative */}
-      {analysis?.narrative && <NarrativeCard narrative={analysis.narrative} />}
-
-      {/* Why Score */}
-      {analysis?.whyScore && analysis.whyScore.length > 0 && (
-        <WhyScoreCard whyScore={analysis.whyScore} recoveryScore={displayedScore} />
-      )}
-
-      {/* Section 2 — Training Sessions */}
-      <div className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}>
-        <TrainingSessionsList
-          checkin={enrichedCheckin}
-          sessions={todaySessions}
-          openAddSignal={openAddSignal}
-          onUpdate={() => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-          }}
-        />
-      </div>
-
-      {/* Section 3 — Current State */}
-      <CurrentStateCard checkin={enrichedCheckin} totalStrain={totalStrain} />
-
-      {/* Section 4 — Recovery Demand alert */}
-      {(enrichedCheckin.recovery_demand || 0) > morningRecovery && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
-        >
-          <span className="text-xl">🚨</span>
-          <div>
-            <p className="text-sm font-semibold text-red-400">Carga acima da recuperação disponível</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Demanda: {enrichedCheckin.recovery_demand} vs Prontidão: {displayedScore}. Priorize descanso e sono para evitar fadiga acumulada.
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Section 4.5 — CTA pós-treino */}
-      {todaySessions.length > 0 && (
-        <Link
-          to="/checkin?mode=post"
-          className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">🏁</span>
-            <div>
-              <p className="text-sm font-semibold">Registrar pós-treino</p>
-              <p className="text-xs text-muted-foreground">~30s · melhora seus insights do dia</p>
-            </div>
-          </div>
-          <span className="text-primary text-sm font-bold">→</span>
-        </Link>
-      )}
-
-      {/* Section 5 — Sleep Forecast */}
-      {!isRestMode && <SleepForecastCard checkin={enrichedCheckin} />}
+      {/* ── Secondary cards — agrupados no expansível ─────────────────────── */}
+      <SecondaryMetrics count={secondaryCards.filter(d => d.action !== 'exclude').length}>
+        {secondaryCards.map(desc => renderCard(desc))}
+      </SecondaryMetrics>
     </div>
   );
 }
