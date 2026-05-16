@@ -673,6 +673,29 @@ function PrescriptionBlock({
   );
 }
 
+// ─── Tomorrow prediction ─────────────────────────────────────────────────────
+function predictTomorrow({ analysis, intent }) {
+  if (!analysis) return null;
+
+  const ratio = analysis.trainingLoad?.ratio ?? 1;
+  const sleepDebt = analysis.sleepDebtHours ?? 0;
+  const state = analysis.physioState?.state;
+
+  if (intent === 'recovery') {
+    return { trend: 'up', message: 'Recuperação deve melhorar amanhã' };
+  }
+
+  if (ratio > 1.4) {
+    return { trend: 'down', message: 'Carga alta hoje pode reduzir sua recuperação amanhã' };
+  } else if (ratio < 0.9 && sleepDebt < 2) {
+    return { trend: 'up', message: 'Boa chance de melhorar a recuperação amanhã' };
+  } else if (state === 'Fatigued') {
+    return { trend: 'down', message: 'Sinais de fadiga indicam recuperação mais lenta' };
+  } else {
+    return { trend: 'stable', message: 'Tendência de manutenção do estado atual' };
+  }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function WorkoutSuggestionCard({
   checkin,
@@ -693,6 +716,7 @@ export default function WorkoutSuggestionCard({
   const { initial, transition: reducedTransition } = useMotionSafe();
 
   const [historyHint, setHistoryHint] = useState(null);
+  const prediction = predictTomorrow({ analysis, intent });
 
   useEffect(() => {
     async function loadHistory() {
@@ -751,6 +775,24 @@ export default function WorkoutSuggestionCard({
       {historyHint && (
         <div className="text-xs text-muted-foreground mb-2">
           {historyHint}
+        </div>
+      )}
+
+      {/* Tomorrow prediction */}
+      {prediction && (
+        <div className={`text-xs mt-3 flex items-center gap-2 ${
+          prediction.trend === 'up'
+            ? 'text-emerald-400'
+            : prediction.trend === 'down'
+            ? 'text-yellow-400'
+            : 'text-muted-foreground'
+        }`}>
+          <span>
+            {prediction.trend === 'up' && '⬆️'}
+            {prediction.trend === 'down' && '⚠️'}
+            {prediction.trend === 'stable' && '➡️'}
+          </span>
+          <span>{prediction.message}</span>
         </div>
       )}
 
