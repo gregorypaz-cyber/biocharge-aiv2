@@ -24,6 +24,7 @@ import NarrativeCard from '@/components/intelligence/NarrativeCard';
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
+import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import { buildCardLayout, resolveWorkoutIntensity } from '@/utils/priorityEngine';
 
 export default function Today() {
@@ -128,7 +129,7 @@ export default function Today() {
     hasSessions:   todaySessions.length > 0,
   } : null;
 
-  const { intent, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
+  const { intent, locked, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
 
   // ── Design-token map per phase ───────────────────────────────────────────
   const PHASE_CONFIG = {
@@ -182,7 +183,10 @@ export default function Today() {
     },
   };
 
-  const phase     = Phase ? (dayPhase ?? 'PLANNING') : (intent === 'recovery' ? 'RECOVERY_DAY' : 'PLANNING');
+  // Se locked=true (usuário declarou dia de descanso), força RECOVERY_DAY independente do engine
+  const phase     = (locked && intent === 'recovery')
+    ? 'RECOVERY_DAY'
+    : Phase ? (dayPhase ?? 'PLANNING') : (intent === 'recovery' ? 'RECOVERY_DAY' : 'PLANNING');
   const phaseCfg  = PHASE_CONFIG[phase] ?? PHASE_CONFIG.PLANNING;
   const CtaIcon   = phaseCfg.ctaIcon;
 
@@ -512,19 +516,8 @@ export default function Today() {
         </motion.div>
       )}
 
-      {/* ── Intent toggle ─────────────────────────────────────────────────── */}
-      <div className="flex gap-2 items-center">
-        <button
-          type="button"
-          onClick={() => setDayIntent(intent === 'recovery' ? 'training' : 'recovery')}
-          className="px-3 py-1 rounded-xl bg-secondary text-sm font-semibold"
-        >
-          {intent === 'recovery' ? 'Voltar para treino' : 'Mudar para recuperação'}
-        </button>
-        <span className="text-xs text-muted-foreground ml-auto">
-          {intent === 'training' ? 'Modo treino' : intent === 'recovery' ? 'Modo recuperação' : 'Indeciso'}
-        </span>
-      </div>
+      {/* ── QuickIntentEdit ───────────────────────────────────────────────── */}
+      <QuickIntentEdit />
 
       {/* ── Primary cards (máx 3) — renderizados pela Priority Engine ───── */}
       {primaryCards.map(desc => renderCard(desc))}
