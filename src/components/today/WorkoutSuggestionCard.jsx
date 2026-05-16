@@ -813,23 +813,34 @@ export default function WorkoutSuggestionCard({
         </div>
       </div>
 
+      {/* Microcopy contextual */}
+      <p className="text-xs font-semibold text-foreground/70">
+        {intent === 'recovery'
+          ? 'Hoje o ganho está na recuperação'
+          : intent === 'training'
+          ? 'Hoje é um bom dia para estímulo'
+          : 'Você pode decidir ao longo do dia'}
+      </p>
+
+      <div className="h-px bg-border/40" />
+
       {/* Yesterday reflection */}
       {yesterdayFeedback?.completed && (
-        <div className="text-xs text-muted-foreground mt-3">
+        <div className="text-xs text-muted-foreground">
           Ontem você treinou (RPE {yesterdayFeedback.perceived_rpe})
         </div>
       )}
 
       {/* History-based hint */}
       {historyHint && (
-        <div className="text-xs text-muted-foreground mb-2">
+        <div className="text-xs text-muted-foreground">
           {historyHint}
         </div>
       )}
 
       {/* Tomorrow prediction */}
       {prediction && (
-        <div className={`text-xs mt-3 flex items-center gap-2 ${
+        <div className={`text-xs flex items-center gap-2 ${
           prediction.trend === 'up'
             ? 'text-emerald-400'
             : prediction.trend === 'down'
@@ -845,8 +856,10 @@ export default function WorkoutSuggestionCard({
         </div>
       )}
 
-      {/* Legacy content (always shown) */}
-      <p className="text-sm text-foreground/85 leading-relaxed">{cfg.detail}</p>
+      <div className="h-px bg-border/40" />
+
+      {/* Legacy content */}
+      <p className="text-xs text-muted-foreground leading-relaxed">{cfg.detail}</p>
 
       {strainTarget != null && (
         <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5">
