@@ -196,6 +196,28 @@ export default function Today() {
         </span>
       </div>
 
+      {intent === 'recovery' && (
+        <div className="rounded-2xl p-4 border border-primary/20 bg-primary/5">
+          <p className="text-sm font-semibold">Hoje o foco é recuperação</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Seu corpo responde melhor ao descanso hoje. Ajustamos seu plano para manutenção e recuperação.
+          </p>
+          {analysis && (
+            <div className="mt-3 text-xs text-muted-foreground space-y-1">
+              {analysis.trainingLoad?.ratio && (
+                <div>ACWR: {analysis.trainingLoad.ratio.toFixed(2)}</div>
+              )}
+              {analysis.sleepDebtHours != null && (
+                <div>Déficit de sono: {analysis.sleepDebtHours.toFixed(1)}h</div>
+              )}
+              {analysis.physioState?.state && (
+                <div>Estado: {analysis.physioState.state}</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Section 0 — Execução do dia (above the fold) */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
