@@ -521,6 +521,26 @@ function PrescriptionBlock({
         <p className="text-[10px] text-muted-foreground/80 italic">{commitmentMsg}</p>
       )}
 
+      {/* Explanation layer */}
+      {(() => {
+        const explanation = [];
+        if (analysis?.trainingLoad?.ratio > 1.3) explanation.push('Carga recente elevada');
+        if (analysis?.sleepDebtHours > 2) explanation.push('Déficit de sono acumulado');
+        if (analysis?.physioState?.state === 'Fatigued') explanation.push('Sinais de fadiga');
+        if (analysis?.physioState?.state === 'Recovered') explanation.push('Boa recuperação disponível');
+        return explanation.length > 0 ? (
+          <div className="text-xs text-muted-foreground mb-3">
+            {explanation.join(' • ')}
+          </div>
+        ) : null;
+      })()}
+
+      {intent === 'recovery' && (
+        <div className="text-xs text-primary mb-2">
+          Ajustado pela sua decisão de recuperar hoje
+        </div>
+      )}
+
       {/* Option tabs */}
       {intent === 'recovery' && (
         <div className="text-xs text-primary mb-3 font-medium">
