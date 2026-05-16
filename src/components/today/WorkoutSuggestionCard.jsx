@@ -551,6 +551,7 @@ function PrescriptionBlock({
         {presc.options.map(o => {
           const isActive = o.key === selected;
           const displayTitle = intent === 'recovery' ? `Leve • ${o.title}` : o.title;
+          const impact = predictOptionImpact(o, analysis, intent);
           return (
             <button
               key={o.key}
@@ -574,6 +575,17 @@ function PrescriptionBlock({
               </p>
               {o.duration_min && (
                 <p className="text-[10px] text-muted-foreground mt-0.5">{o.duration_min}min</p>
+              )}
+              {impact && (
+                <div className={`text-xs mt-1 ${
+                  impact === 'up' ? 'text-emerald-400' :
+                  impact === 'down' ? 'text-yellow-400' :
+                  'text-muted-foreground'
+                }`}>
+                  {impact === 'up' && '⬆️ recuperação provável'}
+                  {impact === 'down' && '⚠️ pode reduzir recuperação'}
+                  {impact === 'stable' && '➡️ manutenção'}
+                </div>
               )}
             </button>
           );
@@ -671,6 +683,19 @@ function PrescriptionBlock({
       </p>
     </div>
   );
+}
+
+// ─── Option impact prediction ────────────────────────────────────────────────
+function predictOptionImpact(option, analysis, intent) {
+  if (!analysis) return null;
+
+  const ratio = analysis.trainingLoad?.ratio ?? 1;
+
+  if (intent === 'recovery') return 'up';
+  if (ratio > 1.4) return 'down';
+  if (option?.duration_min > 40) return 'down';
+  if (option?.duration_min < 25) return 'up';
+  return 'stable';
 }
 
 // ─── Tomorrow prediction ─────────────────────────────────────────────────────
