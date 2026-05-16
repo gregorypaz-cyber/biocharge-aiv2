@@ -692,6 +692,26 @@ export default function WorkoutSuggestionCard({
   const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
   const { initial, transition: reducedTransition } = useMotionSafe();
 
+  const [historyHint, setHistoryHint] = useState(null);
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const userId = await getUserIdOrDeviceId();
+        const recent = await getRecentFeedback(userId, 7);
+        if (!recent || recent.length < 3) return;
+        const completed = recent.filter(r => r.completed && r.perceived_rpe != null);
+        if (completed.length < 3) return;
+        const avgRpe = completed.reduce((sum, r) => sum + r.perceived_rpe, 0) / completed.length;
+        if (avgRpe > 8) setHistoryHint('Você tem treinado com intensidade alta recentemente');
+        else if (avgRpe < 5) setHistoryHint('Seus treinos recentes foram leves');
+      } catch (e) {
+        console.warn('history load failed', e);
+      }
+    }
+    loadHistory();
+  }, []);
+
   const presc = useMemo(() => {
     if (workoutPrescription !== undefined) return workoutPrescription;
     if (analysis) return prescribeWorkout(analysis, userPrefs || {});
@@ -726,6 +746,13 @@ export default function WorkoutSuggestionCard({
           {cfg.label}
         </div>
       </div>
+
+      {/* History-based hint */}
+      {historyHint && (
+        <div className="text-xs text-muted-foreground mb-2">
+          {historyHint}
+        </div>
+      )}
 
       {/* Legacy content (always shown) */}
       <p className="text-sm text-foreground/85 leading-relaxed">{cfg.detail}</p>
