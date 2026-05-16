@@ -17,6 +17,7 @@ import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert } from '@/lib/biocharge-utils';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
+import { useDayContext } from '@/lib/dayContext';
 
 function parseSleepDurationToHours(str) {
   if (!str || str.toString().trim() === '') return null;
@@ -161,6 +162,8 @@ export default function DailyCheckin() {
 
   const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
+
+  const { intent: dayIntent, setDayIntent } = useDayContext();
 
   const isRestDay = form.rest_day;
   const preview = computeCheckinScores(form);
@@ -380,6 +383,38 @@ export default function DailyCheckin() {
 
       <div className="px-1">
         <p className="text-sm text-muted-foreground">Leva ~2 min e gera seu plano do dia</p>
+      </div>
+
+      {/* Day Intent */}
+      <div className="rounded-2xl border border-border/60 bg-card p-4 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold">Qual será o foco do seu dia?</span>
+          <span className="text-xs text-muted-foreground">Opcional</span>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setDayIntent('training')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${dayIntent === 'training' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+          >
+            Vou treinar
+          </button>
+          <button
+            type="button"
+            onClick={() => setDayIntent('undecided')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${dayIntent === 'undecided' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+          >
+            Ainda não decidi
+          </button>
+          <button
+            type="button"
+            onClick={() => setDayIntent('recovery')}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${dayIntent === 'recovery' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
+          >
+            Hoje será recuperação
+          </button>
+        </div>
+        <p className="text-xs mt-2 text-muted-foreground">Você pode mudar isso a qualquer momento.</p>
       </div>
 
       {/* Live Preview */}
