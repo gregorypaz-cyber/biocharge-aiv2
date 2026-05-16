@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -48,8 +48,6 @@ export default function Today() {
     stress_score: engineScores.stress_score,
     sleep_quality: engineScores.sleep_quality,
   } : null;
-
-  const { intent, setDayIntent } = useDayContext();
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
@@ -110,14 +108,83 @@ export default function Today() {
   // Alinhado com a prescrição: Alta >=80, Moderada >=65, Baixa <65
   const readinessFaixa = prescriptionScore >= 80 ? 'Alta' : prescriptionScore >= 65 ? 'Moderada' : 'Baixa';
 
-  // Strain acumulado com cap 21
-  const cappedStrain = Math.min(21, totalStrain);
-
   const strainTarget =
     prescriptionScore >= 80 ? 16 :
     prescriptionScore >= 65 ? 13 :
     prescriptionScore >= 50 ? 10 :
     7;
+
+  const cappedStrain = Math.min(21, totalStrain);
+
+  // ── DayPhase-aware context ───────────────────────────────────────────────
+  const dayMetrics = enrichedCheckin ? {
+    currentStrain: cappedStrain,
+    strainTarget,
+    readiness:     prescriptionScore,
+    hrv:           enrichedCheckin.hrv ?? enrichedCheckin.hrv_manual ?? null,
+    hasSessions:   todaySessions.length > 0,
+  } : null;
+
+  const { intent, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
+
+  // ── Design-token map per phase ───────────────────────────────────────────
+  const PHASE_CONFIG = {
+    PLANNING: {
+      headerTitle:    'Hoje',
+      headerSub:      'Organize seu treino e recuperação',
+      ctaLabel:       'Adicionar treino',
+      ctaIcon:        Dumbbell,
+      ctaClass:       'bg-primary text-primary-foreground hover:bg-primary/90',
+      showCta:        true,
+      accentBorder:   'border-border',
+      accentBg:       'bg-card',
+      bannerClass:    null,
+      bannerText:     null,
+    },
+    OPTIMAL_LOAD: {
+      headerTitle:    'Missão cumprida',
+      headerSub:      'Carga adequada para hoje. Agora é descansar e absorver o estímulo.',
+      ctaLabel:       'Adicionar treino',
+      ctaIcon:        Dumbbell,
+      ctaClass:       'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+      showCta:        true,
+      accentBorder:   'border-border',
+      accentBg:       'bg-card',
+      bannerClass:    null,
+      bannerText:     null,
+    },
+    OVERLOAD: {
+      headerTitle:    'Carga atingida',
+      headerSub:      'Foco em descansar o sistema nervoso. Mais estímulo agora atrasa a recuperação.',
+      ctaLabel:       'Iniciar recuperação',
+      ctaIcon:        Heart,
+      ctaClass:       'bg-secondary text-muted-foreground hover:bg-secondary/80 border border-border',
+      showCta:        false,
+      accentBorder:   'border-blue-500/20',
+      accentBg:       'bg-card',
+      bannerClass:    'border-orange-500/30 bg-orange-500/5 text-orange-400',
+      bannerText:     '⚡ Carga acima do alvo — adicionar mais treino hoje aumenta risco de overtraining.',
+    },
+    RECOVERY_DAY: {
+      headerTitle:    'Dia de recuperação',
+      headerSub:      'Seu corpo pede descanso. Deixe a adaptação acontecer.',
+      ctaLabel:       'Iniciar recuperação',
+      ctaIcon:        Moon,
+      ctaClass:       'bg-secondary text-muted-foreground hover:bg-secondary/80 border border-border',
+      showCta:        false,
+      accentBorder:   'border-blue-500/15',
+      accentBg:       'bg-card',
+      bannerClass:    'border-blue-500/25 bg-blue-500/5 text-blue-300',
+      bannerText:     '🌙 Recuperação ativa — hidrate-se, durma bem e evite estresse adicional.',
+    },
+  };
+
+  const phase     = Phase ? (dayPhase ?? 'PLANNING') : (intent === 'recovery' ? 'RECOVERY_DAY' : 'PLANNING');
+  const phaseCfg  = PHASE_CONFIG[phase] ?? PHASE_CONFIG.PLANNING;
+  const CtaIcon   = phaseCfg.ctaIcon;
+
+  // Paleta fria quando em modo recuperação/sobrecarga
+  const isRestMode = phase === 'OVERLOAD' || phase === 'RECOVERY_DAY';
 
   if (isLoading) {
     return (
@@ -160,14 +227,19 @@ export default function Today() {
   }
 
   return (
-    <div className={cn("space-y-4 max-w-2xl mx-auto transition-all duration-500", isSilentMode && "opacity-90")}>
-      {/* Header */}
+    <div className={cn(
+      "space-y-4 max-w-2xl mx-auto transition-all duration-500",
+      isSilentMode && "opacity-90",
+      isRestMode && "saturate-[0.7]"
+    )}>
+
+      {/* ── Header (DayPhase-aware microcopy) ─────────────────────────────── */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Organize seu treino e recuperação</p>
+        <h1 className="text-2xl font-black tracking-tight">{phaseCfg.headerTitle}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
         {checkin?.created_at ? (
           <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-            <span>Check-in registrado às</span>
+            <span>Check-in às</span>
             <span className="font-medium text-foreground/60">
               {new Date(checkin.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </span>
@@ -175,15 +247,22 @@ export default function Today() {
         ) : checkin?.date ? (
           <p className="text-[10px] text-muted-foreground mt-0.5">Check-in de hoje registrado</p>
         ) : null}
-        {isSilentMode && (
-          <p className="text-xs text-amber-400/80 flex items-center gap-1.5 mt-1">
-            <span aria-label="Atenção">⚠️</span>
-            Modo recuperação — priorize descanso hoje
-          </p>
-        )}
       </div>
 
-      <div className="flex gap-2 mt-2 mb-3">
+      {/* ── Phase banner (OVERLOAD / RECOVERY_DAY only) ───────────────────── */}
+      {phaseCfg.bannerText && (
+        <motion.div
+          key={phase}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', phaseCfg.bannerClass)}
+        >
+          {phaseCfg.bannerText}
+        </motion.div>
+      )}
+
+      {/* ── Intent toggle ─────────────────────────────────────────────────── */}
+      <div className="flex gap-2 items-center">
         <button
           type="button"
           onClick={() => setDayIntent(intent === 'recovery' ? 'training' : 'recovery')}
@@ -196,34 +275,14 @@ export default function Today() {
         </span>
       </div>
 
-      {intent === 'recovery' && (
-        <div className="rounded-2xl p-4 border border-primary/20 bg-primary/5">
-          <p className="text-sm font-semibold">Hoje o foco é recuperação</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Seu corpo responde melhor ao descanso hoje. Ajustamos seu plano para manutenção e recuperação.
-          </p>
-          {analysis && (
-            <div className="mt-3 text-xs text-muted-foreground space-y-1">
-              {analysis.trainingLoad?.ratio && (
-                <div>ACWR: {analysis.trainingLoad.ratio.toFixed(2)}</div>
-              )}
-              {analysis.sleepDebtHours != null && (
-                <div>Déficit de sono: {analysis.sleepDebtHours.toFixed(1)}h</div>
-              )}
-              {analysis.physioState?.state && (
-                <div>Estado: {analysis.physioState.state}</div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Section 0 — Execução do dia (above the fold) */}
+      {/* ── Section 0 — Execution card (above the fold) ───────────────────── */}
       <motion.div
+        key={phase + '-card'}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl border border-border bg-card p-5 space-y-4"
+        className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
       >
+        {/* Readiness row */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Prontidão da manhã</span>
@@ -264,17 +323,20 @@ export default function Today() {
           </p>
           <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
             <div
-              className="h-full rounded-full transition-all"
+              className="h-full rounded-full transition-all duration-700"
               style={{
                 width: `${displayedScore}%`,
-                backgroundColor: prescriptionScore >= 80 ? 'hsl(142,70%,50%)' :
-                                 prescriptionScore >= 65 ? 'hsl(45,93%,58%)' :
-                                 'hsl(0,72%,55%)'
+                backgroundColor: isRestMode
+                  ? 'hsl(215,30%,45%)'
+                  : prescriptionScore >= 80 ? 'hsl(142,70%,50%)'
+                  : prescriptionScore >= 65 ? 'hsl(45,93%,58%)'
+                  : 'hsl(0,72%,55%)'
               }}
             />
           </div>
         </div>
 
+        {/* Metrics grid */}
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-secondary p-3">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Strain acumulado</p>
@@ -317,16 +379,26 @@ export default function Today() {
           </div>
         </div>
 
-        <button
-          onClick={() => setOpenAddSignal(v => v + 1)}
-          className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all"
-        >
-          <Dumbbell className="w-4 h-4" /> Adicionar treino
-        </button>
+        {/* ── CTA primário — transmutado por DayPhase ──────────────────────── */}
+        {phaseCfg.showCta ? (
+          <button
+            onClick={() => setOpenAddSignal(v => v + 1)}
+            className={cn('w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all', phaseCfg.ctaClass)}
+          >
+            <CtaIcon className="w-4 h-4" /> {phaseCfg.ctaLabel}
+          </button>
+        ) : (
+          <button
+            onClick={() => setOpenAddSignal(v => v + 1)}
+            className={cn('w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60', phaseCfg.ctaClass)}
+          >
+            <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
+          </button>
+        )}
       </motion.div>
 
-      {/* Section 0.5 — Treino Sugerido + Morning Recovery (order by intent) */}
-      {intent === 'recovery' ? (
+      {/* ── Section 0.5 — Workout Suggestion + Morning Recovery ──────────── */}
+      {isRestMode ? (
         <>
           <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
           <SleepForecastCard checkin={enrichedCheckin} />
@@ -383,7 +455,7 @@ export default function Today() {
       )}
 
       {/* Section 2 — Training Sessions */}
-      <div className="rounded-2xl border border-border bg-card p-4">
+      <div className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}>
         <TrainingSessionsList
           checkin={enrichedCheckin}
           sessions={todaySessions}
@@ -395,7 +467,7 @@ export default function Today() {
         />
       </div>
 
-      {/* Section 3 — Current State (dynamic) */}
+      {/* Section 3 — Current State */}
       <CurrentStateCard checkin={enrichedCheckin} totalStrain={totalStrain} />
 
       {/* Section 4 — Recovery Demand alert */}
@@ -432,8 +504,8 @@ export default function Today() {
         </Link>
       )}
 
-      {/* Section 5 — Sleep Forecast (only in training/undecided mode) */}
-      {intent !== 'recovery' && <SleepForecastCard checkin={enrichedCheckin} />}
+      {/* Section 5 — Sleep Forecast */}
+      {!isRestMode && <SleepForecastCard checkin={enrichedCheckin} />}
     </div>
   );
 }
