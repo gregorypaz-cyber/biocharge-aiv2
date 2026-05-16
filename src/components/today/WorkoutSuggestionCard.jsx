@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useDayContext } from '@/lib/dayContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, Check, Calendar, TrendingUp } from 'lucide-react';
 import { useMotionSafe } from '@/hooks/use-motion-safe';
@@ -278,7 +279,7 @@ function DailyInsightBlock({ presc, analysis, onMarkDone }) {
 
 // ─── Prescription Block ───────────────────────────────────────────────────────
 function PrescriptionBlock({
-  presc, analysis,
+  presc, analysis, intent,
   onScheduleOption, onCompleteOption, onSchedule,
 }) {
   const [selected, setSelected] = useState('A');
@@ -521,15 +522,21 @@ function PrescriptionBlock({
       )}
 
       {/* Option tabs */}
+      {intent === 'recovery' && (
+        <div className="text-xs text-primary mb-3 font-medium">
+          Plano leve — foco em recuperação
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Opções de treino">
         {presc.options.map(o => {
           const isActive = o.key === selected;
+          const displayTitle = intent === 'recovery' ? `Leve • ${o.title}` : o.title;
           return (
             <button
               key={o.key}
               role="radio"
               aria-checked={isActive}
-              aria-label={`Opção ${o.key}: ${o.title}`}
+              aria-label={`Opção ${o.key}: ${displayTitle}`}
               disabled={savingSelect}
               onClick={() => handleSelectOption(o.key)}
               className={`rounded-xl p-2.5 text-left transition-all border disabled:opacity-60 ${
@@ -543,7 +550,7 @@ function PrescriptionBlock({
                 <span className="text-xs">{MODALITY_EMOJI[o.modality] || '🏃'}</span>
               </div>
               <p className={`text-xs font-semibold leading-tight ${isActive ? 'text-primary' : 'text-foreground/80'}`}>
-                {o.title}
+                {displayTitle}
               </p>
               {o.duration_min && (
                 <p className="text-[10px] text-muted-foreground mt-0.5">{o.duration_min}min</p>
@@ -660,6 +667,7 @@ export default function WorkoutSuggestionCard({
   onCompleteOption,
   onSchedule,
 }) {
+  const { intent } = useDayContext();
   const bodyState = checkin?.current_body_state || 'default';
   const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
   const { initial, transition: reducedTransition } = useMotionSafe();
@@ -747,6 +755,7 @@ export default function WorkoutSuggestionCard({
           <PrescriptionBlock
             presc={presc}
             analysis={analysis}
+            intent={intent}
             onScheduleOption={onScheduleOption}
             onCompleteOption={onCompleteOption}
             onSchedule={onSchedule}
