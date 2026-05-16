@@ -741,7 +741,24 @@ export default function WorkoutSuggestionCard({
   const { initial, transition: reducedTransition } = useMotionSafe();
 
   const [historyHint, setHistoryHint] = useState(null);
+  const [yesterdayFeedback, setYesterdayFeedback] = useState(null);
   const prediction = predictTomorrow({ analysis, intent });
+
+  useEffect(() => {
+    async function loadYesterday() {
+      try {
+        const userId = await getUserIdOrDeviceId();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const key = yesterday.toISOString().slice(0, 10);
+        const data = await getFeedbackByDate(userId, key);
+        setYesterdayFeedback(data);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    loadYesterday();
+  }, []);
 
   useEffect(() => {
     async function loadHistory() {
@@ -795,6 +812,13 @@ export default function WorkoutSuggestionCard({
           {cfg.label}
         </div>
       </div>
+
+      {/* Yesterday reflection */}
+      {yesterdayFeedback?.completed && (
+        <div className="text-xs text-muted-foreground mt-3">
+          Ontem você treinou (RPE {yesterdayFeedback.perceived_rpe})
+        </div>
+      )}
 
       {/* History-based hint */}
       {historyHint && (
