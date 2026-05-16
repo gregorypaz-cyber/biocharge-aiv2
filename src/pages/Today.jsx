@@ -13,6 +13,7 @@ import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } from '@/lib/training-impact-engine';
 import { runPhysiologicalAnalysisAsync } from '@/lib/physiological-engine';
 import { QUERY_KEYS } from '@/lib/query-keys';
+import { useDayContext } from '@/lib/dayContext';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
@@ -47,6 +48,8 @@ export default function Today() {
     stress_score: engineScores.stress_score,
     sleep_quality: engineScores.sleep_quality,
   } : null;
+
+  const { intent, setDayIntent } = useDayContext();
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
@@ -180,6 +183,19 @@ export default function Today() {
         )}
       </div>
 
+      <div className="flex gap-2 mt-2 mb-3">
+        <button
+          type="button"
+          onClick={() => setDayIntent(intent === 'recovery' ? 'training' : 'recovery')}
+          className="px-3 py-1 rounded-xl bg-secondary text-sm font-semibold"
+        >
+          {intent === 'recovery' ? 'Voltar para treino' : 'Mudar para recuperação'}
+        </button>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {intent === 'training' ? 'Modo treino' : intent === 'recovery' ? 'Modo recuperação' : 'Indeciso'}
+        </span>
+      </div>
+
       {/* Section 0 — Execução do dia (above the fold) */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -287,18 +303,33 @@ export default function Today() {
         </button>
       </motion.div>
 
-      {/* Section 0.5 — Treino Sugerido */}
-      <WorkoutSuggestionCard
-        checkin={enrichedCheckin}
-        actionableRecs={analysis?.actionableRecs || []}
-        strainTarget={strainTarget}
-        currentStrain={cappedStrain}
-        analysis={analysis}
-        userPrefs={user?.preferences || {}}
-      />
-
-      {/* Section 1 — Morning Recovery (fixed) */}
-      <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
+      {/* Section 0.5 — Treino Sugerido + Morning Recovery (order by intent) */}
+      {intent === 'recovery' ? (
+        <>
+          <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
+          <SleepForecastCard checkin={enrichedCheckin} />
+          <WorkoutSuggestionCard
+            checkin={enrichedCheckin}
+            actionableRecs={analysis?.actionableRecs || []}
+            strainTarget={strainTarget}
+            currentStrain={cappedStrain}
+            analysis={analysis}
+            userPrefs={user?.preferences || {}}
+          />
+        </>
+      ) : (
+        <>
+          <WorkoutSuggestionCard
+            checkin={enrichedCheckin}
+            actionableRecs={analysis?.actionableRecs || []}
+            strainTarget={strainTarget}
+            currentStrain={cappedStrain}
+            analysis={analysis}
+            userPrefs={user?.preferences || {}}
+          />
+          <MorningRecoveryCard checkin={enrichedCheckin} delta={recoveryDelta} />
+        </>
+      )}
 
       {/* HRV Anomaly Alert */}
       {analysis?.hrvAnomaly && (
@@ -379,8 +410,8 @@ export default function Today() {
         </Link>
       )}
 
-      {/* Section 5 — Sleep Forecast */}
-      <SleepForecastCard checkin={enrichedCheckin} />
+      {/* Section 5 — Sleep Forecast (only in training/undecided mode) */}
+      {intent !== 'recovery' && <SleepForecastCard checkin={enrichedCheckin} />}
     </div>
   );
 }
