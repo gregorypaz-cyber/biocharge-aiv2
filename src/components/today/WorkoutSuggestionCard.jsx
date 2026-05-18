@@ -277,12 +277,30 @@ function DailyInsightBlock({ presc, analysis, onMarkDone }) {
   }
 }
 
+// ─── Resolve recommended option key based on readiness ───────────────────────
+function resolveRecommendedKey(checkin, analysis) {
+  const state = checkin?.current_body_state;
+  const recoveryDemand = checkin?.recovery_demand ?? 0;
+
+  // Force C
+  if (
+    state === 'Fatigued' || state === 'Overreached' || recoveryDemand >= 70
+  ) return 'C';
+
+  const score = checkin?.biocharge_morning ?? checkin?.recovery_score ?? 0;
+  if (score >= 80) return 'A';
+  if (score >= 65) return 'B';
+  return 'C';
+}
+
 // ─── Prescription Block ───────────────────────────────────────────────────────
 function PrescriptionBlock({
   presc, analysis, intent,
   onScheduleOption, onCompleteOption, onSchedule,
+  checkin,
 }) {
-  const [selected, setSelected] = useState('A');
+  const recommendedKey = resolveRecommendedKey(checkin, analysis);
+  const [selected, setSelected] = useState(recommendedKey);
   const [savingSelect, setSavingSelect] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [savingComplete, setSavingComplete] = useState(false);
@@ -290,6 +308,7 @@ function PrescriptionBlock({
   const [dbError, setDbError] = useState(false);
   const [yesterdayFeedback, setYesterdayFeedback] = useState(null);
   const [adaptHints, setAdaptHints] = useState([]);
+  const [showOtherOptions, setShowOtherOptions] = useState(false);
   const debounceRef = useRef(null);
 
   // Commitment states
@@ -541,17 +560,20 @@ function PrescriptionBlock({
         </div>
       )}
 
-      {/* Option tabs */}
+      {/* Option tabs — recommended first, others collapsible */}
       {intent === 'recovery' && (
         <div className="text-xs text-primary mb-3 font-medium">
           Plano leve — foco em recuperação
         </div>
       )}
-      <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Opções de treino">
-        {presc.options.map(o => {
+      {(() => {
+        const recOpt = presc.options.find(o => o.key === recommendedKey) || presc.options[0];
+        const otherOpts = presc.options.filter(o => o.key !== recOpt.key);
+
+        const renderOption = (o, isRecommended) => {
           const isActive = o.key === selected;
           const displayTitle = intent === 'recovery' ? `Leve • ${o.title}` : o.title;
-          const impact = predictOptionImpact(o, analysis, intent);
+          const impact = isRecommended ? null : predictOptionImpact(o, analysis, intent);
           return (
             <button
               key={o.key}
@@ -560,22 +582,33 @@ function PrescriptionBlock({
               aria-label={`Opção ${o.key}: ${displayTitle}`}
               disabled={savingSelect}
               onClick={() => handleSelectOption(o.key)}
-              className={`rounded-xl p-2.5 text-left transition-all border disabled:opacity-60 ${
-                isActive
+              className={`w-full rounded-xl p-3 text-left transition-all border disabled:opacity-60 ${
+                isRecommended
+                  ? isActive
+                    ? 'border-primary/60 bg-primary/10'
+                    : 'border-primary/40 bg-primary/5 hover:bg-primary/10'
+                  : isActive
                   ? 'border-primary/50 bg-primary/8'
                   : 'border-border/50 bg-secondary/50 hover:bg-secondary'
               }`}
             >
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[10px] font-black text-muted-foreground">{o.key}</span>
-                <span className="text-xs">{MODALITY_EMOJI[o.modality] || '🏃'}</span>
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black text-muted-foreground">{o.key}</span>
+                  <span className="text-xs">{MODALITY_EMOJI[o.modality] || '🏃'}</span>
+                  {isRecommended && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary uppercase tracking-wide">
+                      recomendado
+                    </span>
+                  )}
+                </div>
+                {o.duration_min && (
+                  <span className="text-[10px] text-muted-foreground shrink-0">{o.duration_min}min</span>
+                )}
               </div>
-              <p className={`text-xs font-semibold leading-tight ${isActive ? 'text-primary' : 'text-foreground/80'}`}>
+              <p className={`text-xs font-semibold leading-tight ${isActive || isRecommended ? 'text-primary' : 'text-foreground/80'}`}>
                 {displayTitle}
               </p>
-              {o.duration_min && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">{o.duration_min}min</p>
-              )}
               {impact && (
                 <div className={`text-xs mt-1 ${
                   impact === 'up' ? 'text-emerald-400' :
@@ -589,8 +622,38 @@ function PrescriptionBlock({
               )}
             </button>
           );
-        })}
-      </div>
+        };
+
+        return (
+          <div className="space-y-2" role="radiogroup" aria-label="Opções de treino">
+            {/* Recommended option — always visible */}
+            {renderOption(recOpt, true)}
+
+            {/* Other options toggle */}
+            <button
+              onClick={() => setShowOtherOptions(v => !v)}
+              className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors px-1"
+            >
+              <span>{showOtherOptions ? '▾' : '▸'}</span>
+              outras opções ({otherOpts.length})
+            </button>
+
+            <AnimatePresence>
+              {showOtherOptions && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden space-y-2"
+                >
+                  {otherOpts.map(o => renderOption(o, false))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })()}
 
       {/* Selected option detail */}
       <AnimatePresence mode="wait">
@@ -931,6 +994,7 @@ export default function WorkoutSuggestionCard({
             presc={presc}
             analysis={analysis}
             intent={intent}
+            checkin={checkin}
             onScheduleOption={onScheduleOption}
             onCompleteOption={onCompleteOption}
             onSchedule={onSchedule}
