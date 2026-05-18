@@ -144,6 +144,34 @@ export default function Today() {
 
   const { intent, locked, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
 
+  // ── Body state translation map ───────────────────────────────────────────
+  const BODY_STATE_PT = {
+    Recovered:       'Recuperado',
+    Activated:       'Ativado',
+    Balanced:        'Equilibrado',
+    Loaded:          'Carregado',
+    Sympathetic_Load:'Carga simpática',
+    Fatigued:        'Fatigado',
+    Overreached:     'Sobrecarga',
+  };
+
+  const BODY_STATE_HINT = {
+    Recovered:       'Bom momento para estímulo alto.',
+    Activated:       'Corpo responsivo — aproveite o treino.',
+    Balanced:        'Ritmo sustentável hoje.',
+    Loaded:          'Monitore a intensidade; não empilhe carga.',
+    Sympathetic_Load:'Sistema nervoso sobrecarregado — prefira leveza.',
+    Fatigued:        'Evite alta intensidade; priorize recuperação.',
+    Overreached:     'Descanso obrigatório — mais carga agrava o quadro.',
+  };
+
+  const CAPACITY_PT = {
+    High:    'Alta',
+    Moderate:'Moderada',
+    Low:     'Baixa',
+    Minimal: 'Mínima',
+  };
+
   // ── Design-token map per phase ───────────────────────────────────────────
   const PHASE_CONFIG = {
     PLANNING: {
@@ -403,6 +431,19 @@ export default function Today() {
               }}
             />
           </div>
+
+          {/* Body state narrative — only when current_body_state is set */}
+          {enrichedCheckin.current_body_state && BODY_STATE_PT[enrichedCheckin.current_body_state] && (
+            <div className="mt-3 px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
+              <span className="text-foreground/90">
+                <span className="font-semibold">Estado atual:</span> {BODY_STATE_PT[enrichedCheckin.current_body_state]}
+                {enrichedCheckin.remaining_capacity && CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
+                  <> · <span className="font-semibold">Capacidade restante:</span> {CAPACITY_PT[enrichedCheckin.remaining_capacity]}</>
+                )}
+              </span>
+              <p className="text-muted-foreground">{BODY_STATE_HINT[enrichedCheckin.current_body_state]}</p>
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl bg-secondary p-3">
