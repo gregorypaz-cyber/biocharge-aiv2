@@ -162,6 +162,39 @@ export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
   return `Recovery amanhã depende da qualidade do sono desta noite. Meta: ${sleepNeedTonight}h.`;
 }
 
+export async function generateNextDayForecastAI(checkin, scores, recentCheckins) {
+  const { base44 } = await import('@/api/base44Client');
+
+  // Build HRV context
+  const hrvValues = (recentCheckins || []).slice(0, 7).map(c => c.hrv).filter(Boolean);
+  const hrvAvg = hrvValues.length > 0 ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length) : null;
+  const hrvDelta = (checkin.hrv && hrvAvg) ? checkin.hrv - hrvAvg : null;
+
+  // Deep sleep consecutive low nights
+  const deepSleepLow = (recentCheckins || []).slice(0, 3).filter(c => (c.deep_sleep_pct || 0) < 15).length;
+
+  const prompt = `Você é um coach de performance esportiva. Com base nos dados abaixo, escreva uma previsão para o dia seguinte em 2–3 frases curtas, diretas, em português brasileiro. Seja específico com os números quando relevante. Tom: direto, sem rodeios, sem jargão médico.
+
+Dados do check-in de hoje:
+- BioCharge manhã: ${checkin.biocharge_morning ?? '—'}
+- HRV: ${checkin.hrv ?? '—'} ms${hrvDelta != null ? ` (${hrvDelta >= 0 ? '+' : ''}${hrvDelta}ms vs média da semana)` : ''}
+- Horas de sono: ${checkin.sleep_hours ?? '—'}h
+- Sono profundo: ${checkin.deep_sleep_pct ?? '—'}%${deepSleepLow >= 3 ? ' (3ª noite baixa seguida)' : ''}
+- Fadiga: ${checkin.fatigue ?? '—'}
+- Dor muscular: ${checkin.muscle_soreness ?? '—'}/5
+- Estresse: ${checkin.stress ?? '—'}/5
+- Energia: ${checkin.energy ?? '—'}/5
+- Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
+- Strain acumulado ontem: ${checkin.daily_strain_accumulated ?? '—'}
+- Recovery score calculado: ${scores?.recovery_score ?? '—'}
+- Sono necessário esta noite: ${scores?.sleep_need_tonight ?? '—'}h
+
+Responda apenas com a previsão, sem título, sem bullet points.`;
+
+  const result = await base44.integrations.Core.InvokeLLM({ prompt });
+  return typeof result === 'string' ? result.trim() : null;
+}
+
 // ─── Main Compute Function ─────────────────────────────────────────────────
 
 export function computeCheckinScores(checkin, recentCheckins, recentSessions) {
