@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -137,6 +137,25 @@ export default function Today() {
     return null;
   }, [last7Checkins, rawCheckin?.hrv]); // eslint-disable-line
   const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
+
+  // ── Alerta de sono profundo ──────────────────────────────────────────────
+  const [deepSleepAlertDismissed, setDeepSleepAlertDismissed] = useState(false);
+  const deepSleepAlert = useMemo(() => {
+    if (!rawCheckin?.deep_sleep_pct) return null;
+    // Incluir hoje + histórico recente, ordenados mais recente primeiro
+    const sorted = [...checkins].sort((a, b) => b.date.localeCompare(a.date));
+    let consecutiveNights = 0;
+    for (const c of sorted) {
+      if (c.deep_sleep_pct != null && c.deep_sleep_pct < 18) {
+        consecutiveNights++;
+      } else {
+        break;
+      }
+    }
+    if (consecutiveNights < 2) return null;
+    const pct = rawCheckin.deep_sleep_pct;
+    return `⚠ Sono profundo em ${pct}% — abaixo do ideal (20%+) por ${consecutiveNights} noites seguidas. Tente dormir mais cedo esta noite.`;
+  }, [checkins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
 
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
@@ -617,6 +636,25 @@ export default function Today() {
 
       {/* ── QuickIntentEdit ───────────────────────────────────────────────── */}
       <QuickIntentEdit />
+
+      {/* ── Deep sleep alert ─────────────────────────────────────────────── */}
+      {deepSleepAlert && !deepSleepAlertDismissed && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-blue-500/25 bg-blue-500/8 px-4 py-3 flex items-start gap-3"
+        >
+          <Moon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
+          <button
+            onClick={() => setDeepSleepAlertDismissed(true)}
+            className="text-blue-400/60 hover:text-blue-300 transition-colors shrink-0"
+            aria-label="Fechar alerta"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </motion.div>
+      )}
 
       {/* ── Primary cards (máx 3) — renderizados pela Priority Engine ───── */}
       {primaryCards.map(desc => renderCard(desc))}
