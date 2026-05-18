@@ -12,6 +12,7 @@ import {
   getFeedbackByDate,
   getRecentFeedback,
 } from '../../services/workoutFeedbackService.js';
+import WorkoutCompletionToast, { buildProspectiveMessage } from './WorkoutCompletionToast.jsx';
 
 // ─── Legacy body-state config (unchanged) ────────────────────────────────────
 const INTENSITY_MAP = {
@@ -297,7 +298,7 @@ function resolveRecommendedKey(checkin, analysis) {
 function PrescriptionBlock({
   presc, analysis, intent,
   onScheduleOption, onCompleteOption, onSchedule,
-  checkin,
+  checkin, strainTarget, currentStrain,
 }) {
   const recommendedKey = resolveRecommendedKey(checkin, analysis);
   const [selected, setSelected] = useState(recommendedKey);
@@ -309,6 +310,7 @@ function PrescriptionBlock({
   const [yesterdayFeedback, setYesterdayFeedback] = useState(null);
   const [adaptHints, setAdaptHints] = useState([]);
   const [showOtherOptions, setShowOtherOptions] = useState(false);
+  const [celebrationMsg, setCelebrationMsg] = useState(null);
   const debounceRef = useRef(null);
 
   // Commitment states
@@ -439,6 +441,15 @@ function PrescriptionBlock({
       setSavedToday(true);
       if (commitmentSlot) setCommitmentStatus('completed');
       setCommitmentMsg('Executado. Bom trabalho. Volte amanhã para ver o impacto.');
+      // Gerar frase de fechamento emocional
+      const msg = buildProspectiveMessage({
+        analysis,
+        checkin,
+        recentFeedback: yesterdayFeedback ? [yesterdayFeedback] : [],
+        strainTarget,
+        currentStrain,
+      });
+      setCelebrationMsg(msg);
     }
     setSavingComplete(false);
     setShowCompletion(false);
@@ -709,6 +720,12 @@ function PrescriptionBlock({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Celebration toast */}
+      <WorkoutCompletionToast
+        message={celebrationMsg}
+        onClose={() => setCelebrationMsg(null)}
+      />
 
       {/* CTAs */}
       <div className="flex flex-wrap gap-2 items-center">
@@ -995,6 +1012,8 @@ export default function WorkoutSuggestionCard({
             analysis={analysis}
             intent={intent}
             checkin={checkin}
+            strainTarget={strainTarget}
+            currentStrain={currentStrain}
             onScheduleOption={onScheduleOption}
             onCompleteOption={onCompleteOption}
             onSchedule={onSchedule}
