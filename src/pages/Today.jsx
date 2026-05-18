@@ -26,6 +26,7 @@ import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
+import SleepDebtCard from '@/components/today/SleepDebtCard';
 import { buildCardLayout, resolveWorkoutIntensity } from '@/utils/priorityEngine';
 
 export default function Today() {
@@ -675,6 +676,9 @@ export default function Today() {
 
       {/* ── Narrativa compacta — logo após o card de prontidão ───────────── */}
       {analysis?.narrative && <NarrativeInline narrative={analysis.narrative} />}
+
+      {/* ── Dívida de sono — zona de insights ────────────────────────────── */}
+      <SleepDebtCard checkins={checkins} todayCheckin={enrichedCheckin} />
 
       {/* ── Secondary cards — agrupados no expansível ─────────────────────── */}
       <SecondaryMetrics count={secondaryCards.filter(d => d.action !== 'exclude').length}>
