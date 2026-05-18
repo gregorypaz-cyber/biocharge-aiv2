@@ -113,6 +113,29 @@ export default function Today() {
   }, [computedKey, sessionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const recoveryDelta = analysis?.baselineInsights?.find(i => i.label === 'Recovery')?.delta ?? null;
+
+  // ── Tendência 7 dias ─────────────────────────────────────────────────────
+  const last7Checkins = checkins.filter(c => c.date !== today).slice(0, 7);
+  const biochargeTrend = useMemo(() => {
+    const values = last7Checkins.map(c => c.biocharge_morning).filter(v => v != null);
+    if (values.length < 2 || rawCheckin?.biocharge_morning == null) return null;
+    const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    const diff = Math.round(rawCheckin.biocharge_morning - avg);
+    if (diff > 5)  return { text: `↑ +${diff} pts acima da sua média da semana`, color: 'text-emerald-400' };
+    if (diff < -5) return { text: `↓ ${diff} pts abaixo da sua média da semana`, color: 'text-red-400' };
+    return { text: '→ Dentro da sua média da semana', color: 'text-muted-foreground' };
+  }, [last7Checkins, rawCheckin?.biocharge_morning]); // eslint-disable-line
+
+  const hrvTrend = useMemo(() => {
+    if (!rawCheckin?.hrv) return null;
+    const values = last7Checkins.map(c => c.hrv).filter(v => v != null);
+    if (values.length < 2) return null;
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const diff = rawCheckin.hrv - avg;
+    if (diff > 5)  return { text: 'HRV acima do normal — boa recuperação', color: 'text-emerald-400' };
+    if (diff < -5) return { text: 'HRV abaixo do normal — atenção', color: 'text-yellow-400' };
+    return null;
+  }, [last7Checkins, rawCheckin?.hrv]); // eslint-disable-line
   const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
 
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
@@ -418,6 +441,18 @@ export default function Today() {
               </span>
             )}
           </p>
+          {/* Trend lines */}
+          {(biochargeTrend || hrvTrend) && (
+            <div className="space-y-0.5 mt-1">
+              {biochargeTrend && (
+                <p className={`text-[11px] font-medium ${biochargeTrend.color}`}>{biochargeTrend.text}</p>
+              )}
+              {hrvTrend && (
+                <p className={`text-[11px] font-medium ${hrvTrend.color}`}>{hrvTrend.text}</p>
+              )}
+            </div>
+          )}
+
           <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-700"
