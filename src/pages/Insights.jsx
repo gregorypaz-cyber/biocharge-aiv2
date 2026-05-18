@@ -16,6 +16,7 @@ import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import DiscoveriesCard from '@/components/intelligence/DiscoveriesCard';
 import { useUserTrainingSessions } from '@/hooks/useUserData';
 import BaselineInsightsRow from '@/components/intelligence/BaselineInsightsRow';
+import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 
 function pearsonR(arrA, arrB) {
   const n = Math.min(arrA.length, arrB.length);
@@ -607,11 +608,15 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
           {computed.length < 3 ? (
             <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
           ) : todayCheckin?.deep_analysis_text ? (
-            <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
-              <ReactMarkdown>{todayCheckin.deep_analysis_text}</ReactMarkdown>
-            </div>
+            <>
+              <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
+              <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
+                <ReactMarkdown>{todayCheckin.deep_analysis_text}</ReactMarkdown>
+              </div>
+            </>
           ) : aiInsight ? (
             <>
+              <AnalysisHighlights analysisText={aiInsight} />
               <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
                 <ReactMarkdown>{aiInsight}</ReactMarkdown>
               </div>
