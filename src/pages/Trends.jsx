@@ -227,7 +227,7 @@ export default function Trends() {
       )}
 
       {/* Detected Pattern Block */}
-      <DetectedPatternBlock checkins={filtered} />
+      <DetectedPatternBlock checkins={filtered} allCheckins={computed} />
 
       {/* Recovery vs Fatigue Bar */}
       {chartData.length >= 2 && (
