@@ -175,6 +175,18 @@ export default function Today() {
     return `${framing} (sono profundo: ${pct}%)`;
   }, [checkins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
 
+  // ── Nota de contradição prontidão × capacidade ───────────────────────────
+  const capacityContradictionNote = useMemo(() => {
+    if (!rawCheckin) return null;
+    const bio = rawCheckin.biocharge_morning ?? 0;
+    const cap = enrichedCheckin?.remaining_capacity;
+    const sleep = rawCheckin.sleep_score ?? rawCheckin.sleep_quality ?? 100;
+    if (bio < 70 && ['High', 'Alta'].includes(cap) && sleep < 75) {
+      return 'Sua prontidão está moderada por causa do sono, mas sua capacidade muscular está preservada. Você pode treinar — só não force no cardio.';
+    }
+    return null;
+  }, [rawCheckin?.biocharge_morning, enrichedCheckin?.remaining_capacity, rawCheckin?.sleep_score, rawCheckin?.sleep_quality]); // eslint-disable-line
+
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
 
@@ -515,6 +527,13 @@ export default function Today() {
               </span>
               <p className="text-muted-foreground">{BODY_STATE_HINT[enrichedCheckin.current_body_state]}</p>
             </div>
+          )}
+
+          {/* Nota de contradição prontidão × capacidade */}
+          {capacityContradictionNote && (
+            <p className="text-[11px] text-muted-foreground leading-relaxed mt-1 px-1">
+              {capacityContradictionNote}
+            </p>
           )}
         </div>
         <div className="grid grid-cols-3 gap-3">
