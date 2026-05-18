@@ -1,4 +1,4 @@
-import React, { useState, useReducer } from 'react';
+import React, { useState, useReducer, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -8,7 +8,7 @@ import { getTodayLocal } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Save, ArrowLeft, Moon, Activity, Heart, Scale, Info, Zap, SkipForward } from 'lucide-react';
+import { Save, ArrowLeft, Moon, Activity, Heart, Scale, Info, Zap, SkipForward, ArrowRight } from 'lucide-react';
 import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
@@ -160,6 +160,8 @@ export default function DailyCheckin() {
     formatHoursToSleepDuration(editData?.sleep_hours ?? DEFAULT_FORM.sleep_hours)
   );
 
+  const [savedCheckin, setSavedCheckin] = useState(null);
+
   const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
 
@@ -199,7 +201,7 @@ export default function DailyCheckin() {
       if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
       return base44.entities.DailyCheckin.create(scores);
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
       if (navigator.vibrate) navigator.vibrate(40);
@@ -207,7 +209,7 @@ export default function DailyCheckin() {
       if (editData?.id) {
         navigate('/history');
       } else {
-        navigate('/today');
+        setSavedCheckin(result);
       }
     },
   });
@@ -546,18 +548,70 @@ export default function DailyCheckin() {
       {/* Rest Day Toggle */}
       <RestDayToggle value={isRestDay} onChange={v => dispatch({ type: 'SET_REST_DAY', value: v })} />
 
+      {/* Today Preview — shown after save */}
+      {savedCheckin && (
+        <TodayPreviewBlock checkin={savedCheckin} onGoToToday={() => navigate('/today')} />
+      )}
+
       {/* Save */}
-      <Button
-        onClick={() => saveMorningMutation.mutate(form)}
-        disabled={saveMorningMutation.isPending}
-        className="w-full h-13 bg-primary text-primary-foreground font-bold rounded-2xl text-base py-4 hover:bg-primary/90 transition-all hover:scale-[1.01]"
+      {!savedCheckin && (
+        <Button
+          onClick={() => saveMorningMutation.mutate(form)}
+          disabled={saveMorningMutation.isPending}
+          className="w-full h-13 bg-primary text-primary-foreground font-bold rounded-2xl text-base py-4 hover:bg-primary/90 transition-all hover:scale-[1.01]"
+        >
+          {saveMorningMutation.isPending ? (
+            <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <><Save className="w-5 h-5 mr-2" /> Salvar check-in da manhã</>
+          )}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ── Today Preview Block ────────────────────────────────────────────────────────
+function TodayPreviewBlock({ checkin, onGoToToday }) {
+  const score = checkin.readiness_score ?? checkin.recovery_score ?? checkin.morning_recovery_score ?? checkin.biocharge_morning ?? 0;
+  const zone = checkin.zone;
+  const zoneLabel = zone === 'green' ? 'Verde 🟢' : zone === 'yellow' ? 'Amarelo 🟡' : zone === 'red' ? 'Vermelho 🔴' : null;
+
+  const recommendation = checkin.recommendation || checkin.headline_today;
+  const headline = checkin.headline_today;
+
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-primary">Seu dia começa assim</p>
+
+      {/* Score + zona */}
+      <div className="flex items-baseline gap-2">
+        <span className="text-4xl font-mono font-black">{score}</span>
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground">Prontidão</p>
+          {zoneLabel && <p className="text-xs text-foreground/70">{zoneLabel}</p>}
+        </div>
+      </div>
+
+      {/* Treino sugerido */}
+      {recommendation && (
+        <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Decisão principal</p>
+          <p className="text-sm font-semibold leading-snug">{recommendation}</p>
+        </div>
+      )}
+
+      {/* Headline */}
+      {headline && headline !== recommendation && (
+        <p className="text-xs text-muted-foreground leading-relaxed italic">"{headline}"</p>
+      )}
+
+      <button
+        onClick={onGoToToday}
+        className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-all"
       >
-        {saveMorningMutation.isPending ? (
-          <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <><Save className="w-5 h-5 mr-2" /> Salvar check-in da manhã</>
-        )}
-      </Button>
+        Ver meu dia completo <ArrowRight className="w-4 h-4" />
+      </button>
     </div>
   );
 }
