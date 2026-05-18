@@ -198,8 +198,53 @@ export default function DailyCheckin() {
       } catch (e) {
         console.warn('AI generation failed, using fallback', e);
       }
-      if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
-      return base44.entities.DailyCheckin.create(scores);
+
+      let savedRecord;
+      if (editData?.id) {
+        savedRecord = await base44.entities.DailyCheckin.update(editData.id, scores);
+      } else {
+        savedRecord = await base44.entities.DailyCheckin.create(scores);
+      }
+
+      // Generate deep analysis in background (non-blocking)
+      if (!editData?.id) {
+        const summary = [payload, ...recentCheckins.slice(0, 13)].map(c => ({
+          date: c.date,
+          recovery: c.recovery_score,
+          readiness: c.readiness_score,
+          sleep: c.sleep_quality ?? c.sleep_score,
+          fatigue: c.fatigue_score ?? c.fatigue,
+          stress: c.stress_score ?? c.stress,
+          hrv: c.hrv,
+          rpe: c.rpe,
+          zone: c.zone,
+          deep_sleep: c.deep_sleep_pct,
+          mood: c.mood,
+          energy: c.energy,
+          sleep_hours: c.sleep_hours,
+        }));
+        base44.integrations.Core.InvokeLLM({
+          prompt: `Você é o BioCharge AI Coach, especialista em performance e recuperação física. Analise os dados abaixo em português brasileiro.
+
+Dados dos últimos ${summary.length} dias:
+${JSON.stringify(summary, null, 2)}
+
+Forneça uma análise detalhada e personalizada incluindo:
+1. **📊 Análise de Tendência** — como os scores evoluíram
+2. **🔍 Padrões Detectados** — correlações entre sono, HRV, fadiga, RPE
+3. **⚠️ Alertas** — sinais de overtraining, déficit de recuperação
+4. **💡 Recomendações Específicas** — baseadas nos dados reais do usuário
+5. **📈 Próximos 7 dias** — estratégia sugerida
+
+Seja específico, cite os números reais do usuário. Evite insights genéricos. Use emojis para tornar mais visual.`,
+        }).then(deepAnalysis => {
+          if (deepAnalysis && savedRecord?.id) {
+            base44.entities.DailyCheckin.update(savedRecord.id, { deep_analysis_text: deepAnalysis });
+          }
+        }).catch(e => console.warn('Deep analysis generation failed', e));
+      }
+
+      return savedRecord;
     },
     onSuccess: async (result) => {
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });

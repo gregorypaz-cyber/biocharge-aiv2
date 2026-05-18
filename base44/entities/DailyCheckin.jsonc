@@ -195,6 +195,10 @@
     "hydration_liters": {
       "type": "number",
       "description": "Water intake in liters"
+    },
+    "deep_analysis_text": {
+      "type": "string",
+      "description": "AI-generated deep analysis text, auto-generated on morning check-in save"
     }
   },
   "required": [

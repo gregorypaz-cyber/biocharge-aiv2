@@ -228,6 +228,8 @@ export default function Insights() {
 
   const { data: checkins = [] } = useUserCheckins(60);
   const { data: trainingSessions = [] } = useUserTrainingSessions(50);
+  const todayDate = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+  const todayCheckin = checkins.find(c => c.date === todayDate);
 
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, trainingSessions) : null, [computed.length, trainingSessions.length]);
@@ -588,19 +590,26 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
             <Sparkles className="w-4 h-4 text-primary" />
             <h2 className="text-sm font-semibold">Análise Profunda</h2>
           </div>
-          <Button
-            onClick={generateInsights}
-            disabled={isGenerating || computed.length < 3}
-            size="sm"
-            className="bg-primary text-primary-foreground h-8 px-4 text-xs"
-          >
-            {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar Análise'}
-          </Button>
+          {/* Botão de fallback: só aparece se não há análise automática */}
+          {!todayCheckin?.deep_analysis_text && (
+            <Button
+              onClick={generateInsights}
+              disabled={isGenerating || computed.length < 3}
+              size="sm"
+              className="bg-primary text-primary-foreground h-8 px-4 text-xs"
+            >
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar Análise'}
+            </Button>
+          )}
         </div>
         <div className="p-5">
-          <p className="text-[10px] text-muted-foreground mb-3">Seus dados de saúde são enviados ao modelo de IA para gerar análise personalizada.</p>
+          <p className="text-[10px] text-muted-foreground mb-3">Análise gerada automaticamente com base no seu check-in de hoje.</p>
           {computed.length < 3 ? (
             <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
+          ) : todayCheckin?.deep_analysis_text ? (
+            <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
+              <ReactMarkdown>{todayCheckin.deep_analysis_text}</ReactMarkdown>
+            </div>
           ) : aiInsight ? (
             <>
               <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
@@ -613,7 +622,7 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">Clique em "Gerar Análise" para receber insights personalizados baseados nos seus dados reais.</p>
+            <p className="text-sm text-muted-foreground">A análise é gerada automaticamente ao salvar o check-in da manhã. Clique em "Gerar Análise" para obter agora.</p>
           )}
         </div>
       </motion.div>
