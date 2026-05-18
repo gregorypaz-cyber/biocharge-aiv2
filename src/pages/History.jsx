@@ -5,6 +5,7 @@ import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, 
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
+import WeeklyRetrospectCard from '@/components/history/WeeklyRetrospectCard';
 import { useNavigate } from 'react-router-dom';
 
 // Group checkins by week
@@ -214,6 +215,16 @@ export default function History() {
                   <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </div>
               </button>
+
+              {/* Weekly Retrospect Card */}
+              {isOpen && (
+                <WeeklyRetrospectCard
+                  weekStart={weekStart}
+                  weekEnd={(() => { const d = new Date(weekStart + 'T12:00:00'); d.setDate(d.getDate() + 6); return d.toISOString().slice(0, 10); })()}
+                  checkins={items}
+                  sessions={allSessions.filter(s => weekDates.has(s.date))}
+                />
+              )}
 
               {/* Days */}
               <AnimatePresence initial={false}>

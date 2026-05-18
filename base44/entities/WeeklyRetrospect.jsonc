@@ -1,0 +1,49 @@
+{
+  "name": "WeeklyRetrospect",
+  "type": "object",
+  "properties": {
+    "week_start": {
+      "type": "string",
+      "format": "date",
+      "description": "First day (Sunday) of the week (YYYY-MM-DD)"
+    },
+    "week_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Last day (Saturday) of the week (YYYY-MM-DD)"
+    },
+    "avg_readiness": {
+      "type": "number",
+      "description": "Average readiness score for the week"
+    },
+    "avg_sleep_hours": {
+      "type": "number",
+      "description": "Average sleep hours for the week"
+    },
+    "training_count": {
+      "type": "number",
+      "description": "Number of training sessions in the week"
+    },
+    "learning_phrase": {
+      "type": "string",
+      "description": "AI-generated learning insight for the week"
+    }
+  },
+  "required": [
+    "week_start"
+  ],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "created_by": "{{user.email}}"
+    },
+    "update": {
+      "created_by": "{{user.email}}"
+    },
+    "delete": {
+      "created_by": "{{user.email}}"
+    }
+  }
+}
