@@ -712,6 +712,17 @@ export default function Today() {
       {/* ── Narrativa compacta — logo após o card de prontidão ───────────── */}
       {analysis?.narrative && <NarrativeInline narrative={analysis.narrative} />}
 
+      {/* ── Link contextual para Insights ─────────────────────────────────── */}
+      {(enrichedCheckin?.headline_today || analysis?.narrative) && (
+        <Link
+          to="/insights"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+        >
+          Quer entender por que sua prontidão é {displayedScore} hoje?
+          <span className="text-primary font-medium">→ Ver análise detalhada</span>
+        </Link>
+      )}
+
       {/* ── Dívida de sono — zona de insights ────────────────────────────── */}
       <SleepDebtCard checkins={checkins} todayCheckin={enrichedCheckin} />
 
