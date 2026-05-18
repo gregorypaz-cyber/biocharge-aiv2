@@ -247,15 +247,26 @@ export default function Insights() {
     const state = analysis?.physioState?.state;
     const sleepDebt = analysis?.sleepDebt?.debt;
     const loadRisk = analysis?.trainingLoad?.risk;
+    const todayScore = computed[0]?.readiness_score ?? computed[0]?.recovery_score ?? null;
+    const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
     const questions = [];
+
+    // Q1 — contexto do estado atual
     if (state === 'Overreached' || state === 'Fatigued') questions.push('Por que estou sobrecarregado?');
+    else if (todayScore != null && todayScore >= 75) questions.push('Posso treinar forte hoje?');
     else questions.push('Devo treinar hoje?');
-    if (sleepDebt > 3) questions.push(`Como recuperar ${sleepDebt}h de déficit de sono?`);
+
+    // Q2 — sono/déficit
+    if (sleepDebt > 3) questions.push(`Como recuperar ${Math.round(sleepDebt)}h de déficit de sono?`);
     else questions.push('Como melhorar meu sono?');
-    if (loadRisk === 'high' || loadRisk === 'moderate') questions.push('Como reduzir o risco de lesão agora?');
+
+    // Q3 — HRV ou carga
+    if (hrvDelta != null && hrvDelta < -10) questions.push('Por que meu HRV caiu?');
+    else if (loadRisk === 'high' || loadRisk === 'moderate') questions.push('Como reduzir o risco de lesão agora?');
     else questions.push('Por que meu HRV caiu?');
+
     return questions.slice(0, 3);
-  }, [analysis]);
+  }, [analysis, computed]);
 
   const generateInsights = async () => {
     if (computed.length < 3) return;
@@ -358,68 +369,15 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
         <p className="text-sm text-muted-foreground mt-1">Insights personalizados baseados nos seus dados</p>
       </div>
 
-      {/* Physio State */}
-      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
-
-      {/* Performance Level + Streak */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card p-5"
-        style={{ boxShadow: `0 0 30px -12px ${perfLevel.color}30` }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Nível de Performance</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-2xl font-black" style={{ color: perfLevel.color }}>{perfLevel.label}</span>
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-6 rounded-sm"
-                    style={{ backgroundColor: i < perfLevel.level ? perfLevel.color : 'hsl(220,15%,14%)' }}
-                  />
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Recovery médio: <span className="font-mono font-semibold text-foreground">{avgRecovery}</span></p>
-          </div>
-          {streak >= 2 && (
-            <div className="text-center">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Sequência</p>
-              <span className="text-2xl">🔥</span>
-              <p className="text-xs font-bold text-orange-400 mt-0.5">{streak} dias seguidos</p>
-            </div>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Badges */}
-      {badges.length > 0 && (
-        <div className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold">Conquistas</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {badges.map(b => (
-              <motion.div
-                key={b.id}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', bounce: 0.5 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary border border-border/60 text-sm"
-              >
-                <span className="text-sm leading-none">{b.icon}</span>
-                <span className="text-xs font-medium">{b.label}</span>
-              </motion.div>
-            ))}
-          </div>
+      {/* ── BLOCO 1 — Por que sua prontidão é X hoje? ───────────────────────── */}
+      {analysis?.baselineInsights?.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">O que explica seu dia de hoje</h3>
+          <BaselineInsightsRow insights={analysis.baselineInsights} />
         </div>
       )}
 
-      {/* AI Smart Messages */}
+      {/* AI Smart Messages (insights automáticos contextuais) */}
       {actionableRecs.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Insights Automáticos</h3>
@@ -447,89 +405,13 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
         </div>
       )}
 
-      {/* Training Load */}
-      {analysis && (
-        <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
-      )}
-
-      {/* Correlations (engine-detected) */}
-      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) && (
-        <CorrelationsCard correlations={analysis.correlations} laggedEffects={analysis.laggedEffects} />
-      )}
-
-      {/* Pattern Detection */}
-      {patterns.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Padrões Detectados</h3>
-          {patterns.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className={`flex items-start gap-3 p-4 rounded-xl border ${p.negative ? 'bg-red-500/6 border-red-500/25' : 'border-border/40'}`}
-              style={p.negative ? {} : { backgroundColor: `hsl(142,70%,50%,0.06)` }}
-            >
-              <p.icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: p.color }} />
-              <span className="text-sm">{p.text}</span>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Baseline Insights */}
-      {analysis?.baselineInsights?.length > 0 && (
-        <BaselineInsightsRow insights={analysis.baselineInsights} />
-      )}
-
-      {/* AI Deep Analysis */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold">Análise Profunda</h2>
-          </div>
-          <Button
-            onClick={generateInsights}
-            disabled={isGenerating || computed.length < 3}
-            size="sm"
-            className="bg-primary text-primary-foreground h-8 px-4 text-xs"
-          >
-            {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar Análise'}
-          </Button>
-        </div>
-        <div className="p-5">
-          <p className="text-[10px] text-muted-foreground mb-3">Seus dados de saúde são enviados ao modelo de IA para gerar análise personalizada.</p>
-          {computed.length < 3 ? (
-            <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
-          ) : aiInsight ? (
-            <>
-              <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
-                <ReactMarkdown>{aiInsight}</ReactMarkdown>
-              </div>
-              {analysisGeneratedAt && (
-                <p className="text-[10px] text-muted-foreground mt-3 text-right">
-                  Gerado em {analysisGeneratedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">Clique em "Gerar Análise" para receber insights personalizados baseados nos seus dados reais.</p>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Discoveries */}
+      {/* ── BLOCO 2 — O BioCharge Descobriu ─────────────────────────────────── */}
       <DiscoveriesCard discoveries={[
         ...discoveries,
         ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : []),
       ]} />
 
-      {/* AI Coach Chat */}
+      {/* ── BLOCO 3 — Coach IA ───────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -599,6 +481,140 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
               {isCoachThinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Enviar</>}
             </Button>
           </div>
+        </div>
+      </motion.div>
+
+      {/* ── BLOCO 4 — Informações secundárias ───────────────────────────────── */}
+
+      {/* Physio State */}
+      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
+
+      {/* Training Load */}
+      {analysis && (
+        <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
+      )}
+
+      {/* Correlations (engine-detected) */}
+      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) && (
+        <CorrelationsCard correlations={analysis.correlations} laggedEffects={analysis.laggedEffects} />
+      )}
+
+      {/* Pattern Detection */}
+      {patterns.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Padrões Detectados</h3>
+          {patterns.map((p, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className={`flex items-start gap-3 p-4 rounded-xl border ${p.negative ? 'bg-red-500/6 border-red-500/25' : 'border-border/40'}`}
+              style={p.negative ? {} : { backgroundColor: `hsl(142,70%,50%,0.06)` }}
+            >
+              <p.icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: p.color }} />
+              <span className="text-sm">{p.text}</span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Performance Level + Streak */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-border/60 bg-card p-5"
+        style={{ boxShadow: `0 0 30px -12px ${perfLevel.color}30` }}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Nível de Performance</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-2xl font-black" style={{ color: perfLevel.color }}>{perfLevel.label}</span>
+              <div className="flex gap-0.5">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="w-2 h-6 rounded-sm"
+                    style={{ backgroundColor: i < perfLevel.level ? perfLevel.color : 'hsl(220,15%,14%)' }}
+                  />
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Recovery médio: <span className="font-mono font-semibold text-foreground">{avgRecovery}</span></p>
+          </div>
+          {streak >= 2 && (
+            <div className="text-center">
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Sequência</p>
+              <span className="text-2xl">🔥</span>
+              <p className="text-xs font-bold text-orange-400 mt-0.5">{streak} dias seguidos</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Badges */}
+      {badges.length > 0 && (
+        <div className="rounded-2xl border border-border/60 bg-card p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Trophy className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold">Conquistas</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {badges.map(b => (
+              <motion.div
+                key={b.id}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', bounce: 0.5 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary border border-border/60 text-sm"
+              >
+                <span className="text-sm leading-none">{b.icon}</span>
+                <span className="text-xs font-medium">{b.label}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* AI Deep Analysis */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold">Análise Profunda</h2>
+          </div>
+          <Button
+            onClick={generateInsights}
+            disabled={isGenerating || computed.length < 3}
+            size="sm"
+            className="bg-primary text-primary-foreground h-8 px-4 text-xs"
+          >
+            {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar Análise'}
+          </Button>
+        </div>
+        <div className="p-5">
+          <p className="text-[10px] text-muted-foreground mb-3">Seus dados de saúde são enviados ao modelo de IA para gerar análise personalizada.</p>
+          {computed.length < 3 ? (
+            <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
+          ) : aiInsight ? (
+            <>
+              <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
+                <ReactMarkdown>{aiInsight}</ReactMarkdown>
+              </div>
+              {analysisGeneratedAt && (
+                <p className="text-[10px] text-muted-foreground mt-3 text-right">
+                  Gerado em {analysisGeneratedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Clique em "Gerar Análise" para receber insights personalizados baseados nos seus dados reais.</p>
+          )}
         </div>
       </motion.div>
     </div>
