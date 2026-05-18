@@ -156,7 +156,23 @@ export default function Today() {
     }
     if (consecutiveNights < 2) return null;
     const pct = rawCheckin.deep_sleep_pct;
-    return `⚠ Sono profundo em ${pct}% — abaixo do ideal (20%+) por ${consecutiveNights} noites seguidas. Tente dormir mais cedo esta noite.`;
+
+    // Tendência de melhora: último valor maior que a média dos anteriores
+    const recentPcts = sorted.slice(0, consecutiveNights).map(c => c.deep_sleep_pct).filter(v => v != null);
+    const isImproving = recentPcts.length >= 2 && recentPcts[0] > recentPcts[1];
+
+    let framing;
+    if (isImproving) {
+      framing = `Sono melhorando. Continue assim — mais 2 noites boas e sua recuperação volta.`;
+    } else if (consecutiveNights >= 7) {
+      framing = `Uma semana de sono fragmentado. Isso explica sua fadiga acumulada.`;
+    } else if (consecutiveNights >= 4) {
+      framing = `Dia ${consecutiveNights} de uma série difícil. Seu HRV está sentindo.`;
+    } else {
+      framing = `Noite ${consecutiveNights} de sono raso. Seu corpo está em modo de alerta.`;
+    }
+
+    return `${framing} (sono profundo: ${pct}%)`;
   }, [checkins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
 
   // openAddSignal: incrementar para abrir modal no TrainingSessionsList
