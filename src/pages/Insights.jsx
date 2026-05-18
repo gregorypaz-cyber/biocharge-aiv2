@@ -17,6 +17,7 @@ import DiscoveriesCard from '@/components/intelligence/DiscoveriesCard';
 import { useUserTrainingSessions } from '@/hooks/useUserData';
 import BaselineInsightsRow from '@/components/intelligence/BaselineInsightsRow';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
+import AnalysisBody from '@/components/intelligence/AnalysisBody';
 
 function pearsonR(arrA, arrB) {
   const n = Math.min(arrA.length, arrB.length);
@@ -219,6 +220,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 }
 
 export default function Insights() {
+  const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [aiInsight, setAiInsight] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [analysisGeneratedAt, setAnalysisGeneratedAt] = useState(null);
@@ -610,16 +612,12 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
           ) : todayCheckin?.deep_analysis_text ? (
             <>
               <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
-              <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
-                <ReactMarkdown>{todayCheckin.deep_analysis_text}</ReactMarkdown>
-              </div>
+              <AnalysisBody text={todayCheckin.deep_analysis_text} expanded={analysisExpanded} onExpand={() => setAnalysisExpanded(true)} />
             </>
           ) : aiInsight ? (
             <>
               <AnalysisHighlights analysisText={aiInsight} />
-              <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
-                <ReactMarkdown>{aiInsight}</ReactMarkdown>
-              </div>
+              <AnalysisBody text={aiInsight} expanded={analysisExpanded} onExpand={() => setAnalysisExpanded(true)} />
               {analysisGeneratedAt && (
                 <p className="text-[10px] text-muted-foreground mt-3 text-right">
                   Gerado em {analysisGeneratedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
