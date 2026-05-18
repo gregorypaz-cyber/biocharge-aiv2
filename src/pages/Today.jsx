@@ -44,14 +44,27 @@ export default function Today() {
     ? computeCheckinScores(rawCheckin, checkins.slice(1), todaySessions)
     : null;
 
-  const checkin = rawCheckin ? {
-    ...engineScores,
-    ...rawCheckin,
-    readiness_score: engineScores.readiness_score,
-    fatigue_score: engineScores.fatigue_score,
-    stress_score: engineScores.stress_score,
-    sleep_quality: engineScores.sleep_quality,
-  } : null;
+  // Construção determinística do checkin:
+  // - Usar o registro salvo (rawCheckin) como base (origem persistida)
+  // - Aplicar somente os campos calculados aprovados pela engine quando existirem
+  const checkin = rawCheckin ? (() => {
+    const base = { ...rawCheckin };
+    const engine = engineScores || {};
+    const approvedEngineFields = [
+      'readiness_score',
+      'fatigue_score',
+      'stress_score',
+      'sleep_quality',
+      'recovery_score',
+      'morning_recovery_score'
+    ];
+    for (const k of approvedEngineFields) {
+      if (typeof engine[k] !== 'undefined' && engine[k] !== null) {
+        base[k] = engine[k];
+      }
+    }
+    return base;
+  })() : null;
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
@@ -348,6 +361,11 @@ export default function Today() {
               </TooltipTrigger>
               <TooltipContent side="top">
                 Decisão do treino hoje: combina recuperação + sono + fadiga.
+                <div style={{ marginTop: 6 }}>
+                  <small className="text-[10px] text-muted-foreground">
+                    Pontuação do Zepp é uma estimativa do wearable; o app ajusta essa informação com seu histórico para calcular a Prontidão.
+                  </small>
+                </div>
               </TooltipContent>
             </Tooltip>
             {checkin?.recovery_score != null && (
@@ -361,6 +379,11 @@ export default function Today() {
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     Estado do corpo ao acordar (sono + sinais fisiológicos).
+                    <div style={{ marginTop: 6 }}>
+                      <small className="text-[10px] text-muted-foreground">
+                        Sono combina duração, qualidade e consistência — usamos histórico para ajustar recomendações.
+                      </small>
+                    </div>
                   </TooltipContent>
                 </Tooltip>
                 )

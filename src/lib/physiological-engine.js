@@ -970,7 +970,14 @@ function _djb2(str) {
 
 function _cacheKey(checkins, sessions) {
   try {
-    const c = JSON.stringify(checkins.slice(0, 15).map(c => ({ d: c.date, r: c.recovery_score, h: c.hrv })));
+    const c = JSON.stringify(checkins.slice(0, 15).map(c => ({
+      d: c.date,
+      r: c.recovery_score,
+      h: c.hrv,
+      sh: c.sleep_hours,
+      sq: c.sleep_quality,
+      snt: c.sleep_need_tonight
+    })));
     const s = JSON.stringify((sessions || []).slice(0, 10).map(s => ({ d: s.date, st: s.strain_score })));
     return 'physio_v1_' + _djb2(c + s);
   } catch {

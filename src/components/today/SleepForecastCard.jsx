@@ -25,7 +25,10 @@ export default function SleepForecastCard({ checkin }) {
           <div>
             <p className="text-sm font-semibold">Sono recomendado esta noite</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Baseado na carga acumulada e recovery matinal
+              Baseado na carga acumulada e prontidão da manhã
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Pontuação do Zepp é estimativa do wearable; o app ajusta com seu histórico. Sono = duração + qualidade + consistência.
             </p>
           </div>
         </div>
