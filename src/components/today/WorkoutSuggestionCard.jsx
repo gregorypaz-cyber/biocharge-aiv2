@@ -685,6 +685,23 @@ function PrescriptionBlock({
   );
 }
 
+// ─── Readiness-based recommendation ──────────────────────────────────────────
+function resolveReadinessRecommendation(checkin) {
+  const state = checkin?.current_body_state;
+  if (state === 'Fatigued' || state === 'Overreached') {
+    return { text: 'Descanso obrigatório — seu corpo pediu pausa', color: '#ef4444' };
+  }
+  const score = checkin?.biocharge_morning ?? checkin?.readiness_score ?? checkin?.recovery_score ?? 0;
+  const soreness = checkin?.muscle_soreness ?? checkin?.muscle_soreness_level ?? 99;
+  const fatigue = checkin?.fatigue ?? 99;
+  if (score >= 85 && soreness <= 1 && fatigue <= 20) {
+    return { text: 'Treino forte — você está no verde', color: '#22c55e' };
+  }
+  if (score >= 70) return { text: 'Treino moderado — ritmo sustentável', color: '#38bdf8' };
+  if (score >= 60) return { text: 'Treino leve — preserve para amanhã', color: '#eab308' };
+  return { text: 'Recuperação ativa — não force hoje', color: '#ef4444' };
+}
+
 // ─── Option impact prediction ────────────────────────────────────────────────
 function predictOptionImpact(option, analysis, intent) {
   if (!analysis) return null;
@@ -858,8 +875,15 @@ export default function WorkoutSuggestionCard({
 
       <div className="h-px bg-border/40" />
 
-      {/* Legacy content */}
-      <p className="text-xs text-muted-foreground leading-relaxed">{cfg.detail}</p>
+      {/* Readiness-based recommendation */}
+      {(() => {
+        const rec = resolveReadinessRecommendation(checkin);
+        return (
+          <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
+            {rec.text}
+          </p>
+        );
+      })()}
 
       {strainTarget != null && (
         <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5">
