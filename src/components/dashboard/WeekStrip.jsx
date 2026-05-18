@@ -30,6 +30,36 @@ export default function WeekStrip({ data }) {
   const scores = days.filter(d => d.checkin).map(d => d.checkin?.readiness_score ?? d.checkin?.recovery_score ?? 0).filter(v => v > 0);
   const avg7 = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
 
+  // Weekly reading
+  const weeklyReading = (() => {
+    const withScore = days.filter(d => d.checkin && (d.checkin.readiness_score ?? d.checkin.recovery_score) != null);
+    if (withScore.length < 3) return null;
+
+    const scored = withScore.map(d => ({
+      label: format(d.date, 'EEEE', { locale: ptBR }), // full day name
+      labelShort: d.dayLabel,
+      dow: d.date.getDay(),
+      score: d.checkin.readiness_score ?? d.checkin.recovery_score,
+    }));
+
+    const best = scored.reduce((a, b) => b.score > a.score ? b : a);
+    const worst = scored.reduce((a, b) => b.score < a.score ? b : a);
+
+    // Pattern: check if worst day is Monday (typical weekend accumulation)
+    let pattern = null;
+    if (worst.dow === 1) {
+      pattern = 'Padrão típico de acúmulo de fim de semana.';
+    } else if (worst.dow === 5 || worst.dow === 4) {
+      pattern = 'Acúmulo de carga típico de meio de semana.';
+    } else if (best.dow === 1) {
+      pattern = 'Boa recuperação de fim de semana.';
+    }
+
+    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+    return `Sua semana: melhor dia foi ${capitalize(best.label)} (${best.score}), pior foi ${capitalize(worst.label)} (${worst.score}).${pattern ? ' ' + pattern : ''}`;
+  })();
+
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-5">
       <div className="flex items-center justify-between mb-4">
@@ -80,6 +110,12 @@ export default function WeekStrip({ data }) {
           );
         })}
       </div>
+
+      {weeklyReading && (
+        <p className="text-[11px] text-muted-foreground mt-3 leading-snug">
+          {weeklyReading}
+        </p>
+      )}
     </div>
   );
 }
