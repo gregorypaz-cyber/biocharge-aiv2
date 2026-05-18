@@ -9,6 +9,7 @@ import {
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import DetectedPatternBlock from '@/components/trends/DetectedPatternBlock';
 
 const timeFilters = [
   { label: '7D', days: 7 },
@@ -224,6 +225,9 @@ export default function Trends() {
           <p>Registre mais check-ins para ver tendências</p>
         </div>
       )}
+
+      {/* Detected Pattern Block */}
+      <DetectedPatternBlock checkins={filtered} />
 
       {/* Recovery vs Fatigue Bar */}
       {chartData.length >= 2 && (
