@@ -14,6 +14,7 @@ import StreakCard from '@/components/dashboard/StreakCard';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
+import DetectedPatternBlock from '@/components/trends/DetectedPatternBlock';
 
 export default function Dashboard() {
   const { data: checkins = [], isLoading } = useUserCheckins(60);
@@ -21,7 +22,7 @@ export default function Dashboard() {
 
   const [rangeDays, setRangeDays] = useState(14);
   const [showSleep, setShowSleep] = useState(true);
-  const [showFatigue, setShowFatigue] = useState(false);
+  const [showFatigue, setShowFatigue] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
 
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
@@ -169,6 +170,9 @@ export default function Dashboard() {
         </div>
         <MiniChart data={computed} days={rangeDays} showSleep={showSleep} showFatigue={showFatigue} />
       </motion.div>
+
+      {/* Padrão detectado por IA */}
+      <DetectedPatternBlock checkins={computed} allCheckins={computed} />
 
       {/* WeekStrip — últimos 7 dias */}
       <WeekStrip data={computed} />
