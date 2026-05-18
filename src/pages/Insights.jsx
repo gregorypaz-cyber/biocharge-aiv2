@@ -222,6 +222,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 export default function Insights() {
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [aiInsight, setAiInsight] = useState('');
+  const [aiInsightError, setAiInsightError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [analysisGeneratedAt, setAnalysisGeneratedAt] = useState(null);
   const [coachInput, setCoachInput] = useState('');
@@ -311,7 +312,7 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
       setAiInsight(result);
       setAnalysisGeneratedAt(new Date());
     } catch {
-      setAiInsight('Não foi possível gerar análise agora. Tente novamente.');
+      setAiInsightError('Não foi possível gerar análise agora. Tente novamente.');
     } finally {
       setIsGenerating(false);
     }
@@ -624,6 +625,8 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
                 </p>
               )}
             </>
+          ) : aiInsightError ? (
+            <p className="text-sm text-red-400/80">{aiInsightError}</p>
           ) : (
             <p className="text-sm text-muted-foreground">A análise é gerada automaticamente ao salvar o check-in da manhã. Clique em "Gerar Análise" para obter agora.</p>
           )}
