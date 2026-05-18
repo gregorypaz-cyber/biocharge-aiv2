@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Sparkles, AlertTriangle } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
+import { getNextSteps } from '@/utils/analysisHelpers';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -98,8 +99,11 @@ export default function AnalysisHighlights({ analysisText }) {
   const sentences = cleanSentences(analysisText);
   const alerts = extractAlerts(sentences);
   const patterns = extractPatterns(sentences, alerts);
+  const steps = getNextSteps(analysisText);
 
-  if (!alerts.length && !patterns.length) return null;
+  if (!alerts.length && !patterns.length && !steps.length) return null;
+
+  const hasDivider = (a, b) => a.length > 0 && b.length > 0;
 
   return (
     <motion.div
@@ -114,9 +118,7 @@ export default function AnalysisHighlights({ analysisText }) {
         dotColor="bg-red-400/70"
         items={alerts}
       />
-      {alerts.length > 0 && patterns.length > 0 && (
-        <div className="h-px bg-border/40" />
-      )}
+      {hasDivider(alerts, patterns) && <div className="h-px bg-border/40" />}
       <Section
         icon={Sparkles}
         label="Padrões detectados"
@@ -124,6 +126,25 @@ export default function AnalysisHighlights({ analysisText }) {
         dotColor="bg-primary/60"
         items={patterns}
       />
+      {(alerts.length > 0 || patterns.length > 0) && steps.length > 0 && (
+        <div className="h-px bg-border/40" />
+      )}
+      {steps.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <ChevronRight className="w-3.5 h-3.5 shrink-0 text-yellow-400" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400">Próximos passos</p>
+          </div>
+          <ul className="space-y-1.5">
+            {steps.map((text, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-foreground/85 leading-snug">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0 bg-yellow-400/60" />
+                {text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </motion.div>
   );
 }

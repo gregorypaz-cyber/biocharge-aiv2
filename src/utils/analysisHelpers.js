@@ -1,4 +1,41 @@
 /**
+ * Extracts up to 4 actionable next steps from an AI analysis text.
+ * Looks for imperative/recommendation sentences.
+ */
+export function getNextSteps(analysisText) {
+  if (!analysisText || typeof analysisText !== 'string') return [];
+
+  const sentences = analysisText
+    .replace(/#+\s*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .split(/\n|(?<=\.)\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 15 && s.length < 180);
+
+  const scored = sentences.map(s => {
+    const l = s.toLowerCase();
+    let score = 0;
+    // Imperative / recommendation signals
+    if (/^(dormir|reduza|aumente|adicione|evite|priorize|descanse|mantenha|faça|tente|hidrate|limite)/i.test(s)) score += 30;
+    if (/recomend|suger|ideal|deve|precisa|import/i.test(l)) score += 20;
+    if (/dormir|sono/i.test(l)) score += 15;
+    if (/reduzir|diminuir|pausar|descanso/i.test(l)) score += 15;
+    if (/recuperação|recuperar/i.test(l)) score += 12;
+    if (/intensidade|volume|carga/i.test(l)) score += 10;
+    if (/hidrat|nutri|alimenta/i.test(l)) score += 8;
+    if (/\d+/.test(s)) score += 5;
+    return { text: s, score };
+  });
+
+  return scored
+    .filter(s => s.score >= 15)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map(s => s.text);
+}
+
+/**
  * Extracts the 2 most important highlights from an AI analysis text.
  * Priority: alerts (overtraining, high fatigue) > strong patterns (sleep → recovery)
  */
