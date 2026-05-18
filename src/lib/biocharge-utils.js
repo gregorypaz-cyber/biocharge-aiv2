@@ -162,6 +162,51 @@ export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
   return `Recovery amanhã depende da qualidade do sono desta noite. Meta: ${sleepNeedTonight}h.`;
 }
 
+export async function generateHeadlineTodayAI(checkin, scores, recentCheckins) {
+  const { base44 } = await import('@/api/base44Client');
+
+  // Count consecutive low deep sleep nights
+  const sortedRecent = [...(recentCheckins || [])].sort((a, b) => b.date.localeCompare(a.date));
+  let lowDeepSleepNights = 0;
+  for (const c of [checkin, ...sortedRecent]) {
+    if (c.deep_sleep_pct != null && c.deep_sleep_pct < 18) lowDeepSleepNights++;
+    else break;
+  }
+
+  const hrvValues = (recentCheckins || []).slice(0, 7).map(c => c.hrv).filter(Boolean);
+  const hrvAvg = hrvValues.length > 0 ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length) : null;
+  const hrvStatus = checkin.hrv && hrvAvg
+    ? (checkin.hrv > hrvAvg + 5 ? 'alto (acima da média)' : checkin.hrv < hrvAvg - 5 ? 'baixo (abaixo da média)' : 'normal')
+    : null;
+
+  const prompt = `Você é um coach de alta performance. Gere um headline direto para o dashboard de hoje do atleta. Máximo 12 palavras. Tom direto, motivador quando aplicável. Em português brasileiro. Sem aspas. Sem ponto final.
+
+Dados:
+- Prontidão: ${scores?.readiness_score ?? checkin.biocharge_morning ?? '—'}
+- Zone: ${scores?.zone ?? checkin.zone ?? '—'}
+- HRV: ${checkin.hrv ?? '—'} ms${hrvStatus ? ` (${hrvStatus})` : ''}
+- Sono profundo: ${checkin.deep_sleep_pct ?? '—'}%${lowDeepSleepNights >= 2 ? ` (${lowDeepSleepNights} noites consecutivas abaixo de 18%)` : ''}
+- Horas de sono: ${checkin.sleep_hours ?? '—'}h
+- Fadiga: ${checkin.fatigue ?? '—'}
+- Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
+- Alerta fadiga retardada: ${scores?.delayed_fatigue_alert ?? 'nenhum'}
+- Dia de descanso: ${checkin.rest_day ? 'sim' : 'não'}
+
+Exemplos de estilo (NÃO copie, crie um headline original para os dados acima):
+- "Sono fraco por 6 noites. Treine leve, recupere esta noite."
+- "Dia verde. Seu corpo está pronto — aproveite."
+- "Seu corpo pediu pausa. Hoje é dia de recuperar."
+- "Descanso ativo hoje. Amanhã você vai sentir a diferença."
+
+Headline:`;
+
+  const result = await base44.integrations.Core.InvokeLLM({ prompt });
+  if (typeof result !== 'string') return null;
+  // Enforce max 12 words
+  const words = result.trim().replace(/^["']|["']$/g, '').split(/\s+/);
+  return words.slice(0, 15).join(' '); // slight buffer for PT-BR
+}
+
 export async function generateNextDayForecastAI(checkin, scores, recentCheckins) {
   const { base44 } = await import('@/api/base44Client');
 

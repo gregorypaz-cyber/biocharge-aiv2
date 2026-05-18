@@ -14,7 +14,7 @@ import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
-import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert, generateNextDayForecastAI } from '@/lib/biocharge-utils';
+import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert, generateNextDayForecastAI, generateHeadlineTodayAI } from '@/lib/biocharge-utils';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
@@ -187,10 +187,14 @@ export default function DailyCheckin() {
       scores.next_day_forecast = calcNextDayForecast(scores.recovery_score, sleepNeed);
       scores.delayed_fatigue_alert = calcDelayedFatigueAlert(payload, recentCheckins, allSessions);
       try {
-        const aiForecast = await generateNextDayForecastAI(payload, scores, recentCheckins);
+        const [aiForecast, aiHeadline] = await Promise.all([
+          generateNextDayForecastAI(payload, scores, recentCheckins),
+          generateHeadlineTodayAI(payload, scores, recentCheckins),
+        ]);
         if (aiForecast) scores.next_day_forecast = aiForecast;
+        if (aiHeadline) scores.headline_today = aiHeadline;
       } catch (e) {
-        console.warn('AI forecast failed, using fallback', e);
+        console.warn('AI generation failed, using fallback', e);
       }
       if (editData?.id) return base44.entities.DailyCheckin.update(editData.id, scores);
       return base44.entities.DailyCheckin.create(scores);

@@ -608,8 +608,21 @@ export default function Today() {
 
       {/* ── Header (DayPhase-aware microcopy) ─────────────────────────────── */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight">{phaseCfg.headerTitle}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
+        {enrichedCheckin?.headline_today ? (
+          <>
+            <h1 className="text-xl font-black tracking-tight leading-snug">{enrichedCheckin.headline_today}</h1>
+            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2">
+              <span className="font-mono font-semibold text-foreground/50">{displayedScore} pts</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span>{phaseCfg.headerSub}</span>
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-black tracking-tight">{phaseCfg.headerTitle}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
+          </>
+        )}
         {checkin?.created_at ? (
           <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
             <span>Check-in às</span>

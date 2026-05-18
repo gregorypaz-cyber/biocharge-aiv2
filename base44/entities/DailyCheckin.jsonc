@@ -156,6 +156,10 @@
       "type": "string",
       "description": "AI-generated forecast for the next day"
     },
+    "headline_today": {
+      "type": "string",
+      "description": "AI-generated headline summarizing the day's physiological status (max ~12 words)"
+    },
     "delayed_fatigue_alert": {
       "type": "string",
       "description": "Alert about delayed fatigue patterns detected from history"
