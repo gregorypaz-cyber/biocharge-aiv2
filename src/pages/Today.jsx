@@ -28,6 +28,7 @@ import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import SleepDebtCard from '@/components/today/SleepDebtCard';
 import { buildCardLayout, resolveWorkoutIntensity } from '@/utils/priorityEngine';
+import { useStreak } from '@/hooks/useStreak';
 
 export default function Today() {
   const queryClient = useQueryClient();
@@ -215,6 +216,7 @@ export default function Today() {
   } : null;
 
   const { intent, locked, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
+  const { streak, hasCheckedInToday } = useStreak(checkins);
 
   // ── Body state translation map ───────────────────────────────────────────
   const BODY_STATE_PT = {
@@ -644,7 +646,8 @@ export default function Today() {
     )}>
 
       {/* ── Header (DayPhase-aware microcopy) ─────────────────────────────── */}
-      <div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
         {enrichedCheckin?.headline_today ? (
           <>
             <h1 className="text-xl font-black tracking-tight leading-snug">{enrichedCheckin.headline_today}</h1>
@@ -670,6 +673,19 @@ export default function Today() {
         ) : checkin?.date ? (
           <p className="text-[10px] text-muted-foreground mt-0.5">Check-in de hoje registrado</p>
         ) : null}
+        </div>
+
+        {/* ── Streak badge ── */}
+        {hasCheckedInToday && streak >= 3 && (
+          <Link
+            to="/insights"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
+            title={`${streak} dias seguidos`}
+          >
+            <span className="text-sm leading-none">🔥</span>
+            <span className="text-xs font-bold text-orange-400">{streak}</span>
+          </Link>
+        )}
       </div>
 
       {/* ── Phase banner (OVERLOAD / RECOVERY_DAY only) ───────────────────── */}
