@@ -21,6 +21,7 @@ import CurrentStateCard from '@/components/today/CurrentStateCard';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutSuggestionCard from '@/components/today/WorkoutSuggestionCard';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
+import NarrativeInline from '@/components/today/NarrativeInline';
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
@@ -671,6 +672,9 @@ export default function Today() {
 
       {/* ── Primary cards (máx 3) — renderizados pela Priority Engine ───── */}
       {primaryCards.map(desc => renderCard(desc))}
+
+      {/* ── Narrativa compacta — logo após o card de prontidão ───────────── */}
+      {analysis?.narrative && <NarrativeInline narrative={analysis.narrative} />}
 
       {/* ── Secondary cards — agrupados no expansível ─────────────────────── */}
       <SecondaryMetrics count={secondaryCards.filter(d => d.action !== 'exclude').length}>
