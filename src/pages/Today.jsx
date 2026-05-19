@@ -340,6 +340,7 @@ export default function Today() {
       currentStrain: cappedStrain,
       analysis,
       userPrefs: user?.preferences || {},
+      todaySessions,
     };
 
     switch (desc.id) {

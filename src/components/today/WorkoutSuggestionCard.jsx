@@ -3,6 +3,7 @@ import { useDayContext } from '@/lib/dayContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, Check, Calendar, TrendingUp } from 'lucide-react';
 import { useMotionSafe } from '@/hooks/use-motion-safe';
+import WorkoutLoggedState from './WorkoutLoggedState';
 import { prescribeWorkout } from '../../lib/workout-prescription.js';
 import {
   getUserIdOrDeviceId,
@@ -891,11 +892,13 @@ export default function WorkoutSuggestionCard({
   analysis,
   workoutPrescription,
   userPrefs,
+  todaySessions = [],
   onScheduleOption,
   onCompleteOption,
   onSchedule,
 }) {
   const { intent } = useDayContext();
+
   const bodyState = checkin?.current_body_state || 'default';
   const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
   const { initial, transition: reducedTransition } = useMotionSafe();
@@ -947,6 +950,17 @@ export default function WorkoutSuggestionCard({
   const trainingRecs = actionableRecs.filter(r =>
     ['Treino', 'Mobilidade', 'Recuperação'].includes(r.category)
   );
+
+  // ESTADO 2 — Após treino registrado (após todos os hooks)
+  if (todaySessions.length > 0) {
+    return (
+      <WorkoutLoggedState
+        sessions={todaySessions}
+        checkin={checkin}
+        analysis={analysis}
+      />
+    );
+  }
 
   return (
     <motion.div
