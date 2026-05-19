@@ -16,6 +16,8 @@ import {
 } from '../../services/workoutFeedbackService.js';
 import WorkoutCompletionToast, { buildProspectiveMessage } from './WorkoutCompletionToast.jsx';
 import AcwrAlert from './AcwrAlert.jsx';
+import YesterdayContextBanner from './YesterdayContextBanner.jsx';
+import { applyYesterdayLookback } from '../../lib/yesterday-lookback.js';
 
 // ─── Legacy body-state config (unchanged) ────────────────────────────────────
 const INTENSITY_MAP = {
@@ -302,8 +304,11 @@ function PrescriptionBlock({
   presc, analysis, intent,
   onScheduleOption, onCompleteOption, onSchedule,
   checkin, strainTarget, currentStrain,
+  lookbackRecommendKey,
 }) {
-  const recommendedKey = resolveRecommendedKey(checkin, analysis);
+  // lookback can override the recommended key (e.g. force C/B after hard session yesterday)
+  const baseRecommendedKey = resolveRecommendedKey(checkin, analysis);
+  const recommendedKey = lookbackRecommendKey ?? baseRecommendedKey;
   const [selected, setSelected] = useState(recommendedKey);
   const [savingSelect, setSavingSelect] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
@@ -950,6 +955,12 @@ export default function WorkoutSuggestionCard({
     return null;
   }, [analysis, workoutPrescription, userPrefs]);
 
+  const lookback = useMemo(() => {
+    if (!allSessions || allSessions.length === 0) return null;
+    const todayDate = new Date().toISOString().slice(0, 10);
+    return applyYesterdayLookback(allSessions, todayDate, checkin);
+  }, [allSessions, checkin]);
+
   const trainingRecs = actionableRecs.filter(r =>
     ['Treino', 'Mobilidade', 'Recuperação'].includes(r.category)
   );
@@ -984,6 +995,9 @@ export default function WorkoutSuggestionCard({
         todaySessions={todaySessions}
         analysisRatio={analysis?.trainingLoad?.ratio ?? null}
       />
+
+      {/* Yesterday context banner */}
+      <YesterdayContextBanner lookback={lookback} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -1137,6 +1151,7 @@ export default function WorkoutSuggestionCard({
             checkin={checkin}
             strainTarget={strainTarget}
             currentStrain={currentStrain}
+            lookbackRecommendKey={lookback?.recommendKey ?? null}
             onScheduleOption={onScheduleOption}
             onCompleteOption={onCompleteOption}
             onSchedule={onSchedule}
