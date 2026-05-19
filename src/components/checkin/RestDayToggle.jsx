@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BedDouble } from 'lucide-react';
+import { BedDouble, CheckCircle2 } from 'lucide-react';
 
 export default function RestDayToggle({ value, onChange }) {
   return (
@@ -10,8 +10,8 @@ export default function RestDayToggle({ value, onChange }) {
         whileTap={{ scale: 0.98 }}
         className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
           value
-            ? 'border-blue-500/50 bg-blue-500/10'
-            : 'border-border/60 bg-card hover:border-border'
+            ? 'border-blue-500 bg-blue-500/15 shadow-[0_0_0_1px_hsl(217,91%,60%,0.2)]'
+            : 'border-dashed border-border/60 bg-card hover:border-border hover:bg-secondary/40'
         }`}
       >
         {/* Custom toggle */}
@@ -30,14 +30,19 @@ export default function RestDayToggle({ value, onChange }) {
         <div className="flex items-center gap-2 flex-1 text-left">
           <BedDouble className={`w-5 h-5 shrink-0 ${value ? 'text-blue-400' : 'text-muted-foreground'}`} />
           <div>
-            <p className={`text-sm font-semibold ${value ? 'text-blue-300' : 'text-foreground'}`}>
-              Dia de descanso — não treinarei hoje
+            <p className={`text-sm font-semibold ${value ? 'text-blue-300' : 'text-foreground/80'}`}>
+              {value ? 'Dia de descanso ativado ✓' : 'Marcar como dia de descanso'}
             </p>
-            <p className="text-xs text-muted-foreground">Decida após ver seus dados de recuperação</p>
+            <p className="text-xs text-muted-foreground">
+              {value ? 'Recuperação também é treino.' : 'Decida após ver seus dados de recuperação'}
+            </p>
           </div>
         </div>
 
-        {value && <span className="text-xl shrink-0">🛌</span>}
+        {value
+          ? <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0" />
+          : <span className="text-base shrink-0 opacity-40">🛌</span>
+        }
       </motion.button>
 
       {value && (
