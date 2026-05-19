@@ -162,6 +162,40 @@ export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
   return `Recovery amanhã depende da qualidade do sono desta noite. Meta: ${sleepNeedTonight}h.`;
 }
 
+export async function generateTrainingReasonAI(checkin, scores, recentCheckins, acwr) {
+  const { base44 } = await import('@/api/base44Client');
+
+  const hrvValues = (recentCheckins || []).slice(0, 7).map(c => c.hrv).filter(Boolean);
+  const hrvAvg = hrvValues.length > 0 ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length) : null;
+  const hrvDeltaPct = (checkin.hrv && hrvAvg) ? Math.round(((checkin.hrv - hrvAvg) / hrvAvg) * 100) : null;
+
+  const sleepDebt = (recentCheckins || []).slice(0, 7).reduce((sum, c) => {
+    return sum + Math.max(0, 7.5 - (c.sleep_hours || 0));
+  }, 0);
+
+  const prompt = `Você é um coach de performance. Gere UMA frase de razão (máx 2 linhas) explicando por que o atleta deve treinar desta forma hoje. Conecte DIRETAMENTE os dados à decisão. Em português brasileiro. Sem título, sem bullet. Tom direto e pessoal.
+
+Dados do dia:
+- Recovery: ${scores?.recovery_score ?? checkin.biocharge_morning ?? '—'}
+- HRV delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : '—'}
+- ACWR: ${acwr != null ? acwr.toFixed(2) : '—'}
+- Dívida de sono (7 dias): ${sleepDebt.toFixed(1)}h
+- Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
+- Dor muscular: ${checkin.muscle_soreness ?? '—'}/5
+
+Exemplos de estilo (NÃO copie, crie uma frase original para os dados acima):
+- "Seu HRV está acima do normal e sua carga está baixa — bom momento para manter ritmo sem forçar."
+- "Sua dívida de sono está pressionando sua recuperação. Treino leve hoje protege sua próxima janela de carga."
+- "Três dias de carga alta. Seu sistema precisa absorver antes de adicionar mais."
+- "Você está no verde. Este é o dia para treinar com intenção."
+
+Frase de razão:`;
+
+  const result = await base44.integrations.Core.InvokeLLM({ prompt });
+  if (typeof result !== 'string') return null;
+  return result.trim().replace(/^["']|["']$/g, '');
+}
+
 export async function generateHeadlineTodayAI(checkin, scores, recentCheckins) {
   const { base44 } = await import('@/api/base44Client');
 

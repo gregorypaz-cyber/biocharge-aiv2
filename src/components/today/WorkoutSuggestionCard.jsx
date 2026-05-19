@@ -982,6 +982,13 @@ export default function WorkoutSuggestionCard({
           : 'Você pode decidir ao longo do dia'}
       </p>
 
+      {/* Training reason — frase IA explicando a escolha do treino */}
+      {checkin?.recommendation && (
+        <p className="text-xs text-muted-foreground italic leading-relaxed -mt-1">
+          {checkin.recommendation}
+        </p>
+      )}
+
       <div className="h-px bg-border/40" />
 
       {/* Yesterday reflection */}
