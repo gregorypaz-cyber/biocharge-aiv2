@@ -341,6 +341,7 @@ export default function Today() {
       analysis,
       userPrefs: user?.preferences || {},
       todaySessions,
+      allSessions,
     };
 
     switch (desc.id) {

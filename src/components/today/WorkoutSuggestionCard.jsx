@@ -15,6 +15,7 @@ import {
   getRecentFeedback,
 } from '../../services/workoutFeedbackService.js';
 import WorkoutCompletionToast, { buildProspectiveMessage } from './WorkoutCompletionToast.jsx';
+import AcwrAlert from './AcwrAlert.jsx';
 
 // ─── Legacy body-state config (unchanged) ────────────────────────────────────
 const INTENSITY_MAP = {
@@ -894,6 +895,7 @@ export default function WorkoutSuggestionCard({
   workoutPrescription,
   userPrefs,
   todaySessions = [],
+  allSessions = [],
   onScheduleOption,
   onCompleteOption,
   onSchedule,
@@ -976,6 +978,13 @@ export default function WorkoutSuggestionCard({
       className="rounded-2xl border p-5 space-y-4"
       style={{ background: cfg.bg, borderColor: cfg.border }}
     >
+      {/* ACWR Alert — topo do card, antes de tudo */}
+      <AcwrAlert
+        allSessions={allSessions}
+        todaySessions={todaySessions}
+        analysisRatio={analysis?.trainingLoad?.ratio ?? null}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
