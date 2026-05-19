@@ -765,21 +765,84 @@ function PrescriptionBlock({
   );
 }
 
+// ─── ACWR modifier ────────────────────────────────────────────────────────────
+/**
+ * Aplica ACWR como modificador de texto/cor sobre a recomendação base.
+ * Retorna { text, color, acwrContext } onde acwrContext é a linha de contexto a exibir.
+ */
+function applyAcwrModifier(baseRec, acwr, hrvDeltaPositive) {
+  if (acwr == null) return { ...baseRec, acwrContext: null };
+
+  // Níveis de intensidade em ordem crescente
+  const LEVELS = [
+    { text: 'Descanso ou recuperação ativa · risco de lesão elevado', color: '#ef4444' },
+    { text: 'Treino leve — preserve para amanhã',                      color: '#eab308' },
+    { text: 'Treino moderado — ritmo sustentável',                     color: '#38bdf8' },
+    { text: 'Treino forte — você está no verde',                       color: '#22c55e' },
+  ];
+
+  // Mapear texto base para índice
+  function baseIndex(text) {
+    if (/descanso obrigatório|sobrecarga/i.test(text)) return 0;
+    if (/recuperação ativa/i.test(text))               return 0;
+    if (/leve/i.test(text))                            return 1;
+    if (/moderado/i.test(text))                        return 2;
+    if (/forte|verde/i.test(text))                     return 3;
+    return 2; // fallback moderado
+  }
+
+  let idx = baseIndex(baseRec.text);
+  let acwrContext = null;
+
+  if (acwr > 1.50) {
+    // Força descanso independente do estado
+    return {
+      text: 'Descanso ou recuperação ativa · risco de lesão elevado',
+      color: '#ef4444',
+      acwrContext: { text: `ACWR: ${acwr.toFixed(2)} — muito acima do ideal. Risco de lesão elevado.`, color: '#ef4444' },
+    };
+  } else if (acwr >= 1.30) {
+    idx = Math.max(0, idx - 1);
+    acwrContext = { text: `ACWR: ${acwr.toFixed(2)} — acima do ideal. Reduza a intensidade hoje.`, color: '#f59e0b' };
+  } else if (acwr <= 0.80 && hrvDeltaPositive) {
+    idx = Math.min(LEVELS.length - 1, idx + 1);
+    acwrContext = { text: `ACWR: ${acwr.toFixed(2)} — abaixo da zona ideal. Seu corpo pode absorver mais carga.`, color: '#22c55e' };
+  } else if (acwr <= 0.80) {
+    acwrContext = { text: `ACWR: ${acwr.toFixed(2)} — abaixo da zona ideal. Seu corpo pode absorver mais carga.`, color: '#22c55e' };
+  }
+  // 0.80–1.30: sem mudança, sem contexto
+
+  const level = LEVELS[idx];
+  return { text: level.text, color: level.color, acwrContext };
+}
+
 // ─── Readiness-based recommendation ──────────────────────────────────────────
-function resolveReadinessRecommendation(checkin) {
+function resolveReadinessRecommendation(checkin, analysis) {
   const state = checkin?.current_body_state;
+  let baseRec;
+
   if (state === 'Fatigued' || state === 'Overreached') {
-    return { text: 'Descanso obrigatório — seu corpo pediu pausa', color: '#ef4444' };
+    baseRec = { text: 'Descanso obrigatório — seu corpo pediu pausa', color: '#ef4444' };
+  } else {
+    const score = checkin?.biocharge_morning ?? checkin?.readiness_score ?? checkin?.recovery_score ?? 0;
+    const soreness = checkin?.muscle_soreness ?? checkin?.muscle_soreness_level ?? 99;
+    const fatigue = checkin?.fatigue ?? 99;
+    if (score >= 85 && soreness <= 1 && fatigue <= 20) {
+      baseRec = { text: 'Treino forte — você está no verde', color: '#22c55e' };
+    } else if (score >= 70) {
+      baseRec = { text: 'Treino moderado — ritmo sustentável', color: '#38bdf8' };
+    } else if (score >= 60) {
+      baseRec = { text: 'Treino leve — preserve para amanhã', color: '#eab308' };
+    } else {
+      baseRec = { text: 'Recuperação ativa — não force hoje', color: '#ef4444' };
+    }
   }
-  const score = checkin?.biocharge_morning ?? checkin?.readiness_score ?? checkin?.recovery_score ?? 0;
-  const soreness = checkin?.muscle_soreness ?? checkin?.muscle_soreness_level ?? 99;
-  const fatigue = checkin?.fatigue ?? 99;
-  if (score >= 85 && soreness <= 1 && fatigue <= 20) {
-    return { text: 'Treino forte — você está no verde', color: '#22c55e' };
-  }
-  if (score >= 70) return { text: 'Treino moderado — ritmo sustentável', color: '#38bdf8' };
-  if (score >= 60) return { text: 'Treino leve — preserve para amanhã', color: '#eab308' };
-  return { text: 'Recuperação ativa — não force hoje', color: '#ef4444' };
+
+  const acwr = analysis?.trainingLoad?.ratio ?? null;
+  const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
+  const hrvDeltaPositive = hrvDelta != null && hrvDelta > 0;
+
+  return applyAcwrModifier(baseRec, acwr, hrvDeltaPositive);
 }
 
 // ─── Option impact prediction ────────────────────────────────────────────────
@@ -955,13 +1018,20 @@ export default function WorkoutSuggestionCard({
 
       <div className="h-px bg-border/40" />
 
-      {/* Readiness-based recommendation */}
+      {/* Readiness-based recommendation + ACWR modifier */}
       {(() => {
-        const rec = resolveReadinessRecommendation(checkin);
+        const rec = resolveReadinessRecommendation(checkin, analysis);
         return (
-          <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
-            {rec.text}
-          </p>
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
+              {rec.text}
+            </p>
+            {rec.acwrContext && (
+              <p className="text-[11px] leading-snug" style={{ color: rec.acwrContext.color }}>
+                {rec.acwrContext.text}
+              </p>
+            )}
+          </div>
         );
       })()}
 
