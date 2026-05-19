@@ -230,19 +230,27 @@ export default function DailyCheckin() {
           sleep_hours: c.sleep_hours,
         }));
         base44.integrations.Core.InvokeLLM({
-          prompt: `Você é o BioCharge AI Coach, especialista em performance e recuperação física. Analise os dados abaixo em português brasileiro.
+          prompt: `INSTRUÇÃO: Você é um especialista em fisiologia do exercício e ciência do esporte. Gere uma análise técnica, estruturada e profissional em português brasileiro.
+PROIBIDO: linguagem conversacional, saudações, "Claro!", "Vamos", "Com prazer", referências a datas específicas isoladas, frases incompletas. O texto deve terminar obrigatoriamente com uma frase completa. Se o conteúdo ultrapassar o limite, encurte — nunca corte no meio.
 
-Dados dos últimos ${summary.length} dias:
-${JSON.stringify(summary, null, 2)}
+FORMATO (respeitar exatamente esta estrutura, sem adicionar seções extras):
 
-Forneça uma análise detalhada e personalizada incluindo:
-1. **📊 Análise de Tendência** — como os scores evoluíram
-2. **🔍 Padrões Detectados** — correlações entre sono, HRV, fadiga, RPE
-3. **⚠️ Alertas** — sinais de overtraining, déficit de recuperação
-4. **💡 Recomendações Específicas** — baseadas nos dados reais do usuário
-5. **📈 Próximos 7 dias** — estratégia sugerida
+Análise de tendência
+[2–3 frases sobre os padrões dos últimos ${summary.length} dias. Foco em correlações, não em eventos isolados.]
 
-Seja específico, cite os números reais do usuário. Evite insights genéricos. Use emojis para tornar mais visual.`,
+Sono
+[1–2 frases sobre o padrão de sono e impacto no recovery. Use médias e tendências, não datas.]
+
+Fadiga e carga
+[1–2 frases sobre a relação entre strain e recovery observada no período.]
+
+Recomendações para os próximos 7 dias
+• [ação concreta 1]
+• [ação concreta 2]
+• [ação concreta 3]
+
+DADOS (${summary.length} dias, mais recente primeiro):
+${JSON.stringify(summary, null, 2)}`,
         }).then(deepAnalysis => {
           if (deepAnalysis && savedRecord?.id) {
             base44.entities.DailyCheckin.update(savedRecord.id, { deep_analysis_text: deepAnalysis });
