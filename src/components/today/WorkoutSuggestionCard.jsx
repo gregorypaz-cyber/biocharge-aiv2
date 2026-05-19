@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, Check, Calendar, TrendingUp } from 'lucide-react';
 import { useMotionSafe } from '@/hooks/use-motion-safe';
 import WorkoutLoggedState from './WorkoutLoggedState';
+import RecoveryProtocolCard from './RecoveryProtocolCard';
 import { prescribeWorkout } from '../../lib/workout-prescription.js';
 import {
   getUserIdOrDeviceId,
@@ -950,6 +951,11 @@ export default function WorkoutSuggestionCard({
   const trainingRecs = actionableRecs.filter(r =>
     ['Treino', 'Mobilidade', 'Recuperação'].includes(r.category)
   );
+
+  // ESTADO 0 — Dia de descanso declarado
+  if (checkin?.rest_day) {
+    return <RecoveryProtocolCard checkin={checkin} analysis={analysis} />;
+  }
 
   // ESTADO 2 — Após treino registrado (após todos os hooks)
   if (todaySessions.length > 0) {
