@@ -15,6 +15,7 @@ import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
 import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert, generateNextDayForecastAI, generateHeadlineTodayAI, generateTrainingReasonAI, generateContextualBulletsAI } from '@/lib/biocharge-utils';
+import CheckinSuccessOverlay from '@/components/checkin/CheckinSuccessOverlay';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
@@ -264,8 +265,8 @@ ${JSON.stringify(summary, null, 2)}`,
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
       if (navigator.vibrate) navigator.vibrate(40);
-      toast.success(editData?.id ? '✅ Check-in atualizado!' : '✅ Check-in salvo!');
       if (editData?.id) {
+        toast.success('✅ Check-in atualizado!');
         navigate('/history');
       } else {
         setSavedCheckin(result);
@@ -439,6 +440,13 @@ ${JSON.stringify(summary, null, 2)}`,
 
   // MORNING MODE UI
   return (
+    <>
+    {savedCheckin && (
+      <CheckinSuccessOverlay
+        checkin={savedCheckin}
+        onContinue={() => navigate('/today')}
+      />
+    )}
     <div className="space-y-4 max-w-xl mx-auto pb-8">
       {/* Header */}
       <div className="flex items-center justify-between pt-1">
@@ -607,11 +615,6 @@ ${JSON.stringify(summary, null, 2)}`,
       {/* Rest Day Toggle */}
       <RestDayToggle value={isRestDay} onChange={v => dispatch({ type: 'SET_REST_DAY', value: v })} />
 
-      {/* Today Preview — shown after save */}
-      {savedCheckin && (
-        <TodayPreviewBlock checkin={savedCheckin} onGoToToday={() => navigate('/today')} />
-      )}
-
       {/* Save */}
       {!savedCheckin && (
         <Button
@@ -627,6 +630,7 @@ ${JSON.stringify(summary, null, 2)}`,
         </Button>
       )}
     </div>
+    </>
   );
 }
 
