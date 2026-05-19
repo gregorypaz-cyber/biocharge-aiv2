@@ -1081,14 +1081,31 @@ export default function WorkoutSuggestionCard({
         </div>
       )}
 
-      <ul className="space-y-1.5">
-        {cfg.tips.map((tip, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-            <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.color }} />
-            {tip}
-          </li>
-        ))}
-      </ul>
+      {/* Contextual bullets — AI-generated on check-in save, max 2 */}
+      {(() => {
+        const raw = checkin?.contextual_bullets;
+        const bullets = raw ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : null;
+        if (bullets?.length) {
+          return (
+            <ul className="space-y-2">
+              {bullets.map((tip, i) => (
+                <li key={i} className="text-sm text-foreground/80 leading-snug">{tip}</li>
+              ))}
+            </ul>
+          );
+        }
+        // Fallback: generic tips from body state config
+        return (
+          <ul className="space-y-1.5">
+            {cfg.tips.map((tip, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.color }} />
+                {tip}
+              </li>
+            ))}
+          </ul>
+        );
+      })()}
 
       {trainingRecs.length > 0 && (
         <div className="pt-2 border-t border-border/30 space-y-2">

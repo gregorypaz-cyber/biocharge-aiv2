@@ -196,6 +196,57 @@ Frase de razão:`;
   return result.trim().replace(/^["']|["']$/g, '');
 }
 
+export async function generateContextualBulletsAI(checkin, scores, recentCheckins, recentSessions, acwr) {
+  const { base44 } = await import('@/api/base44Client');
+
+  // Build context
+  const hrvValues = (recentCheckins || []).slice(0, 7).map(c => c.hrv).filter(Boolean);
+  const hrvAvg = hrvValues.length > 0 ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length) : null;
+  const hrvDeltaPct = (checkin.hrv && hrvAvg) ? Math.round(((checkin.hrv - hrvAvg) / hrvAvg) * 100) : null;
+
+  const sleepDebt = (recentCheckins || []).slice(0, 7).reduce((sum, c) => {
+    return sum + Math.max(0, 7.5 - (c.sleep_hours || 0));
+  }, 0);
+
+  const lastSession = (recentSessions || [])
+    .filter(s => s.date !== checkin.date)
+    .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
+
+  const prompt = `Você é um coach de performance esportiva. Com base nos dados abaixo, gere EXATAMENTE 2 bullets contextuais para o dia de treino do atleta. Cada bullet deve ser uma frase direta, específica com os números dos dados, com máximo de 2 linhas. Em português brasileiro. Sem título. Sem asterisco. Sem numeração. Apenas os 2 bullets, um por linha.
+
+Regras:
+- Use APENAS dados que existem abaixo (não invente valores)
+- Cite o número real do dado quando for relevante
+- Cada bullet começa com um emoji relevante
+- Máximo 2 bullets, mínimo 1
+
+Dados do dia:
+- Recovery: ${scores?.recovery_score ?? checkin.biocharge_morning ?? '—'}
+- HRV delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : 'sem dados'}
+- ACWR: ${acwr != null ? acwr.toFixed(2) : 'sem dados'}
+- Dívida de sono (7 dias): ${sleepDebt.toFixed(1)}h
+- Dor muscular: ${checkin.muscle_soreness ?? checkin.muscle_soreness_level ?? '—'}/5
+- Stress: ${checkin.stress ?? checkin.stress_level ?? '—'}/5
+- Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
+- Último treino: ${lastSession ? `${lastSession.sport} (${lastSession.intensity}) em ${lastSession.date}` : 'sem dados'}
+
+Exemplos de estilo (NÃO copie, use os dados reais acima):
+- "💤 Com ${sleepDebt.toFixed(1)}h de dívida de sono, sua percepção de esforço vai parecer maior. Confie no RPE, não na sensação."
+- "⚡ Você está com mais capacidade que o normal. Não se limite — mas mantenha o foco na técnica."
+- "🦵 Pernas podem estar sensíveis do treino anterior. Priorize parte superior ou corrida leve."
+- "🧠 Stress elevado aumenta o custo fisiológico. RPE 6 hoje pode custar como 7."
+- "🎯 ACWR no limite. Pare 10 min antes de se sentir esgotado."
+
+Bullets:`;
+
+  const result = await base44.integrations.Core.InvokeLLM({ prompt });
+  if (typeof result !== 'string') return null;
+
+  // Parse lines into array, max 2
+  const lines = result.trim().split('\n').map(l => l.trim()).filter(l => l.length > 10);
+  return lines.slice(0, 2);
+}
+
 export async function generateHeadlineTodayAI(checkin, scores, recentCheckins) {
   const { base44 } = await import('@/api/base44Client');
 

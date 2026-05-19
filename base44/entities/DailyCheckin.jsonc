@@ -199,6 +199,10 @@
     "deep_analysis_text": {
       "type": "string",
       "description": "AI-generated deep analysis text, auto-generated on morning check-in save"
+    },
+    "contextual_bullets": {
+      "type": "string",
+      "description": "JSON array of max 2 contextual training bullets generated on check-in save"
     }
   },
   "required": [

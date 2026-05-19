@@ -14,7 +14,7 @@ import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
-import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert, generateNextDayForecastAI, generateHeadlineTodayAI, generateTrainingReasonAI } from '@/lib/biocharge-utils';
+import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert, generateNextDayForecastAI, generateHeadlineTodayAI, generateTrainingReasonAI, generateContextualBulletsAI } from '@/lib/biocharge-utils';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
@@ -191,14 +191,16 @@ export default function DailyCheckin() {
       try {
         // ACWR requer acesso ao analysis; usamos ratio salvo se disponível, senão null
         const acwr = payload.acwr ?? null;
-        const [aiForecast, aiHeadline, aiTrainingReason] = await Promise.all([
+        const [aiForecast, aiHeadline, aiTrainingReason, aiBullets] = await Promise.all([
           generateNextDayForecastAI(payload, scores, recentCheckins),
           generateHeadlineTodayAI(payload, scores, recentCheckins),
           generateTrainingReasonAI(payload, scores, recentCheckins, acwr),
+          !payload.rest_day ? generateContextualBulletsAI(payload, scores, recentCheckins, allSessions, acwr) : Promise.resolve(null),
         ]);
         if (aiForecast) scores.next_day_forecast = aiForecast;
         if (aiHeadline) scores.headline_today = aiHeadline;
         if (aiTrainingReason) scores.recommendation = aiTrainingReason;
+        if (aiBullets?.length) scores.contextual_bullets = JSON.stringify(aiBullets);
       } catch (e) {
         console.warn('AI generation failed, using fallback', e);
       }
