@@ -42,14 +42,24 @@ export default function Today() {
   const rawCheckin = todayCheckins[0];
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   const todaySessions = allSessions.filter(s => s.date === today);
+
+  // Sessões da semana atual (segunda-feira até hoje)
+  const weekSessions = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+    const mondayStr = monday.toISOString().slice(0, 10);
+    return allSessions.filter(s => s.date >= mondayStr);
+  }, [allSessions]);
+
   // Scores frescos da engine sobrepõem o DB para readiness/fatigue
   const engineScores = rawCheckin
     ? computeCheckinScores(rawCheckin, checkins.slice(1), todaySessions)
     : null;
 
-  // Construção determinística do checkin:
-  // - Usar o registro salvo (rawCheckin) como base (origem persistida)
-  // - Aplicar somente os campos calculados aprovados pela engine quando existirem
+  // Construção determinística do checkin
   const checkin = rawCheckin ? (() => {
     const base = { ...rawCheckin };
     const engine = engineScores || {};
@@ -72,13 +82,11 @@ export default function Today() {
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
 
-  // Derive live state if not saved yet
   const liveBodyState = checkin ? calculateBodyState(morningRecovery, totalStrain) : null;
   const liveCapacity = checkin ? calculateRemainingCapacity(morningRecovery, totalStrain) : null;
   const liveRecoveryDemand = checkin ? calculateRecoveryDemand(totalStrain, morningRecovery) : null;
   const liveSleepNeed = checkin ? calculateSleepNeed(totalStrain, morningRecovery) : null;
 
-  // Merge live state into checkin
   const enrichedCheckin = checkin ? {
     ...checkin,
     current_body_state: checkin.current_body_state || liveBodyState,
@@ -139,13 +147,13 @@ export default function Today() {
     if (diff < -5) return { text: 'HRV abaixo do normal — atenção', color: 'text-yellow-400' };
     return null;
   }, [last7Checkins, rawCheckin?.hrv]); // eslint-disable-line
+
   const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
 
   // ── Alerta de sono profundo ──────────────────────────────────────────────
   const [deepSleepAlertDismissed, setDeepSleepAlertDismissed] = useState(false);
   const deepSleepAlert = useMemo(() => {
     if (!rawCheckin?.deep_sleep_pct) return null;
-    // Incluir hoje + histórico recente, ordenados mais recente primeiro
     const sorted = [...checkins].sort((a, b) => b.date.localeCompare(a.date));
     let consecutiveNights = 0;
     for (const c of sorted) {
@@ -157,11 +165,8 @@ export default function Today() {
     }
     if (consecutiveNights < 2) return null;
     const pct = rawCheckin.deep_sleep_pct;
-
-    // Tendência de melhora: último valor maior que a média dos anteriores
     const recentPcts = sorted.slice(0, consecutiveNights).map(c => c.deep_sleep_pct).filter(v => v != null);
     const isImproving = recentPcts.length >= 2 && recentPcts[0] > recentPcts[1];
-
     let framing;
     if (isImproving) {
       framing = `Sono melhorando. Continue assim — mais 2 noites boas e sua recuperação volta.`;
@@ -172,7 +177,6 @@ export default function Today() {
     } else {
       framing = `Noite ${consecutiveNights} de sono raso. Seu corpo está em modo de alerta.`;
     }
-
     return `${framing} (sono profundo: ${pct}%)`;
   }, [checkins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
 
@@ -188,14 +192,10 @@ export default function Today() {
     return null;
   }, [rawCheckin?.biocharge_morning, enrichedCheckin?.remaining_capacity, rawCheckin?.sleep_score, rawCheckin?.sleep_quality]); // eslint-disable-line
 
-  // openAddSignal: incrementar para abrir modal no TrainingSessionsList
   const [openAddSignal, setOpenAddSignal] = useState(0);
 
-  // Número grande exibido: "Prontidão" (readiness), com fallback
   const displayedScore = checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
-  // Para decisões de treino/targets, priorizar recovery_score quando disponível (alinha com prescribeWorkout)
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
-  // Alinhado com a prescrição: Alta >=80, Moderada >=65, Baixa <65
   const readinessFaixa = prescriptionScore >= 80 ? 'Alta' : prescriptionScore >= 65 ? 'Moderada' : 'Baixa';
 
   const strainTarget =
@@ -206,7 +206,6 @@ export default function Today() {
 
   const cappedStrain = Math.min(21, totalStrain);
 
-  // ── DayPhase-aware context ───────────────────────────────────────────────
   const dayMetrics = enrichedCheckin ? {
     currentStrain: cappedStrain,
     strainTarget,
@@ -218,7 +217,6 @@ export default function Today() {
   const { intent, locked, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
   const { streak, hasCheckedInToday } = useStreak(checkins);
 
-  // ── Body state translation map ───────────────────────────────────────────
   const BODY_STATE_PT = {
     Recovered:       'Recuperado',
     Activated:       'Ativado',
@@ -246,7 +244,6 @@ export default function Today() {
     Minimal: 'Mínima',
   };
 
-  // ── Design-token map per phase ───────────────────────────────────────────
   const PHASE_CONFIG = {
     PLANNING: {
       headerTitle:    'Hoje',
@@ -298,14 +295,12 @@ export default function Today() {
     },
   };
 
-  // Se locked=true (usuário declarou dia de descanso), força RECOVERY_DAY independente do engine
-  const phase     = (locked && intent === 'recovery')
+  const phase = (locked && intent === 'recovery')
     ? 'RECOVERY_DAY'
     : Phase ? (dayPhase ?? 'PLANNING') : (intent === 'recovery' ? 'RECOVERY_DAY' : 'PLANNING');
   const phaseCfg  = PHASE_CONFIG[phase] ?? PHASE_CONFIG.PLANNING;
   const CtaIcon   = phaseCfg.ctaIcon;
 
-  // Paleta fria quando em modo recuperação/sobrecarga
   const isRestMode = phase === 'OVERLOAD' || phase === 'RECOVERY_DAY';
 
   // ── Priority Engine ────────────────────────────────────────────────────────
@@ -329,6 +324,32 @@ export default function Today() {
     });
   }, [phase, workoutIntensity, scheduledSport, todaySessions.length, analysis, enrichedCheckin, morningRecovery]); // eslint-disable-line
 
+  // ── Mensagem de contexto semanal ──────────────────────────────────────────
+  const weeklyContextMsg = useMemo(() => {
+    if (!enrichedCheckin) return null;
+    const sessionsCount = weekSessions.length;
+    const fatigue = enrichedCheckin.fatigue_score ?? enrichedCheckin.fatigue ?? 0;
+    const readiness = prescriptionScore;
+
+    const recentCheckins = checkins.filter(c => c.date !== today).slice(0, 5);
+    let trend = '';
+    if (recentCheckins.length >= 3) {
+      const scores = recentCheckins.slice(0, 3).map(c => c.recovery_score ?? c.readiness_score ?? 0);
+      if (scores[0] > scores[2] + 3) trend = ' · tendência positiva';
+      else if (scores[0] < scores[2] - 3) trend = ' · atenção à recuperação';
+    }
+
+    if (fatigue > 60 || sessionsCount >= 4)
+      return `Carga alta esta semana — considere reduzir intensidade.${trend}`;
+    if (readiness >= 85 && sessionsCount <= 1)
+      return `Alta prontidão com baixo volume — oportunidade para treino forte.${trend}`;
+    if (sessionsCount === 0)
+      return `Primeiro treino da semana — bom momento para começar.${trend}`;
+    if (sessionsCount >= 3)
+      return `Meta semanal atingida. Hoje pode ser leve ou descanso.${trend}`;
+    return `${sessionsCount} de 3 treinos esta semana — você está no ritmo.${trend}`;
+  }, [weekSessions, enrichedCheckin, checkins, prescriptionScore, today]); // eslint-disable-line
+
   /** Renderiza um card pelo seu id, usando o descriptor para mutações */
   function renderCard(desc) {
     if (!desc || desc.action === 'exclude') return null;
@@ -347,10 +368,19 @@ export default function Today() {
     switch (desc.id) {
       case 'execution':
         return <ExecutionCard key="execution" />;
-      case 'workout':
-        return desc.action === 'mutate'
+      case 'workout': {
+        const workoutEl = desc.action === 'mutate'
           ? <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
           : <WorkoutSuggestionCard key="workout" {...workoutProps} />;
+        return (
+          <React.Fragment key="workout-wrapper">
+            {workoutEl}
+            {weeklyContextMsg && (
+              <p className="text-xs text-muted-foreground mt-2 px-1">{weeklyContextMsg}</p>
+            )}
+          </React.Fragment>
+        );
+      }
       case 'morning_recovery':
         return <MorningRecoveryCard key="morning_recovery" checkin={enrichedCheckin} delta={recoveryDelta} />;
       case 'sleep_forecast':
@@ -494,7 +524,6 @@ export default function Today() {
               </span>
             )}
           </p>
-          {/* Trend lines */}
           {(biochargeTrend || hrvTrend) && (
             <div className="space-y-0.5 mt-1">
               {biochargeTrend && (
@@ -520,7 +549,6 @@ export default function Today() {
             />
           </div>
 
-          {/* Body state narrative — only when current_body_state is set */}
           {enrichedCheckin.current_body_state && BODY_STATE_PT[enrichedCheckin.current_body_state] && (
             <div className="mt-3 px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
               <span className="text-foreground/90">
@@ -533,7 +561,6 @@ export default function Today() {
             </div>
           )}
 
-          {/* Nota de contradição prontidão × capacidade */}
           {capacityContradictionNote && (
             <p className="text-[11px] text-muted-foreground leading-relaxed mt-1 px-1">
               {capacityContradictionNote}
