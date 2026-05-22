@@ -192,7 +192,7 @@ export default function Today() {
     return null;
   }, [rawCheckin?.biocharge_morning, enrichedCheckin?.remaining_capacity, rawCheckin?.sleep_score, rawCheckin?.sleep_quality]); // eslint-disable-line
 
-  const [openAddSignal, setOpenAddSignal] = useState(0);
+ const [showAddModal, setShowAddModal] = useState(false);
 
   const displayedScore = checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
