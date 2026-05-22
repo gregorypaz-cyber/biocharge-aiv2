@@ -391,7 +391,6 @@ export default function Today() {
             <TrainingSessionsList
               checkin={enrichedCheckin}
               sessions={todaySessions}
-              openAddSignal={openAddSignal}
               onUpdate={() => {
                 queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
                 queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
