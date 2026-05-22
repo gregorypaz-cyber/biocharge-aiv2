@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
 import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysis, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift, calculateSleepConsistency } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysisAsync, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
@@ -221,6 +221,8 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
 export default function Insights() {
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState('');
   const [aiInsightError, setAiInsightError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -236,7 +238,6 @@ export default function Insights() {
   const todayCheckin = checkins.find(c => c.date === todayDate);
 
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
-  const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, trainingSessions) : null, [computed.length, trainingSessions.length]);
   const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
 
   const streak = calculateStreak(checkins);
@@ -256,6 +257,20 @@ export default function Insights() {
     const todayScore = computed[0]?.readiness_score ?? computed[0]?.recovery_score ?? null;
     const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
     const questions = [];
+
+const computedKey = computed.length + ':' + (computed[0]?.date || '');
+  const sessionsKey = trainingSessions.length + ':' + (trainingSessions[0]?.date || '');
+
+  useEffect(() => {
+    if (computed.length === 0) { setAnalysis(null); return; }
+    let cancelled = false;
+    setAnalysisLoading(true);
+    runPhysiologicalAnalysisAsync(computed, trainingSessions, { useWorker: true, cacheTTLMinutes: 15 })
+      .then(result => { if (!cancelled) setAnalysis(result); })
+      .catch(() => { if (!cancelled) setAnalysis(null); })
+      .finally(() => { if (!cancelled) setAnalysisLoading(false); });
+    return () => { cancelled = true; };
+  }, [computedKey, sessionsKey]);
 
     // Q1 — contexto do estado atual
     if (state === 'Overreached' || state === 'Fatigued') questions.push('Por que estou sobrecarregado?');
