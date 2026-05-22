@@ -771,9 +771,22 @@ export default function Today() {
       <SleepDebtCard checkins={checkins} todayCheckin={enrichedCheckin} />
 
       {/* ── Secondary cards — agrupados no expansível ─────────────────────── */}
-      <SecondaryMetrics count={secondaryCards.filter(d => d.action !== 'exclude').length}>
+<SecondaryMetrics count={secondaryCards.filter(d => d.action !== 'exclude').length}>
         {secondaryCards.map(desc => renderCard(desc))}
       </SecondaryMetrics>
+
+      {showAddModal && (
+        <AddTrainingModal
+          checkin={enrichedCheckin}
+          existingSessions={todaySessions}
+          onClose={() => setShowAddModal(false)}
+          onAdded={() => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+            setShowAddModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
