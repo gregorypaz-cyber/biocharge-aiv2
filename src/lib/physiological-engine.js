@@ -136,8 +136,12 @@ function parseSpeedFromSession(s) {
 // ─── Moving Averages & Baseline ──────────────────────────────────────────────
 
 export function movingAvg(checkins, key, days) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+
   const vals = checkins
-    .slice(0, days)
+    .filter(c => c.date >= cutoffStr)
     .map(c => c[key])
     .filter(v => v != null && v > 0);
   if (!vals.length) return null;
@@ -145,7 +149,13 @@ export function movingAvg(checkins, key, days) {
 }
 
 function movingAvgRhr(checkins, days) {
-  const vals = checkins.slice(0, days).map(c => c.resting_hr ?? c.resting_heart_rate).filter(v => v != null && v > 0);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const vals = checkins
+    .filter(c => c.date >= cutoffStr)
+    .map(c => c.resting_hr ?? c.resting_heart_rate)
+    .filter(v => v != null && v > 0);
   return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
 }
 
