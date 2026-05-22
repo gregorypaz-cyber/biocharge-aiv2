@@ -615,9 +615,9 @@ export default function Today() {
           >
             <CtaIcon className="w-4 h-4" /> {phaseCfg.ctaLabel}
           </button>
-        ) : (
+) : (
           <button
-            onClick={() => setOpenAddSignal(v => v + 1)}
+            onClick={() => setShowAddModal(true)}
             className={cn('w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60', phaseCfg.ctaClass)}
           >
             <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
