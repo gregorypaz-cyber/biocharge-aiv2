@@ -28,6 +28,7 @@ import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import SleepDebtCard from '@/components/today/SleepDebtCard';
 import { buildCardLayout, resolveWorkoutIntensity } from '@/utils/priorityEngine';
+import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { useStreak } from '@/hooks/useStreak';
 
 export default function Today() {
