@@ -331,9 +331,11 @@ export function getPhysiologicalState(today, baseline, trainingLoad, sleepDebt) 
   if (trainingLoad?.risk === 'high') { score -= 2; signals.push({ type: 'negative', text: 'Spike de carga de treino' }); }
   else if (trainingLoad?.risk === 'moderate') { score -= 1; }
 
-  // Determine state
+// Determine state
   let state;
-  if (score >= PHYSIO_SCORE_RECOVERED) state = 'Recovered';
+  const hasTrainingStimulus = trainingLoad?.acute > 0;
+  if (score >= PHYSIO_SCORE_RECOVERED && hasTrainingStimulus) state = 'Activated';
+  else if (score >= PHYSIO_SCORE_RECOVERED) state = 'Recovered';
   else if (score >= PHYSIO_SCORE_BALANCED) state = 'Balanced';
   else if (score <= PHYSIO_SCORE_OVERREACHED) state = 'Overreached';
   else if (score <= PHYSIO_SCORE_STRESSED) {
@@ -471,6 +473,7 @@ export function getBaselineInsights(today, baseline) {
 
 export function detectCorrelations(checkins) {
   checkins = _ensure(checkins);
+  checkins = [...checkins].sort((a, b) => b.date > a.date ? 1 : -1);
   const insights = [];
   if (checkins.length < CORRELATION_MIN_CHECKINS) return insights;
 
@@ -547,6 +550,7 @@ export function detectCorrelations(checkins) {
 
 export function detectLaggedEffects(checkins) {
   checkins = _ensure(checkins);
+  checkins = [...checkins].sort((a, b) => b.date > a.date ? 1 : -1);
   const effects = [];
   if (checkins.length < LAGGED_MIN_CHECKINS) return effects;
 
