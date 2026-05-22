@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Zap, Plus } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysis, calculateSleepConsistency } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysisAsync, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 
 import MiniChart from '@/components/dashboard/MiniChart';
@@ -27,7 +27,6 @@ export default function Dashboard() {
 
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   const streak = calculateStreak(checkins);
-  const analysis = useMemo(() => computed.length > 0 ? runPhysiologicalAnalysis(computed, allSessions) : null, [computed.length, allSessions.length]);
   const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
   const [hrvAlertDismissed, setHrvAlertDismissed] = useState(false);
 
