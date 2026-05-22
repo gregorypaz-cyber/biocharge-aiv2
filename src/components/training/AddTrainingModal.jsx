@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { getTodayLocal } from '@/lib/date-utils';
 import { calculateStrainScore, generateTrainingImpactMessage } from '@/lib/training-impact-engine';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/query-keys';
 import { useAuth } from '@/lib/AuthContext';
 
 const INTENSITIES = [
@@ -104,8 +105,8 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
     },
     onSuccess: () => {
       setCalculating(false);
-      queryClient.invalidateQueries({ queryKey: ['checkins', user?.email] });
-      queryClient.invalidateQueries({ queryKey: ['training-sessions', user?.email] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
     },
     onError: () => setCalculating(false),
   });
