@@ -608,9 +608,9 @@ export default function Today() {
             )}
           </div>
         </div>
-        {phaseCfg.showCta ? (
+{phaseCfg.showCta ? (
           <button
-            onClick={() => setOpenAddSignal(v => v + 1)}
+            onClick={() => setShowAddModal(true)}
             className={cn('w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all', phaseCfg.ctaClass)}
           >
             <CtaIcon className="w-4 h-4" /> {phaseCfg.ctaLabel}
