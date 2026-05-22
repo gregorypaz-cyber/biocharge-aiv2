@@ -776,16 +776,12 @@ export default function Today() {
         {secondaryCards.map(desc => renderCard(desc))}
       </SecondaryMetrics>
 
-      {showAddModal && (
+{showAddModal && (
         <AddTrainingModal
           checkin={enrichedCheckin}
           existingSessions={todaySessions}
           onClose={() => setShowAddModal(false)}
-          onAdded={() => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-            setShowAddModal(false);
-          }}
+          onAdded={() => setShowAddModal(false)}
         />
       )}
     </div>
