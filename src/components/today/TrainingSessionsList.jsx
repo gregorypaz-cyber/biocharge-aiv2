@@ -40,12 +40,8 @@ const INTENSITY_COLORS = {
   very_hard: 'text-red-400',
 };
 
-export default function TrainingSessionsList({ checkin, sessions, onUpdate, openAddSignal }) {
+export default function TrainingSessionsList({ checkin, sessions, onUpdate }) {
   const [showModal, setShowModal] = useState(false);
-
-  useEffect(() => {
-    if (openAddSignal > 0) setShowModal(true);
-  }, [openAddSignal]);
 
   return (
     <div className="space-y-3">
