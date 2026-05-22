@@ -79,8 +79,10 @@ function calcDiscoveries(checkins, trainingSessions = []) {
   tryAdd(
     getPairs(c => c.sleep_hours, c => c.hrv, 1), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
-      const high = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
-      const low = arrA.filter((v, i) => v <= mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v <= mA && j === i2)]).filter(Boolean);
+      const highIdxs = arrA.reduce((acc, v, i) => { if (v > mA) acc.push(i); return acc; }, []);
+      const high = highIdxs.map(i => arrB[i]).filter(v => v != null);
+      const lowIdxs = arrA.reduce((acc, v, i) => { if (v <= mA) acc.push(i); return acc; }, []);
+      const low = lowIdxs.map(i => arrB[i]).filter(v => v != null);
       const delta = Math.round(Math.abs((avg(high) || mB) - (avg(low) || mB)));
       return {
         icon: '🌙', title: 'Sono impacta seu HRV',
@@ -144,7 +146,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
   tryAdd(
     getPairs(c => c.daily_strain_accumulated ?? c.strain_accumulated ?? null, c => c.resting_hr ?? c.resting_heart_rate ?? null, 1), 0.4,
     (r, n, mA, mB, arrA, arrB) => {
-      const highStrain = arrA.filter((v, i) => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const highStrain = arrA.reduce((acc, v, i) => { if (v > mA) acc.push(arrB[i]); return acc; }, []).filter(v => v != null);
       const delta = Math.round(Math.abs((avg(highStrain) || mB) - mB));
       return {
         icon: '⚡', title: 'Treino eleva sua FC',
@@ -193,7 +195,7 @@ function calcDiscoveries(checkins, trainingSessions = []) {
   tryAdd(
     getPairs(c => c.deep_sleep_pct, c => c.hrv, 0), 0.35,
     (r, n, mA, mB, arrA, arrB) => {
-      const highDeep = arrA.filter(v => v > mA).map((_, i2) => arrB[arrA.findIndex((v, j) => v > mA && j === i2)]).filter(Boolean);
+      const highDeep = arrA.reduce((acc, v, i) => { if (v > mA) acc.push(arrB[i]); return acc; }, []).filter(v => v != null);
       const delta = Math.round(Math.abs((avg(highDeep) || mB) - mB));
       return {
         icon: '🔬', title: 'Sono profundo e HRV',
