@@ -242,17 +242,11 @@ export default function Insights() {
 
   const discoveries = useMemo(() => calcDiscoveries(computed, trainingSessions), [computed.length, trainingSessions.length]);
 
-  const suggestedQuestions = useMemo(() => {
-    const state = analysis?.physioState?.state;
-    const sleepDebt = analysis?.sleepDebt?.debt;
-    const loadRisk = analysis?.trainingLoad?.risk;
-    const todayScore = computed[0]?.readiness_score ?? computed[0]?.recovery_score ?? null;
-    const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
-    const questions = [];
-
-const computedKey = computed.length + ':' + (computed[0]?.date || '');
+  // ✅ FIX: computedKey e sessionsKey fora do useMemo
+  const computedKey = computed.length + ':' + (computed[0]?.date || '');
   const sessionsKey = trainingSessions.length + ':' + (trainingSessions[0]?.date || '');
 
+  // ✅ FIX: useEffect fora do useMemo
   useEffect(() => {
     if (computed.length === 0) { setAnalysis(null); return; }
     let cancelled = false;
@@ -263,6 +257,14 @@ const computedKey = computed.length + ':' + (computed[0]?.date || '');
       .finally(() => { if (!cancelled) setAnalysisLoading(false); });
     return () => { cancelled = true; };
   }, [computedKey, sessionsKey]);
+
+  const suggestedQuestions = useMemo(() => {
+    const state = analysis?.physioState?.state;
+    const sleepDebt = analysis?.sleepDebt?.debt;
+    const loadRisk = analysis?.trainingLoad?.risk;
+    const todayScore = computed[0]?.readiness_score ?? computed[0]?.recovery_score ?? null;
+    const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
+    const questions = [];
 
     // Q1 — contexto do estado atual
     if (state === 'Overreached' || state === 'Fatigued') questions.push('Por que estou sobrecarregado?');
