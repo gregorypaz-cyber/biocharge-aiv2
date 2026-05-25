@@ -27,18 +27,18 @@ export default function Dashboard() {
 
   const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
   const streak = calculateStreak(checkins);
-const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
-const [hrvAlertDismissed, setHrvAlertDismissed] = useState(false);
-const [analysis, setAnalysis] = useState(null);
+  const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
+  const [hrvAlertDismissed, setHrvAlertDismissed] = useState(false);
 
-useEffect(() => {
-  if (checkins.length < 2) return;
-  runPhysiologicalAnalysisAsync(checkins, allSessions)
-    .then(result => setAnalysis(result))
-    .catch(e => console.warn('Análise fisiológica falhou', e));
-}, [checkins.length, allSessions.length]);
+  // ✅ FIX: analysis state declarado aqui, junto com os outros hooks
+  const [analysis, setAnalysis] = useState(null);
 
-if (isLoading) {   // ← early return continua aqui, sem mudança
+  useEffect(() => {
+    if (checkins.length < 2) return;
+    runPhysiologicalAnalysisAsync(checkins, allSessions)
+      .then(result => setAnalysis(result))
+      .catch(e => console.warn('Análise fisiológica falhou', e));
+  }, [checkins.length, allSessions.length]);
 
   if (isLoading) {
     return (
