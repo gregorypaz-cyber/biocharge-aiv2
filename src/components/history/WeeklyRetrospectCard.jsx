@@ -16,7 +16,7 @@ export default function WeeklyRetrospectCard({ weekStart, weekEnd, checkins, ses
       setLoading(true);
       try {
         // First try to read from DB
-        const existing = await base44.entities.WeeklyRetrospect.filter({ week_start: weekStart });
+        const existing = await base44.entities.WeeklyRetrospect.filter({ week_start: weekStart, created_by: user?.email });
         if (existing?.length > 0) {
           if (!cancelled) setRetrospect(existing[0]);
           return;
