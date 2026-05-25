@@ -280,12 +280,13 @@ ${JSON.stringify(summary, null, 2)}`,
   // Post-workout save mutation
   const savePostMutation = useMutation({
     mutationFn: async (data) => {
-      const existing = todayRecord;
-      // Merge notes
-      const mergedNotes = data.notes
-        ? (existing.notes ? existing.notes + '\n\n[PÓS-TREINO] ' + data.notes : '[PÓS-TREINO] ' + data.notes)
-        : existing.notes || '';
-
+const existing = todayRecord;
+if (!existing?.id) {
+  throw new Error('Check-in da manhã não encontrado. Faça o check-in da manhã primeiro.');
+}
+const mergedNotes = data.notes
+  ? (existing.notes ? existing.notes + '\n\n[PÓS-TREINO] ' + data.notes : '[PÓS-TREINO] ' + data.notes)
+  : existing.notes || '';
       // Compute delta_post
       const deltaPost = (data.biocharge_post_workout > 0 && existing.biocharge_morning)
         ? data.biocharge_post_workout - existing.biocharge_morning
