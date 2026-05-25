@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Moon, Dumbbell, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function WeeklyRetrospectCard({ weekStart, weekEnd, checkins, sessions }) {
   const [retrospect, setRetrospect] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!weekStart || checkins.length < 4) return;
