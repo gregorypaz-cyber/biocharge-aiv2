@@ -207,11 +207,14 @@ export default function DailyCheckin() {
       }
 
       let savedRecord;
-      if (editData?.id) {
-        savedRecord = await base44.entities.DailyCheckin.update(editData.id, scores);
-      } else {
-        savedRecord = await base44.entities.DailyCheckin.create(scores);
-      }
+if (editData?.id) {
+  savedRecord = await base44.entities.DailyCheckin.update(editData.id, scores);
+} else if (todayRecord?.id) {
+  // Já existe um check-in hoje — atualiza em vez de criar duplicado
+  savedRecord = await base44.entities.DailyCheckin.update(todayRecord.id, scores);
+} else {
+  savedRecord = await base44.entities.DailyCheckin.create(scores);
+}
 
       // Generate deep analysis in background (non-blocking)
       if (!editData?.id) {
