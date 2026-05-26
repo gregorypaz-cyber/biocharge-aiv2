@@ -44,12 +44,16 @@ function getMainText(checkin) {
 export default function CheckinSuccessOverlay({ checkin, onContinue }) {
   const [progress, setProgress] = useState(0);
 
-  const score =
-    checkin?.readiness_score ??
-    checkin?.recovery_score ??
-    checkin?.morning_recovery_score ??
-    checkin?.biocharge_morning ??
-    0;
+  const readiness =
+  checkin?.readiness_score ??
+  checkin?.recovery_score ??
+  0;
+
+const recovery =
+  checkin?.recovery_score ??
+  checkin?.morning_recovery_score ??
+  readiness;
+``
 
   const zone = checkin?.zone ?? 'yellow';
   const zoneCfg = ZONE_CONFIG[zone] || ZONE_CONFIG.yellow;
