@@ -1,86 +1,103 @@
-import { motion } from 'framer-motion';
-import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
-import { getNextSteps } from '@/utils/analysisHelpers';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function cleanSentences(text) {
-  return text
+import { motion } from 'framer-motion';import { motion } from || '')
     .replace(/#+\s*/g, '')
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
-    .split(/\n|(?<=\.)\s+/)
-    .map(s => s.trim())
-    .filter(s => s.length > 20 && s.length < 220);
+    .trim();
 }
 
-function makeTitle(sentence) {
-  // Grab first meaningful noun phrase (up to ~5 words)
+function splitSentences(text) {
+  return normalizeText(text)
+    .split(/\n|(?<=\.)\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 20 && s.length < 240);
+}
+
+function pickAlerts(sentences) {
+  return sentences
+    .map((s) => {
+      const l = s.toLowerCase();
+      let score = 0;
+
+      if (/alerta|atenção|risco|sobrecarga|overreach|fadiga|déficit/i.test(l)) score += 25;
+      if (/reduzir|evitar|proteger|pausar|descanso/i.test(l)) score += 18;
+      if (/sono.*curto|sono.*ruim|stress alto|hrv.*baixo/i.test(l)) score += 12;
+      if (/\d+/.test(s)) score += 4;
+
+      return { text: s, score };
+    })
+    .filter((x) => x.score >= 18)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .map((x) => x.text);
+}
+
+function pickPatterns(sentences, used) {
+  const usedSet = new Set(used);
+
+  return sentences
+    .filter((s) => !usedSet.has(s))
+    .map((s) => {
+      const l = s.toLowerCase();
+      let score = 0;
+
+      if (/padrão|tendência|responde|associad|correlação/i.test(l)) score += 20;
+      if (/melhorando|piorando|acima|abaixo|média/i.test(l)) score += 12;
+      if (/sono|hrv|recovery|carga|stress/i.test(l)) score += 10;
+      if (/\d+/.test(s)) score += 4;
+
+      return { text: s, score };
+    })
+    .filter((x) => x.score >= 14)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((x) => x.text);
+}
+
+function pickActions(sentences, used) {
+  const usedSet = new Set(used);
+
+  return sentences
+    .filter((s) => !usedSet.has(s))
+    .map((s) => {
+      const l = s.toLowerCase();
+      let score = 0;
+
+      if (/priorize|tente|observe|reduza|mantenha|ajuste|durma|hidrate/i.test(l)) score += 20;
+      if (/próximos 7 dias|esta semana|hoje à noite/i.test(l)) score += 10;
+
+      return { text: s, score };
+    })
+    .filter((x) => x.score >= 16)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((x) => x.text);
+}
+
+function shortTitle(sentence) {
   const cleaned = sentence.replace(/^[-–•]\s*/, '');
   const words = cleaned.split(' ');
   return words.slice(0, 5).join(' ').replace(/[,:;]$/, '') + (words.length > 5 ? '…' : '');
 }
 
-function extractAlerts(sentences) {
-  return sentences
-    .map(s => {
-      const l = s.toLowerCase();
-      let score = 0;
-      if (/overtraining|sobretreino|sobrecarga|overreach/i.test(l)) score += 30;
-      if (/fadiga\s*(elevada|alta|acumulada)/i.test(l)) score += 25;
-      if (/alerta|atenção|cuidado/i.test(l)) score += 22;
-      if (/risco/i.test(l)) score += 20;
-      if (/reduzir|pausar|descanso obrigatório/i.test(l)) score += 18;
-      if (/déficit|débito/i.test(l)) score += 15;
-      if (/[⚠️🔴🚨]/u.test(s)) score += 10;
-      if (/\d+/.test(s)) score += 4;
-      return { text: s, score };
-    })
-    .filter(s => s.score >= 15)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 2)
-    .map(s => s.text);
-}
-
-function extractPatterns(sentences, alertTexts) {
-  const alertSet = new Set(alertTexts);
-  return sentences
-    .filter(s => !alertSet.has(s))
-    .map(s => {
-      const l = s.toLowerCase();
-      let score = 0;
-      if (/padrão|correlação|tendência|coincidi/i.test(l)) score += 20;
-      if (/tendem|tende a/i.test(l)) score += 18;
-      if (/sono.*recup|recup.*sono/i.test(l)) score += 16;
-      if (/hrv.*caiu|caiu.*hrv|hrv\s*abaixo/i.test(l)) score += 15;
-      if (/consistência|melhora|evolução/i.test(l)) score += 10;
-      if (/💡📊🔍/u.test(s)) score += 8;
-      if (/\d+/.test(s)) score += 4;
-      return { text: s, score };
-    })
-    .filter(s => s.score >= 10)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map(s => s.text);
-}
-
-// ── Sub-section ───────────────────────────────────────────────────────────────
-
-function Section({ icon: Icon, label, color, items, dotColor }) {
+function Section({ icon: Icon, label, color, dotColor, items }) {
   if (!items.length) return null;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
         <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
-        <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>{label}</p>
+        <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>
+          {label}
+        </p>
       </div>
+
       <ul className="space-y-2">
         {items.map((text, i) => (
           <li key={i} className="flex items-start gap-2">
             <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
             <div>
               <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-wide leading-none mb-0.5">
-                {makeTitle(text)}
+                {shortTitle(text)}
               </p>
               <p className="text-xs text-foreground/85 leading-snug">{text}</p>
             </div>
@@ -91,19 +108,17 @@ function Section({ icon: Icon, label, color, items, dotColor }) {
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-
 export default function AnalysisHighlights({ analysisText }) {
   if (!analysisText || typeof analysisText !== 'string') return null;
 
-  const sentences = cleanSentences(analysisText);
-  const alerts = extractAlerts(sentences);
-  const patterns = extractPatterns(sentences, alerts);
-  const steps = getNextSteps(analysisText);
+  const sentences = splitSentences(analysisText);
+  if (!sentences.length) return null;
 
-  if (!alerts.length && !patterns.length && !steps.length) return null;
+  const alerts = pickAlerts(sentences);
+  const patterns = pickPatterns(sentences, alerts);
+  const actions = pickActions(sentences, [...alerts, ...patterns]);
 
-  const hasDivider = (a, b) => a.length > 0 && b.length > 0;
+  if (!alerts.length && !patterns.length && !actions.length) return null;
 
   return (
     <motion.div
@@ -113,38 +128,42 @@ export default function AnalysisHighlights({ analysisText }) {
     >
       <Section
         icon={AlertTriangle}
-        label="Alertas"
+        label="Sinais de atenção"
         color="text-red-400"
         dotColor="bg-red-400/70"
         items={alerts}
       />
-      {hasDivider(alerts, patterns) && <div className="h-px bg-border/40" />}
+
+      {alerts.length > 0 && patterns.length > 0 && <div className="h-px bg-border/40" />}
+
       <Section
         icon={Sparkles}
-        label="Padrões detectados"
+        label="O que vale observar"
         color="text-primary"
         dotColor="bg-primary/60"
         items={patterns}
       />
-      {(alerts.length > 0 || patterns.length > 0) && steps.length > 0 && (
+
+      {(alerts.length > 0 || patterns.length > 0) && actions.length > 0 && (
         <div className="h-px bg-border/40" />
       )}
-      {steps.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-1.5">
-            <ChevronRight className="w-3.5 h-3.5 shrink-0 text-yellow-400" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400">Próximos passos</p>
-          </div>
-          <ul className="space-y-1.5">
-            {steps.map((text, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-foreground/85 leading-snug">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0 bg-yellow-400/60" />
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
+
+      {actions.length > 0 && (
+        <Section
+          icon={ChevronRight}
+          label="Ajustes práticos"
+          color="text-yellow-400"
+          dotColor="bg-yellow-400/60"
+          items={actions}
+        />
       )}
     </motion.div>
   );
 }
+import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Helpers */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function normalizeText(text) {
