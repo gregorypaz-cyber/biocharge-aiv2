@@ -426,34 +426,47 @@ function getDailyMasterSignal(checkinLike) {
   const deepSleep = Number(checkinLike?.deep_sleep_pct ?? 0);
   const soreness = Number(resolveCheckinField(checkinLike, 'muscle_soreness') ?? 0);
   const restDay = !!checkinLike?.rest_day;
+  const confidence = checkinLike?.preview_confidence ?? 'low';
+
+  const hasHrv = !!(checkinLike?.hrv && checkinLike.hrv > 0);
+  const rhrValue = resolveCheckinField(checkinLike, 'resting_hr');
+  const hasRhr = !!(rhrValue && rhrValue > 0);
+  const strongPhysiology = hasHrv || hasRhr;
 
   if (restDay) return 'recover';
 
   if (
-    recovery < 55 ||
-    readiness < 55 ||
-    fatigue >= 70 ||
+    recovery < 50 ||
+    readiness < 50 ||
+    fatigue >= 72 ||
     soreness >= 4 ||
-    (deepSleep > 0 && deepSleep < 15)
+    (deepSleep > 0 && deepSleep < 12)
   ) {
     return 'recover';
   }
 
+  // Para parecer mais WHOOP-like, "treino forte" exige apoio fisiológico real
   if (
-    recovery >= 80 &&
-    readiness >= 78 &&
-    fatigue <= 25 &&
-    sleep >= 70 &&
-    soreness <= 2
+    recovery >= 82 &&
+    readiness >= 80 &&
+    fatigue <= 22 &&
+    sleep >= 72 &&
+    soreness <= 1 &&
+    strongPhysiology &&
+    confidence !== 'low'
   ) {
     return 'train_high';
   }
 
-  if (recovery >= 65 && readiness >= 65) {
+  if (recovery >= 65 && readiness >= 62) {
     return 'train_moderate';
   }
 
-  return 'train_light';
+  if (recovery >= 50) {
+    return 'train_light';
+  }
+
+  return 'recover';
 }
 
 function buildHeadline(masterSignal, checkinLike) {
