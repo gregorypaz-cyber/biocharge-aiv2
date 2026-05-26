@@ -14,7 +14,10 @@ import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import RestDayToggle from '@/components/checkin/RestDayToggle';
-import { computeCheckinScores, calcSleepNeedTonight, calcNextDayForecast, calcDelayedFatigueAlert, generateNextDayForecastAI, generateHeadlineTodayAI, generateTrainingReasonAI, generateContextualBulletsAI } from '@/lib/biocharge-utils';
+import {
+  computeCheckinScores,
+  generateContextualBulletsAI,
+} from '@/lib/biocharge-utils';
 import CheckinSuccessOverlay from '@/components/checkin/CheckinSuccessOverlay';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
