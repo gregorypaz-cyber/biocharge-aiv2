@@ -153,6 +153,28 @@ export function getZoneLabel(zone) {
   return labels[zone] || 'Indefinido';
 }
 
+export function getRecommendation(zone, preWorkout) {
+  const pre = clamp(preWorkout ?? 0);
+
+  if (zone === 'green' && pre >= 60) {
+    return 'Hoje existe margem para um treino mais forte, se o aquecimento confirmar.';
+  }
+
+  if (zone === 'green') {
+    return 'Boa janela para um treino produtivo, sem precisar exagerar.';
+  }
+
+  if (zone === 'yellow' && pre >= 50) {
+    return 'Treino moderado é a melhor dose hoje.';
+  }
+
+  if (zone === 'yellow') {
+    return 'Hoje vale sustentar consistência com controle.';
+  }
+
+  return 'Hoje faz mais sentido recuperar ou manter movimento leve.';
+}
+
 // ─── Old compatibility exports ─────────────────────────────────────────────
 
 export function getDeltaPre(morning, preWorkout) {
