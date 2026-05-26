@@ -32,10 +32,32 @@ function getDecisionTone(mode) {
   return 'text-muted-foreground bg-secondary border-border/40';
 }
 
+function getConfidenceChip(confidence) {
+  if (confidence === 'high') {
+    return {
+      label: 'Confiança alta',
+      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    };
+  }
+
+  if (confidence === 'medium') {
+    return {
+      label: 'Confiança média',
+      className: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+    };
+  }
+
+  return {
+    label: 'Confiança baixa',
+    className: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+  };
+}
+
 export default function LivePreview({ preview }) {
   if (!preview) return null;
 
-  const score = preview.readiness_score ?? preview.recovery_score ?? 0;
+  const recoveryScore = preview.recovery_score ?? 0;
+  const readinessScore = preview.readiness_score ?? recoveryScore;
   const zone = preview.zone || 'yellow';
   const color = getZoneColor(zone);
   const zoneLabel = getZoneLabel(zone);
@@ -47,6 +69,12 @@ export default function LivePreview({ preview }) {
     'Complete seu check-in para ver como o dia está se desenhando.';
 
   const sleepNeed = preview.sleep_need_tonight ?? null;
+  const confidence = preview.preview_confidence || 'low';
+  const confidenceReason =
+    preview.preview_confidence_reason ||
+    'Esta leitura ainda depende do que foi preenchido manualmente.';
+
+  const confidenceChip = getConfidenceChip(confidence);
 
   return (
     <motion.div
@@ -55,38 +83,48 @@ export default function LivePreview({ preview }) {
       className="rounded-2xl border border-border/60 bg-card p-4 space-y-4"
       style={{ boxShadow: `0 0 30px -10px ${color}22` }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
             Prévia do dia
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Leitura provisória com base no que você já preencheu.
+            Leitura provisória com o que já foi preenchido.
           </p>
         </div>
 
-        {decisionMode && (
+        <div className="flex flex-col items-end gap-1.5">
           <span
             className={cn(
               'text-[10px] font-bold px-2 py-1 rounded-full border',
-              getDecisionTone(decisionMode)
+              confidenceChip.className
             )}
           >
-            {getDecisionLabel(decisionMode)}
+            {confidenceChip.label}
           </span>
-        )}
+
+          {decisionMode && (
+            <span
+              className={cn(
+                'text-[10px] font-bold px-2 py-1 rounded-full border',
+                getDecisionTone(decisionMode)
+              )}
+            >
+              {getDecisionLabel(decisionMode)}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Main score */}
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Prontidão estimada
+            Recovery estimado
           </p>
+
           <div className="flex items-end gap-2">
             <span className="text-4xl font-black font-mono leading-none" style={{ color }}>
-              {score}
+              {recoveryScore}
             </span>
             <span className="text-sm font-semibold mb-1" style={{ color }}>
               {zoneLabel}
@@ -94,38 +132,41 @@ export default function LivePreview({ preview }) {
           </div>
         </div>
 
-        {sleepNeed != null && (
-          <div className="text-right">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Sono sugerido
-            </p>
-            <p className="text-lg font-mono font-bold text-foreground">
-              {sleepNeed}h
-            </p>
-          </div>
-        )}
+        <div className="text-right">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Readiness
+          </p>
+          <p className="text-lg font-mono font-bold text-foreground">
+            {readinessScore}
+          </p>
+        </div>
       </div>
 
-      <ZoneBar value={score} color={color} />
+      <ZoneBar value={recoveryScore} color={color} />
 
-      {/* Main interpretation */}
       <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
           Como o dia está ficando
         </p>
-        <p className="text-sm font-semibold leading-snug">
-          {headline}
+        <p className="text-sm font-semibold leading-snug">{headline}</p>
+      </div>
+
+      <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          Qualidade da leitura
+        </p>
+        <p className="text-xs text-foreground/80 leading-relaxed">
+          {confidenceReason}
         </p>
       </div>
 
-      {/* Secondary signals */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Recovery
+            Sono
           </p>
           <p className="text-sm font-mono font-bold">
-            {preview.recovery_score ?? '—'}
+            {preview.sleep_quality ?? preview.sleep_score ?? '—'}
           </p>
         </div>
 
@@ -140,10 +181,19 @@ export default function LivePreview({ preview }) {
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Sono
+            HRV
           </p>
           <p className="text-sm font-mono font-bold">
-            {preview.sleep_quality ?? preview.sleep_score ?? '—'}
+            {preview.hrv ?? '—'}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Sono hoje
+          </p>
+          <p className="text-sm font-mono font-bold">
+            {sleepNeed != null ? `${sleepNeed}h` : '—'}
           </p>
         </div>
       </div>
