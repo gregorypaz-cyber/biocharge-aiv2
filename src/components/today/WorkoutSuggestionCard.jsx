@@ -19,52 +19,87 @@ import AcwrAlert from './AcwrAlert.jsx';
 import YesterdayContextBanner from './YesterdayContextBanner.jsx';
 import { applyYesterdayLookback } from '../../lib/yesterday-lookback.js';
 
-// ─── Legacy body-state config (unchanged) ────────────────────────────────────
 const INTENSITY_MAP = {
   Recovered: {
-    label: 'Alta Intensidade', color: '#22c55e', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.25)',
-    emoji: '🏋️', detail: 'Seu corpo está pronto para desafio máximo. Aproveite para treinos de força, intervalado ou competição.',
-    tips: ['Volume alto ou intensidade máxima', 'Bom momento para bater recordes pessoais', 'Garanta nutrição e hidratação adequadas'],
+    label: 'Alta Intensidade',
+    color: '#22c55e',
+    bg: 'rgba(34,197,94,0.08)',
+    border: 'rgba(34,197,94,0.25)',
+    emoji: '🏋️',
+    detail: 'Seu corpo está pronto para desafio alto.',
+    tips: ['Bom momento para estímulo forte', 'Garanta hidratação e nutrição adequadas', 'Respeite a técnica'],
   },
   Balanced: {
-    label: 'Intensidade Moderada', color: '#38bdf8', bg: 'rgba(56,189,248,0.08)', border: 'rgba(56,189,248,0.25)',
-    emoji: '🚴', detail: 'Equilíbrio fisiológico estável. Treino moderado com monitoramento da frequência cardíaca.',
-    tips: ['RPE entre 6-7 é ideal hoje', 'Evite volume excessivo', 'Hidratação contínua durante o treino'],
+    label: 'Intensidade Moderada',
+    color: '#38bdf8',
+    bg: 'rgba(56,189,248,0.08)',
+    border: 'rgba(56,189,248,0.25)',
+    emoji: '🚴',
+    detail: 'Seu sistema está estável para um treino moderado.',
+    tips: ['RPE entre 6–7 é um bom alvo', 'Evite empilhar fadiga sem necessidade', 'Monitore como se sente no aquecimento'],
   },
   Fatigued: {
-    label: 'Leve ou Recuperação Ativa', color: '#eab308', bg: 'rgba(234,179,8,0.08)', border: 'rgba(234,179,8,0.25)',
-    emoji: '🧘', detail: 'Fadiga acumulada detectada. Priorize mobilidade, caminhada leve ou yoga.',
-    tips: ['Evite cargas altas ou corridas intensas', 'Alongamento e mobilidade articular', 'Priorize sono de qualidade esta noite'],
+    label: 'Leve ou Recuperação Ativa',
+    color: '#eab308',
+    bg: 'rgba(234,179,8,0.08)',
+    border: 'rgba(234,179,8,0.25)',
+    emoji: '🧘',
+    detail: 'Há sinais de fadiga. Reduza a ambição do treino hoje.',
+    tips: ['Evite cargas altas', 'Mobilidade e caminhada leve fazem mais sentido', 'Priorize o sono hoje à noite'],
   },
   Activated: {
-    label: 'Alta Intensidade', color: '#22c55e', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.25)',
-    emoji: '🏋️', detail: 'Você está ativado e respondeu bem ao treino. Ótimo momento para alta intensidade.',
-    tips: ['Volume alto ou intensidade máxima', 'Seu corpo está adaptado ao estímulo atual', 'Mantenha hidratação e nutrição em dia'],
+    label: 'Alta Intensidade',
+    color: '#22c55e',
+    bg: 'rgba(34,197,94,0.08)',
+    border: 'rgba(34,197,94,0.25)',
+    emoji: '🏋️',
+    detail: 'Você respondeu bem à carga recente.',
+    tips: ['Bom momento para intensidade alta', 'Aquecimento bem feito', 'Nutrição e hidratação em dia'],
   },
   Loaded: {
-    label: 'Carga Moderada', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
-    emoji: '⚖️', detail: 'Carga de treino acumulada. Seu corpo está trabalhando — monitore como se sente.',
-    tips: ['Intensidade moderada no máximo', 'Observe sinais de fadiga durante o treino', 'Priorize sono esta noite'],
+    label: 'Carga Moderada',
+    color: '#f59e0b',
+    bg: 'rgba(245,158,11,0.08)',
+    border: 'rgba(245,158,11,0.25)',
+    emoji: '⚖️',
+    detail: 'Há carga acumulada. Melhor sustentar do que forçar.',
+    tips: ['Moderado no máximo', 'Observe fadiga no aquecimento', 'Sono importa ainda mais hoje'],
   },
   Sympathetic_Load: {
-    label: 'Sistema Nervoso Ativado', color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.25)',
-    emoji: '⚡', detail: 'Carga simpática elevada. Seu sistema nervoso está sobrecarregado.',
-    tips: ['Atividade leve apenas', 'Respiração profunda e meditação ajudam', 'Evite estressores adicionais hoje'],
+    label: 'Sistema Nervoso Ativado',
+    color: '#f97316',
+    bg: 'rgba(249,115,22,0.08)',
+    border: 'rgba(249,115,22,0.25)',
+    emoji: '⚡',
+    detail: 'Seu sistema está sobrecarregado. Preserve.',
+    tips: ['Atividade leve apenas', 'Respiração profunda ajuda', 'Evite estressores extras'],
   },
   'High Stress': {
-    label: 'Leve — foque em recuperar', color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.25)',
-    emoji: '🌿', detail: 'Stress elevado detectado. Atividades de baixo impacto ajudam sem sobrecarregar o sistema nervoso.',
-    tips: ['Caminhada, natação leve ou yoga', 'Respiração diafragmática pré-treino', '10min de meditação potencializa o HRV'],
+    label: 'Leve — foque em recuperar',
+    color: '#f97316',
+    bg: 'rgba(249,115,22,0.08)',
+    border: 'rgba(249,115,22,0.25)',
+    emoji: '🌿',
+    detail: 'Stress elevado. Menos é mais hoje.',
+    tips: ['Baixo impacto apenas', 'Respiração diafragmática pré-treino', 'Meditação pode ajudar'],
   },
   Overreached: {
-    label: 'Descanso ativo', color: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)',
-    emoji: '🛌', detail: 'Sobrecarga fisiológica. Seu corpo precisa de recuperação real para avançar.',
-    tips: ['Nenhum treino de alta intensidade hoje', 'Caminhada curta (<30min) se quiser se mover', 'Sono, alimentação e hidratação em foco'],
+    label: 'Descanso ativo',
+    color: '#ef4444',
+    bg: 'rgba(239,68,68,0.08)',
+    border: 'rgba(239,68,68,0.25)',
+    emoji: '🛌',
+    detail: 'Há sobrecarga fisiológica. Recuperação é a melhor decisão.',
+    tips: ['Evite intensidade alta', 'Movimento leve, se quiser se mover', 'Sono, alimentação e hidratação em foco'],
   },
   default: {
-    label: 'Moderado', color: '#eab308', bg: 'rgba(234,179,8,0.08)', border: 'rgba(234,179,8,0.25)',
-    emoji: '🚶', detail: 'Avalie como você está se sentindo e ajuste a intensidade conforme o aquecimento.',
-    tips: ['Comece leve e avalie no aquecimento', 'Monitore a frequência cardíaca', 'Hidrate-se bem'],
+    label: 'Moderado',
+    color: '#eab308',
+    bg: 'rgba(234,179,8,0.08)',
+    border: 'rgba(234,179,8,0.25)',
+    emoji: '🚶',
+    detail: 'Comece leve e ajuste conforme o aquecimento.',
+    tips: ['Monitore como se sente', 'Use o aquecimento como teste', 'Hidrate-se bem'],
   },
 };
 
@@ -78,29 +113,45 @@ const CONF_STYLE = {
 };
 
 const MODALITY_EMOJI = {
-  Corrida: '🏃', Força: '🏋️', Mobilidade: '🧘', Recuperação: '🛌', Misto: '🔄',
+  Corrida: '🏃',
+  Força: '🏋️',
+  Mobilidade: '🧘',
+  Recuperação: '🛌',
+  Misto: '🔄',
 };
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 const SLOT_LABELS = { now: 'Agora', morning: 'Manhã', afternoon: 'Tarde', evening: 'Noite' };
-function humanizeSlot(slot) { return SLOT_LABELS[slot] || slot; }
+function humanizeSlot(slot) {
+  return SLOT_LABELS[slot] || slot;
+}
 
 const SLOT_COPY = {
-  high:    'Janela aberta. Execute e evolua.',
-  medium:  'Consistência hoje. Vitória amanhã.',
-  low:     'Disciplina é recuar hoje para atacar amanhã.',
+  high: 'Janela boa. Execute com controle.',
+  medium: 'Consistência hoje. Progresso amanhã.',
+  low: 'Melhor preservar hoje para render mais depois.',
 };
 
 function yesterdayKey() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-// ─── Yesterday Impact Banner ──────────────────────────────────────────────────
+function getSleepDebtHours(analysis) {
+  return analysis?.sleepDebt?.debt ?? analysis?.sleepDebtHours ?? 0;
+}
+
 function YesterdayImpact({ analysis }) {
   const checkins = analysis?.checkins || [];
   const today = checkins[0];
@@ -133,7 +184,6 @@ function YesterdayImpact({ analysis }) {
   );
 }
 
-// ─── Completion Form ──────────────────────────────────────────────────────────
 function CompletionForm({ optKey, onSave, onCancel, saving }) {
   const [rpe, setRpe] = useState(6);
   const [notes, setNotes] = useState('');
@@ -141,29 +191,36 @@ function CompletionForm({ optKey, onSave, onCancel, saving }) {
   return (
     <div className="rounded-xl bg-secondary/50 border border-border/40 p-3 space-y-3">
       <p className="text-xs font-semibold">Como foi o treino {optKey}?</p>
+
       <div>
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] text-muted-foreground">RPE percebido</span>
           <span className="text-xs font-bold text-primary">{rpe}/10</span>
         </div>
         <input
-          type="range" min={1} max={10} value={rpe}
-          onChange={e => setRpe(Number(e.target.value))}
+          type="range"
+          min={1}
+          max={10}
+          value={rpe}
+          onChange={(e) => setRpe(Number(e.target.value))}
           className="w-full accent-primary h-1.5"
           aria-label="RPE percebido"
         />
         <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-          <span>Fácil</span><span>Máximo</span>
+          <span>Fácil</span>
+          <span>Máximo</span>
         </div>
       </div>
+
       <textarea
         value={notes}
-        onChange={e => setNotes(e.target.value.slice(0, 140))}
+        onChange={(e) => setNotes(e.target.value.slice(0, 140))}
         placeholder="Notas opcionais... (máx 140)"
         rows={2}
         className="w-full text-xs bg-background/50 border border-border/40 rounded-lg p-2 resize-none text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/40"
         aria-label="Notas do treino"
       />
+
       <div className="flex gap-2">
         <button
           disabled={saving}
@@ -183,71 +240,61 @@ function CompletionForm({ optKey, onSave, onCancel, saving }) {
   );
 }
 
-// ─── Daily Insight Block ──────────────────────────────────────────────────────
-function DailyInsightBlock({ presc, analysis, onMarkDone }) {
+function DailyInsightBlock({ presc, analysis, onMarkDone, recommendedKey }) {
   if (!presc || !analysis) return null;
 
   try {
     const recovery = analysis.today?.recovery_score ?? analysis.today?.readiness_score ?? null;
-    const hrvDelta = (() => {
-      const ins = analysis.baselineInsights?.find(i => i.label === 'HRV');
-      return ins?.delta ?? null;
-    })();
-    const sleepDebt = analysis.sleepDebt?.debt ?? null;
+    const hrvDelta = analysis.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
+    const sleepDebt = getSleepDebtHours(analysis);
     const ratio = analysis.trainingLoad?.ratio ?? null;
     const risk = analysis.trainingLoad?.risk ?? null;
     const state = analysis.physioState?.state ?? null;
-    const recommendedKey = presc.recommendedKey ?? null;
 
-    // Confidence badge recalculated locally
     const hasLoad = risk && risk !== 'insufficient_data';
     const hasHRV = hrvDelta != null;
-    const hasSleep = sleepDebt != null;
+    const hasSleep = sleepDebt != null && sleepDebt > 0;
     const conf = hasLoad && (hasHRV || hasSleep) ? 'Alta' : hasLoad || hasSleep ? 'Média' : 'Baixa';
     const confStyle = CONF_STYLE[conf] || CONF_STYLE.Baixa;
 
-    // Headline
     const isLowRecovery = recovery != null && recovery < 55;
     const headline = recommendedKey && !isLowRecovery
-      ? `Hoje o plano é ${recommendedKey}. Execute e some pontos.`
-      : 'Hoje é disciplina: recuar para atacar amanhã.';
+      ? `Hoje o plano principal é ${recommendedKey}.`
+      : 'Hoje o foco é preservar para recuperar melhor.';
 
-    // Evidence bullets (only available data)
     const bullets = [];
     if (recovery != null) bullets.push(`Recovery: ${recovery} pts`);
     if (hrvDelta != null) bullets.push(`HRV delta: ${hrvDelta >= 0 ? '+' : ''}${hrvDelta}%`);
-    if (sleepDebt != null && sleepDebt > 0) bullets.push(`Dívida sono: ${sleepDebt}h`);
+    if (sleepDebt != null && sleepDebt > 0) bullets.push(`Dívida de sono: ${sleepDebt}h`);
     if (ratio != null && ratio > 0) bullets.push(`ACWR: ${ratio.toFixed(2)}`);
-
     if (!bullets.length) return null;
 
-    // Micro-ação
     const microAction = (() => {
-      if (state === 'Overreached' || risk === 'high') return '1 min: deite, respire fundo 4-4-4-4, libere tensão.';
-      if (state === 'Fatigued' || isLowRecovery) return '1 min: hidrate-se agora — 500ml antes do treino.';
-      if (recovery != null && recovery >= 80) return '1 min: ative o core com 10 dead bugs para preparar o sistema.';
-      return '1 min: faça 5 respirações profundas e defina a intenção do treino.';
+      if (state === 'Overreached' || risk === 'high') return '1 min: respire fundo e reduza o estresse antes de decidir treinar.';
+      if (state === 'Fatigued' || isLowRecovery) return '1 min: hidrate-se agora e reavalie a intensidade no aquecimento.';
+      if (recovery != null && recovery >= 80) return '1 min: faça um aquecimento progressivo e confirme se o corpo responde bem.';
+      return '1 min: defina a intenção do treino antes de começar.';
     })();
 
-    // Contrafactual
     const counterfactual = (() => {
-      if (ratio != null && ratio > 1.3) return 'Se escolher C hoje, tende a proteger o recovery (+3~6 pts em 48h).';
-      if (recovery != null && recovery >= 80) return 'Se fizer A e dormir +30min, tende a manter a janela verde amanhã.';
+      if (ratio != null && ratio > 1.3) return 'Se você reduzir a dose hoje, a chance de recuperar melhor nas próximas 24–48h aumenta.';
+      if (recovery != null && recovery >= 80) return 'Se você treinar bem e dormir o suficiente, a tendência de manter boa prontidão amanhã melhora.';
       return null;
     })();
 
     return (
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
-        {/* Header row */}
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-primary">Insight do Dia</span>
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>{conf}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+            Insight do dia
+          </span>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>
+            {conf}
+          </span>
         </div>
 
-        {/* Headline */}
         <p className="text-sm font-bold leading-snug">{headline}</p>
 
-        {/* Evidence bullets */}
         <ul className="space-y-0.5">
           {bullets.map((b, i) => (
             <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -257,17 +304,18 @@ function DailyInsightBlock({ presc, analysis, onMarkDone }) {
           ))}
         </ul>
 
-        {/* Counterfactual */}
         {counterfactual && (
-          <p className="text-[11px] text-foreground/60 italic border-l-2 border-primary/30 pl-2">{counterfactual}</p>
+          <p className="text-[11px] text-foreground/60 italic border-l-2 border-primary/30 pl-2">
+            {counterfactual}
+          </p>
         )}
 
-        {/* Micro-ação */}
         <p className="text-[11px] text-foreground/70">⚡ {microAction}</p>
 
-        {/* Trigger + CTA */}
         <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
-          <p className="text-[10px] text-muted-foreground/70">Marque o RPE depois. Amanhã você vê o impacto.</p>
+          <p className="text-[10px] text-muted-foreground/70">
+            Depois do treino, marque o RPE para melhorar o modelo de amanhã.
+          </p>
           <button
             onClick={onMarkDone}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold whitespace-nowrap hover:bg-primary/90 transition-all"
@@ -283,32 +331,211 @@ function DailyInsightBlock({ presc, analysis, onMarkDone }) {
   }
 }
 
-// ─── Resolve recommended option key based on readiness ───────────────────────
-function resolveRecommendedKey(checkin, analysis) {
+function resolveRecommendedKey(checkin) {
   const state = checkin?.current_body_state;
   const recoveryDemand = checkin?.recovery_demand ?? 0;
 
-  // Force C
-  if (
-    state === 'Fatigued' || state === 'Overreached' || recoveryDemand >= 70
-  ) return 'C';
+  if (state === 'Fatigued' || state === 'Overreached' || recoveryDemand >= 70) return 'C';
 
-  const score = checkin?.biocharge_morning ?? checkin?.recovery_score ?? 0;
+  const score = checkin?.biocharge_morning ?? checkin?.recovery_score ?? checkin?.readiness_score ?? 0;
   if (score >= 80) return 'A';
   if (score >= 65) return 'B';
   return 'C';
 }
 
-// ─── Prescription Block ───────────────────────────────────────────────────────
+function applyAcwrModifier(baseRec, acwr, hrvDeltaPositive) {
+  if (acwr == null) return { ...baseRec, acwrContext: null };
+
+  const LEVELS = [
+    { text: 'Recuperação ou movimento leve', color: '#ef4444' },
+    { text: 'Treino leve — preserve para amanhã', color: '#eab308' },
+    { text: 'Treino moderado — melhor dose de hoje', color: '#38bdf8' },
+    { text: 'Treino forte — janela favorável', color: '#22c55e' },
+  ];
+
+  function baseIndex(text) {
+    if (/descanso|recuperação/i.test(text)) return 0;
+    if (/leve/i.test(text)) return 1;
+    if (/moderado/i.test(text)) return 2;
+    if (/forte|janela/i.test(text)) return 3;
+    return 2;
+  }
+
+  let idx = baseIndex(baseRec.text);
+  let acwrContext = null;
+
+  if (acwr > 1.5) {
+    return {
+      text: 'Recuperação ou movimento leve',
+      color: '#ef4444',
+      acwrContext: {
+        text: `ACWR ${acwr.toFixed(2)} — muito acima do ideal. Hoje faz mais sentido proteger do que insistir em carga.`,
+        color: '#ef4444',
+      },
+    };
+  } else if (acwr >= 1.3) {
+    idx = Math.max(0, idx - 1);
+    acwrContext = {
+      text: `ACWR ${acwr.toFixed(2)} — acima do ideal. Rebaixe a intensidade hoje.`,
+      color: '#f59e0b',
+    };
+  } else if (acwr <= 0.8 && hrvDeltaPositive) {
+    idx = Math.min(LEVELS.length - 1, idx + 1);
+    acwrContext = {
+      text: `ACWR ${acwr.toFixed(2)} — abaixo da zona ideal. Seu corpo pode absorver um pouco mais de carga.`,
+      color: '#22c55e',
+    };
+  } else if (acwr <= 0.8) {
+    acwrContext = {
+      text: `ACWR ${acwr.toFixed(2)} — abaixo da zona ideal. Há margem para progredir com controle.`,
+      color: '#22c55e',
+    };
+  }
+
+  const level = LEVELS[idx];
+  return { text: level.text, color: level.color, acwrContext };
+}
+
+function resolveReadinessRecommendation(checkin, analysis) {
+  const state = checkin?.current_body_state;
+  let baseRec;
+
+  if (state === 'Fatigued' || state === 'Overreached') {
+    baseRec = { text: 'Recuperação ou movimento leve', color: '#ef4444' };
+  } else {
+    const score = checkin?.biocharge_morning ?? checkin?.readiness_score ?? checkin?.recovery_score ?? 0;
+    const soreness = checkin?.muscle_soreness ?? checkin?.muscle_soreness_level ?? 99;
+    const fatigue = checkin?.fatigue ?? checkin?.fatigue_score ?? 99;
+
+    if (score >= 85 && soreness <= 1 && fatigue <= 20) {
+      baseRec = { text: 'Treino forte — janela favorável', color: '#22c55e' };
+    } else if (score >= 70) {
+      baseRec = { text: 'Treino moderado — melhor dose de hoje', color: '#38bdf8' };
+    } else if (score >= 60) {
+      baseRec = { text: 'Treino leve — preserve para amanhã', color: '#eab308' };
+    } else {
+      baseRec = { text: 'Recuperação ou movimento leve', color: '#ef4444' };
+    }
+  }
+
+  const acwr = analysis?.trainingLoad?.ratio ?? null;
+  const hrvDelta = analysis?.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
+  const hrvDeltaPositive = hrvDelta != null && hrvDelta > 0;
+
+  return applyAcwrModifier(baseRec, acwr, hrvDeltaPositive);
+}
+
+function predictOptionImpact(option, analysis, intent) {
+  if (!analysis) return null;
+
+  const ratio = analysis.trainingLoad?.ratio ?? 1;
+
+  if (intent === 'recovery') return 'up';
+  if (ratio > 1.4) return 'down';
+  if (option?.duration_min > 40) return 'down';
+  if (option?.duration_min < 25) return 'up';
+  return 'stable';
+}
+
+function predictTomorrow({ analysis, intent }) {
+  if (!analysis) return null;
+
+  const ratio = analysis.trainingLoad?.ratio ?? 1;
+  const sleepDebt = getSleepDebtHours(analysis);
+  const state = analysis.physioState?.state;
+
+  if (intent === 'recovery') {
+    return {
+      trend: 'up',
+      message: 'Se você realmente recuperar hoje, a chance de melhorar amanhã aumenta.',
+    };
+  }
+
+  if (ratio > 1.4) {
+    return {
+      trend: 'down',
+      message: 'Se você insistir em carga alta hoje, a recuperação de amanhã tende a cair.',
+    };
+  }
+
+  if (ratio < 0.9 && sleepDebt < 2) {
+    return {
+      trend: 'up',
+      message: 'Se mantiver a dose controlada e dormir bem hoje, a recuperação de amanhã tende a melhorar.',
+    };
+  }
+
+  if (state === 'Fatigued') {
+    return {
+      trend: 'down',
+      message: 'Os sinais atuais sugerem recuperação mais lenta se você exagerar hoje.',
+    };
+  }
+
+  return {
+    trend: 'stable',
+    message: 'Se mantiver a dose planejada hoje, a tendência é de manutenção do estado atual amanhã.',
+  };
+}
+
+function getHeaderFromVerdict(dailyVerdict, fallbackCfg) {
+  if (!dailyVerdict) {
+    return {
+      title: fallbackCfg.label,
+      emoji: fallbackCfg.emoji,
+      subtitle: fallbackCfg.detail,
+      color: fallbackCfg.color,
+    };
+  }
+
+  switch (dailyVerdict.mode) {
+    case 'train_high':
+      return {
+        title: 'Treino forte',
+        emoji: '🔥',
+        subtitle: dailyVerdict.subheadline,
+        color: '#22c55e',
+      };
+    case 'train_moderate':
+      return {
+        title: 'Treino moderado',
+        emoji: '⚡',
+        subtitle: dailyVerdict.subheadline,
+        color: '#38bdf8',
+      };
+    case 'train_light':
+      return {
+        title: 'Treino leve',
+        emoji: '🌿',
+        subtitle: dailyVerdict.subheadline,
+        color: '#eab308',
+      };
+    case 'recover':
+    default:
+      return {
+        title: 'Recuperação',
+        emoji: '🌙',
+        subtitle: dailyVerdict.subheadline,
+        color: '#60a5fa',
+      };
+  }
+}
+
 function PrescriptionBlock({
-  presc, analysis, intent,
-  onScheduleOption, onCompleteOption, onSchedule,
-  checkin, strainTarget, currentStrain,
+  presc,
+  analysis,
+  intent,
+  onScheduleOption,
+  onCompleteOption,
+  onSchedule,
+  checkin,
+  strainTarget,
+  currentStrain,
   lookbackRecommendKey,
 }) {
-  // lookback can override the recommended key (e.g. force C/B after hard session yesterday)
-  const baseRecommendedKey = resolveRecommendedKey(checkin, analysis);
+  const baseRecommendedKey = presc?.recommendedKey ?? resolveRecommendedKey(checkin);
   const recommendedKey = lookbackRecommendKey ?? baseRecommendedKey;
+
   const [selected, setSelected] = useState(recommendedKey);
   const [savingSelect, setSavingSelect] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
@@ -321,18 +548,20 @@ function PrescriptionBlock({
   const [celebrationMsg, setCelebrationMsg] = useState(null);
   const debounceRef = useRef(null);
 
-  // Commitment states
   const [showCommitmentPicker, setShowCommitmentPicker] = useState(false);
   const [commitmentSlot, setCommitmentSlot] = useState(null);
   const [commitmentStatus, setCommitmentStatus] = useState(null);
   const [commitmentMsg, setCommitmentMsg] = useState(null);
   const [commitmentSaving, setCommitmentSaving] = useState(false);
 
-  const opt = presc.options.find(o => o.key === selected) || presc.options[0];
-  const conf = presc.summary.confidence;
+  useEffect(() => {
+    setSelected(recommendedKey);
+  }, [recommendedKey]);
+
+  const opt = presc.options.find((o) => o.key === selected) || presc.options[0];
+  const conf = presc.summary?.confidence || 'Média';
   const confStyle = CONF_STYLE[conf] || CONF_STYLE.Baixa;
 
-  // Load yesterday feedback + recent for adaptation hints
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -345,40 +574,50 @@ function PrescriptionBlock({
 
       setYesterdayFeedback(yFb);
 
-      // Lightweight adaptation hints
       const hints = [];
       if (recent.length >= 3) {
-        const cCount = recent.filter(r => r.selected_option === 'C').length;
+        const cCount = recent.filter((r) => r.selected_option === 'C').length;
         if (cCount / recent.length > 0.5) {
-          hints.push('Você costuma preferir treinos curtos — opção C pode ser a melhor escolha.');
+          hints.push('Seu histórico recente favorece sessões curtas ou conservadoras.');
         }
-        const completed = recent.filter(r => r.completed && r.perceived_rpe != null);
+
+        const completed = recent.filter((r) => r.completed && r.perceived_rpe != null);
         if (completed.length >= 3) {
           const avgRpe = completed.reduce((s, r) => s + r.perceived_rpe, 0) / completed.length;
           if (avgRpe > 8) {
-            hints.push('RPE médio acima de 8 — considere reduzir a intensidade 1 nível.');
+            hints.push('RPE médio recente acima de 8 — vale reduzir 1 nível se o corpo não responder bem no aquecimento.');
           }
         }
       }
+
       setAdaptHints(hints);
     })();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const persistSelection = async (key, option) => {
     if (debounceRef.current) return;
     setSavingSelect(true);
     setDbError(false);
-    debounceRef.current = setTimeout(() => { debounceRef.current = null; }, 800);
+    debounceRef.current = setTimeout(() => {
+      debounceRef.current = null;
+    }, 800);
+
     const userId = await getUserIdOrDeviceId();
-    const evidence = analysis ? {
-      recovery: analysis.today?.recovery_score ?? null,
-      sleepDebtHours: analysis.sleepDebt?.debt ?? null,
-      trainingRatio: analysis.trainingLoad?.ratio ?? null,
-      trainingRisk: analysis.trainingLoad?.risk ?? null,
-      fatigue: analysis.today?.fatigue_score ?? null,
-      hrvDeltaPct: null,
-    } : null;
+    const evidence = analysis
+      ? {
+          recovery: analysis.today?.recovery_score ?? null,
+          sleepDebtHours: getSleepDebtHours(analysis),
+          trainingRatio: analysis.trainingLoad?.ratio ?? null,
+          trainingRisk: analysis.trainingLoad?.risk ?? null,
+          fatigue: analysis.today?.fatigue_score ?? null,
+          hrvDeltaPct: analysis.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null,
+        }
+      : null;
+
     const result = await upsertDailySelection(userId, todayKey(), {
       selected_option: key,
       planned_duration_min: option.duration_min ?? null,
@@ -387,22 +626,23 @@ function PrescriptionBlock({
       planned_intensity_max: option.intensity?.range?.[1] ?? null,
       evidence_snapshot: evidence,
     });
+
     if (!result) setDbError(true);
     setSavingSelect(false);
-    // Always open commitment picker after selection (even if DB failed)
     setShowCommitmentPicker(true);
     setCommitmentMsg(null);
   };
 
   const handleSelectOption = (key) => {
     setSelected(key);
-    const opt = presc.options.find(o => o.key === key);
-    if (opt) persistSelection(key, opt);
+    const selectedOpt = presc.options.find((o) => o.key === key);
+    if (selectedOpt) persistSelection(key, selectedOpt);
   };
 
   const handleCommitSlot = async (slot) => {
     if (!['now', 'morning', 'afternoon', 'evening'].includes(slot)) return;
     setCommitmentSaving(true);
+
     try {
       const userId = await getUserIdOrDeviceId();
       await upsertDailyCommitment(userId, todayKey(), {
@@ -417,6 +657,7 @@ function PrescriptionBlock({
       console.warn('WorkoutSuggestionCard: handleCommitSlot error', err);
       setCommitmentMsg('Não foi possível salvar agora — continue mesmo assim.');
     }
+
     setCommitmentSaving(false);
     setShowCommitmentPicker(false);
   };
@@ -431,6 +672,7 @@ function PrescriptionBlock({
     } catch (err) {
       console.warn('WorkoutSuggestionCard: handleCancelCommitment error', err);
     }
+
     setCommitmentStatus('cancelled');
     setCommitmentMsg('Cancelado. Replaneje quando estiver pronto.');
   };
@@ -438,18 +680,21 @@ function PrescriptionBlock({
   const handleSaveCompletion = async (rpe, notes) => {
     setSavingComplete(true);
     setDbError(false);
+
     const userId = await getUserIdOrDeviceId();
     const result = await upsertDailyCompletion(userId, todayKey(), {
       completed: true,
       perceived_rpe: rpe,
       notes: notes || null,
     });
-    if (!result) setDbError(true);
-    else {
+
+    if (!result) {
+      setDbError(true);
+    } else {
       setSavedToday(true);
       if (commitmentSlot) setCommitmentStatus('completed');
       setCommitmentMsg('Executado. Bom trabalho. Volte amanhã para ver o impacto.');
-      // Gerar frase de fechamento emocional
+
       const msg = buildProspectiveMessage({
         analysis,
         checkin,
@@ -459,6 +704,7 @@ function PrescriptionBlock({
       });
       setCelebrationMsg(msg);
     }
+
     setSavingComplete(false);
     setShowCompletion(false);
     if (onCompleteOption) onCompleteOption(opt);
@@ -471,693 +717,31 @@ function PrescriptionBlock({
 
   return (
     <div className="space-y-4">
-      {/* Daily Insight Block */}
       <DailyInsightBlock
         presc={presc}
         analysis={analysis}
+        recommendedKey={recommendedKey}
         onMarkDone={() => setShowCompletion(true)}
       />
 
-      {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Plano de Treino de Hoje
+          Plano de treino de hoje
         </span>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>
           {conf}
         </span>
       </div>
 
-      {/* Yesterday impact */}
       {yesterdayFeedback?.completed && <YesterdayImpact analysis={analysis} />}
 
-      {/* Adaptation hints */}
       {adaptHints.map((hint, i) => (
-        <p key={i} className="text-[10px] text-yellow-400/80 italic px-1">💡 {hint}</p>
+        <p key={i} className="text-[10px] text-yellow-400/80 italic px-1">
+          💡 {hint}
+        </p>
       ))}
 
-      {/* Commitment Picker */}
       <AnimatePresence>
         {showCommitmentPicker && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18 }}
-            className="rounded-xl border border-primary/25 bg-primary/5 p-3.5 space-y-3"
-          >
-            <p className="text-xs font-bold">
-              Compromisso rápido: quando você vai executar?
-            </p>
-            <p className="text-[10px] text-muted-foreground -mt-1">
-              {(() => {
-                const r = analysis?.today?.recovery_score ?? analysis?.today?.readiness_score ?? 50;
-                return r >= 70 ? SLOT_COPY.high : r >= 50 ? SLOT_COPY.medium : SLOT_COPY.low;
-              })()}
-            </p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[['now','Agora'],['morning','Manhã'],['afternoon','Tarde'],['evening','Noite']].map(([slot, label]) => (
-                <button
-                  key={slot}
-                  disabled={commitmentSaving}
-                  onClick={() => handleCommitSlot(slot)}
-                  className="px-2 py-2 rounded-lg bg-secondary border border-border text-[11px] font-semibold hover:bg-primary/10 hover:border-primary/40 disabled:opacity-50 transition-all"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <button
-              disabled={commitmentSaving}
-              onClick={() => setShowCommitmentPicker(false)}
-              className="text-[10px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            >
-              Pular
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Commitment status */}
-      {!showCommitmentPicker && commitmentStatus === 'committed' && commitmentSlot && (
-        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-secondary/60 border border-border/40">
-          <span className="text-[11px] text-foreground/80">
-            🎯 Compromisso: Opção {selected} · {humanizeSlot(commitmentSlot)}
-          </span>
-          <button
-            onClick={handleCancelCommitment}
-            className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors"
-          >
-            Cancelar
-          </button>
-        </div>
-      )}
-      {commitmentStatus === 'completed' && (
-        <p className="text-xs font-semibold text-emerald-400">Executado ✅ Consistência +1</p>
-      )}
-      {commitmentMsg && commitmentStatus !== 'completed' && commitmentStatus !== 'committed' && (
-        <p className="text-[10px] text-muted-foreground/80 italic">{commitmentMsg}</p>
-      )}
-
-      {/* Explanation layer */}
-      {(() => {
-        const explanation = [];
-        if (analysis?.trainingLoad?.ratio > 1.3) explanation.push('Carga recente elevada');
-        if (analysis?.sleepDebtHours > 2) explanation.push('Déficit de sono acumulado');
-        if (analysis?.physioState?.state === 'Fatigued') explanation.push('Sinais de fadiga');
-        if (analysis?.physioState?.state === 'Recovered') explanation.push('Boa recuperação disponível');
-        return explanation.length > 0 ? (
-          <div className="text-xs text-muted-foreground mb-3">
-            {explanation.join(' • ')}
-          </div>
-        ) : null;
-      })()}
-
-      {intent === 'recovery' && (
-        <div className="text-xs text-primary mb-2">
-          Ajustado pela sua decisão de recuperar hoje
-        </div>
-      )}
-
-      {/* Option tabs — recommended first, others collapsible */}
-      {intent === 'recovery' && (
-        <div className="text-xs text-primary mb-3 font-medium">
-          Plano leve — foco em recuperação
-        </div>
-      )}
-      {(() => {
-        const recOpt = presc.options.find(o => o.key === recommendedKey) || presc.options[0];
-        const otherOpts = presc.options.filter(o => o.key !== recOpt.key);
-
-        const renderOption = (o, isRecommended) => {
-          const isActive = o.key === selected;
-          const displayTitle = intent === 'recovery' ? `Leve • ${o.title}` : o.title;
-          const impact = isRecommended ? null : predictOptionImpact(o, analysis, intent);
-          return (
-            <button
-              key={o.key}
-              role="radio"
-              aria-checked={isActive}
-              aria-label={`Opção ${o.key}: ${displayTitle}`}
-              disabled={savingSelect}
-              onClick={() => handleSelectOption(o.key)}
-              className={`w-full rounded-xl p-3 text-left transition-all border disabled:opacity-60 ${
-                isRecommended
-                  ? isActive
-                    ? 'border-primary/60 bg-primary/10'
-                    : 'border-primary/40 bg-primary/5 hover:bg-primary/10'
-                  : isActive
-                  ? 'border-primary/50 bg-primary/8'
-                  : 'border-border/50 bg-secondary/50 hover:bg-secondary'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-1 mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-black text-muted-foreground">{o.key}</span>
-                  <span className="text-xs">{MODALITY_EMOJI[o.modality] || '🏃'}</span>
-                  {isRecommended && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary uppercase tracking-wide">
-                      recomendado
-                    </span>
-                  )}
-                </div>
-                {o.duration_min && (
-                  <span className="text-[10px] text-muted-foreground shrink-0">{o.duration_min}min</span>
-                )}
-              </div>
-              <p className={`text-xs font-semibold leading-tight ${isActive || isRecommended ? 'text-primary' : 'text-foreground/80'}`}>
-                {displayTitle}
-              </p>
-              {impact && (
-                <div className={`text-xs mt-1 ${
-                  impact === 'up' ? 'text-emerald-400' :
-                  impact === 'down' ? 'text-yellow-400' :
-                  'text-muted-foreground'
-                }`}>
-                  {impact === 'up' && '⬆️ recuperação provável'}
-                  {impact === 'down' && '⚠️ pode reduzir recuperação'}
-                  {impact === 'stable' && '➡️ manutenção'}
-                </div>
-              )}
-            </button>
-          );
-        };
-
-        return (
-          <div className="space-y-2" role="radiogroup" aria-label="Opções de treino">
-            {/* Recommended option — always visible */}
-            {renderOption(recOpt, true)}
-
-            {/* Other options toggle */}
-            <button
-              onClick={() => setShowOtherOptions(v => !v)}
-              className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors px-1"
-            >
-              <span>{showOtherOptions ? '▾' : '▸'}</span>
-              outras opções ({otherOpts.length})
-            </button>
-
-            <AnimatePresence>
-              {showOtherOptions && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden space-y-2"
-                >
-                  {otherOpts.map(o => renderOption(o, false))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })()}
-
-      {/* Selected option detail */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={selected}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.18 }}
-          className="rounded-xl bg-secondary/40 border border-border/40 p-3.5 space-y-2"
-          aria-live="polite"
-          aria-label={`Detalhes da opção ${selected}`}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold">{opt.title}</p>
-            {opt.intensity && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
-                {opt.intensity.type === 'strain' ? 'Strain' : 'RPE'} {opt.intensity.range[0]}–{opt.intensity.range[1]}
-              </span>
-            )}
-          </div>
-          {(opt.structure?.warmup || opt.structure?.main || opt.structure?.cooldown) && (
-            <div className="space-y-1 text-xs text-muted-foreground">
-              {opt.structure.warmup && <p>🔥 <span className="font-medium text-foreground/70">Aquecimento:</span> {opt.structure.warmup}</p>}
-              {opt.structure.main && <p>💪 <span className="font-medium text-foreground/70">Principal:</span> {opt.structure.main}</p>}
-              {opt.structure.cooldown && <p>🧊 <span className="font-medium text-foreground/70">Volta à calma:</span> {opt.structure.cooldown}</p>}
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground italic">{opt.rationale}</p>
-          {opt.riskNote && (
-            <p className="text-xs text-amber-400/90 flex items-center gap-1">
-              <span>⚠️</span> {opt.riskNote}
-            </p>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Completion form inline */}
-      <AnimatePresence>
-        {showCompletion && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <CompletionForm
-              optKey={selected}
-              saving={savingComplete}
-              onSave={handleSaveCompletion}
-              onCancel={() => setShowCompletion(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Celebration toast */}
-      <WorkoutCompletionToast
-        message={celebrationMsg}
-        onClose={() => setCelebrationMsg(null)}
-      />
-
-      {/* CTAs */}
-      <div className="flex flex-wrap gap-2 items-center">
-        {(onScheduleOption || onSchedule) && (
-          <button
-            onClick={handleSchedule}
-            aria-label={`Agendar opção ${opt.key}: ${opt.title}`}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all"
-          >
-            <Calendar className="w-3.5 h-3.5" /> Agendar
-          </button>
-        )}
-        {!savedToday && !showCompletion && (
-          <button
-            onClick={() => setShowCompletion(true)}
-            aria-label={`Marcar opção ${opt.key} como feito`}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-all"
-          >
-            <Check className="w-3.5 h-3.5" /> Marcar como feito
-          </button>
-        )}
-        {savedToday && (
-          <span className="text-xs text-emerald-400 font-semibold">Salvo ✅</span>
-        )}
-      </div>
-
-      {/* DB error notice */}
-      {dbError && (
-        <p className="text-[10px] text-amber-400/80">Não foi possível salvar agora. Tente novamente.</p>
-      )}
-
-      {/* Safety disclaimer */}
-      <p className="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/20 pt-2">
-        Isto não é aconselhamento médico. Se sentir dor, tontura ou falta de ar, pare e procure assistência.
-      </p>
-    </div>
-  );
-}
-
-// ─── ACWR modifier ────────────────────────────────────────────────────────────
-/**
- * Aplica ACWR como modificador de texto/cor sobre a recomendação base.
- * Retorna { text, color, acwrContext } onde acwrContext é a linha de contexto a exibir.
- */
-function applyAcwrModifier(baseRec, acwr, hrvDeltaPositive) {
-  if (acwr == null) return { ...baseRec, acwrContext: null };
-
-  // Níveis de intensidade em ordem crescente
-  const LEVELS = [
-    { text: 'Descanso ou recuperação ativa · risco de lesão elevado', color: '#ef4444' },
-    { text: 'Treino leve — preserve para amanhã',                      color: '#eab308' },
-    { text: 'Treino moderado — ritmo sustentável',                     color: '#38bdf8' },
-    { text: 'Treino forte — você está no verde',                       color: '#22c55e' },
-  ];
-
-  // Mapear texto base para índice
-  function baseIndex(text) {
-    if (/descanso obrigatório|sobrecarga/i.test(text)) return 0;
-    if (/recuperação ativa/i.test(text))               return 0;
-    if (/leve/i.test(text))                            return 1;
-    if (/moderado/i.test(text))                        return 2;
-    if (/forte|verde/i.test(text))                     return 3;
-    return 2; // fallback moderado
-  }
-
-  let idx = baseIndex(baseRec.text);
-  let acwrContext = null;
-
-  if (acwr > 1.50) {
-    // Força descanso independente do estado
-    return {
-      text: 'Descanso ou recuperação ativa · risco de lesão elevado',
-      color: '#ef4444',
-      acwrContext: { text: `ACWR: ${acwr.toFixed(2)} — muito acima do ideal. Risco de lesão elevado.`, color: '#ef4444' },
-    };
-  } else if (acwr >= 1.30) {
-    idx = Math.max(0, idx - 1);
-    acwrContext = { text: `ACWR: ${acwr.toFixed(2)} — acima do ideal. Reduza a intensidade hoje.`, color: '#f59e0b' };
-  } else if (acwr <= 0.80 && hrvDeltaPositive) {
-    idx = Math.min(LEVELS.length - 1, idx + 1);
-    acwrContext = { text: `ACWR: ${acwr.toFixed(2)} — abaixo da zona ideal. Seu corpo pode absorver mais carga.`, color: '#22c55e' };
-  } else if (acwr <= 0.80) {
-    acwrContext = { text: `ACWR: ${acwr.toFixed(2)} — abaixo da zona ideal. Seu corpo pode absorver mais carga.`, color: '#22c55e' };
-  }
-  // 0.80–1.30: sem mudança, sem contexto
-
-  const level = LEVELS[idx];
-  return { text: level.text, color: level.color, acwrContext };
-}
-
-// ─── Readiness-based recommendation ──────────────────────────────────────────
-function resolveReadinessRecommendation(checkin, analysis) {
-  const state = checkin?.current_body_state;
-  let baseRec;
-
-  if (state === 'Fatigued' || state === 'Overreached') {
-    baseRec = { text: 'Descanso obrigatório — seu corpo pediu pausa', color: '#ef4444' };
-  } else {
-    const score = checkin?.biocharge_morning ?? checkin?.readiness_score ?? checkin?.recovery_score ?? 0;
-    const soreness = checkin?.muscle_soreness ?? checkin?.muscle_soreness_level ?? 99;
-    const fatigue = checkin?.fatigue ?? 99;
-    if (score >= 85 && soreness <= 1 && fatigue <= 20) {
-      baseRec = { text: 'Treino forte — você está no verde', color: '#22c55e' };
-    } else if (score >= 70) {
-      baseRec = { text: 'Treino moderado — ritmo sustentável', color: '#38bdf8' };
-    } else if (score >= 60) {
-      baseRec = { text: 'Treino leve — preserve para amanhã', color: '#eab308' };
-    } else {
-      baseRec = { text: 'Recuperação ativa — não force hoje', color: '#ef4444' };
-    }
-  }
-
-  const acwr = analysis?.trainingLoad?.ratio ?? null;
-  const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
-  const hrvDeltaPositive = hrvDelta != null && hrvDelta > 0;
-
-  return applyAcwrModifier(baseRec, acwr, hrvDeltaPositive);
-}
-
-// ─── Option impact prediction ────────────────────────────────────────────────
-function predictOptionImpact(option, analysis, intent) {
-  if (!analysis) return null;
-
-  const ratio = analysis.trainingLoad?.ratio ?? 1;
-
-  if (intent === 'recovery') return 'up';
-  if (ratio > 1.4) return 'down';
-  if (option?.duration_min > 40) return 'down';
-  if (option?.duration_min < 25) return 'up';
-  return 'stable';
-}
-
-// ─── Tomorrow prediction ─────────────────────────────────────────────────────
-function predictTomorrow({ analysis, intent }) {
-  if (!analysis) return null;
-
-  const ratio = analysis.trainingLoad?.ratio ?? 1;
-  const sleepDebt = analysis.sleepDebtHours ?? 0;
-  const state = analysis.physioState?.state;
-
-  if (intent === 'recovery') {
-    return { trend: 'up', message: 'Recuperação deve melhorar amanhã' };
-  }
-
-  if (ratio > 1.4) {
-    return { trend: 'down', message: 'Carga alta hoje pode reduzir sua recuperação amanhã' };
-  } else if (ratio < 0.9 && sleepDebt < 2) {
-    return { trend: 'up', message: 'Boa chance de melhorar a recuperação amanhã' };
-  } else if (state === 'Fatigued') {
-    return { trend: 'down', message: 'Sinais de fadiga indicam recuperação mais lenta' };
-  } else {
-    return { trend: 'stable', message: 'Tendência de manutenção do estado atual' };
-  }
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
-export default function WorkoutSuggestionCard({
-  checkin,
-  actionableRecs = [],
-  strainTarget,
-  currentStrain = 0,
-  // Prescription props
-  analysis,
-  workoutPrescription,
-  userPrefs,
-  todaySessions = [],
-  allSessions = [],
-  onScheduleOption,
-  onCompleteOption,
-  onSchedule,
-}) {
-  const { intent } = useDayContext();
-
-  const bodyState = checkin?.current_body_state || 'default';
-  const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
-  const { initial, transition: reducedTransition } = useMotionSafe();
-
-  const [historyHint, setHistoryHint] = useState(null);
-  const [yesterdayFeedback, setYesterdayFeedback] = useState(null);
-  const prediction = predictTomorrow({ analysis, intent });
-
-  useEffect(() => {
-    async function loadYesterday() {
-      try {
-        const userId = await getUserIdOrDeviceId();
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const key = yesterday.toISOString().slice(0, 10);
-        const data = await getFeedbackByDate(userId, key);
-        setYesterdayFeedback(data);
-      } catch (e) {
-        console.warn(e);
-      }
-    }
-    loadYesterday();
-  }, []);
-
-  useEffect(() => {
-    async function loadHistory() {
-      try {
-        const userId = await getUserIdOrDeviceId();
-        const recent = await getRecentFeedback(userId, 7);
-        if (!recent || recent.length < 3) return;
-        const completed = recent.filter(r => r.completed && r.perceived_rpe != null);
-        if (completed.length < 3) return;
-        const avgRpe = completed.reduce((sum, r) => sum + r.perceived_rpe, 0) / completed.length;
-        if (avgRpe > 8) setHistoryHint('Você tem treinado com intensidade alta recentemente');
-        else if (avgRpe < 5) setHistoryHint('Seus treinos recentes foram leves');
-      } catch (e) {
-        console.warn('history load failed', e);
-      }
-    }
-    loadHistory();
-  }, []);
-
-  const presc = useMemo(() => {
-    if (workoutPrescription !== undefined) return workoutPrescription;
-    if (analysis) return prescribeWorkout(analysis, userPrefs || {});
-    return null;
-  }, [analysis, workoutPrescription, userPrefs]);
-
-  const lookback = useMemo(() => {
-    if (!allSessions || allSessions.length === 0) return null;
-    const todayDate = new Date().toISOString().slice(0, 10);
-    return applyYesterdayLookback(allSessions, todayDate, checkin);
-  }, [allSessions, checkin]);
-
-  const trainingRecs = actionableRecs.filter(r =>
-    ['Treino', 'Mobilidade', 'Recuperação'].includes(r.category)
-  );
-
-  // ESTADO 0 — Dia de descanso declarado
-  if (checkin?.rest_day) {
-    return <RecoveryProtocolCard checkin={checkin} analysis={analysis} />;
-  }
-
-  // ESTADO 2 — Após treino registrado (após todos os hooks)
-  if (todaySessions.length > 0) {
-    return (
-      <WorkoutLoggedState
-        sessions={todaySessions}
-        checkin={checkin}
-        analysis={analysis}
-      />
-    );
-  }
-
-  return (
-    <motion.div
-      initial={initial ?? { opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={reducedTransition ?? { delay: 0.1 }}
-      className="rounded-2xl border p-5 space-y-4"
-      style={{ background: cfg.bg, borderColor: cfg.border }}
-    >
-      {/* ACWR Alert — topo do card, antes de tudo */}
-      <AcwrAlert
-        allSessions={allSessions}
-        todaySessions={todaySessions}
-        analysisRatio={analysis?.trainingLoad?.ratio ?? null}
-      />
-
-      {/* Yesterday context banner */}
-      <YesterdayContextBanner lookback={lookback} />
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Dumbbell className="w-4 h-4" style={{ color: cfg.color }} />
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Treino Sugerido
-          </span>
-        </div>
-        <div
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-          style={{ background: `${cfg.color}20`, color: cfg.color }}
-        >
-          <span>{cfg.emoji}</span>
-          {cfg.label}
-        </div>
-      </div>
-
-      {/* Microcopy contextual */}
-      <p className="text-xs font-semibold text-foreground/70">
-        {intent === 'recovery'
-          ? 'Hoje o ganho está na recuperação'
-          : intent === 'training'
-          ? 'Hoje é um bom dia para estímulo'
-          : 'Você pode decidir ao longo do dia'}
-      </p>
-
-      {/* Training reason — frase IA explicando a escolha do treino */}
-      {checkin?.recommendation && (
-        <p className="text-xs text-muted-foreground italic leading-relaxed -mt-1">
-          {checkin.recommendation}
-        </p>
-      )}
-
-      <div className="h-px bg-border/40" />
-
-      {/* Yesterday reflection */}
-      {yesterdayFeedback?.completed && (
-        <div className="text-xs text-muted-foreground">
-          Ontem você treinou (RPE {yesterdayFeedback.perceived_rpe})
-        </div>
-      )}
-
-      {/* History-based hint */}
-      {historyHint && (
-        <div className="text-xs text-muted-foreground">
-          {historyHint}
-        </div>
-      )}
-
-      {/* Tomorrow prediction */}
-      {prediction && (
-        <div className={`text-xs flex items-center gap-2 ${
-          prediction.trend === 'up'
-            ? 'text-emerald-400'
-            : prediction.trend === 'down'
-            ? 'text-yellow-400'
-            : 'text-muted-foreground'
-        }`}>
-          <span>
-            {prediction.trend === 'up' && '⬆️'}
-            {prediction.trend === 'down' && '⚠️'}
-            {prediction.trend === 'stable' && '➡️'}
-          </span>
-          <span>{prediction.message}</span>
-        </div>
-      )}
-
-      <div className="h-px bg-border/40" />
-
-      {/* Readiness-based recommendation + ACWR modifier */}
-      {(() => {
-        const rec = resolveReadinessRecommendation(checkin, analysis);
-        return (
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
-              {rec.text}
-            </p>
-            {rec.acwrContext && (
-              <p className="text-[11px] leading-snug" style={{ color: rec.acwrContext.color }}>
-                {rec.acwrContext.text}
-              </p>
-            )}
-          </div>
-        );
-      })()}
-
-      {strainTarget != null && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5">
-          <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Strain alvo hoje</p>
-            <p className="text-lg font-mono font-bold" style={{ color: cfg.color }}>até {strainTarget}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{STRAIN_ZONE(strainTarget)}</p>
-          </div>
-          {currentStrain > 0 && (
-            <div className="text-right">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Acumulado</p>
-              <p className={`text-lg font-mono font-bold ${currentStrain >= strainTarget ? 'text-red-400' : 'text-emerald-400'}`}>
-                {currentStrain}
-              </p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{STRAIN_ZONE(currentStrain)}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Contextual bullets — AI-generated on check-in save, max 2 */}
-      {(() => {
-        const raw = checkin?.contextual_bullets;
-        const bullets = raw ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : null;
-        if (bullets?.length) {
-          return (
-            <ul className="space-y-2">
-              {bullets.map((tip, i) => (
-                <li key={i} className="text-sm text-foreground/80 leading-snug">{tip}</li>
-              ))}
-            </ul>
-          );
-        }
-        // Fallback: generic tips from body state config
-        return (
-          <ul className="space-y-1.5">
-            {cfg.tips.map((tip, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cfg.color }} />
-                {tip}
-              </li>
-            ))}
-          </ul>
-        );
-      })()}
-
-      {trainingRecs.length > 0 && (
-        <div className="pt-2 border-t border-border/30 space-y-2">
-          {trainingRecs.map((rec, i) => (
-            <div key={i} className="flex items-start gap-2.5">
-              <span className="text-base leading-none mt-0.5">{rec.icon}</span>
-              <p className="text-xs text-foreground/75 leading-snug">{rec.text}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Prescription block — only when presc is available */}
-      {presc && (
-        <div className="pt-3 border-t border-border/30">
-          <PrescriptionBlock
-            presc={presc}
-            analysis={analysis}
-            intent={intent}
-            checkin={checkin}
-            strainTarget={strainTarget}
-            currentStrain={currentStrain}
-            lookbackRecommendKey={lookback?.recommendKey ?? null}
-            onScheduleOption={onScheduleOption}
-            onCompleteOption={onCompleteOption}
-            onSchedule={onSchedule}
-          />
-        </div>
-      )}
-    </motion.div>
-  );
-}
