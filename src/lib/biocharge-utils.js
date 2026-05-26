@@ -6,6 +6,27 @@ function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, n));
 }
 
+export function resolveCheckinField(checkin, fieldName) {
+  const aliases = {
+    energy: ['energy', 'energy_level'],
+    stress: ['stress', 'stress_level'],
+    muscle_soreness: ['muscle_soreness', 'muscle_soreness_level'],
+    mood: ['mood', 'mood_level'],
+    resting_hr: ['resting_hr', 'resting_heart_rate'],
+    hydration: ['hydration', 'hydration_liters'],
+  };
+
+  const candidates = aliases[fieldName] || [fieldName];
+
+  for (const candidate of candidates) {
+    if (checkin?.[candidate] !== null && checkin?.[candidate] !== undefined) {
+      return checkin[candidate];
+    }
+  }
+
+  return null;
+}
+
 function normalizeMoodOrEnergy(v) {
   if (v == null) return 50;
   return clamp((Number(v) / 5) * 100);
@@ -13,15 +34,15 @@ function normalizeMoodOrEnergy(v) {
 
 function normalizeDeepSleep(deepSleepPct) {
   if (deepSleepPct == null) return 50;
-  // alvo simples: 20–25% tende a ser um bom nível prático
   return clamp((Number(deepSleepPct) / 25) * 100);
 }
 
 function normalizeHrv(hrv) {
   if (hrv == null) return 50;
-  // sem baseline aqui, então apenas uma normalização conservadora
   return clamp((Number(hrv) / 80) * 100);
 }
+
+// ─── Core scores ───────────────────────────────────────────────────────────
 
 export function calculateRecoveryScore(checkin) {
   const morning = clamp(checkin.biocharge_morning ?? 0);
@@ -29,8 +50,8 @@ export function calculateRecoveryScore(checkin) {
   const fatigue = clamp(checkin.fatigue ?? 0);
   const deepSleep = normalizeDeepSleep(checkin.deep_sleep_pct);
   const hrv = normalizeHrv(checkin.hrv);
-  const mood = normalizeMoodOrEnergy(checkin.mood);
-  const energy = normalizeMoodOrEnergy(checkin.energy);
+  const mood = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'mood'));
+  const energy = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'energy'));
 
   const score =
     morning * 0.35 +
@@ -61,9 +82,10 @@ export function calculateSleepScore(checkin) {
 
 export function calculateFatigueScore(checkin) {
   const base = clamp(checkin.fatigue ?? 0);
-  const sorenessRaw = checkin.muscle_soreness ?? checkin.muscle_soreness_level ?? 0;
+  const sorenessRaw = resolveCheckinField(checkin, 'muscle_soreness') ?? 0;
   const soreness = clamp((Number(sorenessRaw) / 5) * 100);
-  const stressRaw = checkin.stress ?? checkin.stress_level ?? 0;
+
+  const stressRaw = resolveCheckinField(checkin, 'stress') ?? 0;
   const stress = clamp((Number(stressRaw) / 5) * 100);
 
   const score =
@@ -75,10 +97,11 @@ export function calculateFatigueScore(checkin) {
 }
 
 export function calculateStressScore(checkin) {
-  const stressRaw = checkin.stress ?? checkin.stress_level ?? 0;
+  const stressRaw = resolveCheckinField(checkin, 'stress') ?? 0;
   const stress = clamp((Number(stressRaw) / 5) * 100);
-  const moodPenalty = clamp(((5 - Number(checkin.mood ?? 3)) / 5) * 100);
-  const energyPenalty = clamp(((5 - Number(checkin.energy ?? 3)) / 5) * 100);
+
+  const moodPenalty = clamp(((5 - Number(resolveCheckinField(checkin, 'mood') ?? 3)) / 5) * 100);
+  const energyPenalty = clamp(((5 - Number(resolveCheckinField(checkin, 'energy') ?? 3)) / 5) * 100);
 
   const score =
     stress * 0.50 +
@@ -102,6 +125,8 @@ export function calculateReadinessScore(checkin) {
 
   return clamp(Math.round(score));
 }
+
+// ─── Zones / Labels ────────────────────────────────────────────────────────
 
 export function getZone(recoveryScore) {
   const score = clamp(recoveryScore ?? 0);
@@ -128,27 +153,7 @@ export function getZoneLabel(zone) {
   return labels[zone] || 'Indefinido';
 }
 
-export function getRecommendation(zone, preWorkout) {
-  const pre = clamp(preWorkout ?? 0);
-
-  if (zone === 'green' && pre >= 60) {
-    return 'Hoje existe margem para um treino mais forte, se o aquecimento confirmar.';
-  }
-
-  if (zone === 'green') {
-    return 'Boa janela para um treino produtivo, sem precisar exagerar.';
-  }
-
-  if (zone === 'yellow' && pre >= 50) {
-    return 'Treino moderado é a melhor dose hoje.';
-  }
-
-  if (zone === 'yellow') {
-    return 'Hoje vale sustentar consistência com controle.';
-  }
-
-  return 'Hoje faz mais sentido recuperar ou manter movimento leve.';
-}
+// ─── Old compatibility exports ─────────────────────────────────────────────
 
 export function getDeltaPre(morning, preWorkout) {
   if (morning == null || preWorkout == null) return null;
@@ -187,6 +192,116 @@ export function getTrainingLoad(recoveryScore, deltaPost) {
   return 'Hoje o desgaste foi alto para sua margem atual';
 }
 
+// ─── Daily signal normalization ─────────────────────────────────────────────
+
+function getDailyMasterSignal(checkinLike) {
+  const recovery = clamp(checkinLike?.recovery_score ?? 0);
+  const readiness = clamp(checkinLike?.readiness_score ?? recovery);
+  const fatigue = clamp(checkinLike?.fatigue_score ?? checkinLike?.fatigue ?? 0);
+  const sleep = clamp(checkinLike?.sleep_quality ?? checkinLike?.sleep_score ?? 0);
+  const deepSleep = Number(checkinLike?.deep_sleep_pct ?? 0);
+  const soreness = Number(resolveCheckinField(checkinLike, 'muscle_soreness') ?? 0);
+  const restDay = !!checkinLike?.rest_day;
+
+  if (restDay) return 'recover';
+
+  if (
+    recovery < 55 ||
+    readiness < 55 ||
+    fatigue >= 70 ||
+    soreness >= 4 ||
+    (deepSleep > 0 && deepSleep < 15)
+  ) {
+    return 'recover';
+  }
+
+  if (
+    recovery >= 80 &&
+    readiness >= 78 &&
+    fatigue <= 25 &&
+    sleep >= 70 &&
+    soreness <= 2
+  ) {
+    return 'train_high';
+  }
+
+  if (recovery >= 65 && readiness >= 65) {
+    return 'train_moderate';
+  }
+
+  return 'train_light';
+}
+
+function buildHeadline(masterSignal, checkinLike) {
+  const sleepDebtHint = checkinLike?.sleep_need_tonight;
+  if (masterSignal === 'train_high') {
+    return 'Boa janela para intensidade hoje';
+  }
+  if (masterSignal === 'train_moderate') {
+    return 'Moderado é a melhor dose hoje';
+  }
+  if (masterSignal === 'train_light') {
+    return 'Hoje vale manter leve';
+  }
+
+  if (sleepDebtHint && sleepDebtHint >= 8) {
+    return 'Hoje recuperar vale mais do que insistir';
+  }
+
+  return 'Seu corpo pede recuperação hoje';
+}
+
+function buildRecommendation(masterSignal, checkinLike) {
+  const deepSleep = Number(checkinLike?.deep_sleep_pct ?? 0);
+  const soreness = Number(resolveCheckinField(checkinLike, 'muscle_soreness') ?? 0);
+
+  if (masterSignal === 'train_high') {
+    return 'Seu corpo acordou com boa margem. Se o aquecimento confirmar, hoje é um bom dia para um estímulo mais forte.';
+  }
+
+  if (masterSignal === 'train_moderate') {
+    if (deepSleep > 0 && deepSleep < 18) {
+      return 'Seu corpo está funcional, mas o sono reduz a margem de intensidade. Moderado é a melhor dose hoje.';
+    }
+    return 'Hoje o ganho está em consistência, não em exagero. Um treino moderado tende a render mais do que forçar.';
+  }
+
+  if (masterSignal === 'train_light') {
+    if (soreness >= 3) {
+      return 'Há espaço para movimento, mas a dor muscular sugere manter a sessão curta e leve.';
+    }
+    return 'Hoje vale usar movimento leve como manutenção, sem exigir demais do sistema.';
+  }
+
+  return 'Hoje faz mais sentido priorizar descanso ou recuperação ativa do que buscar intensidade.';
+}
+
+function buildTrainingLoadLabel(masterSignal) {
+  if (masterSignal === 'train_high') return 'Boa carga / recuperação sustentável';
+  if (masterSignal === 'train_moderate') return 'Carga moderada / controlada';
+  if (masterSignal === 'train_light') return 'Carga leve / manutenção';
+  return 'Descanso / recuperação ativa';
+}
+
+export function normalizeDailySignals(checkinLike) {
+  const masterSignal = getDailyMasterSignal(checkinLike);
+
+  const zone =
+    masterSignal === 'train_high' ? 'green' :
+    masterSignal === 'train_moderate' ? 'yellow' :
+    masterSignal === 'train_light' ? 'yellow' :
+    'red';
+
+  return {
+    ...checkinLike,
+    decision_mode: masterSignal,
+    zone,
+    headline_today: buildHeadline(masterSignal, checkinLike),
+    recommendation: buildRecommendation(masterSignal, checkinLike),
+    training_load: buildTrainingLoadLabel(masterSignal),
+  };
+}
+
 // ─── Delayed Fatigue Alert ─────────────────────────────────────────────────
 
 export function calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions) {
@@ -201,11 +316,12 @@ export function calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions)
   const recoveryTwoDaysAgo = twoDaysAgo.recovery_score ?? calculateRecoveryScore(twoDaysAgo);
   if (recoveryToday >= recoveryTwoDaysAgo - 15) return null;
 
-  const soreness = checkin.muscle_soreness ?? checkin.muscle_soreness_level ?? 0;
+  const soreness = resolveCheckinField(checkin, 'muscle_soreness') ?? 0;
   if (soreness < 3) return null;
 
   if (!recentSessions || recentSessions.length === 0) return null;
   const todayDate = checkin.date;
+
   const sessionsNotToday = [...recentSessions]
     .filter((s) => s.date !== todayDate)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -223,7 +339,7 @@ export function calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions)
   return `Fadiga retardada detectada — seu corpo ainda parece estar absorvendo o treino de ${daysDiff} ${daysDiff === 1 ? 'dia' : 'dias'} atrás.`;
 }
 
-// ─── Sleep Need & Next Day Forecast ────────────────────────────────────────
+// ─── Sleep Need & Forecast ────────────────────────────────────────────────
 
 export function calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins) {
   let base = 7.5;
@@ -257,14 +373,12 @@ export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
   return `Amanhã vai depender bastante da qualidade do sono desta noite. Meta prática: ${sleepNeedTonight}h.`;
 }
 
+// ─── AI helpers ────────────────────────────────────────────────────────────
+
 export async function generateTrainingReasonAI(checkin, scores, recentCheckins, acwr) {
   const { base44 } = await import('@/api/base44Client');
 
-  const hrvValues = (recentCheckins || [])
-    .slice(0, 7)
-    .map((c) => c.hrv)
-    .filter(Boolean);
-
+  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => c.hrv).filter(Boolean);
   const hrvAvg =
     hrvValues.length > 0
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
@@ -288,7 +402,7 @@ Dados do dia:
 - ACWR: ${acwr != null ? acwr.toFixed(2) : '—'}
 - Dívida de sono (7 dias): ${sleepDebt.toFixed(1)}h
 - Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
-- Dor muscular: ${checkin.muscle_soreness ?? '—'}/5
+- Dor muscular: ${resolveCheckinField(checkin, 'muscle_soreness') ?? '—'}/5
 
 Exemplos de tom:
 - "Seu sono está limitando sua margem, então moderado é a melhor dose hoje."
@@ -338,8 +452,8 @@ Dados:
 - HRV delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : 'sem dados'}
 - ACWR: ${acwr != null ? acwr.toFixed(2) : 'sem dados'}
 - Dívida de sono (7 dias): ${sleepDebt.toFixed(1)}h
-- Dor muscular: ${checkin.muscle_soreness ?? checkin.muscle_soreness_level ?? '—'}/5
-- Stress: ${checkin.stress ?? checkin.stress_level ?? '—'}/5
+- Dor muscular: ${resolveCheckinField(checkin, 'muscle_soreness') ?? '—'}/5
+- Stress: ${resolveCheckinField(checkin, 'stress') ?? '—'}/5
 - Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
 - Último treino: ${lastSession ? `${lastSession.sport} (${lastSession.intensity}) em ${lastSession.date}` : 'sem dados'}
 
@@ -442,9 +556,9 @@ Dados do check-in de hoje:
 - Horas de sono: ${checkin.sleep_hours ?? '—'}h
 - Sono profundo: ${checkin.deep_sleep_pct ?? '—'}%${deepSleepLow >= 3 ? ' (3ª noite baixa seguida)' : ''}
 - Fadiga: ${checkin.fatigue ?? '—'}
-- Dor muscular: ${checkin.muscle_soreness ?? '—'}/5
-- Estresse: ${checkin.stress ?? '—'}/5
-- Energia: ${checkin.energy ?? '—'}/5
+- Dor muscular: ${resolveCheckinField(checkin, 'muscle_soreness') ?? '—'}/5
+- Estresse: ${resolveCheckinField(checkin, 'stress') ?? '—'}/5
+- Energia: ${resolveCheckinField(checkin, 'energy') ?? '—'}/5
 - Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
 - Strain acumulado hoje: ${checkin.daily_strain_accumulated ?? '—'}
 - Recovery score calculado: ${scores?.recovery_score ?? '—'}
@@ -456,48 +570,58 @@ Responda apenas com a projeção, sem título, sem bullet points.`;
   return typeof result === 'string' ? result.trim() : null;
 }
 
-// ─── Main Compute Function ─────────────────────────────────────────────────
+// ─── Main compute ──────────────────────────────────────────────────────────
 
 export function computeCheckinScores(checkin, recentCheckins, recentSessions) {
-  const recoveryScore = calculateRecoveryScore(checkin);
-  const zone = getZone(recoveryScore);
+  const canonicalCheckin = {
+    ...checkin,
+    energy: resolveCheckinField(checkin, 'energy'),
+    stress: resolveCheckinField(checkin, 'stress'),
+    muscle_soreness: resolveCheckinField(checkin, 'muscle_soreness'),
+    mood: resolveCheckinField(checkin, 'mood'),
+    resting_hr: resolveCheckinField(checkin, 'resting_hr'),
+    hydration: resolveCheckinField(checkin, 'hydration'),
+  };
 
-  const deltaPre = getDeltaPre(checkin.biocharge_morning, checkin.biocharge_pre_workout);
-  const deltaPost = getDeltaPost(checkin.biocharge_pre_workout, checkin.biocharge_post_workout);
+  const recoveryScore = calculateRecoveryScore(canonicalCheckin);
+  const sleepScore = calculateSleepScore(canonicalCheckin);
+  const fatigueScore = calculateFatigueScore(canonicalCheckin);
+  const stressScore = calculateStressScore(canonicalCheckin);
+  const readinessScore = calculateReadinessScore(canonicalCheckin);
 
-  const alert = getAlert(recoveryScore, deltaPre, checkin.fatigue || 0);
-  const recommendation = getRecommendation(zone, checkin.biocharge_pre_workout || 0);
+  const deltaPre = getDeltaPre(canonicalCheckin.biocharge_morning, canonicalCheckin.biocharge_pre_workout);
+  const deltaPost = getDeltaPost(canonicalCheckin.biocharge_pre_workout, canonicalCheckin.biocharge_post_workout);
+
+  const alert = getAlert(recoveryScore, deltaPre, canonicalCheckin.fatigue || 0);
+  const baseRecommendation = getRecommendation(getZone(recoveryScore), canonicalCheckin.biocharge_pre_workout || 0);
   const trainingLoad = getTrainingLoad(recoveryScore, deltaPost);
-  const sleepScore = calculateSleepScore(checkin);
-  const fatigueScore = calculateFatigueScore(checkin);
-  const stressScore = calculateStressScore(checkin);
-  const readinessScore = calculateReadinessScore(checkin);
 
-  const strainAccumulated = checkin.daily_strain_accumulated || 0;
+  const strainAccumulated = canonicalCheckin.daily_strain_accumulated ?? 0;
   const sleepNeedTonight = calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins);
   const nextDayForecast = calcNextDayForecast(recoveryScore, sleepNeedTonight);
-  const delayedFatigueAlert = calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions);
+  const delayedFatigueAlert = calcDelayedFatigueAlert(canonicalCheckin, recentCheckins, recentSessions);
 
-  return {
-    ...checkin,
+  const normalized = normalizeDailySignals({
+    ...canonicalCheckin,
     recovery_score: recoveryScore,
     sleep_quality: sleepScore,
     fatigue_score: fatigueScore,
     stress_score: stressScore,
     readiness_score: readinessScore,
-    zone,
     delta_pre: deltaPre,
     delta_post: deltaPost,
     alert,
-    recommendation,
-    training_load: trainingLoad,
-    sleep_need_tonight: checkin.sleep_need_tonight ?? sleepNeedTonight,
-    next_day_forecast: checkin.next_day_forecast ?? nextDayForecast,
-    delayed_fatigue_alert: checkin.delayed_fatigue_alert ?? delayedFatigueAlert,
-  };
+    recommendation: canonicalCheckin.recommendation || baseRecommendation,
+    training_load: canonicalCheckin.training_load || trainingLoad,
+    sleep_need_tonight: canonicalCheckin.sleep_need_tonight ?? sleepNeedTonight,
+    next_day_forecast: canonicalCheckin.next_day_forecast ?? nextDayForecast,
+    delayed_fatigue_alert: canonicalCheckin.delayed_fatigue_alert ?? delayedFatigueAlert,
+  });
+
+  return normalized;
 }
 
-// ─── Smart Insights Engine ─────────────────────────────────────────────────
+// ─── Smart insights ────────────────────────────────────────────────────────
 
 export function getSmartMessage(checkin, recentCheckins) {
   const messages = [];
@@ -551,7 +675,7 @@ export function getSmartMessage(checkin, recentCheckins) {
   return messages.slice(0, 3);
 }
 
-// ─── Streak & Gamification ─────────────────────────────────────────────────
+// ─── Streak & gamification ─────────────────────────────────────────────────
 
 export function calculateStreak(checkins) {
   if (!checkins || checkins.length === 0) return 0;
