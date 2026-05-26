@@ -1,225 +1,328 @@
 /**
  * Training Impact Engine
- * Calculates strain scores, body states, remaining capacity and recovery demand
- * All heavy AI calls go through InvokeLLM
+ * Deterministic engine for:
+ * - strain score
+ * - body state
+ * - remaining capacity
+ * - recovery demand
+ * - sleep need
+ * - post-workout impact message
+ * - next-day forecast
+ *
+ * Objetivo:
+ * reduzir dependência de IA em decisões operacionais e manter coerência.
  */
-import { base44 } from '@/api/base44Client';
 
-// Visual intensity factors mapped to FC zones (WHOOP methodology)
-const INTENSITY_FACTORS_VISUAL = {
-  very_light: 0.50,
-  light:      0.63,
-  moderate:   0.74,
-  hard:       0.86,
-  very_hard:  0.93,
-};
-
-// Sport cardiovascular demand factors (WHOOP scale 0-21)
-const SPORT_FACTORS = {
-  'Corrida':    1.00,
-  'Caminhada':  0.40,
-  'Musculação': 0.70,
-  'CrossFit':   1.05,
-  'Ciclismo':   0.90,
-  'Natação':    0.95,
-  'Yoga':       0.50,
-  'Jiu-jitsu':  0.85,
-  'Futsal':     0.88,
-  'Futebol':    0.85,
-  'Padel':      0.82,
-  'HIIT':       1.05,
-  'Outro':      0.80,
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// Config
+// ─────────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_MAX_HR = 185;
 
+const INTENSITY_FACTORS_VISUAL = {
+  very_light: 0.50,
+  light: 0.63,
+  moderate: 0.74,
+  hard: 0.86,
+  very_hard: 0.93,
+};
+
+const SPORT_FACTORS = {
+  Corrida: 1.0,
+  Caminhada: 0.42,
+  Musculação: 0.72,
+  CrossFit: 1.03,
+  Ciclismo: 0.9,
+  Natação: 0.95,
+  Yoga: 0.45,
+  'Jiu-jitsu': 0.88,
+  Futsal: 0.9,
+  Futebol: 0.88,
+  Padel: 0.8,
+  HIIT: 1.05,
+  Outro: 0.8,
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function clamp(value, min, max) {
+  const n = Number(value);
+  if (!isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+function round1(value) {
+  return Math.round(Number(value) * 10) / 10;
+}
+
+function safeNumber(v, fallback = 0) {
+  const n = Number(v);
+  return isFinite(n) ? n : fallback;
+}
+
+function resolveSportFactor(sport) {
+  const normalized = String(sport || '').toLowerCase().trim();
+
+  const match = Object.keys(SPORT_FACTORS).find((key) => {
+    const k = key.toLowerCase();
+    return normalized === k || normalized.includes(k);
+  });
+
+  return SPORT_FACTORS[match || 'Outro'];
+}
+
+function strainTo100(strain) {
+  return Math.round((clamp(strain || 0, 0, 21) / 21) * 100);
+}
+
+function getBodyStateDescription(state) {
+  const map = {
+    Recovered: 'Boa margem fisiológica disponível.',
+    Activated: 'O corpo respondeu bem à carga do dia.',
+    Balanced: 'Seu sistema está em zona relativamente estável.',
+    Loaded: 'A carga do dia já está começando a pesar.',
+    Sympathetic_Load: 'O sistema parece mais ativado do que o ideal.',
+    Fatigued: 'Há sinais claros de fadiga acumulada.',
+    Overreached: 'A margem fisiológica ficou muito comprometida.',
+  };
+
+  return map[state] || 'Estado fisiológico não definido.';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Strain score
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
- * Calculate strain score on 0-21 scale (WHOOP methodology)
+ * Calculate strain score on a 0–21 scale.
+ * Mais estável que a versão antiga:
+ * - usa FC média / FC máx pessoal como principal
+ * - FC máxima observada só ajusta levemente
+ * - mistura com duração + RPE
  */
 export function calculateStrainScore(session, maxHr) {
-  const fcMedia = session.heart_rate_avg ? Number(session.heart_rate_avg) : 0;
-  const fcMaxima = session.heart_rate_max ? Number(session.heart_rate_max) : 0;
-  const personalMaxHr = maxHr || DEFAULT_MAX_HR;
-  const duration = session.duration_minutes || 30;
-  const effort = session.perceived_effort || 6;
+  const personalMaxHr = safeNumber(maxHr, DEFAULT_MAX_HR);
+  const duration = clamp(safeNumber(session?.duration_minutes, 30), 5, 300);
+  const effort = clamp(safeNumber(session?.perceived_effort, 6), 1, 10);
 
-  // Determine intensity_final
-  let intensidadeFinal;
-  if (fcMedia > 0 && fcMaxima > 0) {
-    intensidadeFinal = fcMedia / fcMaxima;
-  } else if (fcMedia > 0) {
-    intensidadeFinal = fcMedia / personalMaxHr;
+  const hrAvg = safeNumber(session?.heart_rate_avg, 0);
+  const hrMaxObserved = safeNumber(session?.heart_rate_max, 0);
+  const sportFactor = resolveSportFactor(session?.sport);
+
+  let intensityBase;
+
+  if (hrAvg > 0) {
+    const avgHrFactor = clamp(hrAvg / personalMaxHr, 0.4, 1.0);
+
+    if (hrMaxObserved > 0) {
+      const peakFactor = clamp(hrMaxObserved / personalMaxHr, 0.5, 1.0);
+      intensityBase = avgHrFactor * 0.8 + peakFactor * 0.2;
+    } else {
+      intensityBase = avgHrFactor;
+    }
   } else {
-    intensidadeFinal = INTENSITY_FACTORS_VISUAL[session.intensity] || 0.75;
+    intensityBase = INTENSITY_FACTORS_VISUAL[session?.intensity] || 0.74;
   }
 
-  const sportKey = Object.keys(SPORT_FACTORS).find(k =>
-    session.sport?.toLowerCase() === k.toLowerCase() ||
-    session.sport?.toLowerCase().includes(k.toLowerCase())
-  );
-  const sportFactor = sportKey ? SPORT_FACTORS[sportKey] : SPORT_FACTORS['Outro'];
+  // Duração cresce, mas com retorno decrescente
+  const durationFactor = Math.pow(duration / 45, 0.85);
 
-  const raw = intensidadeFinal * (duration / 60) * sportFactor * 21;
-  return Math.min(21, Math.round(raw * 10) / 10);
+  // Esforço percebido como ajuste fino
+  const effortFactor = 0.82 + effort / 22; // ~0.86 até ~1.27
+
+  const raw = intensityBase * durationFactor * sportFactor * effortFactor * 13.5;
+  return round1(clamp(raw, 0, 21));
 }
 
-/**
- * Determine body state from morning recovery and accumulated strain
- */
-// Convert 0-21 strain to 0-100 scale for body state comparisons
-function strainTo100(strain) {
-  return Math.round((strain / 21) * 100);
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Body state
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function calculateBodyState(morningRecovery, accumulatedStrain) {
-  const strain100 = strainTo100(accumulatedStrain || 0);
-  const net = morningRecovery - strain100;
+  const recovery = clamp(safeNumber(morningRecovery, 0), 0, 100);
+  const strain = clamp(safeNumber(accumulatedStrain, 0), 0, 21);
+  const strain100 = strainTo100(strain);
 
-  if (!accumulatedStrain) {
-    if (morningRecovery >= 80) return 'Recovered';
-    if (morningRecovery >= 65) return 'Balanced';
-    if (morningRecovery >= 50) return 'Loaded';
+  if (strain <= 0) {
+    if (recovery >= 80) return 'Recovered';
+    if (recovery >= 65) return 'Balanced';
+    if (recovery >= 50) return 'Loaded';
     return 'Fatigued';
   }
 
-  if (net >= 40) return 'Activated';
-  if (net >= 20) return 'Balanced';
-  if (net >= 0) return 'Loaded';
-  if (net >= -20) return 'Sympathetic_Load';
-  if (net >= -40) return 'Fatigued';
+  const margin = recovery - strain100;
+
+  if (recovery >= 75 && strain <= 8 && margin >= 30) return 'Activated';
+  if (margin >= 15) return 'Balanced';
+  if (margin >= 0) return 'Loaded';
+  if (margin >= -15) return 'Sympathetic_Load';
+  if (margin >= -35) return 'Fatigued';
   return 'Overreached';
 }
 
-/**
- * Determine remaining capacity
- * Uses ratio of strain used vs recovery score
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Remaining capacity
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function calculateRemainingCapacity(morningRecovery, accumulatedStrain) {
-  if (!morningRecovery || morningRecovery <= 0) return 'Minimal';
+  const recovery = clamp(safeNumber(morningRecovery, 0), 1, 100);
   const strain100 = strainTo100(accumulatedStrain || 0);
-  const capacidadeUsada = (strain100 / morningRecovery) * 100;
-  if (capacidadeUsada < 30) return 'High';
-  if (capacidadeUsada < 60) return 'Moderate';
-  if (capacidadeUsada < 85) return 'Low';
+
+  const usedPct = (strain100 / recovery) * 100;
+
+  if (usedPct < 30) return 'High';
+  if (usedPct < 60) return 'Moderate';
+  if (usedPct < 85) return 'Low';
   return 'Minimal';
 }
 
-/**
- * Calculate recovery demand for tonight (strain on 0-21 scale)
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Recovery demand
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function calculateRecoveryDemand(accumulatedStrain, morningRecovery) {
   const strain100 = strainTo100(accumulatedStrain || 0);
-  const fatigueBonus = morningRecovery < 60 ? (60 - morningRecovery) * 0.3 : 0;
-  return Math.min(100, Math.round(strain100 + fatigueBonus));
+  const recovery = clamp(safeNumber(morningRecovery, 0), 0, 100);
+
+  let demand = strain100;
+
+  if (recovery < 60) demand += (60 - recovery) * 0.35;
+  if (recovery < 45) demand += 6;
+
+  return Math.min(100, Math.round(demand));
 }
 
-/**
- * Calculate recommended sleep hours (strain on 0-21 scale)
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Sleep need
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function calculateSleepNeed(accumulatedStrain, morningRecovery) {
+  const strain = clamp(safeNumber(accumulatedStrain, 0), 0, 21);
+  const recovery = clamp(safeNumber(morningRecovery, 0), 0, 100);
+
   let base = 7.5;
-  if (morningRecovery < 60) base += 1.0;
-  if ((accumulatedStrain || 0) > 12) base += 0.5;
+
+  if (recovery < 60) base += 1.0;
+  if (recovery < 50) base += 0.5;
+
+  if (strain > 12) base += 0.5;
+  if (strain > 16) base += 0.5;
+
   return Math.min(10, Math.round(base * 2) / 2);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Post-workout impact message
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
- * Generate AI impact message after a training session
+ * Mensagem curta e determinística.
+ * Não depende de IA.
+ * Deve ser estável, rápida e coerente.
  */
-export async function generateTrainingImpactMessage(session, checkin, allSessionsToday) {
-  const strainScore = session.strain_score || calculateStrainScore(session);
+export async function generateTrainingImpactMessage(session, checkin, allSessionsToday = []) {
+  const recovery = checkin?.morning_recovery_score || checkin?.recovery_score || 70;
+  const strainScore = session?.strain_score || calculateStrainScore(session);
   const totalStrain = allSessionsToday.reduce((s, t) => s + (t.strain_score || 0), 0);
-  const bodyState = calculateBodyState(checkin.morning_recovery_score || checkin.recovery_score, totalStrain);
-  const capacity = calculateRemainingCapacity(checkin.morning_recovery_score || checkin.recovery_score, totalStrain);
 
-  const intensityLabels = {
-    very_light: 'muito leve', light: 'leve', moderate: 'moderada',
-    hard: 'intensa', very_hard: 'muito intensa'
-  };
+  const bodyState = calculateBodyState(recovery, totalStrain);
+  const capacity = calculateRemainingCapacity(recovery, totalStrain);
 
-  const prompt = `Você é um fisiologista esportivo analisando o impacto de um treino.
+  const stateDesc = getBodyStateDescription(bodyState);
 
-Usuário completou: ${session.sport} por ${session.duration_minutes} minutos com intensidade ${intensityLabels[session.intensity] || session.intensity}.
-Strain deste treino: ${strainScore} pontos.
-Strain acumulado no dia: ${totalStrain} pontos.
-Recovery matinal: ${checkin.morning_recovery_score || checkin.recovery_score}/100.
-Estado corporal atual: ${bodyState}.
-Capacidade restante: ${capacity}.
+  let practical;
+  if (bodyState === 'Overreached' || bodyState === 'Fatigued') {
+    practical = 'Agora o melhor retorno vem de hidratação, comida e sono, não de mais carga.';
+  } else if (bodyState === 'Sympathetic_Load' || capacity === 'Low' || capacity === 'Minimal') {
+    practical = 'O treino já contou. O restante do dia deve focar em recuperar bem.';
+  } else if (capacity === 'High' || capacity === 'Moderate') {
+    practical = 'Seu dia ainda está relativamente controlado, mas dormir bem hoje continua sendo decisivo.';
+  } else {
+    practical = 'Feche o dia com recuperação adequada para consolidar o benefício do treino.';
+  }
 
-Gere uma mensagem de impacto CURTA (2-3 frases) em português, direta ao ponto, focando em:
-1. O que este treino gerou fisiologicamente
-2. Estado atual do corpo
-3. Uma recomendação prática para as próximas horas
-
-Seja direto e informativo, sem ser alarmista. Use linguagem acessível mas precisa.`;
-
-  const result = await base44.integrations.Core.InvokeLLM({ prompt });
-  return result;
+  return `Este treino adicionou ${strainScore} de strain e levou seu total do dia para ${round1(totalStrain)}. Seu corpo agora está em estado ${bodyState}. ${stateDesc} ${practical}`;
 }
 
-/**
- * Analyze delayed fatigue patterns from history
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Delayed fatigue pattern helper
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function analyzeDelayedFatigue(checkins, sessions, todayCheckin) {
   if (!checkins || checkins.length < 7) return null;
 
-  // Find patterns: intense sessions followed by low recovery next day
-  const patterns = [];
-  const sortedCheckins = [...checkins].sort((a, b) =>
-    new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00')
+  const sortedCheckins = [...checkins].sort(
+    (a, b) => new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00')
   );
+
+  const patterns = [];
 
   for (let i = 0; i < sortedCheckins.length - 1; i++) {
     const nextDay = sortedCheckins[i];
     const prevDay = sortedCheckins[i + 1];
-    if (!nextDay.date || !prevDay.date) continue;
+    if (!nextDay?.date || !prevDay?.date) continue;
 
-    const prevSessions = sessions.filter(s => s.date === prevDay.date && (s.intensity === 'hard' || s.intensity === 'very_hard'));
-    if (prevSessions.length > 0 && nextDay.recovery_score < 65) {
+    const prevSessions = (sessions || []).filter(
+      (s) =>
+        s.date === prevDay.date &&
+        (s.intensity === 'hard' || s.intensity === 'very_hard')
+    );
+
+    if (prevSessions.length > 0 && (nextDay.recovery_score || 0) < 65) {
       patterns.push({
         sport: prevSessions[0].sport,
-        timeOfDay: prevSessions[0].time_of_day,
-        recoveryDrop: prevDay.recovery_score - nextDay.recovery_score
+        recoveryDrop: (prevDay.recovery_score || 0) - (nextDay.recovery_score || 0),
       });
     }
   }
 
   if (patterns.length < 2) return null;
 
-  // Find most frequent pattern
   const sportCounts = {};
-  patterns.forEach(p => {
+  patterns.forEach((p) => {
     sportCounts[p.sport] = (sportCounts[p.sport] || 0) + 1;
   });
-  const topSport = Object.entries(sportCounts).sort((a, b) => b[1] - a[1])[0];
 
+  const topSport = Object.entries(sportCounts).sort((a, b) => b[1] - a[1])[0];
   if (!topSport || topSport[1] < 2) return null;
 
+  const matching = patterns.filter((p) => p.sport === topSport[0]);
   const avgDrop = Math.round(
-    patterns.filter(p => p.sport === topSport[0]).reduce((s, p) => s + p.recoveryDrop, 0) /
-    patterns.filter(p => p.sport === topSport[0]).length
+    matching.reduce((s, p) => s + p.recoveryDrop, 0) / matching.length
   );
 
-  return `Padrão detectado: ${topSport[0]} tende a reduzir seu recovery em ~${avgDrop} pontos no dia seguinte. Monitore a recuperação após sessões intensas.`;
+  if (avgDrop < 5) return null;
+
+  return `Padrão detectado: sessões intensas de ${topSport[0]} costumam derrubar sua recuperação em cerca de ${avgDrop} pontos no dia seguinte.`;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Next-day forecast
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
- * Generate next-day forecast
+ * Projeção determinística e cautelosa.
+ * Tendência, não garantia.
  */
-export async function generateNextDayForecast(checkin, sessions) {
+export async function generateNextDayForecast(checkin, sessions = []) {
+  const recovery = checkin?.morning_recovery_score || checkin?.recovery_score || 70;
   const totalStrain = sessions.reduce((s, t) => s + (t.strain_score || 0), 0);
-  const bodyState = calculateBodyState(checkin.morning_recovery_score || checkin.recovery_score, totalStrain);
+  const bodyState = calculateBodyState(recovery, totalStrain);
+  const sleepNeed = calculateSleepNeed(totalStrain, recovery);
 
-  const prompt = `Fisiologista esportivo gerando previsão para amanhã.
+  if (bodyState === 'Overreached' || totalStrain >= 16) {
+    return `Se você não recuperar bem hoje à noite, a tendência para amanhã é de prontidão baixa. Mire em cerca de ${sleepNeed}h de sono.`;
+  }
 
-Recovery matinal de hoje: ${checkin.morning_recovery_score || checkin.recovery_score}/100
-Strain acumulado hoje: ${totalStrain}
-Estado corporal ao fim do dia: ${bodyState}
-Horas de sono recomendadas: ${calculateSleepNeed(totalStrain, checkin.morning_recovery_score || checkin.recovery_score)}h
-HRV: ${checkin.hrv || 'não informado'}
-Fadiga: ${checkin.fatigue || 'não informada'}
+  if (bodyState === 'Fatigued' || bodyState === 'Sympathetic_Load' || totalStrain >= 12) {
+    return `Amanhã tende a depender bastante de como você fechar hoje. Com cerca de ${sleepNeed}h de sono, há chance de manter ou recuperar parte da prontidão.`;
+  }
 
-Gere uma previsão CURTA (1-2 frases) para amanhã: qual o estado esperado de recovery, se deve treinar e com qual intensidade.`;
+  if (bodyState === 'Balanced' || bodyState === 'Activated') {
+    return `Se você dormir bem hoje, a tendência para amanhã é de manter uma recuperação funcional. Meta prática: ${sleepNeed}h.`;
+  }
 
-  return await base44.integrations.Core.InvokeLLM({ prompt });
+  return `A tendência para amanhã depende principalmente do seu sono desta noite. Tente chegar perto de ${sleepNeed}h.`;
 }
