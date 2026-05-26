@@ -304,42 +304,71 @@ ${JSON.stringify(summary, null, 2)}`,
   },
 });
 
-  // Post-workout save mutation
-  const savePostMutation = useMutation({
-    mutationFn: async (data) => {
-const existing = todayRecord;
-if (!existing?.id) {
-  throw new Error('Check-in da manhã não encontrado. Faça o check-in da manhã primeiro.');
-}
-const mergedNotes = data.notes
-  ? (existing.notes ? existing.notes + '\n\n[PÓS-TREINO] ' + data.notes : '[PÓS-TREINO] ' + data.notes)
-  : existing.notes || '';
-      // Compute delta_post
-      const deltaPost = (data.biocharge_post_workout > 0 && existing.biocharge_morning)
+const savePostMutation = useMutation({
+  mutationFn: async (data) => {
+    const existing = todayRecord;
+
+    if (!existing?.id) {
+      throw new Error('Check-in da manhã não encontrado. Faça o check-in da manhã primeiro.');
+    }
+
+    const mergedNotes = data.notes
+      ? existing.notes
+        ? existing.notes + '\n\n[PÓS-TREINO] ' + data.notes
+        : '[PÓS-TREINO] ' + data.notes
+      : existing.notes || '';
+
+    const deltaPost =
+      data.biocharge_post_workout > 0 && existing.biocharge_morning
         ? data.biocharge_post_workout - existing.biocharge_morning
         : existing.delta_post ?? null;
 
-      const payload = {
-        ...existing,
-        biocharge_post_workout: data.biocharge_post_workout > 0 ? data.biocharge_post_workout : existing.biocharge_post_workout,
-        rpe: data.rpe > 0 ? data.rpe : existing.rpe,
-        energy: data.energy > 0 ? data.energy : existing.energy,
-        muscle_soreness: data.muscle_soreness > 0 ? data.muscle_soreness : existing.muscle_soreness,
-        delta_post: deltaPost,
-        notes: mergedNotes,
-      };
+    const payload = {
+      ...existing,
+      biocharge_post_workout:
+        data.biocharge_post_workout > 0
+          ? data.biocharge_post_workout
+          : existing.biocharge_post_workout,
+      rpe: data.rpe > 0 ? data.rpe : existing.rpe,
+      energy: data.energy > 0 ? data.energy : existing.energy,
+      muscle_soreness:
+        data.muscle_soreness > 0
+          ? data.muscle_soreness
+          : existing.muscle_soreness,
+      delta_post: deltaPost,
+      notes: mergedNotes,
+    };
 
-      const scores = computeCheckinScores(payload);
-      return base44.entities.DailyCheckin.update(existing.id, scores);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-      if (navigator.vibrate) navigator.vibrate(40);
-      toast.success('✅ Pós-treino salvo!');
-      navigate('/today');
-    },
-  });
+    const recentCheckins = [...checkins]
+      .filter((c) => c.id !== existing.id)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 14);
+
+    const sortedSessions = [...allSessions].sort((a, b) =>
+      String(b.date).localeCompare(String(a.date))
+    );
+
+    const scores = computeCheckinScores(payload, recentCheckins, sortedSessions);
+
+    // ✅ preservar a âncora da manhã
+    scores.morning_recovery_score =
+      existing.morning_recovery_score ??
+      existing.recovery_score ??
+      scores.recovery_score;
+
+    return base44.entities.DailyCheckin.update(existing.id, scores);
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+
+    if (navigator.vibrate) navigator.vibrate(40);
+
+    toast.success('✅ Pós-treino salvo!');
+    navigate('/today');
+  },
+});
+``
 
   // Post mode: no morning checkin guard
   if (isPostMode && !loadingCheckins && !todayRecord) {
