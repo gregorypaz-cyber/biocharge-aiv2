@@ -174,82 +174,100 @@ export default function DailyCheckin() {
   const isRestDay = form.rest_day;
   const preview = computeCheckinScores(form);
 
-  // Morning save mutation
-  const saveMorningMutation = useMutation({
-    mutationFn: async (data) => {
-      const payload = data.rest_day
-        ? { ...data, rpe: 0, fatigue: 0, biocharge_pre_workout: null, biocharge_post_workout: null }
-        : data;
-      const recentCheckins = checkins.filter(c => c.date !== data.date).slice(0, 14);
-      const scores = computeCheckinScores(payload, recentCheckins, allSessions);
-      if (!editData?.id) {
-        scores.morning_recovery_score = scores.recovery_score;
+const saveMorningMutation = useMutation({
+  mutationFn: async (data) => {
+    const payload = data.rest_day
+      ? {
+          ...data,
+          rpe: 0,
+          fatigue: 0,
+          biocharge_pre_workout: null,
+          biocharge_post_workout: null,
+        }
+      : data;
+
+    const recentCheckins = [...checkins]
+      .filter((c) => c.date !== payload.date)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 14);
+
+    const sortedSessions = [...allSessions].sort((a, b) =>
+      String(b.date).localeCompare(String(a.date))
+    );
+
+    const scores = computeCheckinScores(payload, recentCheckins, sortedSessions);
+
+    // Morning score vira âncora do dia quando é novo registro
+    if (!editData?.id && !todayRecord?.id) {
+      scores.morning_recovery_score = scores.recovery_score;
+    } else {
+      scores.morning_recovery_score =
+        editData?.morning_recovery_score ??
+        todayRecord?.morning_recovery_score ??
+        scores.recovery_score;
+    }
+
+    // ✅ IA só entra como suporte secundário, não como voz principal do dia
+    try {
+      const acwr = payload.acwr ?? null;
+      const aiBullets =
+        !payload.rest_day
+          ? await generateContextualBulletsAI(payload, scores, recentCheckins, sortedSessions, acwr)
+          : null;
+
+      if (aiBullets?.length) {
+        scores.contextual_bullets = JSON.stringify(aiBullets);
       }
-      // Compute and save the three new fields
-      const strainAccumulated = payload.daily_strain_accumulated || 0;
-      const sleepNeed = calcSleepNeedTonight(scores.recovery_score, strainAccumulated, recentCheckins);
-      scores.sleep_need_tonight = sleepNeed;
-      // Fallback síncrono imediato; tenta IA e sobrescreve se bem-sucedido
-      scores.next_day_forecast = calcNextDayForecast(scores.recovery_score, sleepNeed);
-      scores.delayed_fatigue_alert = calcDelayedFatigueAlert(payload, recentCheckins, allSessions);
-      try {
-        // ACWR requer acesso ao analysis; usamos ratio salvo se disponível, senão null
-        const acwr = payload.acwr ?? null;
-        const [aiForecast, aiHeadline, aiTrainingReason, aiBullets] = await Promise.all([
-          generateNextDayForecastAI(payload, scores, recentCheckins),
-          generateHeadlineTodayAI(payload, scores, recentCheckins),
-          generateTrainingReasonAI(payload, scores, recentCheckins, acwr),
-          !payload.rest_day ? generateContextualBulletsAI(payload, scores, recentCheckins, allSessions, acwr) : Promise.resolve(null),
-        ]);
-        if (aiForecast) scores.next_day_forecast = aiForecast;
-        if (aiHeadline) scores.headline_today = aiHeadline;
-        if (aiTrainingReason) scores.recommendation = aiTrainingReason;
-        if (aiBullets?.length) scores.contextual_bullets = JSON.stringify(aiBullets);
-      } catch (e) {
-        console.warn('AI generation failed, using fallback', e);
-      }
+    } catch (e) {
+      console.warn('AI support bullets failed, keeping deterministic signals', e);
+    }
 
-      let savedRecord;
-if (editData?.id) {
-  savedRecord = await base44.entities.DailyCheckin.update(editData.id, scores);
-} else if (todayRecord?.id) {
-  // Já existe um check-in hoje — atualiza em vez de criar duplicado
-  savedRecord = await base44.entities.DailyCheckin.update(todayRecord.id, scores);
-} else {
-  savedRecord = await base44.entities.DailyCheckin.create(scores);
-}
+    let savedRecord;
+    if (editData?.id) {
+      savedRecord = await base44.entities.DailyCheckin.update(editData.id, scores);
+    } else if (todayRecord?.id) {
+      savedRecord = await base44.entities.DailyCheckin.update(todayRecord.id, scores);
+    } else {
+      savedRecord = await base44.entities.DailyCheckin.create(scores);
+    }
 
-      // Generate deep analysis in background (non-blocking)
-      if (!editData?.id) {
-        const summary = [payload, ...recentCheckins.slice(0, 13)].map(c => ({
-          date: c.date,
-          recovery: c.recovery_score,
-          readiness: c.readiness_score,
-          sleep: c.sleep_quality ?? c.sleep_score,
-          fatigue: c.fatigue_score ?? c.fatigue,
-          stress: c.stress_score ?? c.stress,
-          hrv: c.hrv,
-          rpe: c.rpe,
-          zone: c.zone,
-          deep_sleep: c.deep_sleep_pct,
-          mood: c.mood,
-          energy: c.energy,
-          sleep_hours: c.sleep_hours,
-        }));
-        base44.integrations.Core.InvokeLLM({
-          prompt: `INSTRUÇÃO: Você é um especialista em fisiologia do exercício e ciência do esporte. Gere uma análise técnica, estruturada e profissional em português brasileiro.
-PROIBIDO: linguagem conversacional, saudações, "Claro!", "Vamos", "Com prazer", referências a datas específicas isoladas, frases incompletas. O texto deve terminar obrigatoriamente com uma frase completa. Se o conteúdo ultrapassar o limite, encurte — nunca corte no meio.
+    // ✅ Deep analysis fica só para Insights / aprofundamento
+    if (!editData?.id) {
+      const summary = [scores, ...recentCheckins.slice(0, 13)].map((c) => ({
+        date: c.date,
+        recovery: c.recovery_score,
+        readiness: c.readiness_score,
+        sleep: c.sleep_quality ?? c.sleep_score,
+        fatigue: c.fatigue_score ?? c.fatigue,
+        stress: c.stress_score ?? c.stress,
+        hrv: c.hrv,
+        rpe: c.rpe,
+        zone: c.zone,
+        deep_sleep: c.deep_sleep_pct,
+        mood: c.mood,
+        energy: c.energy,
+        sleep_hours: c.sleep_hours,
+      }));
 
-FORMATO (respeitar exatamente esta estrutura, sem adicionar seções extras):
+      base44.integrations.Core.InvokeLLM({
+        prompt: `INSTRUÇÃO: Você é um analista de performance e recuperação. Gere uma análise profunda, útil e estruturada em português brasileiro.
 
+IMPORTANTE:
+- não repita a recomendação operacional do dia
+- não diga "treine moderado" ou "descanse" como decisão principal
+- foque em padrões, tendências e ajustes de comportamento
+- o texto deve terminar com frase completa
+- não use tom de conversa nem saudações
+
+FORMATO:
 Análise de tendência
-[2–3 frases sobre os padrões dos últimos ${summary.length} dias. Foco em correlações, não em eventos isolados.]
+[2–3 frases]
 
 Sono
-[1–2 frases sobre o padrão de sono e impacto no recovery. Use médias e tendências, não datas.]
+[1–2 frases]
 
 Fadiga e carga
-[1–2 frases sobre a relação entre strain e recovery observada no período.]
+[1–2 frases]
 
 Recomendações para os próximos 7 dias
 • [ação concreta 1]
@@ -258,27 +276,33 @@ Recomendações para os próximos 7 dias
 
 DADOS (${summary.length} dias, mais recente primeiro):
 ${JSON.stringify(summary, null, 2)}`,
-        }).then(deepAnalysis => {
+      })
+        .then((deepAnalysis) => {
           if (deepAnalysis && savedRecord?.id) {
-            base44.entities.DailyCheckin.update(savedRecord.id, { deep_analysis_text: deepAnalysis });
+            base44.entities.DailyCheckin.update(savedRecord.id, {
+              deep_analysis_text: deepAnalysis,
+            });
           }
-        }).catch(e => console.warn('Deep analysis generation failed', e));
-      }
+        })
+        .catch((e) => console.warn('Deep analysis generation failed', e));
+    }
 
-      return savedRecord;
-    },
-    onSuccess: async (result) => {
-      await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-      await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-      if (navigator.vibrate) navigator.vibrate(40);
-      if (editData?.id) {
-        toast.success('✅ Check-in atualizado!');
-        navigate('/history');
-      } else {
-        setSavedCheckin(result);
-      }
-    },
-  });
+    return savedRecord;
+  },
+  onSuccess: async (result) => {
+    await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+    await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+
+    if (navigator.vibrate) navigator.vibrate(40);
+
+    if (editData?.id) {
+      toast.success('✅ Check-in atualizado!');
+      navigate('/history');
+    } else {
+      setSavedCheckin(result);
+    }
+  },
+});
 
   // Post-workout save mutation
   const savePostMutation = useMutation({
