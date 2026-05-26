@@ -1,10 +1,26 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useUserCheckins } from '@/hooks/useUserData';
-import { motion } from 'framer-motion';
-import { Brain, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Loader2, Send, Trophy, Zap } from 'lucide-react';
-import { computeCheckinScores, calculateStreak, getBadges, getPerformanceLevel } from '@/lib/biocharge-utils';
-import { runPhysiologicalAnalysisAsync,calculateSleepConsistency } from '@/lib/physiological-engine';
+import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Brain,
+  Sparkles,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Loader2,
+  Send,
+  ChevronDown,
+  BarChart3,
+  Activity,
+  Moon,
+  Clock3,
+} from 'lucide-react';
+import { computeCheckinScores } from '@/lib/biocharge-utils';
+import {
+  runPhysiologicalAnalysisAsync,
+  calculateSleepConsistency,
+} from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
@@ -13,22 +29,38 @@ import { cn } from '@/lib/utils';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
-import DiscoveriesCard from '@/components/intelligence/DiscoveriesCard';
-import { useUserTrainingSessions } from '@/hooks/useUserData';
-import BaselineInsightsRow from '@/components/intelligence/BaselineInsightsRow';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 import AnalysisBody from '@/components/intelligence/AnalysisBody';
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Helpers */
+/* ────────────────────────────────────────────────────────────────────────── */
+
+function avg(arr) {
+  const valid = arr.filter((v) => v != null && !isNaN(v));
+  return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
+}
 
 function pearsonR(arrA, arrB) {
   const n = Math.min(arrA.length, arrB.length);
   if (n < 7) return null;
-  const meanA = arrA.slice(0, n).reduce((a, b) => a + b, 0) / n;
-  const meanB = arrB.slice(0, n).reduce((a, b) => a + b, 0) / n;
-  let num = 0, dA = 0, dB = 0;
+
+  const meanA = avg(arrA.slice(0, n));
+  const meanB = avg(arrB.slice(0, n));
+  if (meanA == null || meanB == null) return null;
+
+  let num = 0;
+  let dA = 0;
+  let dB = 0;
+
   for (let i = 0; i < n; i++) {
-    const a = arrA[i] - meanA, b = arrB[i] - meanB;
-    num += a * b; dA += a * a; dB += b * b;
+    const a = arrA[i] - meanA;
+    const b = arrB[i] - meanB;
+    num += a * b;
+    dA += a * a;
+    dB += b * b;
   }
+
   if (dA === 0 || dB === 0) return null;
   return num / Math.sqrt(dA * dB);
 }
@@ -39,17 +71,153 @@ function getConfidence(n) {
   return 'Baixa';
 }
 
-function avg(arr) {
-  const valid = arr.filter(v => v != null && !isNaN(v));
-  return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
+function getConfidenceOrder(conf) {
+  if (conf === 'Alta') return 3;
+  if (conf === 'Média') return 2;
+  return 1;
 }
 
+function getTodayLocalString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-sm font-semibold">{title}</h2>
+      {subtitle ? (
+        <p className="text-xs text-muted-foreground leading-relaxed">{subtitle}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function InsightChip({ confidence }) {
+  const cls =
+    confidence === 'Alta'
+      ? 'bg-emerald-500/15 text-emerald-400'
+      : confidence === 'Média'
+      ? 'bg-yellow-500/15 text-yellow-400'
+      : 'bg-zinc-500/15 text-zinc-400';
+
+  return (
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cls}`}>
+      {confidence}
+    </span>
+  );
+}
+
+function DiscoveryCard({ item }) {
+  const negative = item.sentiment === 'negative';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        'rounded-2xl border p-4 space-y-2',
+        negative
+          ? 'border-red-500/20 bg-red-500/5'
+          : 'border-emerald-500/20 bg-emerald-500/5'
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span className="text-xl leading-none mt-0.5">{item.icon}</span>
+          <div>
+            <p className="text-sm font-semibold">{item.title}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+              {item.text}
+            </p>
+          </div>
+        </div>
+        <InsightChip confidence={item.confidence} />
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        Baseado em {item.days} {item.days === 1 ? 'registro' : 'registros'} úteis.
+      </p>
+    </motion.div>
+  );
+}
+
+function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
+  const cls =
+    tone === 'negative'
+      ? 'border-red-500/20 bg-red-500/5'
+      : tone === 'positive'
+      ? 'border-emerald-500/20 bg-emerald-500/5'
+      : 'border-border/40 bg-card';
+
+  const iconCls =
+    tone === 'negative'
+      ? 'text-red-400'
+      : tone === 'positive'
+      ? 'text-emerald-400'
+      : 'text-primary';
+
+  return (
+    <div className={`rounded-2xl border p-4 ${cls}`}>
+      <div className="flex items-start gap-3">
+        <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconCls}`} />
+        <div>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed mt-1">{text}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-secondary/30 transition-colors"
+      >
+        <div>
+          <p className="text-sm font-semibold">{title}</p>
+          {subtitle ? (
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          ) : null}
+        </div>
+
+        <ChevronDown
+          className={cn('w-4 h-4 text-muted-foreground transition-transform', open && 'rotate-180')}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 pt-1 space-y-4 border-t border-border/30">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Discoveries Engine — mais rígido e menos “falso insight” */
+/* ────────────────────────────────────────────────────────────────────────── */
+
 function calcDiscoveries(checkins, trainingSessions = []) {
-  if (checkins.length < 10) return [];
-  const sorted = [...checkins].sort((a, b) => a.date > b.date ? 1 : -1);
+  if (!checkins || checkins.length < 12) return [];
+
+  const sorted = [...checkins].sort((a, b) => (a.date > b.date ? 1 : -1));
   const discoveries = [];
 
-  // Helper: get paired arrays (lagged or same day), filtering null values
   function getPairs(getA, getB, lag = 0) {
     const pairs = [];
     for (let i = 0; i < sorted.length - lag; i++) {
@@ -62,235 +230,460 @@ function calcDiscoveries(checkins, trainingSessions = []) {
     return pairs;
   }
 
-  function tryAdd(pairs, threshold, buildDiscovery) {
-    if (pairs.length < 7) return;
-    const arrA = pairs.map(p => p[0]);
-    const arrB = pairs.map(p => p[1]);
+  function tryAdd(pairs, minPairs, threshold, buildDiscovery) {
+    if (pairs.length < minPairs) return;
+    const arrA = pairs.map((p) => p[0]);
+    const arrB = pairs.map((p) => p[1]);
     const r = pearsonR(arrA, arrB);
     if (r == null || Math.abs(r) < threshold) return;
+
     const n = pairs.length;
     const meanA = avg(arrA);
     const meanB = avg(arrB);
     if (meanA == null || meanB == null) return;
-    discoveries.push(buildDiscovery(r, n, meanA, meanB, arrA, arrB));
+
+    const discovery = buildDiscovery(r, n, meanA, meanB, arrA, arrB);
+    if (!discovery) return;
+
+    const confidence = getConfidence(n);
+    if (confidence === 'Baixa') return; // <- crítico: não mostrar descoberta fraca
+
+    discoveries.push({
+      ...discovery,
+      confidence,
+    });
   }
 
-  // A) sleep_hours[N] → hrv[N+1]
+  // A) Sono -> HRV do dia seguinte
   tryAdd(
-    getPairs(c => c.sleep_hours, c => c.hrv, 1), 0.4,
-    (r, n, mA, mB, arrA, arrB) => {
-      const highIdxs = arrA.reduce((acc, v, i) => { if (v > mA) acc.push(i); return acc; }, []);
-      const high = highIdxs.map(i => arrB[i]).filter(v => v != null);
-      const lowIdxs = arrA.reduce((acc, v, i) => { if (v <= mA) acc.push(i); return acc; }, []);
-      const low = lowIdxs.map(i => arrB[i]).filter(v => v != null);
-      const delta = Math.round(Math.abs((avg(high) || mB) - (avg(low) || mB)));
+    getPairs((c) => c.sleep_hours, (c) => c.hrv, 1),
+    8,
+    0.40,
+    (r, n, meanA, meanB, arrA, arrB) => {
+      const higherSleepIdx = arrA.map((v, i) => (v > meanA ? i : -1)).filter((i) => i !== -1);
+      const higherSleepHrv = higherSleepIdx.map((i) => arrB[i]).filter((v) => v != null);
+      const lowerSleepIdx = arrA.map((v, i) => (v <= meanA ? i : -1)).filter((i) => i !== -1);
+      const lowerSleepHrv = lowerSleepIdx.map((i) => arrB[i]).filter((v) => v != null);
+
+      const delta = Math.round(Math.abs((avg(higherSleepHrv) || meanB) - (avg(lowerSleepHrv) || meanB)));
+      if (delta < 3) return null;
+
       return {
-        icon: '🌙', title: 'Sono impacta seu HRV',
-        text: `Noites com mais sono estão associadas a HRV ${delta > 0 ? '+' : ''}${delta}ms maior no dia seguinte.`,
-        sentiment: r > 0 ? 'positive' : 'negative', confidence: getConfidence(n), days: n,
+        icon: '🌙',
+        title: 'Seu HRV responde ao sono',
+        text: `Quando você dorme mais do que sua média recente, seu HRV tende a acordar cerca de ${delta}ms melhor no dia seguinte.`,
+        sentiment: r > 0 ? 'positive' : 'negative',
+        days: n,
       };
     }
   );
 
-  // B) sleep_hours[N] → recovery_score[N+1]
+  // B) Sono -> Recovery do dia seguinte
   tryAdd(
-    getPairs(c => c.sleep_hours, c => c.recovery_score, 1), 0.4,
-    (r, n, mA, mB) => ({
-      icon: '💤', title: 'Sono e recuperação',
-      text: `Cada hora extra de sono tende a elevar seu score de recuperação no dia seguinte. Média de recuperação: ${Math.round(mB)}.`,
-      sentiment: r > 0 ? 'positive' : 'neutral', confidence: getConfidence(n), days: n,
+    getPairs((c) => c.sleep_hours, (c) => c.recovery_score, 1),
+    8,
+    0.40,
+    (r, n, meanA, meanB, arrA, arrB) => {
+      const higherSleepIdx = arrA.map((v, i) => (v > meanA ? i : -1)).filter((i) => i !== -1);
+      const higherSleepRecovery = higherSleepIdx.map((i) => arrB[i]).filter((v) => v != null);
+      const lowerSleepIdx = arrA.map((v, i) => (v <= meanA ? i : -1)).filter((i) => i !== -1);
+      const lowerSleepRecovery = lowerSleepIdx.map((i) => arrB[i]).filter((v) => v != null);
+
+      const delta = Math.round(Math.abs((avg(higherSleepRecovery) || meanB) - (avg(lowerSleepRecovery) || meanB)));
+      if (delta < 4) return null;
+
+      return {
+        icon: '💤',
+        title: 'Seu recovery depende bastante do sono',
+        text: `Nas semanas recentes, dormir mais está associado a cerca de ${delta} pontos a mais de recuperação no dia seguinte.`,
+        sentiment: r > 0 ? 'positive' : 'negative',
+        days: n,
+      };
+    }
+  );
+
+  // C) Stress -> sono
+  tryAdd(
+    getPairs((c) => c.stress ?? c.stress_level ?? null, (c) => c.sleep_score, 0),
+    8,
+    0.40,
+    (r, n, meanA, meanB, arrA, arrB) => {
+      const highStressIdx = arrA.map((v, i) => (v >= 4 ? i : -1)).filter((i) => i !== -1);
+      if (highStressIdx.length < 4) return null;
+
+      const highStressSleep = highStressIdx.map((i) => arrB[i]).filter((v) => v != null);
+      const delta = Math.round(Math.abs(meanB - (avg(highStressSleep) || meanB)));
+      if (delta < 4) return null;
+
+      return {
+        icon: '😰',
+        title: 'Stress está pesando no seu sono',
+        text: `Em dias de stress mais alto, sua qualidade de sono costuma cair cerca de ${delta} pontos.`,
+        sentiment: 'negative',
+        days: n,
+      };
+    }
+  );
+
+  // D) Stress -> HRV do dia seguinte
+  tryAdd(
+    getPairs((c) => c.stress ?? c.stress_level ?? null, (c) => c.hrv, 1),
+    8,
+    0.40,
+    (r, n, meanA, meanB) => ({
+      icon: '📉',
+      title: 'Stress e HRV andam em direções opostas',
+      text: `Nos seus dados recentes, dias mais estressantes tendem a aparecer com HRV pior no dia seguinte.`,
+      sentiment: r < 0 ? 'negative' : 'neutral',
+      days: n,
     })
   );
 
-  // C) stress_level[N] → sleep_score[N]
+  // E) Hidratação -> energia
   tryAdd(
-    getPairs(c => c.stress ?? c.stress_level ?? null, c => c.sleep_score, 0), 0.4,
-    (r, n, mA, mB, arrA, arrB) => {
-      const highIdxs = arrA.map((v, i) => v >= 4 ? i : -1).filter(i => i !== -1);
-      const highStress = highIdxs.map(i => arrB[i]).filter(v => v != null);
-      const delta = Math.round(Math.abs(mB - (avg(highStress) || mB)));
+    getPairs(
+      (c) => c.hydration_liters ?? c.hydration ?? null,
+      (c) => c.energy ?? c.energy_level ?? null,
+      0
+    ),
+    8,
+    0.35,
+    (r, n, meanA, meanB, arrA, arrB) => {
+      const goodIdx = arrA.map((v, i) => (v > meanA ? i : -1)).filter((i) => i !== -1);
+      const goodEnergy = goodIdx.map((i) => arrB[i]).filter((v) => v != null);
+      const delta = parseFloat(Math.abs((avg(goodEnergy) || meanB) - meanB).toFixed(1));
+      if (delta < 0.3) return null;
+
       return {
-        icon: '😰', title: 'Stress afeta seu sono',
-        text: `Dias com stress elevado reduzem sua qualidade de sono em média ${delta} pontos.`,
-        sentiment: 'negative', confidence: getConfidence(n), days: n,
+        icon: '💧',
+        title: 'Sua energia responde à hidratação',
+        text: `Nos dias em que você se hidrata melhor, sua energia tende a ficar cerca de ${delta} ponto acima da média.`,
+        sentiment: r > 0 ? 'positive' : 'neutral',
+        days: n,
       };
     }
   );
 
-  // D) stress_level[N] → hrv[N+1]
+  // F) Strain -> RHR do dia seguinte
   tryAdd(
-    getPairs(c => c.stress ?? c.stress_level ?? null, c => c.hrv, 1), 0.4,
-    (r, n, mA, mB) => ({
-      icon: '📉', title: 'Stress impacta HRV',
-      text: `Dias estressantes tendem a reduzir seu HRV no dia seguinte. HRV médio: ${Math.round(mB)}ms.`,
-      sentiment: r < 0 ? 'negative' : 'positive', confidence: getConfidence(n), days: n,
+    getPairs(
+      (c) => c.daily_strain_accumulated ?? c.strain_accumulated ?? null,
+      (c) => c.resting_hr ?? c.resting_heart_rate ?? null,
+      1
+    ),
+    8,
+    0.40,
+    (r, n, meanA, meanB, arrA, arrB) => {
+      const highStrainIdx = arrA.map((v, i) => (v > meanA ? i : -1)).filter((i) => i !== -1);
+      const nextRhr = highStrainIdx.map((i) => arrB[i]).filter((v) => v != null);
+      const delta = Math.round(Math.abs((avg(nextRhr) || meanB) - meanB));
+      if (delta < 2) return null;
+
+      return {
+        icon: '⚡',
+        title: 'Carga alta sobe sua FC de repouso',
+        text: `Depois de dias mais pesados, sua FC de repouso tende a amanhecer cerca de ${delta} bpm acima do normal.`,
+        sentiment: 'negative',
+        days: n,
+      };
+    }
+  );
+
+  // G) Dor muscular -> recovery do dia seguinte
+  tryAdd(
+    getPairs(
+      (c) => c.muscle_soreness ?? c.muscle_soreness_level ?? null,
+      (c) => c.recovery_score,
+      1
+    ),
+    8,
+    0.35,
+    (r, n) => ({
+      icon: '💪',
+      title: 'Dor muscular pesa na recuperação seguinte',
+      text: `Quando a dor muscular sobe muito, sua recuperação do dia seguinte costuma cair junto.`,
+      sentiment: r < 0 ? 'negative' : 'neutral',
+      days: n,
     })
   );
 
-  // E) hydration_liters[N] → energy_level[N]
-  tryAdd(
-    getPairs(c => c.hydration_liters ?? c.hydration ?? null, c => c.energy ?? c.energy_level ?? null, 0), 0.4,
-    (r, n, mA, mB, arrA, arrB) => {
-      const highIdxs = arrA.map((v, i) => v > mA ? i : -1).filter(i => i !== -1);
-      const goodHydration = highIdxs.map(i => arrB[i]).filter(v => v != null);
-      const delta = parseFloat(Math.abs((avg(goodHydration) || mB) - mB).toFixed(1));
-      return {
-        icon: '💧', title: 'Hidratação e energia',
-        text: `Dias com boa hidratação mostram energia ${delta > 0 ? '+' : ''}${delta} pontos acima da sua média.`,
-        sentiment: r > 0 ? 'positive' : 'neutral', confidence: getConfidence(n), days: n,
-      };
-    }
-  );
-
-  // F) daily_strain_accumulated[N] → resting_hr[N+1]
-  tryAdd(
-    getPairs(c => c.daily_strain_accumulated ?? c.strain_accumulated ?? null, c => c.resting_hr ?? c.resting_heart_rate ?? null, 1), 0.4,
-    (r, n, mA, mB, arrA, arrB) => {
-      const highStrain = arrA.reduce((acc, v, i) => { if (v > mA) acc.push(arrB[i]); return acc; }, []).filter(v => v != null);
-      const delta = Math.round(Math.abs((avg(highStrain) || mB) - mB));
-      return {
-        icon: '⚡', title: 'Treino eleva sua FC',
-        text: `Após treinos intensos, sua FC de repouso fica ${delta}bpm acima do normal no dia seguinte.`,
-        sentiment: 'negative', confidence: getConfidence(n), days: n,
-      };
-    }
-  );
-
-  // G) muscle_soreness[N] → recovery_score[N+1]
-  tryAdd(
-    getPairs(c => c.muscle_soreness ?? c.muscle_soreness_level ?? null, c => c.recovery_score, 1), 0.4,
-    (r, n, mA, mB) => ({
-      icon: '💪', title: 'Dor muscular e recuperação',
-      text: `Dias com alta dor muscular impactam o seu score de recuperação no dia seguinte. Média: ${Math.round(mB)}.`,
-      sentiment: r < 0 ? 'negative' : 'neutral', confidence: getConfidence(n), days: n,
-    })
-  );
-
-  // H) time_of_day → recovery_score do dia seguinte
+  // H) Horário de treino -> recovery do dia seguinte (agora bem mais rígido)
   const periodRecovery = {};
   sorted.forEach((c, i) => {
     if (i + 1 >= sorted.length) return;
-    const sessions = trainingSessions.filter(s => s.date === c.date);
-    sessions.forEach(s => {
+
+    const sessions = trainingSessions.filter((s) => s.date === c.date);
+    sessions.forEach((s) => {
       if (!s.time_of_day) return;
       if (!periodRecovery[s.time_of_day]) periodRecovery[s.time_of_day] = [];
+
       const nextRecovery = sorted[i + 1]?.recovery_score;
-      if (nextRecovery) periodRecovery[s.time_of_day].push(nextRecovery);
+      if (nextRecovery != null) {
+        periodRecovery[s.time_of_day].push(nextRecovery);
+      }
     });
   });
-  const periods = Object.entries(periodRecovery).filter(([, arr]) => arr.length >= 2);
+
+  const periods = Object.entries(periodRecovery).filter(([, arr]) => arr.length >= 4);
   if (periods.length >= 2) {
-    const best = periods.sort((a, b) => avg(b[1]) - avg(a[1]))[0];
-    const periodLabels = { morning: 'manhã', afternoon: 'tarde', evening: 'noite', night: 'madrugada' };
-    discoveries.push({
-      icon: '⏰', title: 'Seu melhor horário de treino',
-      text: `Treinos de ${periodLabels[best[0]] || best[0]} geram recovery médio de ${Math.round(avg(best[1]))} no dia seguinte — seu período mais favorável.`,
-      sentiment: 'positive',
-      confidence: getConfidence(best[1].length),
-      days: best[1].length,
-    });
+    const ranking = periods
+      .map(([period, arr]) => ({ period, values: arr, mean: avg(arr), count: arr.length }))
+      .sort((a, b) => b.mean - a.mean);
+
+    const best = ranking[0];
+    const second = ranking[1];
+
+    if (best && second && best.count >= 4 && second.count >= 4 && Math.abs(best.mean - second.mean) >= 5) {
+      const periodLabels = {
+        morning: 'manhã',
+        afternoon: 'tarde',
+        evening: 'noite',
+        night: 'madrugada',
+      };
+
+      const conf = getConfidence(best.count);
+      if (conf !== 'Baixa') {
+        discoveries.push({
+          icon: '⏰',
+          title: 'Seu horário de treino parece importar',
+          text: `Treinos de ${periodLabels[best.period] || best.period} vêm gerando recuperação média de ${Math.round(best.mean)} no dia seguinte — melhor do que outros horários nos seus dados recentes.`,
+          sentiment: 'positive',
+          confidence: conf,
+          days: best.count,
+        });
+      }
+    }
   }
 
-  // I) deep_sleep_pct → hrv (mesmo dia)
+  // I) Sono profundo -> HRV
   tryAdd(
-    getPairs(c => c.deep_sleep_pct, c => c.hrv, 0), 0.35,
-    (r, n, mA, mB, arrA, arrB) => {
-      const highDeep = arrA.reduce((acc, v, i) => { if (v > mA) acc.push(arrB[i]); return acc; }, []).filter(v => v != null);
-      const delta = Math.round(Math.abs((avg(highDeep) || mB) - mB));
+    getPairs((c) => c.deep_sleep_pct, (c) => c.hrv, 0),
+    8,
+    0.35,
+    (r, n, meanA, meanB, arrA, arrB) => {
+      const highDeepIdx = arrA.map((v, i) => (v > meanA ? i : -1)).filter((i) => i !== -1);
+      const highDeepHrv = highDeepIdx.map((i) => arrB[i]).filter((v) => v != null);
+      const delta = Math.round(Math.abs((avg(highDeepHrv) || meanB) - meanB));
+      if (delta < 3) return null;
+
       return {
-        icon: '🔬', title: 'Sono profundo e HRV',
-        text: `Noites com mais sono profundo estão associadas a HRV ${delta}ms maior pela manhã.`,
+        icon: '🔬',
+        title: 'Sono profundo está ligado ao seu HRV',
+        text: `Quando sua proporção de sono profundo sobe, seu HRV da manhã tende a vir cerca de ${delta}ms melhor.`,
         sentiment: r > 0 ? 'positive' : 'negative',
-        confidence: getConfidence(n), days: n,
+        days: n,
       };
     }
   );
 
-
-
-  return discoveries;
+  return discoveries.sort((a, b) => getConfidenceOrder(b.confidence) - getConfidenceOrder(a.confidence));
 }
+
+function buildRecentShifts(computed, analysis) {
+  if (!computed || computed.length < 8) return [];
+
+  const items = [];
+
+  const last7 = computed.slice(0, 7);
+  const prev7 = computed.slice(7, 14);
+
+  if (last7.length >= 4) {
+    const rec7 = avg(last7.map((c) => c.recovery_score || 0));
+    const prevRec7 = prev7.length >= 4 ? avg(prev7.map((c) => c.recovery_score || 0)) : null;
+
+    if (rec7 != null && prevRec7 != null && Math.abs(rec7 - prevRec7) >= 5) {
+      items.push({
+        icon: rec7 > prevRec7 ? TrendingUp : TrendingDown,
+        title: rec7 > prevRec7 ? 'Recuperação melhorando' : 'Recuperação piorando',
+        text: `Sua média de recuperação dos últimos 7 dias ${rec7 > prevRec7 ? 'subiu' : 'caiu'} de ${Math.round(prevRec7)} para ${Math.round(rec7)}.`,
+        tone: rec7 > prevRec7 ? 'positive' : 'negative',
+      });
+    }
+
+    const sleep7 = avg(last7.map((c) => c.sleep_hours || 0));
+    if (sleep7 != null && sleep7 < 7) {
+      items.push({
+        icon: Moon,
+        title: 'Seu sono recente está curto',
+        text: `Sua média de sono nos últimos 7 dias está em ${sleep7.toFixed(1)}h. Isso sozinho já pode limitar seu score de recuperação.`,
+        tone: 'negative',
+      });
+    }
+  }
+
+  const ratio = analysis?.trainingLoad?.ratio ?? null;
+  if (ratio != null) {
+    if (ratio > 1.3) {
+      items.push({
+        icon: AlertTriangle,
+        title: 'Sua carga recente está acima do ideal',
+        text: `O ratio aguda/crônica está em ${ratio.toFixed(2)}. Isso aumenta a chance de fadiga ou necessidade de redução de intensidade.`,
+        tone: 'negative',
+      });
+    } else if (ratio < 0.9) {
+      items.push({
+        icon: Activity,
+        title: 'Sua carga recente está controlada',
+        text: `O ratio aguda/crônica está em ${ratio.toFixed(2)}. Há boa chance de absorver carga sem excesso, se o resto do contexto acompanhar.`,
+        tone: 'positive',
+      });
+    }
+  }
+
+  const sleepDebt = analysis?.sleepDebt?.debt ?? null;
+  if (sleepDebt != null && sleepDebt >= 4) {
+    items.push({
+      icon: Clock3,
+      title: 'Sua dívida de sono já está relevante',
+      text: `Você acumulou cerca de ${sleepDebt.toFixed(1)}h de sono abaixo do ideal. Isso provavelmente está pesando mais do que parece no seu dia.`,
+      tone: 'negative',
+    });
+  }
+
+  return items.slice(0, 4);
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+/* Main Page */
+/* ────────────────────────────────────────────────────────────────────────── */
 
 export default function Insights() {
   const [analysisExpanded, setAnalysisExpanded] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+
   const [aiInsight, setAiInsight] = useState('');
   const [aiInsightError, setAiInsightError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [analysisGeneratedAt, setAnalysisGeneratedAt] = useState(null);
+
   const [coachInput, setCoachInput] = useState('');
   const [coachQuestion, setCoachQuestion] = useState('');
   const [coachResponse, setCoachResponse] = useState('');
   const [isCoachThinking, setIsCoachThinking] = useState(false);
 
-  const { data: checkins = [] } = useUserCheckins(60);
-  const { data: trainingSessions = [] } = useUserTrainingSessions(50);
-  const todayDate = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
-  const todayCheckin = checkins.find(c => c.date === todayDate);
+  const { data: rawCheckins = [] } = useUserCheckins(60);
+  const { data: rawTrainingSessions = [] } = useUserTrainingSessions(50);
 
-  const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
-  const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
+  const todayDate = getTodayLocalString();
 
-  const streak = calculateStreak(checkins);
-  const badges = getBadges(computed, streak);
-  const avgRecovery = computed.length
-    ? Math.round(computed.reduce((s, c) => s + (c.recovery_score || 0), 0) / computed.length)
-    : 0;
-  const perfLevel = getPerformanceLevel(avgRecovery);
-  const actionableRecs = analysis?.actionableRecs || [];
+  const checkins = useMemo(() => {
+    return [...rawCheckins].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [rawCheckins]);
 
-  const discoveries = useMemo(() => calcDiscoveries(computed, trainingSessions), [computed.length, trainingSessions.length]);
+  const trainingSessions = useMemo(() => {
+    return [...rawTrainingSessions].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [rawTrainingSessions]);
 
-  // ✅ FIX: computedKey e sessionsKey fora do useMemo
-  const computedKey = computed.length + ':' + (computed[0]?.date || '');
-  const sessionsKey = trainingSessions.length + ':' + (trainingSessions[0]?.date || '');
+  const todayCheckin = useMemo(() => {
+    return checkins.find((c) => c.date === todayDate) || null;
+  }, [checkins, todayDate]);
 
-  // ✅ FIX: useEffect fora do useMemo
+  const computed = useMemo(() => {
+    return checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), trainingSessions));
+  }, [checkins, trainingSessions]);
+
+  const sleepConsistency = useMemo(() => {
+    return calculateSleepConsistency(checkins);
+  }, [checkins]);
+
+  const computedKey = `${computed.length}:${computed[0]?.date || ''}:${computed[0]?.readiness_score || ''}`;
+  const sessionsKey = `${trainingSessions.length}:${trainingSessions[0]?.date || ''}:${trainingSessions[0]?.strain_score || ''}`;
+
   useEffect(() => {
-    if (computed.length === 0) { setAnalysis(null); return; }
+    if (computed.length === 0) {
+      setAnalysis(null);
+      return;
+    }
+
     let cancelled = false;
     setAnalysisLoading(true);
+
     runPhysiologicalAnalysisAsync(computed, trainingSessions, { useWorker: true, cacheTTLMinutes: 15 })
-      .then(result => { if (!cancelled) setAnalysis(result); })
-      .catch(() => { if (!cancelled) setAnalysis(null); })
-      .finally(() => { if (!cancelled) setAnalysisLoading(false); });
-    return () => { cancelled = true; };
-  }, [computedKey, sessionsKey]);
+      .then((result) => {
+        if (!cancelled) setAnalysis(result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn('Insights analysis failed', err);
+          setAnalysis(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAnalysisLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [computedKey, sessionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const discoveries = useMemo(() => {
+    const strictDiscoveries = calcDiscoveries(computed, trainingSessions);
+    const sleepDiscovery = sleepConsistency?.discovery
+      ? [{ ...sleepConsistency.discovery, confidence: sleepConsistency.discovery.confidence || 'Média' }]
+      : [];
+    return [...strictDiscoveries, ...sleepDiscovery]
+      .filter((d) => d.confidence !== 'Baixa')
+      .slice(0, 6);
+  }, [computedKey, sessionsKey, sleepConsistency]);
+
+  const recentShifts = useMemo(() => {
+    return buildRecentShifts(computed, analysis);
+  }, [computedKey, analysis]);
+
+  const todayDetailInsights = useMemo(() => {
+    const baselineInsights = analysis?.baselineInsights || [];
+    const whyScore = analysis?.whyScore || [];
+    const nonTrainingActionable =
+      (analysis?.actionableRecs || []).filter((r) => r.category !== 'Treino');
+
+    return {
+      baselineInsights,
+      whyScore,
+      nonTrainingActionable,
+    };
+  }, [analysis]);
 
   const suggestedQuestions = useMemo(() => {
     const state = analysis?.physioState?.state;
     const sleepDebt = analysis?.sleepDebt?.debt;
-    const loadRisk = analysis?.trainingLoad?.risk;
-    const todayScore = computed[0]?.readiness_score ?? computed[0]?.recovery_score ?? null;
-    const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
-    const questions = [];
+    const ratio = analysis?.trainingLoad?.ratio ?? null;
 
-    // Q1 — contexto do estado atual
-    if (state === 'Overreached' || state === 'Fatigued') questions.push('Por que estou sobrecarregado?');
-    else if (todayScore != null && todayScore >= 75) questions.push('Posso treinar forte hoje?');
-    else questions.push('Devo treinar hoje?');
+    const qs = [];
 
-    // Q2 — sono/déficit
-    if (sleepDebt > 3) questions.push(`Como recuperar ${Math.round(sleepDebt)}h de déficit de sono?`);
-    else questions.push('Como melhorar meu sono?');
+    if (discoveries[0]?.title) {
+      qs.push(`Explique melhor: ${discoveries[0].title}`);
+    }
 
-    // Q3 — HRV ou carga
-    if (hrvDelta != null && hrvDelta < -10) questions.push('Por que meu HRV caiu?');
-    else if (loadRisk === 'high' || loadRisk === 'moderate') questions.push('Como reduzir o risco de lesão agora?');
-    else questions.push('Por que meu HRV caiu?');
+    if (sleepDebt >= 4) {
+      qs.push(`Como reduzir ${Math.round(sleepDebt)}h de dívida de sono?`);
+    }
 
-    return questions.slice(0, 3);
-  }, [analysis, computed]);
+    if (ratio != null && ratio > 1.3) {
+      qs.push('O que a minha carga recente está fazendo com a recuperação?');
+    } else if (state === 'Fatigued' || state === 'Overreached') {
+      qs.push('Por que meu corpo está em fadiga agora?');
+    } else {
+      qs.push('Qual padrão dos meus dados mais merece atenção?');
+    }
 
-  const generateInsights = async () => {
-    if (computed.length < 3) return;
+    return qs.slice(0, 3);
+  }, [analysis, discoveries]);
+
+  async function generateInsights() {
+    if (computed.length < 5) return;
+
     setIsGenerating(true);
-    const summary = computed.slice(0, 14).map(c => ({
+    setAiInsight('');
+    setAiInsightError('');
+
+    const summary = computed.slice(0, 21).map((c) => ({
       date: c.date,
       recovery: c.recovery_score,
       readiness: c.readiness_score,
       sleep: c.sleep_quality,
+      sleep_hours: c.sleep_hours,
       fatigue: c.fatigue_score,
       stress: c.stress_score,
       hrv: c.hrv,
@@ -299,186 +692,295 @@ export default function Insights() {
       deep_sleep: c.deep_sleep_pct,
       mood: c.mood,
       energy: c.energy,
-      sleep_hours: c.sleep_hours,
+      strain: c.daily_strain_accumulated,
     }));
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é o BioCharge AI Coach, especialista em performance e recuperação física. Analise os dados abaixo em português brasileiro.
+        prompt: `Você é um analista de performance e recuperação no estilo Whoop. Sua função é gerar uma análise profunda, útil e honesta. Em português brasileiro.
+
+Objetivo:
+- NÃO repetir a tela de hoje
+- NÃO virar feed de recomendações do dia
+- focar em padrões reais, aprendizados e comportamento
+- falar o que realmente importa para o usuário
 
 Dados dos últimos ${summary.length} dias:
 ${JSON.stringify(summary, null, 2)}
 
-Forneça uma análise detalhada e personalizada incluindo:
-1. **📊 Análise de Tendência** — como os scores evoluíram
-2. **🔍 Padrões Detectados** — correlações entre sono, HRV, fadiga, RPE
-3. **⚠️ Alertas** — sinais de overtraining, déficit de recuperação
-4. **💡 Recomendações Específicas** — baseadas nos dados reais do usuário
-5. **📈 Próximos 7 dias** — estratégia sugerida
+Estruture assim:
+1. **Insight principal** — o padrão mais importante agora
+2. **O que está melhorando**
+3. **O que está limitando a performance**
+4. **O que o usuário deveria mudar no comportamento**
+5. **O que observar nos próximos 7 dias**
 
-Seja específico, cite os números reais do usuário. Evite insights genéricos. Use emojis para tornar mais visual.`,
+Regras:
+- use números reais quando fizer sentido
+- trate padrões como tendência, não como certeza absoluta
+- evite linguagem vaga
+- não repita "treino moderado recomendado" nem frases de dashboard diário
+- seja específico, útil e comportamental`,
       });
+
       setAiInsight(result);
       setAnalysisGeneratedAt(new Date());
-    } catch {
-      setAiInsightError('Não foi possível gerar análise agora. Tente novamente.');
+    } catch (err) {
+      console.warn(err);
+      setAiInsightError('Não foi possível gerar a análise profunda agora. Tente novamente.');
     } finally {
       setIsGenerating(false);
     }
-  };
+  }
 
-  const askCoach = async () => {
+  async function askCoach() {
     const question = coachInput.trim() || coachQuestion.trim();
     if (!question) return;
+
     setCoachQuestion(question);
     setIsCoachThinking(true);
+    setCoachResponse('');
 
-    const systemContext = buildCoachContext({ checkins: computed, sessions: trainingSessions, analysis, question });
+    const systemContext = buildCoachContext({
+      checkins: computed,
+      sessions: trainingSessions,
+      analysis,
+      question,
+    });
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
 
-      // Validate response for impossible numbers
-      const impossibleSleep = /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) && (() => {
-        const m = result.match(/(\d+(?:\.\d+)?)\s*h(oras?)?\s*de\s*sono/gi) || [];
-        return m.some(match => parseFloat(match) > 12);
-      })();
-      const impossibleAvgSleep = /média\s*(de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/i.test(result) && (() => {
-        const m = result.match(/média\s*(?:de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/gi) || [];
-        return m.some(match => parseFloat(match.replace(/[^\d.]/g, '')) > 10);
-      })();
+      const impossibleSleep =
+        /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) &&
+        (() => {
+          const m = result.match(/(\d+(?:\.\d+)?)\s*h(oras?)?\s*de\s*sono/gi) || [];
+          return m.some((match) => parseFloat(match) > 12);
+        })();
+
+      const impossibleAvgSleep =
+        /média\s*(de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/i.test(result) &&
+        (() => {
+          const m = result.match(/média\s*(?:de\s*sono\s*)?de\s*(\d+(?:\.\d+)?)\s*h/gi) || [];
+          return m.some((match) => parseFloat(match.replace(/[^\d.]/g, '')) > 10);
+        })();
 
       if (impossibleSleep || impossibleAvgSleep) {
-        setCoachResponse('Não tenho dados suficientes para responder com precisão. Continue fazendo check-ins diários para que eu possa te dar insights personalizados.');
+        setCoachResponse(
+          'Ainda não tenho segurança suficiente para responder isso com boa precisão. Continue alimentando seus dados para eu te responder melhor.'
+        );
       } else {
         setCoachResponse(result);
       }
-    } catch {
+    } catch (err) {
+      console.warn(err);
       setCoachResponse('Não foi possível conectar ao coach agora. Tente novamente.');
     } finally {
       setCoachInput('');
       setCoachQuestion('');
       setIsCoachThinking(false);
     }
-  };
-
-  // Pattern cards
-  const patterns = [];
-  if (computed.length >= 3) {
-    const avg = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
-    const recentRecovery = avg(computed.slice(0, 3).map(c => c.recovery_score || 0));
-    const recentFatigue = avg(computed.slice(0, 3).map(c => c.fatigue_score || 0));
-    const recentSleep = avg(computed.slice(0, 3).map(c => c.sleep_quality || 0));
-
-    if (recentRecovery >= 75) patterns.push({ icon: TrendingUp, color: 'hsl(142,70%,55%)', negative: false, text: `Recovery médio de ${Math.round(recentRecovery)} nos últimos 3 dias — Excelente tendência` });
-    else if (recentRecovery < 60) patterns.push({ icon: TrendingDown, color: 'hsl(0,72%,60%)', negative: true, text: `Recovery médio baixo: ${Math.round(recentRecovery)} — Priorize recuperação esta semana` });
-    if (recentFatigue > 55) patterns.push({ icon: AlertTriangle, color: 'hsl(45,93%,63%)', negative: true, text: `Fadiga elevada detectada: ${Math.round(recentFatigue)}/100 — Considere reduzir intensidade` });
-    if (recentSleep < 60) patterns.push({ icon: TrendingDown, color: 'hsl(0,72%,60%)', negative: true, text: `Sono em queda: ${Math.round(recentSleep)} pts — Impacto direto no Recovery` });
-    else if (recentSleep >= 80) patterns.push({ icon: TrendingUp, color: 'hsl(142,70%,55%)', negative: false, text: `Sono de alta qualidade: ${Math.round(recentSleep)} pts — Continue o protocolo atual` });
   }
 
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Inteligência IA</h1>
-        <p className="text-sm text-muted-foreground mt-1">Insights personalizados baseados nos seus dados</p>
+        <h1 className="text-2xl font-black tracking-tight">Insights</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Aprendizados, padrões e sinais que realmente ajudam a entender seu corpo.
+        </p>
       </div>
 
-      {/* ── BLOCO 1 — Por que sua prontidão é X hoje? ───────────────────────── */}
-      {analysis?.baselineInsights?.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">O que explica seu dia de hoje</h3>
-          <BaselineInsightsRow insights={analysis.baselineInsights} />
+      {/* Loading */}
+      {analysisLoading && (
+        <div className="rounded-2xl border border-border/50 bg-card p-5 flex items-center gap-3">
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Analisando seus dados mais recentes...
+          </p>
         </div>
       )}
 
-      {/* AI Smart Messages (insights automáticos contextuais) */}
-      {actionableRecs.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Insights Automáticos</h3>
-          {actionableRecs.map((rec, i) => {
-            const categoryMeta = rec.category === 'Treino'
-              ? { badge: '🏋️ Treino', badgeClass: 'bg-emerald-500/15 text-emerald-400' }
-              : rec.category === 'Sono'
-              ? { badge: '🌙 Sono', badgeClass: 'bg-blue-500/15 text-blue-400' }
-              : { badge: `${rec.icon || '⚡'} ${rec.category || ''}`, badgeClass: 'bg-primary/10 text-primary' };
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/10"
-              >
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${categoryMeta.badgeClass}`}>
-                  {categoryMeta.badge}
-                </span>
-                <p className="text-sm text-foreground/85">{rec.text}</p>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
+      {/* 1. High-value discoveries */}
+      <div className="space-y-3">
+        <SectionHeader
+          title="Achados que realmente importam"
+          subtitle="Só entram aqui padrões com sinal suficiente para valer sua atenção."
+        />
 
-      {/* ── BLOCO 2 — O BioCharge Descobriu ─────────────────────────────────── */}
-      <DiscoveriesCard discoveries={[
-        ...discoveries,
-        ...(sleepConsistency?.discovery ? [sleepConsistency.discovery] : []),
-      ]} />
+        {discoveries.length > 0 ? (
+          <div className="space-y-3">
+            {discoveries.map((item, i) => (
+              <DiscoveryCard key={`${item.title}-${i}`} item={item} />
+            ))}
+          </div>
+        ) : (
+          <SmallInsightCard
+            icon={BarChart3}
+            title="Ainda falta evidência suficiente"
+            text="Você já tem dados úteis, mas ainda não há descobertas fortes o bastante para aparecer aqui com confiança."
+            tone="neutral"
+          />
+        )}
+      </div>
 
-      {/* ── BLOCO 3 — Coach IA ───────────────────────────────────────────────── */}
+      {/* 2. Recent shifts */}
+      <div className="space-y-3">
+        <SectionHeader
+          title="O que mudou recentemente"
+          subtitle="Leituras dos últimos 7–14 dias para te ajudar a perceber tendências, não só o dia de hoje."
+        />
+
+        {recentShifts.length > 0 ? (
+          <div className="space-y-3">
+            {recentShifts.map((item, i) => (
+              <SmallInsightCard
+                key={`${item.title}-${i}`}
+                icon={item.icon}
+                title={item.title}
+                text={item.text}
+                tone={item.tone}
+              />
+            ))}
+          </div>
+        ) : (
+          <SmallInsightCard
+            icon={TrendingUp}
+            title="Sem mudança forte recente"
+            text="Nos seus dados atuais, não apareceu nenhuma mudança relevante o bastante para destacar nesta seção."
+            tone="neutral"
+          />
+        )}
+      </div>
+
+      {/* 3. Today detail - secondary */}
+      <ExpandableSection
+        title="Leitura detalhada de hoje"
+        subtitle="Use esta seção quando quiser entender melhor o dia atual, sem competir com a tela Today."
+      >
+        {todayDetailInsights.baselineInsights?.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Hoje vs seu baseline
+            </p>
+            <div className="space-y-2">
+              {todayDetailInsights.baselineInsights.map((insight, i) => (
+                <div
+                  key={`${insight.label}-${i}`}
+                  className="rounded-xl border border-border/40 bg-secondary/30 px-3 py-2.5 flex items-center justify-between gap-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{insight.label}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                      {insight.text}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      'text-xs font-bold',
+                      insight.isPositive ? 'text-emerald-400' : 'text-red-400'
+                    )}
+                  >
+                    {insight.delta > 0 ? '+' : ''}
+                    {insight.delta}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {todayDetailInsights.nonTrainingActionable?.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Pontos de atenção hoje
+            </p>
+            <div className="space-y-2">
+              {todayDetailInsights.nonTrainingActionable.map((rec, i) => (
+                <div
+                  key={`${rec.id}-${i}`}
+                  className="rounded-xl border border-border/40 bg-secondary/30 px-3 py-2.5"
+                >
+                  <p className="text-sm text-foreground/85 leading-relaxed">{rec.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {todayDetailInsights.whyScore?.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Fatores que mais influenciaram hoje
+            </p>
+
+            <div className="space-y-2">
+              {todayDetailInsights.whyScore.map((item, i) => (
+                <div
+                  key={`${item.text}-${i}`}
+                  className="rounded-xl border border-border/40 bg-secondary/30 px-3 py-2.5 flex items-start gap-2.5"
+                >
+                  <span
+                    className={cn(
+                      'text-xs font-bold mt-0.5 shrink-0',
+                      item.impact === 'positive' ? 'text-emerald-400' : 'text-red-400'
+                    )}
+                  >
+                    {item.impact === 'positive' ? '↑' : '↓'}
+                  </span>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </ExpandableSection>
+
+      {/* 4. Coach IA */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.12 }}
         className="rounded-2xl border border-border/60 bg-card overflow-hidden"
       >
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40">
           <Brain className="w-4 h-4 text-primary" />
           <h2 className="text-sm font-semibold">Coach IA</h2>
         </div>
-        <div className="p-5 space-y-4">
-          {coachResponse && (() => {
-            const last7 = computed.slice(0, 7);
-            const hasHrv = last7.some(c => c.hrv);
-            const hasSleep = last7.some(c => c.sleep_hours);
-            const hasSession = trainingSessions.length > 0;
-            const sources = [
-              `${Math.min(last7.length, 7)} dias de dados`,
-              hasHrv && 'HRV',
-              hasSleep && 'Sono',
-              hasSession && 'Treinos',
-            ].filter(Boolean).join(' · ');
 
-            return (
-              <>
-                <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary/50"></span>
-                  Baseado em: {sources}
-                </p>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
-                >
-                  <ReactMarkdown>{coachResponse}</ReactMarkdown>
-                </motion.div>
-              </>
-            );
-          })()}
-          <p className="text-[10px] text-muted-foreground mt-1">
-            As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
+        <div className="p-5 space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Use o coach para aprofundar padrões e dúvidas. Esta seção funciona melhor depois que você revisar os achados acima.
           </p>
+
+          {coachResponse ? (
+            <>
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
+              </p>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
+              >
+                <ReactMarkdown>{coachResponse}</ReactMarkdown>
+              </motion.div>
+            </>
+          ) : null}
+
           <div className="space-y-2">
             <Input
-              placeholder="Pergunte ao seu coach..."
+              placeholder="Pergunte algo mais profundo sobre seus padrões..."
               value={coachInput}
-              onChange={e => setCoachInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && askCoach()}
+              onChange={(e) => setCoachInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && askCoach()}
               className="bg-secondary border-border/40 flex-1"
             />
+
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {suggestedQuestions.map(q => (
+              {suggestedQuestions.map((q) => (
                 <button
                   key={q}
                   onClick={() => setCoachInput(q)}
@@ -488,111 +990,30 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
                 </button>
               ))}
             </div>
+
             <Button
               onClick={askCoach}
               disabled={isCoachThinking || !coachInput.trim()}
               className="w-full bg-primary text-primary-foreground h-9 text-xs rounded-xl"
             >
-              {isCoachThinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Enviar</>}
+              {isCoachThinking ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5 mr-1.5" />
+                  Enviar
+                </>
+              )}
             </Button>
           </div>
+
+          <p className="text-[10px] text-muted-foreground">
+            As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
+          </p>
         </div>
       </motion.div>
 
-      {/* ── BLOCO 4 — Informações secundárias ───────────────────────────────── */}
-
-      {/* Physio State */}
-      {analysis?.physioState && <PhysioStateCard physioState={analysis.physioState} />}
-
-      {/* Training Load */}
-      {analysis && (
-        <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
-      )}
-
-      {/* Correlations (engine-detected) */}
-      {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) && (
-        <CorrelationsCard correlations={analysis.correlations} laggedEffects={analysis.laggedEffects} />
-      )}
-
-      {/* Pattern Detection */}
-      {patterns.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Padrões Detectados</h3>
-          {patterns.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className={`flex items-start gap-3 p-4 rounded-xl border ${p.negative ? 'bg-red-500/6 border-red-500/25' : 'border-border/40'}`}
-              style={p.negative ? {} : { backgroundColor: `hsl(142,70%,50%,0.06)` }}
-            >
-              <p.icon className="w-4 h-4 mt-0.5 shrink-0" style={{ color: p.color }} />
-              <span className="text-sm">{p.text}</span>
-            </motion.div>
-          ))}
-        </div>
-      )}
-
-      {/* Performance Level + Streak */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card p-5"
-        style={{ boxShadow: `0 0 30px -12px ${perfLevel.color}30` }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Nível de Performance</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-2xl font-black" style={{ color: perfLevel.color }}>{perfLevel.label}</span>
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-6 rounded-sm"
-                    style={{ backgroundColor: i < perfLevel.level ? perfLevel.color : 'hsl(220,15%,14%)' }}
-                  />
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Recovery médio: <span className="font-mono font-semibold text-foreground">{avgRecovery}</span></p>
-          </div>
-          {streak >= 2 && (
-            <div className="text-center">
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1">Sequência</p>
-              <span className="text-2xl">🔥</span>
-              <p className="text-xs font-bold text-orange-400 mt-0.5">{streak} dias seguidos</p>
-            </div>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Badges */}
-      {badges.length > 0 && (
-        <div className="rounded-2xl border border-border/60 bg-card p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold">Conquistas</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {badges.map(b => (
-              <motion.div
-                key={b.id}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', bounce: 0.5 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary border border-border/60 text-sm"
-              >
-                <span className="text-sm leading-none">{b.icon}</span>
-                <span className="text-xs font-medium">{b.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* AI Deep Analysis */}
+      {/* 5. Deep analysis */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -601,46 +1022,87 @@ Seja específico, cite os números reais do usuário. Evite insights genéricos.
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold">Análise Profunda</h2>
+            <h2 className="text-sm font-semibold">Análise profunda</h2>
           </div>
-          {/* Botão de fallback: só aparece se não há análise automática */}
+
           {!todayCheckin?.deep_analysis_text && (
             <Button
               onClick={generateInsights}
-              disabled={isGenerating || computed.length < 3}
+              disabled={isGenerating || computed.length < 5}
               size="sm"
               className="bg-primary text-primary-foreground h-8 px-4 text-xs"
             >
-              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar Análise'}
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar análise'}
             </Button>
           )}
         </div>
+
         <div className="p-5">
-          <p className="text-[10px] text-muted-foreground mb-3">Análise gerada automaticamente com base no seu check-in de hoje.</p>
-          {computed.length < 3 ? (
-            <p className="text-sm text-muted-foreground">Registre ao menos 3 check-ins para gerar análise profunda.</p>
+          <p className="text-[10px] text-muted-foreground mb-3">
+            Esta seção resume padrões, limitações e ajustes relevantes com mais profundidade.
+          </p>
+
+          {computed.length < 5 ? (
+            <p className="text-sm text-muted-foreground">
+              Registre ao menos 5 check-ins para uma análise profunda mais útil.
+            </p>
           ) : todayCheckin?.deep_analysis_text ? (
             <>
               <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
-              <AnalysisBody text={todayCheckin.deep_analysis_text} expanded={analysisExpanded} onExpand={() => setAnalysisExpanded(true)} />
+              <AnalysisBody
+                text={todayCheckin.deep_analysis_text}
+                expanded={analysisExpanded}
+                onExpand={() => setAnalysisExpanded(true)}
+              />
             </>
           ) : aiInsight ? (
             <>
               <AnalysisHighlights analysisText={aiInsight} />
-              <AnalysisBody text={aiInsight} expanded={analysisExpanded} onExpand={() => setAnalysisExpanded(true)} />
+              <AnalysisBody
+                text={aiInsight}
+                expanded={analysisExpanded}
+                onExpand={() => setAnalysisExpanded(true)}
+              />
               {analysisGeneratedAt && (
                 <p className="text-[10px] text-muted-foreground mt-3 text-right">
-                  Gerado em {analysisGeneratedAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  Gerado em{' '}
+                  {analysisGeneratedAt.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
                 </p>
               )}
             </>
           ) : aiInsightError ? (
             <p className="text-sm text-red-400/80">{aiInsightError}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">A análise é gerada automaticamente ao salvar o check-in da manhã. Clique em "Gerar Análise" para obter agora.</p>
+            <p className="text-sm text-muted-foreground">
+              A análise profunda aparece automaticamente após o check-in, quando disponível. Você também pode gerar uma nova leitura agora.
+            </p>
           )}
         </div>
       </motion.div>
+
+      {/* 6. Technical context */}
+      <ExpandableSection
+        title="Contexto técnico"
+        subtitle="Detalhes fisiológicos e métricas avançadas. Útil para quem quer ir além da leitura principal."
+      >
+        {analysis?.physioState ? <PhysioStateCard physioState={analysis.physioState} /> : null}
+
+        {analysis ? (
+          <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
+        ) : null}
+
+        {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
+          <CorrelationsCard
+            correlations={analysis.correlations}
+            laggedEffects={analysis.laggedEffects}
+          />
+        ) : null}
+      </ExpandableSection>
     </div>
   );
 }
