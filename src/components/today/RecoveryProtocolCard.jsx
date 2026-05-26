@@ -1,5 +1,18 @@
-import { motion } from 'framer-motion';import { motion } from 'Debt > 3) {
-    const targetHours = Math.min(9, Math.round((sleepHours ?? 7) + Math.min(2, sleepDebt * 0.4)));
+import { motion } from 'framer-motion';
+import { Moon } from 'lucide-react';
+
+function buildRecoveryProtocol(checkin, analysis) {
+  const actions = [];
+
+  const sleepDebt = analysis?.sleepDebt?.debt ?? 0;
+  const sleepHours = checkin?.sleep_hours ?? checkin?.sleep_need_tonight ?? null;
+
+  if (sleepDebt > 3) {
+    const targetHours = Math.min(
+      9,
+      Math.round((sleepHours ?? 7) + Math.min(2, sleepDebt * 0.4))
+    );
+
     const wakeHour = 6;
     const bedHour = wakeHour - targetHours;
     const normalizedBedHour = bedHour < 0 ? 24 + bedHour : bedHour;
@@ -19,7 +32,9 @@ import { motion } from 'framer-motion';import { motion } from 'Debt > 3) {
     });
   }
 
-  const hrvDelta = analysis?.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
+  const hrvDelta =
+    analysis?.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
+
   if (hrvDelta != null && hrvDelta < -8) {
     actions.push({
       icon: '📵',
@@ -49,7 +64,8 @@ import { motion } from 'framer-motion';import { motion } from 'Debt > 3) {
 function estimateReadinessGain(checkin, analysis) {
   const sleepDebt = analysis?.sleepDebt?.debt ?? 0;
   const stress = checkin?.stress ?? checkin?.stress_level ?? 0;
-  const hrvDelta = analysis?.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
+  const hrvDelta =
+    analysis?.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
 
   let gain = 0;
 
@@ -82,14 +98,15 @@ export default function RecoveryProtocolCard({ checkin, analysis }) {
             Protocolo de recuperação
           </span>
         </div>
+
         <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400">
           Hoje
         </span>
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Hoje o ganho não vem de adicionar carga. Hoje o ganho vem de baixar estresse, recuperar energia
-        e preparar melhor a manhã de amanhã.
+        Hoje o ganho não vem de adicionar carga. Hoje o ganho vem de baixar estresse,
+        recuperar energia e preparar melhor a manhã de amanhã.
       </p>
 
       <div className="h-px bg-border/40" />
@@ -109,17 +126,11 @@ export default function RecoveryProtocolCard({ checkin, analysis }) {
         <span className="text-base shrink-0">⬆️</span>
         <p className="text-xs text-blue-300 leading-snug">
           <span className="font-semibold">Amanhã cedo (projeção):</span>{' '}
-          se você seguir isso hoje, sua prontidão pode subir cerca de <span className="font-bold">+{gain} pts</span>.
+          se você seguir isso hoje, sua prontidão pode subir cerca de{' '}
+          <span className="font-bold">+{gain} pts</span>.
         </p>
       </div>
     </motion.div>
   );
 }
-import { Moon } from 'lucide-react';
-
-function buildRecoveryProtocol(checkin, analysis) {
-  const actions = [];
-
-  const sleepDebt = analysis?.sleepDebt?.debt ?? 0;
-  const sleepHours = checkin?.sleep_hours ?? checkin?.sleep_need_tonight ?? null;
 
