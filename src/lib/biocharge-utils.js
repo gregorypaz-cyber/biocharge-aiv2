@@ -296,19 +296,34 @@ export function calculateStressScore(checkin) {
   return clamp(Math.round(score));
 }
 
-export function calculateReadinessScore(checkin) {
-  const recovery = calculateRecoveryScore(checkin);
+export function calculateReadinessScore(checkin, recentCheckins = []) {
+  const recovery = calculateRecoveryScore(checkin, recentCheckins);
   const fatigue = calculateFatigueScore(checkin);
   const sleep = calculateSleepScore(checkin);
-  const hrv = normalizeHrv(checkin.hrv);
+  const hrv = normalizeHrv(checkin.hrv, recentCheckins);
+  const rhr = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
 
-  const score =
-    recovery * 0.45 +
-    (100 - fatigue) * 0.30 +
-    sleep * 0.15 +
-    hrv * 0.10;
+  const weighted = [
+    { value: recovery, weight: 0.58 },
+    { value: 100 - fatigue, weight: 0.18 },
+    { value: sleep, weight: 0.12 },
+    { value: hrv, weight: 0.07 },
+    { value: rhr, weight: 0.05 },
+  ];
 
-  return clamp(Math.round(score));
+  let total = 0;
+  let weightSum = 0;
+
+  for (const item of weighted) {
+    if (item.value != null) {
+      total += item.value * item.weight;
+      weightSum += item.weight;
+    }
+  }
+
+  if (weightSum <= 0) return 0;
+
+  return clamp(Math.round(total / weightSum));
 }
 
 // ─── Zones / Labels ────────────────────────────────────────────────────────
