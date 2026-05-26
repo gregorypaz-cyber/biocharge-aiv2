@@ -196,25 +196,47 @@ function applyConfidenceCap(score, confidence, hasStrongPhysiology) {
 
 // ─── Core scores ───────────────────────────────────────────────────────────
 
-export function calculateRecoveryScore(checkin) {
+export function calculateRecoveryScore(checkin, recentCheckins = []) {
   const morning = clamp(checkin.biocharge_morning ?? 0);
-  const sleep = clamp(checkin.sleep_score ?? 0);
-  const fatigue = clamp(checkin.fatigue ?? 0);
-  const deepSleep = normalizeDeepSleep(checkin.deep_sleep_pct);
-  const hrv = normalizeHrv(checkin.hrv);
+  const sleepScore = clamp(checkin.sleep_score ?? 0);
+  const fatigueInverse = 100 - clamp(checkin.fatigue ?? 0);
+
+  const deepSleepScore = normalizeDeepSleep(checkin.deep_sleep_pct);
+  const hrvScore = normalizeHrv(checkin.hrv, recentCheckins);
+  const rhrScore = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
+  const sleepHoursScore = getSleepHoursScore(checkin.sleep_hours);
+
   const mood = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'mood'));
   const energy = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'energy'));
 
-  const score =
-    morning * 0.35 +
-    sleep * 0.25 +
-    (100 - fatigue) * 0.20 +
-    deepSleep * 0.08 +
-    hrv * 0.07 +
-    mood * 0.03 +
-    energy * 0.02;
+  // WHOOP-like na intenção: biometria manda, subjetividade ajusta levemente
+  const weighted = [
+    { value: hrvScore, weight: 0.26 },
+    { value: rhrScore, weight: 0.18 },
+    { value: sleepScore, weight: 0.18 },
+    { value: sleepHoursScore, weight: 0.12 },
+    { value: deepSleepScore, weight: 0.08 },
+    { value: morning, weight: 0.10 },
+    { value: fatigueInverse, weight: 0.06 },
+    { value: mood, weight: 0.01 },
+    { value: energy, weight: 0.01 },
+  ];
 
-  return clamp(Math.round(score));
+  let weightSum = 0;
+  let total = 0;
+
+  for (const item of weighted) {
+    if (item.value != null) {
+      total += item.value * item.weight;
+      weightSum += item.weight;
+    }
+  }
+
+  if (weightSum <= 0) return 0;
+
+  // renormaliza pelo peso disponível
+  const raw = total / weightSum;
+  return clamp(Math.round(raw));
 }
 
 export function calculateSleepScore(checkin) {
