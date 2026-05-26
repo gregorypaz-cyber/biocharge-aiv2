@@ -1,87 +1,7 @@
 import { motion } from 'framer-motion';
 import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
 
-/* ────────────────────────────────────────────────────────────────────────── *//* ─────────────────────────────────────────────────: Icon, label, color, dotColor, items }) {
-  if (!items.length) return null;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1.5">
-        <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
-        <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>
-          {label}
-        </p>
-      </div>
-
-      <ul className="space-y-2">
-        {items.map((text, i) => (
-          <li key={i} className="flex items-start gap-2">
-            <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-            <div>
-              <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-wide leading-none mb-0.5">
-                {shortTitle(text)}
-              </p>
-              <p className="text-xs text-foreground/85 leading-snug">{text}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default function AnalysisHighlights({ analysisText }) {
-  if (!analysisText || typeof analysisText !== 'string') return null;
-
-  const sentences = splitSentences(analysisText);
-  if (!sentences.length) return null;
-
-  const alerts = pickAlerts(sentences);
-  const patterns = pickPatterns(sentences, alerts);
-  const actions = pickActions(sentences, [...alerts, ...patterns]);
-
-  if (!alerts.length && !patterns.length && !actions.length) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border/50 bg-secondary/40 px-4 py-4 space-y-4 mb-4"
-    >
-      <Section
-        icon={AlertTriangle}
-        label="Sinais de atenção"
-        color="text-red-400"
-        dotColor="bg-red-400/70"
-        items={alerts}
-      />
-
-      {alerts.length > 0 && patterns.length > 0 && <div className="h-px bg-border/40" />}
-
-      <Section
-        icon={Sparkles}
-        label="O que vale observar"
-        color="text-primary"
-        dotColor="bg-primary/60"
-        items={patterns}
-      />
-
-      {(alerts.length > 0 || patterns.length > 0) && actions.length > 0 && (
-        <div className="h-px bg-border/40" />
-      )}
-
-      {actions.length > 0 && (
-        <Section
-          icon={ChevronRight}
-          label="Ajustes práticos"
-          color="text-yellow-400"
-          dotColor="bg-yellow-400/60"
-          items={actions}
-        />
-      )}
-    </motion.div>
-  );
-}
+/* ────────────────────────────────────────────────────────────────────────── */
 /* Helpers */
 /* ────────────────────────────────────────────────────────────────────────── */
 
@@ -167,3 +87,84 @@ function shortTitle(sentence) {
   return words.slice(0, 5).join(' ').replace(/[,:;]$/, '') + (words.length > 5 ? '…' : '');
 }
 
+function Section({ icon: Icon, label, color, dotColor, items }) {
+  if (!items.length) return null;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
+        <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>
+          {label}
+        </p>
+      </div>
+
+      <ul className="space-y-2">
+        {items.map((text, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+            <div>
+              <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-wide leading-none mb-0.5">
+                {shortTitle(text)}
+              </p>
+              <p className="text-xs text-foreground/85 leading-snug">{text}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function AnalysisHighlights({ analysisText }) {
+  if (!analysisText || typeof analysisText !== 'string') return null;
+
+  const sentences = splitSentences(analysisText);
+  if (!sentences.length) return null;
+
+  const alerts = pickAlerts(sentences);
+  const patterns = pickPatterns(sentences, alerts);
+  const actions = pickActions(sentences, [...alerts, ...patterns]);
+
+  if (!alerts.length && !patterns.length && !actions.length) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-border/50 bg-secondary/40 px-4 py-4 space-y-4 mb-4"
+    >
+      <Section
+        icon={AlertTriangle}
+        label="Sinais de atenção"
+        color="text-red-400"
+        dotColor="bg-red-400/70"
+        items={alerts}
+      />
+
+      {alerts.length > 0 && patterns.length > 0 && <div className="h-px bg-border/40" />}
+
+      <Section
+        icon={Sparkles}
+        label="O que vale observar"
+        color="text-primary"
+        dotColor="bg-primary/60"
+        items={patterns}
+      />
+
+      {(alerts.length > 0 || patterns.length > 0) && actions.length > 0 && (
+        <div className="h-px bg-border/40" />
+      )}
+
+      {actions.length > 0 && (
+        <Section
+          icon={ChevronRight}
+          label="Ajustes práticos"
+          color="text-yellow-400"
+          dotColor="bg-yellow-400/60"
+          items={actions}
+        />
+      )}
+    </motion.div>
+  );
+}
