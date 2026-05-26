@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
+
 /* ────────────────────────────────────────────────────────────────────────── *//* ─────────────────────────────────────────────────: Icon, label, color, dotColor, items }) {
   if (!items.length) return null;
 
