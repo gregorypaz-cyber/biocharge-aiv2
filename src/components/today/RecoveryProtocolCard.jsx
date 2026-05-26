@@ -1,12 +1,4 @@
-import { motion } from 'framer-motion';import { motion } fromimport { Moon } from 'lucide-react';
-
-function buildRecoveryProtocol(checkin, analysis) {
-  const actions = [];
-
-  const sleepDebt = analysis?.sleepDebt?.debt ?? 0;
-  const sleepHours = checkin?.sleep_hours ?? checkin?.sleep_need_tonight ?? null;
-
-  if (sleepDebt > 3) {
+import { motion } from 'framer-motion';import { motion } from 'Debt > 3) {
     const targetHours = Math.min(9, Math.round((sleepHours ?? 7) + Math.min(2, sleepDebt * 0.4)));
     const wakeHour = 6;
     const bedHour = wakeHour - targetHours;
@@ -60,6 +52,7 @@ function estimateReadinessGain(checkin, analysis) {
   const hrvDelta = analysis?.baselineInsights?.find((i) => i.label === 'HRV')?.delta ?? null;
 
   let gain = 0;
+
   if (sleepDebt > 3) gain += 6;
   else if (sleepDebt > 1) gain += 3;
 
@@ -67,6 +60,7 @@ function estimateReadinessGain(checkin, analysis) {
   if (hrvDelta != null && hrvDelta < -8) gain += 5;
 
   if (gain === 0) gain = 3;
+
   return Math.min(gain, 15);
 }
 
@@ -121,4 +115,11 @@ export default function RecoveryProtocolCard({ checkin, analysis }) {
     </motion.div>
   );
 }
+import { Moon } from 'lucide-react';
+
+function buildRecoveryProtocol(checkin, analysis) {
+  const actions = [];
+
+  const sleepDebt = analysis?.sleepDebt?.debt ?? 0;
+  const sleepHours = checkin?.sleep_hours ?? checkin?.sleep_need_tonight ?? null;
 
