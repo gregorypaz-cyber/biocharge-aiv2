@@ -5,12 +5,6 @@ import { useDayContext } from '@/lib/dayContext';
 
 const UNDO_TIMEOUT = 5000;
 
-/**
- * QuickIntentEdit — toggle de baixa fricção no Hero da Home.
- * Ao ativar "Hoje é dia de descanso", força DayPhase → RECOVERY_DAY
- * com locked:true e dispara re-render da Priority Engine.
- * Um toast de Undo fica visível por 5s para evitar miss-clicks.
- */
 export default function QuickIntentEdit() {
   const { intent, locked, lockRestDay, unlockRestDay } = useDayContext();
   const [undoVisible, setUndoVisible] = useState(false);
@@ -21,7 +15,6 @@ export default function QuickIntentEdit() {
 
   function handleActivate() {
     if (isRestDay) return;
-    // salva o intent anterior para o Undo
     prevIntentRef.current = intent;
     lockRestDay();
     setUndoVisible(true);
@@ -43,7 +36,6 @@ export default function QuickIntentEdit() {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* ── Toggle pill ─────────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
         {isRestDay ? (
           <motion.button
@@ -78,7 +70,6 @@ export default function QuickIntentEdit() {
         )}
       </AnimatePresence>
 
-      {/* ── Undo toast ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {undoVisible && (
           <motion.div
@@ -91,7 +82,7 @@ export default function QuickIntentEdit() {
           >
             <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl border border-blue-500/25 bg-blue-500/8">
               <span className="text-xs text-blue-200/80">
-                🌙 Dia de descanso declarado. CTAs de treino removidos.
+                🌙 Dia de descanso declarado. As recomendações do dia foram ajustadas para recuperação.
               </span>
               <button
                 onClick={handleUndo}
