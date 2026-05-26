@@ -368,7 +368,10 @@ export default function Today() {
     checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
-  const readinessFaixa = prescriptionScore >= 80 ? 'Alta' : prescriptionScore >= 65 ? 'Moderada' : 'Baixa';
+  const readinessFaixa =
+  prescriptionScore >= 82 ? 'Alta' :
+  prescriptionScore >= 65 ? 'Moderada' :
+  'Baixa';
 
   const strainTarget =
     prescriptionScore >= 80 ? 16 :
