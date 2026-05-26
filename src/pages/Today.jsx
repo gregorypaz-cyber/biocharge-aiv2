@@ -80,7 +80,12 @@ function getDailyVerdict({
   const lowLoad = acwr != null && acwr <= 0.8;
   const highLoad = acwr != null && acwr >= 1.3;
 
-  if (prescriptionScore >= 80 && !sleepIsLimiting && !highLoad) {
+  const hasPhysio =
+  (checkin?.hrv && checkin.hrv > 0) ||
+  (checkin?.resting_hr && checkin.resting_hr > 0);
+
+if (prescriptionScore >= 82 && !sleepIsLimiting && !highLoad && hasPhysio) {
+
     return {
       mode: 'train_high',
       workoutIntensity: 'high',
