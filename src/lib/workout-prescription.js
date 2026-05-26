@@ -1,7 +1,8 @@
 // ─── Workout Prescription Engine ─────────────────────────────────────────────
-// Produces 3 daily workout options based on physiological analysis.
-// Conservative heuristic — inspired by Whoop strain model.
-// No network calls, no external dependencies.
+// Versão alinhada com a UX da Today:
+// - uma decisão principal por dia
+// - evita contradições entre recuperação x treino
+// - separa melhor treino forte / moderado / leve / recuperação
 
 const SAFETY_WARNINGS = [
   'Isto não é aconselhamento médico.',
@@ -9,251 +10,401 @@ const SAFETY_WARNINGS = [
   'Se tiver condição clínica, siga orientação profissional.',
 ];
 
-function _clampTime(mins, available) {
-  const base = available != null && available > 0 ? available : 45;
+function clampTime(mins, fallback = 45) {
+  const base = mins != null && mins > 0 ? mins : fallback;
   return Math.max(15, Math.min(90, base));
 }
 
-function _strainIntensity(range) {
+function strain(range) {
   return { type: 'strain', range };
 }
 
-function _rpeIntensity(range) {
+function rpe(range) {
   return { type: 'RPE', range };
 }
 
-function _todayStr() {
-  try {
-    return new Date().toISOString().slice(0, 10);
-  } catch {
-    return 'unknown';
-  }
+function todayStr() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function _uid() {
+function uid() {
   return 'rx_' + Math.random().toString(36).slice(2, 9);
 }
 
-function _runFocus(userPrefs, analysis) {
-  const sports = userPrefs.preferred_sports || [];
-  return sports.some(s => s.toLowerCase().includes('corr')) || !!analysis.runningEconomy;
+function hasRunFocus(userPrefs, analysis) {
+  const sports = userPrefs?.preferred_sports || [];
+  return sports.some((s) => String(s).toLowerCase().includes('corr')) || !!analysis?.runningEconomy;
 }
 
-// ─── Build 3 options per scenario ────────────────────────────────────────────
+function getSleepDebtHours(analysis) {
+  return analysis?.sleepDebt?.debt ?? analysis?.sleepDebtHours ?? 0;
+}
 
-function _overloadOptions(time) {
-  const t = _clampTime(time);
+export function buildWorkoutDecision(analysis, userPrefs = {}, context = {}) {
+  if (!analysis) return null;
+
+  const today = analysis.today || {};
+  const trainingLoad = analysis.trainingLoad || {};
+  const physioState = analysis.physioState || {};
+  const hrvAnomaly = analysis.hrvAnomaly || null;
+
+  const recovery = today.recovery_score ?? today.readiness_score ?? 0;
+  const fatigue = today.fatigue_score ?? today.fatigue ?? 0;
+  const sleepDebt = getSleepDebtHours(analysis);
+  const trainingRisk = trainingLoad.risk ?? null;
+  const trainingRatio = trainingLoad.ratio ?? null;
+  const deepSleepPct = context.deepSleepPct ?? today.deep_sleep_pct ?? null;
+
+  const deepSleepLow = deepSleepPct != null && deepSleepPct < 18;
+  const sleepIsLimiting = sleepDebt >= 4 || deepSleepLow;
+
+  const overloaded =
+    trainingRisk === 'high' ||
+    physioState.state === 'Overreached' ||
+    physioState.state === 'Fatigued' ||
+    (fatigue != null && fatigue >= 75) ||
+    (hrvAnomaly?.alert?.type === 'critical');
+
+  if (context.forceRecovery === true) {
+    return {
+      mode: 'recover',
+      headline: 'Hoje o foco é recuperar',
+      subheadline: 'Seu corpo se beneficia mais de descanso ou atividade leve do que de mais carga.',
+      primaryReason: 'forced_recovery',
+      confidence: 'Alta',
+    };
+  }
+
+  if (overloaded) {
+    return {
+      mode: 'recover',
+      headline: 'Hoje o foco é recuperar',
+      subheadline: 'Seu sistema mostra sinais de fadiga ou sobrecarga. Recuperar traz mais retorno do que insistir em treino.',
+      primaryReason: 'overload',
+      confidence: 'Alta',
+    };
+  }
+
+  if (recovery >= 80 && !sleepIsLimiting && trainingRisk !== 'high' && trainingRisk !== 'moderate') {
+    return {
+      mode: 'train_high',
+      headline: 'Hoje é uma boa janela para intensidade',
+      subheadline: 'Seu corpo acordou bem e tem margem para um estímulo mais forte com controle.',
+      primaryReason: 'high_readiness',
+      confidence: 'Alta',
+    };
+  }
+
+  if (recovery >= 65) {
+    if (sleepIsLimiting || trainingRisk === 'moderate') {
+      return {
+        mode: 'train_moderate',
+        headline: 'Treino moderado com cautela',
+        subheadline: 'Seu corpo está funcional, mas o sono ou a carga recente reduzem sua margem de intensidade.',
+        primaryReason: 'moderate_with_limiters',
+        confidence: 'Alta',
+      };
+    }
+
+    return {
+      mode: 'train_moderate',
+      headline: 'Treino moderado recomendado',
+      subheadline: 'Seu sistema está estável para manter ritmo e consistência hoje.',
+      primaryReason: 'moderate_readiness',
+      confidence: 'Alta',
+    };
+  }
+
+  if (recovery >= 50 || sleepIsLimiting || fatigue >= 50) {
+    return {
+      mode: 'train_light',
+      headline: 'Hoje vale manter leve',
+      subheadline: 'Há espaço para movimento, mas não para insistir em intensidade.',
+      primaryReason: 'low_margin',
+      confidence: 'Média',
+    };
+  }
+
+  return {
+    mode: 'recover',
+    headline: 'Recuperação é a melhor decisão',
+    subheadline: 'Seu corpo não mostra boa margem para carga útil hoje.',
+    primaryReason: 'low_readiness',
+    confidence: 'Alta',
+  };
+}
+
+function overloadOptions(time) {
+  const t = clampTime(time);
   return [
     {
       key: 'A',
-      title: 'Recuperação Ativa',
+      title: 'Mobilidade + Respiração',
       modality: 'Recuperação',
-      duration_min: Math.min(t, 30),
-      intensity: _strainIntensity([1, 4]),
+      duration_min: Math.min(t, 20),
+      intensity: rpe([1, 2]),
       structure: {
-        warmup: '5min caminhada leve',
-        main: 'Alongamento global + respiração diafragmática 10min',
-        cooldown: 'Repouso 10min',
+        warmup: '2min respiração nasal',
+        main: '10–15min mobilidade leve + respiração diafragmática',
+        cooldown: '2–3min relaxamento',
       },
-      rationale: 'Sinais de sobrecarga detectados — recuperação ativa é o estímulo correto agora.',
-      riskNote: 'Evite qualquer intensidade moderada ou alta hoje.',
+      rationale: 'Hoje o melhor retorno vem de baixar o estresse do sistema.',
+      riskNote: 'Evite intensidade moderada ou alta.',
     },
     {
       key: 'B',
-      title: 'Mobilidade + Caminhada Leve',
-      modality: 'Mobilidade',
+      title: 'Caminhada leve',
+      modality: 'Recuperação',
       duration_min: Math.min(t, 25),
-      intensity: _rpeIntensity([2, 4]),
+      intensity: strain([1, 4]),
       structure: {
-        warmup: '2min respiração',
-        main: 'Rotina de mobilidade articular + caminhada 10min em Z1',
-        cooldown: 'Alongamento estático 5min',
+        warmup: '3min soltando o corpo',
+        main: '15–20min caminhada leve, confortável',
+        cooldown: '2min respiração',
       },
-      rationale: 'Movimentação suave mantém circulação sem adicionar carga ao sistema nervoso.',
-      riskNote: 'Mantenha FC abaixo de 120 bpm.',
+      rationale: 'Movimento leve ajuda sem adicionar carga relevante.',
+      riskNote: 'Se o corpo parecer pesado, reduza ainda mais.',
     },
     {
       key: 'C',
-      title: 'Descanso Total',
+      title: 'Descanso total',
       modality: 'Recuperação',
       duration_min: null,
       intensity: null,
       structure: {
-        main: 'Descanso completo. Priorize hidratação, alimentação e sono.',
+        main: 'Descanso total. Priorize sono, hidratação e alimentação.',
       },
-      rationale: 'Com múltiplos sinais de sobrecarga, descanso total é a opção mais segura.',
+      rationale: 'Hoje descansar é uma escolha estratégica, não perda de dia.',
       riskNote: null,
     },
   ];
 }
 
-function _highRecoveryOptions(time, runFocus, ratio, level) {
-  const t = _clampTime(time);
-  const strainHigh = level === 'advanced' ? [13, 17] : level === 'beginner' ? [10, 14] : [12, 16];
+function highOptions(time, runFocus, level) {
+  const t = clampTime(time);
+  const highStrain =
+    level === 'advanced' ? [13, 17] :
+    level === 'beginner' ? [10, 14] :
+    [12, 16];
+
   if (runFocus) {
-    const mainDesc = ratio != null && ratio > 1.3
-      ? `Corrida Z2 contínua ${Math.round(t * 0.75)}min (FC confortável, fala possível)`
-      : `Intervalado leve: ${Math.round(t * 0.6)}min Z2 + 2x3min Z3 com recuperação`;
     return [
       {
         key: 'A',
-        title: ratio != null && ratio > 1.3 ? 'Corrida Z2 Build' : 'Corrida Intervalada Leve',
+        title: 'Corrida com estímulo forte',
         modality: 'Corrida',
         duration_min: t,
-        intensity: _strainIntensity(strainHigh),
+        intensity: strain(highStrain),
         structure: {
           warmup: '8min trote leve + mobilidade',
-          main: mainDesc,
-          cooldown: '5min trote + alongamento',
+          main: `Bloco principal de qualidade por ${Math.max(20, Math.round(t * 0.55))}min`,
+          cooldown: '5–8min trote leve + alongamento',
         },
-        rationale: `Recovery alto${ratio != null ? ` e ratio ${ratio.toFixed(2)}` : ''} — bom momento para carga de qualidade.`,
-        riskNote: null,
+        rationale: 'Hoje há boa margem para um estímulo mais forte.',
+        riskNote: 'Se o aquecimento não encaixar, troque para a opção B.',
       },
       {
         key: 'B',
-        title: 'Corrida Z2 Moderada',
+        title: 'Corrida Z2 moderada',
         modality: 'Corrida',
         duration_min: Math.min(t, 50),
-        intensity: _strainIntensity([8, 12]),
+        intensity: strain([8, 12]),
         structure: {
           warmup: '5min caminhada + mobilidade',
-          main: `Corrida Z2 contínua ${Math.min(t - 10, 40)}min`,
+          main: `Corrida Z2 contínua por ${Math.min(40, Math.max(25, t - 10))}min`,
           cooldown: '5min caminhada + alongamento',
         },
-        rationale: 'Alternativa segura com volume adequado em zona aeróbica.',
+        rationale: 'Alternativa segura caso você queira manter o dia produtivo sem forçar tanto.',
         riskNote: null,
       },
       {
         key: 'C',
-        title: 'Corrida Curta + Mobilidade',
+        title: 'Corrida curta + mobilidade',
         modality: 'Misto',
         duration_min: 30,
-        intensity: _strainIntensity([5, 9]),
+        intensity: strain([5, 9]),
         structure: {
           warmup: '3min caminhada',
-          main: '20min corrida Z2 leve',
+          main: '20min corrida leve',
           cooldown: '7min mobilidade',
         },
-        rationale: 'Opção de 30min para dias com pouco tempo disponível.',
+        rationale: 'Opção eficiente para agenda curta.',
         riskNote: null,
       },
     ];
   }
-  // Strength focus
+
   return [
     {
       key: 'A',
-      title: 'Força Moderada',
+      title: 'Força moderada/alta',
       modality: 'Força',
       duration_min: t,
-      intensity: _rpeIntensity([7, 9]),
+      intensity: rpe([7, 9]),
       structure: {
         warmup: '5min mobilidade + ativação',
-        main: `Treino de força: ${Math.round(t * 0.7)}min — série principal com cargas moderadas`,
+        main: 'Treino de força com séries principais em carga moderada/alta',
         cooldown: '5min alongamento',
       },
-      rationale: 'Recovery alto — bom momento para carga de força.',
-      riskNote: null,
+      rationale: 'Hoje há boa margem para um treino mais forte.',
+      riskNote: 'Mantenha técnica e controle.',
     },
     {
       key: 'B',
-      title: 'Corrida Z2',
-      modality: 'Corrida',
-      duration_min: Math.min(t, 45),
-      intensity: _strainIntensity([8, 12]),
-      structure: {
-        warmup: '5min caminhada',
-        main: `Corrida Z2 ${Math.min(t - 10, 35)}min`,
-        cooldown: '5min caminhada',
-      },
-      rationale: 'Alternativa aeróbica de baixo impacto articular.',
-      riskNote: null,
-    },
-    {
-      key: 'C',
-      title: 'Mobilidade + Z1 Curto',
-      modality: 'Misto',
-      duration_min: 30,
-      intensity: _strainIntensity([4, 8]),
-      structure: { main: '15min mobilidade + 15min caminhada ativa' },
-      rationale: 'Opção curta para dias com agenda apertada.',
-      riskNote: null,
-    },
-  ];
-}
-
-function _moderateRecoveryOptions(time, runFocus) {
-  const t = _clampTime(time);
-  return [
-    {
-      key: 'A',
-      title: 'Corrida Z2 Moderada',
-      modality: 'Corrida',
-      duration_min: Math.min(t, 45),
-      intensity: _strainIntensity([8, 12]),
-      structure: {
-        warmup: '5min caminhada + mobilidade',
-        main: `Corrida Z2 contínua ${Math.min(t - 10, 35)}min`,
-        cooldown: '5min caminhada + alongamento',
-      },
-      rationale: 'Recovery moderado — Z2 é a zona ideal para manter adaptação sem adicionar estresse.',
-      riskNote: 'Reduza se sentir cansaço excessivo nos primeiros 10min.',
-    },
-    {
-      key: 'B',
-      title: 'Força Técnica',
+      title: 'Força técnica',
       modality: 'Força',
       duration_min: Math.min(t, 45),
-      intensity: _rpeIntensity([5, 7]),
+      intensity: rpe([5, 7]),
       structure: {
         warmup: '5min mobilidade',
-        main: 'Treino de força com ênfase técnica — cargas submáximas',
+        main: 'Treino técnico com cargas submáximas',
         cooldown: '5min alongamento',
       },
-      rationale: 'Alternativa de força em intensidade controlada.',
+      rationale: 'Alternativa para manter progresso com menor custo de recuperação.',
       riskNote: null,
     },
     {
       key: 'C',
-      title: 'Mobilidade + Caminhada',
+      title: 'Mobilidade + caminhada',
       modality: 'Misto',
-      duration_min: Math.min(t, 30),
-      intensity: _rpeIntensity([2, 4]),
-      structure: { main: '15min mobilidade + 15min caminhada leve' },
-      rationale: 'Opção conservadora para manter movimento sem carga.',
+      duration_min: 30,
+      intensity: rpe([2, 4]),
+      structure: {
+        main: '15min mobilidade + 15min caminhada',
+      },
+      rationale: 'Opção curta e conservadora.',
       riskNote: null,
     },
   ];
 }
 
-function _lowRecoveryOptions(time) {
-  const t = _clampTime(time);
+function moderateOptions(time, runFocus, cautious = false) {
+  const t = clampTime(time);
+
+  if (runFocus) {
+    return [
+      {
+        key: 'A',
+        title: cautious ? 'Corrida Z2 controlada' : 'Corrida Z2 moderada',
+        modality: 'Corrida',
+        duration_min: Math.min(t, 45),
+        intensity: strain([8, 12]),
+        structure: {
+          warmup: '5min caminhada + mobilidade',
+          main: `Corrida Z2 contínua ${Math.min(35, Math.max(20, t - 10))}min`,
+          cooldown: '5min caminhada + alongamento',
+        },
+        rationale: cautious
+          ? 'Moderado é a melhor dose hoje. Evite transformar o moderado em forte.'
+          : 'Z2 é a melhor forma de manter adaptação sem custo excessivo.',
+        riskNote: cautious ? 'Reduza se o corpo não responder bem nos primeiros 10min.' : null,
+      },
+      {
+        key: 'B',
+        title: 'Corrida leve curta',
+        modality: 'Corrida',
+        duration_min: Math.min(t, 30),
+        intensity: strain([5, 8]),
+        structure: {
+          warmup: '5min caminhada',
+          main: '15–20min corrida leve',
+          cooldown: '5min caminhada',
+        },
+        rationale: 'Versão mais conservadora do dia.',
+        riskNote: null,
+      },
+      {
+        key: 'C',
+        title: 'Mobilidade + caminhada',
+        modality: 'Misto',
+        duration_min: 25,
+        intensity: rpe([2, 4]),
+        structure: {
+          main: '10min mobilidade + 15min caminhada',
+        },
+        rationale: 'Opção de manutenção sem quase nenhum custo de recuperação.',
+        riskNote: null,
+      },
+    ];
+  }
+
   return [
     {
       key: 'A',
-      title: 'Corrida Z1/Z2 Leve',
+      title: cautious ? 'Força técnica controlada' : 'Força técnica',
+      modality: 'Força',
+      duration_min: Math.min(t, 45),
+      intensity: rpe([5, 7]),
+      structure: {
+        warmup: '5min mobilidade',
+        main: 'Treino técnico com cargas submáximas',
+        cooldown: '5min alongamento',
+      },
+      rationale: cautious
+        ? 'Hoje o ganho está em consistência e controle, não em agressividade.'
+        : 'Boa alternativa para manter estímulo com controle.',
+      riskNote: cautious ? 'Se estiver pesado, migre para a opção B ou C.' : null,
+    },
+    {
+      key: 'B',
+      title: 'Cardio leve/moderado',
       modality: 'Corrida',
       duration_min: Math.min(t, 35),
-      intensity: _strainIntensity([5, 9]),
+      intensity: strain([6, 10]),
       structure: {
         warmup: '5min caminhada',
-        main: `Corrida Z1/Z2 muito leve ${Math.min(t - 10, 25)}min — priorize conforto`,
+        main: '20–25min cardio confortável',
         cooldown: '5min caminhada',
       },
-      rationale: 'Recovery baixo ou débito de sono elevado — intensidade reduzida é essencial.',
-      riskNote: 'Se cansaço piorar, converta em caminhada.',
+      rationale: 'Alternativa aeróbica controlada.',
+      riskNote: null,
+    },
+    {
+      key: 'C',
+      title: 'Mobilidade + caminhada',
+      modality: 'Misto',
+      duration_min: 25,
+      intensity: rpe([2, 4]),
+      structure: {
+        main: '10min mobilidade + 15min caminhada',
+      },
+      rationale: 'Opção conservadora.',
+      riskNote: null,
+    },
+  ];
+}
+
+function lightOptions(time) {
+  const t = clampTime(time);
+  return [
+    {
+      key: 'A',
+      title: 'Corrida ou caminhada leve',
+      modality: 'Corrida',
+      duration_min: Math.min(t, 30),
+      intensity: strain([5, 8]),
+      structure: {
+        warmup: '5min caminhada',
+        main: '15–20min muito confortáveis',
+        cooldown: '5min caminhada',
+      },
+      rationale: 'Hoje faz mais sentido manter o corpo ativo do que buscar performance.',
+      riskNote: 'Se o corpo estiver pesado, troque pela opção B ou C.',
     },
     {
       key: 'B',
       title: 'Mobilidade',
       modality: 'Mobilidade',
-      duration_min: Math.min(t, 25),
-      intensity: _rpeIntensity([1, 3]),
+      duration_min: Math.min(t, 20),
+      intensity: rpe([1, 3]),
       structure: {
-        main: 'Rotina de mobilidade completa — quadril, coluna, ombros',
-        cooldown: '5min respiração',
+        main: 'Rotina leve de mobilidade global',
       },
-      rationale: 'Mobilidade mantém amplitude sem adicionar carga cardiovascular.',
+      rationale: 'Ajuda a manter movimento com custo mínimo.',
       riskNote: null,
     },
     {
@@ -262,34 +413,42 @@ function _lowRecoveryOptions(time) {
       modality: 'Recuperação',
       duration_min: null,
       intensity: null,
-      structure: { main: 'Descanso ativo — caminhada leve ou repouso completo.' },
-      rationale: 'Com fadiga ou sono em déficit, descanso pode ser o melhor treino.',
+      structure: {
+        main: 'Descanso ou caminhada muito leve, se quiser se mover.',
+      },
+      rationale: 'Hoje descansar pode render mais do que insistir em treino.',
       riskNote: null,
     },
   ];
 }
 
-function _insufficientDataOptions(time) {
-  const t = _clampTime(time);
-  const note = 'Poucos dados disponíveis — recomendação conservadora por precaução.';
+function insufficientDataOptions(time) {
+  const t = clampTime(time);
+  const note = 'Poucos dados disponíveis — recomendação conservadora por segurança.';
   return [
     {
       key: 'A',
-      title: 'Corrida Z2 Conservadora',
+      title: 'Cardio leve',
       modality: 'Corrida',
-      duration_min: Math.min(t, 35),
-      intensity: _strainIntensity([5, 10]),
-      structure: { warmup: '5min caminhada', main: '25–30min corrida Z2 leve', cooldown: '5min caminhada' },
+      duration_min: Math.min(t, 30),
+      intensity: strain([5, 9]),
+      structure: {
+        warmup: '5min caminhada',
+        main: '15–20min leves',
+        cooldown: '5min caminhada',
+      },
       rationale: note,
-      riskNote: 'Sem dados suficientes — reduza se necessário.',
+      riskNote: 'Se não estiver encaixando, reduza.',
     },
     {
       key: 'B',
-      title: 'Mobilidade + Caminhada',
+      title: 'Mobilidade + caminhada',
       modality: 'Misto',
-      duration_min: Math.min(t, 30),
-      intensity: _rpeIntensity([2, 4]),
-      structure: { main: '15min mobilidade + 15min caminhada' },
+      duration_min: 25,
+      intensity: rpe([2, 4]),
+      structure: {
+        main: '10min mobilidade + 15min caminhada',
+      },
       rationale: note,
       riskNote: null,
     },
@@ -299,62 +458,79 @@ function _insufficientDataOptions(time) {
       modality: 'Recuperação',
       duration_min: null,
       intensity: null,
-      structure: { main: 'Descanso ou atividade muito leve.' },
+      structure: {
+        main: 'Descanso ou atividade muito leve.',
+      },
       rationale: note,
       riskNote: null,
     },
   ];
 }
 
-// ─── Option scoring ───────────────────────────────────────────────────────────
-
-function scoreOptions(options, analysis, userPrefs, adaptationHint) {
-  const runFocus = _runFocus(userPrefs, analysis);
+function scoreOptions(options, analysis, userPrefs, adaptationHint, decision) {
+  const runFocus = hasRunFocus(userPrefs, analysis);
   const freqC = adaptationHint?.freqC ?? 0;
   const avgRPE = adaptationHint?.avgPerceivedRPE ?? null;
-  const recovery = analysis?.today?.recovery_score ?? analysis?.today?.readiness_score ?? null;
   const ratio = analysis?.trainingLoad?.ratio ?? null;
+  const recovery = analysis?.today?.recovery_score ?? analysis?.today?.readiness_score ?? null;
 
-  return options.map(opt => {
+  return options.map((opt) => {
     let score = 50;
     const explain = [];
 
-    // +20 if modality matches run focus
+    if (decision?.mode === 'train_high' && opt.key === 'A') {
+      score += 18;
+      explain.push({ feature: 'best_match_high', impact: +18 });
+    }
+
+    if (decision?.mode === 'train_moderate' && opt.key === 'A') {
+      score += 18;
+      explain.push({ feature: 'best_match_moderate', impact: +18 });
+    }
+
+    if (decision?.mode === 'train_light' && opt.key === 'A') {
+      score += 18;
+      explain.push({ feature: 'best_match_light', impact: +18 });
+    }
+
+    if (decision?.mode === 'recover' && ['B', 'C'].includes(opt.key)) {
+      score += 18;
+      explain.push({ feature: 'best_match_recovery', impact: +18 });
+    }
+
     if (runFocus && ['Corrida', 'Misto'].includes(opt.modality)) {
-      score += 20;
-      explain.push({ feature: 'run_focus', impact: +20 });
-    }
-
-    // -25 if high intensity but avg RPE >= 8 historically
-    const maxIntensity = opt.intensity?.range?.[1];
-    if (avgRPE != null && avgRPE >= 8 && maxIntensity != null && maxIntensity >= 12) {
-      score -= 25;
-      explain.push({ feature: 'high_rpe_history', impact: -25 });
-    }
-
-    // +10 if shorter option preferred (freqC > 0.5) and this is option C or short
-    if (freqC > 0.5 && (opt.key === 'C' || (opt.duration_min != null && opt.duration_min <= 30))) {
       score += 10;
-      explain.push({ feature: 'prefers_short', impact: +10 });
+      explain.push({ feature: 'run_focus', impact: +10 });
     }
 
-    // +15 if high recovery and option is quality/competitive
-    if (recovery != null && recovery >= 80 && ['Corrida', 'Força'].includes(opt.modality) && opt.key === 'A') {
-      score += 15;
-      explain.push({ feature: 'high_recovery_quality', impact: +15 });
+    const maxIntensity = opt.intensity?.range?.[1];
+    if (avgRPE != null && avgRPE >= 8 && maxIntensity != null && maxIntensity >= 8) {
+      score -= 15;
+      explain.push({ feature: 'high_rpe_history', impact: -15 });
     }
 
-    // +15 if high ratio and option is protective (Recuperação/Mobilidade)
-    if (ratio != null && ratio > 1.3 && ['Recuperação', 'Mobilidade'].includes(opt.modality)) {
-      score += 15;
-      explain.push({ feature: 'high_ratio_protective', impact: +15 });
+    if (freqC > 0.5 && (opt.key === 'C' || (opt.duration_min != null && opt.duration_min <= 30))) {
+      score += 6;
+      explain.push({ feature: 'prefers_short', impact: +6 });
     }
 
-    return { ...opt, _score: Math.max(0, Math.min(100, score)), _explain: explain.slice(0, 3) };
+    if (ratio != null && ratio > 1.3 && ['Recuperação', 'Mobilidade', 'Misto'].includes(opt.modality)) {
+      score += 10;
+      explain.push({ feature: 'protective_under_high_load', impact: +10 });
+    }
+
+    if (recovery != null && recovery >= 80 && opt.key === 'A' && decision?.mode === 'train_high') {
+      score += 10;
+      explain.push({ feature: 'high_recovery_supports_A', impact: +10 });
+    }
+
+    return {
+      ...opt,
+      _score: Math.max(0, Math.min(100, score)),
+      _explain: explain.slice(0, 3),
+    };
   });
 }
-
-// ─── Main export ──────────────────────────────────────────────────────────────
 
 export function prescribeWorkout(analysis, userPrefs = {}, opts = {}) {
   try {
@@ -368,112 +544,82 @@ export function prescribeWorkout(analysis, userPrefs = {}, opts = {}) {
 
     const recovery = today.recovery_score ?? today.readiness_score ?? null;
     const fatigue = today.fatigue_score ?? today.fatigue ?? null;
-    const rhr = today.resting_hr ?? today.resting_heart_rate ?? null;
-
     const trainingRisk = trainingLoad.risk ?? null;
     const trainingRatio = trainingLoad.ratio ?? null;
     const sleepDebtHours = sleepDebt.debt ?? null;
 
-    // HRV delta from baseline insights
     let hrvDeltaPct = null;
     if (Array.isArray(analysis.baselineInsights)) {
-      const hrvInsight = analysis.baselineInsights.find(i => i.label === 'HRV');
+      const hrvInsight = analysis.baselineInsights.find((i) => i.label === 'HRV');
       if (hrvInsight) hrvDeltaPct = hrvInsight.delta ?? null;
     }
 
     const time = userPrefs.available_time_minutes;
     const level = userPrefs.level || 'intermediate';
-    const runFocus = _runFocus(userPrefs, analysis);
-
-    // ── Determine confidence ──────────────────────────────────────────────────
-    let confidence = 'Média';
-    if (trainingRisk === 'insufficient_data' || recovery == null) {
-      confidence = 'Baixa';
-    }
-
-    // ── Overload guardrail ────────────────────────────────────────────────────
-    const isOverloaded =
-      trainingRisk === 'high' ||
-      physioState.state === 'Overreached' ||
-      (fatigue != null && fatigue > 75) ||
-      (hrvAnomaly && hrvAnomaly.alert && hrvAnomaly.alert.type === 'critical');
-
-    if (isOverloaded) {
-      confidence = 'Alta';
-    }
-
-    // ── State tags ────────────────────────────────────────────────────────────
-    const stateTag = physioState.state || null;
-    const riskTag = trainingRisk || null;
-
+    const runFocus = hasRunFocus(userPrefs, analysis);
     const adaptationHint = opts.adaptationHint ?? null;
 
-    // ── Choose options ────────────────────────────────────────────────────────
+    const decision = buildWorkoutDecision(analysis, userPrefs, {
+      deepSleepPct: opts.deepSleepPct ?? today.deep_sleep_pct ?? null,
+      forceRecovery: opts.forceRecovery ?? false,
+    });
+
     let options;
 
-    if (confidence === 'Baixa' && recovery == null) {
-      options = _insufficientDataOptions(time);
-    } else if (isOverloaded) {
-      options = _overloadOptions(time);
-    } else if (recovery != null && recovery >= 80) {
-      options = _highRecoveryOptions(time, runFocus, trainingRatio, level);
-    } else if (recovery != null && recovery >= 65) {
-      options = _moderateRecoveryOptions(time, runFocus);
-    } else if (
-      (recovery != null && recovery >= 50) ||
-      (sleepDebtHours != null && sleepDebtHours >= 3) ||
-      (fatigue != null && fatigue >= 50 && fatigue <= 75)
-    ) {
-      options = _lowRecoveryOptions(time);
-    } else if (recovery != null && recovery < 50) {
-      options = _overloadOptions(time);
+    if (!decision || recovery == null) {
+      options = insufficientDataOptions(time);
+    } else if (decision.mode === 'recover') {
+      options = overloadOptions(time);
+    } else if (decision.mode === 'train_high') {
+      options = highOptions(time, runFocus, level);
+    } else if (decision.mode === 'train_moderate') {
+      const cautious = decision.primaryReason === 'moderate_with_limiters';
+      options = moderateOptions(time, runFocus, cautious);
+    } else if (decision.mode === 'train_light') {
+      options = lightOptions(time);
     } else {
-      options = _insufficientDataOptions(time);
+      options = insufficientDataOptions(time);
     }
 
-    // ── Strengthen confidence when signals are consistent ────────────────────
-    if (
-      confidence === 'Média' &&
-      trainingRisk !== 'insufficient_data' &&
-      recovery != null &&
-      fatigue != null
-    ) {
-      if ((trainingRisk === 'high' || trainingRisk === 'moderate') && fatigue > 50) {
-        confidence = 'Alta';
-      }
-    }
+    options = scoreOptions(options, analysis, userPrefs, adaptationHint, decision);
 
-    // ── Score options + apply adaptation ─────────────────────────────────────
-    options = scoreOptions(options, analysis, userPrefs, adaptationHint);
-
-    // Apply soft adaptation cap (15%) if adaptationHint provided
     if (adaptationHint) {
-      options = options.map(opt => {
-        let adapted = { ...opt };
+      options = options.map((opt) => {
+        const adapted = { ...opt };
+
         if (adapted.duration_min != null) {
-          adapted.duration_min = Math.max(15, Math.round(adapted.duration_min * 0.85));
+          adapted.duration_min = Math.max(15, Math.round(adapted.duration_min * 0.9));
         }
+
         if (adapted.intensity?.range) {
           adapted.intensity = {
             ...adapted.intensity,
-            range: adapted.intensity.range.map(v => Math.max(1, Math.round(v * 0.85))),
+            range: adapted.intensity.range.map((v) => Math.max(1, Math.round(v * 0.9))),
           };
         }
+
         adapted.adaptationApplied = true;
         adapted.adaptationReason = 'historic_adherence';
         return adapted;
       });
     }
 
-    // Determine recommendedKey by highest score (stable sort, keep original order for ties)
     const sorted = [...options].sort((a, b) => b._score - a._score);
     const recommendedKey = sorted[0]?.key ?? 'A';
     const explainTop = (sorted[0]?._explain || []).slice(0, 3);
 
     const result = {
-      id: _uid(),
-      date: today.date || _todayStr(),
-      summary: { confidence, stateTag, riskTag },
+      id: uid(),
+      date: today.date || todayStr(),
+      summary: {
+        confidence: decision?.confidence || 'Média',
+        stateTag: physioState.state || null,
+        riskTag: trainingRisk || null,
+        mode: decision?.mode || 'train_light',
+        primaryReason: decision?.primaryReason || 'fallback',
+        headline: decision?.headline || 'Plano do dia',
+        subheadline: decision?.subheadline || 'Use o treino de hoje com controle.',
+      },
       options,
       recommendedKey,
       explainTop,
@@ -486,7 +632,7 @@ export function prescribeWorkout(analysis, userPrefs = {}, opts = {}) {
         hrvDeltaPct,
       },
       safetyWarnings: SAFETY_WARNINGS,
-      provenance: 'heuristic',
+      provenance: 'heuristic_v2',
     };
 
     return result;
@@ -496,24 +642,32 @@ export function prescribeWorkout(analysis, userPrefs = {}, opts = {}) {
   }
 }
 
-// ─── Optional text formatter ──────────────────────────────────────────────────
-
 export function formatPrescriptionText(prescription) {
   if (!prescription) return '';
   try {
     const lines = [];
     lines.push(`📋 Prescrição de Treino — ${prescription.date}`);
-    lines.push(`Confiança: ${prescription.summary.confidence}${prescription.summary.stateTag ? ` | Estado: ${prescription.summary.stateTag}` : ''}`);
+    lines.push(
+      `Confiança: ${prescription.summary.confidence}${
+        prescription.summary.stateTag ? ` | Estado: ${prescription.summary.stateTag}` : ''
+      }`
+    );
     lines.push('');
+
     for (const opt of prescription.options) {
       lines.push(`[${opt.key}] ${opt.title} (${opt.modality})`);
       if (opt.duration_min) lines.push(`  ⏱ ${opt.duration_min}min`);
-      if (opt.intensity) lines.push(`  💥 ${opt.intensity.type === 'strain' ? 'Strain' : 'RPE'} ${opt.intensity.range[0]}–${opt.intensity.range[1]}`);
-      if (opt.structure.main) lines.push(`  📌 ${opt.structure.main}`);
+      if (opt.intensity) {
+        lines.push(
+          `  💥 ${opt.intensity.type === 'strain' ? 'Strain' : 'RPE'} ${opt.intensity.range[0]}–${opt.intensity.range[1]}`
+        );
+      }
+      if (opt.structure?.main) lines.push(`  📌 ${opt.structure.main}`);
       lines.push(`  💬 ${opt.rationale}`);
       if (opt.riskNote) lines.push(`  ⚠️ ${opt.riskNote}`);
       lines.push('');
     }
+
     return lines.join('\n');
   } catch (e) {
     console.warn('formatPrescriptionText failed', e);
