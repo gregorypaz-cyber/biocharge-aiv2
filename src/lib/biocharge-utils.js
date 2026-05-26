@@ -346,9 +346,9 @@ export function getZoneColor(zone) {
 
 export function getZoneLabel(zone) {
   const labels = {
-    green: 'Prontidão alta',
-    yellow: 'Prontidão moderada',
-    red: 'Prontidão baixa',
+    green: 'Recovery alto',
+    yellow: 'Recovery moderado',
+    red: 'Recovery baixo',
   };
   return labels[zone] || 'Indefinido';
 }
