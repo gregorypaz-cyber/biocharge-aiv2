@@ -97,24 +97,63 @@ await base44.entities.TrainingSession.update(created.id, {
 });
 
       // Update checkin with new strain/state
-      if (checkin?.id) {
-        const totalStrain = Math.min(21, allSessions.reduce((s, t) => s + (t.strain_score || 0), 0));
-        const { calculateBodyState, calculateRemainingCapacity, calculateRecoveryDemand, calculateSleepNeed } = await import('@/lib/training-impact-engine');
-        const { calcNextDayForecast } = await import('@/lib/biocharge-utils');
-        const morningRecovery = checkin.morning_recovery_score || checkin.recovery_score || 70;
-        const sleepNeed = calculateSleepNeed(totalStrain, morningRecovery);
-// ✅ importar normalizador
-const { normalizeDailySignals, computeCheckinScores } = await import('@/lib/biocharge-utils');
+if (checkin?.id) {
+  const totalStrain = Math.min(
+    21,
+    allSessions.reduce((s, t) => s + (t.strain_score || 0), 0)
+  );
 
-const updatedBase = {
-  ...checkin,
-  daily_strain_accumulated: totalStrain,
-  current_body_state: calculateBodyState(morningRecovery, totalStrain),
-  remaining_capacity: calculateRemainingCapacity(morningRecovery, totalStrain),
-  recovery_demand: calculateRecoveryDemand(totalStrain, morningRecovery),
-  sleep_need_tonight: sleepNeed,
-  next_day_forecast: calcNextDayForecast(morningRecovery, sleepNeed),
-};
+  const {
+    calculateBodyState,
+    calculateRemainingCapacity,
+    calculateRecoveryDemand,
+    calculateSleepNeed,
+  } = await import('@/lib/training-impact-engine');
+
+  const { computeCheckinScores } = await import('@/lib/biocharge-utils');
+
+  const morningRecovery = checkin.morning_recovery_score || checkin.recovery_score || 70;
+  const sleepNeed = calculateSleepNeed(totalStrain, morningRecovery);
+
+  const nonTodayRecentCheckins = [...recentCheckins]
+    .filter((c) => c.id !== checkin.id)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    .slice(0, 14);
+
+  const updatedBase = {
+    ...checkin,
+    daily_strain_accumulated: totalStrain,
+    current_body_state: calculateBodyState(morningRecovery, totalStrain),
+    remaining_capacity: calculateRemainingCapacity(morningRecovery, totalStrain),
+    recovery_demand: calculateRecoveryDemand(totalStrain, morningRecovery),
+    sleep_need_tonight: sleepNeed,
+  };
+
+  const normalized = computeCheckinScores(
+    updatedBase,
+    nonTodayRecentCheckins,
+    allSessions
+  );
+
+  normalized.morning_recovery_score =
+    checkin.morning_recovery_score ??
+    checkin.recovery_score ??
+    normalized.recovery_score;
+
+  await base44.entities.DailyCheckin.update(checkin.id, {
+    daily_strain_accumulated: normalized.daily_strain_accumulated,
+    current_body_state: updatedBase.current_body_state,
+    remaining_capacity: updatedBase.remaining_capacity,
+    recovery_demand: updatedBase.recovery_demand,
+    zone: normalized.zone,
+    recommendation: normalized.recommendation,
+    training_load: normalized.training_load,
+    headline_today: normalized.headline_today,
+    sleep_need_tonight: normalized.sleep_need_tonight,
+    next_day_forecast: normalized.next_day_forecast,
+    morning_recovery_score: normalized.morning_recovery_score,
+  });
+}
 
 // ✅ recalcular TODOS os sinais corretamente
 const normalized = computeCheckinScores(
