@@ -241,17 +241,28 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
 
 export function calculateSleepScore(checkin) {
   const base = clamp(checkin.sleep_score ?? 0);
-  const hours = Number(checkin.sleep_hours ?? 0);
   const deep = normalizeDeepSleep(checkin.deep_sleep_pct);
+  const hours = getSleepHoursScore(checkin.sleep_hours);
 
-  let hoursAdj = 0;
-  if (hours >= 8) hoursAdj = 8;
-  else if (hours >= 7) hoursAdj = 4;
-  else if (hours >= 6) hoursAdj = 0;
-  else if (hours > 0) hoursAdj = -10;
+  const weighted = [
+    { value: base, weight: 0.65 },
+    { value: hours, weight: 0.20 },
+    { value: deep, weight: 0.15 },
+  ];
 
-  const score = base * 0.65 + deep * 0.35 + hoursAdj;
-  return clamp(Math.round(score));
+  let total = 0;
+  let weightSum = 0;
+
+  for (const item of weighted) {
+    if (item.value != null) {
+      total += item.value * item.weight;
+      weightSum += item.weight;
+    }
+  }
+
+  if (weightSum <= 0) return 0;
+
+  return clamp(Math.round(total / weightSum));
 }
 
 export function calculateFatigueScore(checkin) {
