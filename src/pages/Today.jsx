@@ -1,258 +1,163 @@
-/**
- * Today.jsx — BioCharge AI
- * Redesigned: Action-First, Radical Simplification
- * Answers: 1) Como estou? 2) O que fazer? 3) Por quê? (colapsível)
- */
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import {
-  Plus, Zap, Dumbbell, Moon, Heart, ChevronDown, ChevronUp,
-  X, ArrowRight, Flame, Activity, CheckCircle2, AlertTriangle
-} from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import {
-  calculateBodyState, calculateRemainingCapacity,
-  calculateRecoveryDemand, calculateSleepNeed
+  calculateBodyState,
+  calculateRemainingCapacity,
+  calculateRecoveryDemand,
+  calculateSleepNeed,
 } from '@/lib/training-impact-engine';
 import { runPhysiologicalAnalysisAsync } from '@/lib/physiological-engine';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
-import { buildCardLayout, resolveWorkoutIntensity } from '@/utils/priorityEngine';
-import AddTrainingModal from '@/components/training/AddTrainingModal';
+
+import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
+import CurrentStateCard from '@/components/today/CurrentStateCard';
+import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutSuggestionCard from '@/components/today/WorkoutSuggestionCard';
+import NarrativeCard from '@/components/intelligence/NarrativeCard';
+import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
+import SecondaryMetrics from '@/components/today/SecondaryMetrics';
+import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
+import QuickIntentEdit from '@/components/today/QuickIntentEdit';
+import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { useStreak } from '@/hooks/useStreak';
+import { buildCardLayout } from '@/utils/priorityEngine';
 
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-/** SVG arc gauge — 270° span, like a classic sport watch */
-function ScoreArc({ score = 0, size = 180 }) {
-  const cx = size / 2, cy = size / 2;
-  const r = size * 0.40;
-  const sw = size * 0.065;
-  const circ = 2 * Math.PI * r;
-  const arcSpan = 0.75; // 270°
-  const arcLen = circ * arcSpan;
-  const fillLen = Math.max(0, Math.min(1, score / 100)) * arcLen;
-  const color =
-    score >= 80 ? '#34d399' :
-    score >= 65 ? '#fbbf24' :
-                  '#f87171';
-  const glowColor =
-    score >= 80 ? 'rgba(52,211,153,0.35)' :
-    score >= 65 ? 'rgba(251,191,36,0.35)' :
-                  'rgba(248,113,113,0.35)';
-
-  // rotate(135°) → arc starts at ~7-o'clock, ends at ~5-o'clock
-  const rot = `rotate(135, ${cx}, ${cy})`;
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      style={{ overflow: 'visible', filter: `drop-shadow(0 0 12px ${glowColor})` }}
-    >
-      {/* Track */}
-      <circle
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke="hsl(220,18%,11%)"
-        strokeWidth={sw}
-        strokeDasharray={`${arcLen} ${circ - arcLen}`}
-        strokeLinecap="round"
-        transform={rot}
-      />
-      {/* Progress */}
-      {score > 1 && (
-        <circle
-          cx={cx} cy={cy} r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={sw}
-          strokeDasharray={`${fillLen} ${circ - fillLen}`}
-          strokeLinecap="round"
-          transform={rot}
-          style={{ transition: 'stroke-dasharray 1s cubic-bezier(.4,0,.2,1)' }}
-        />
-      )}
-    </svg>
-  );
+function getSleepDebtHours(analysis) {
+  return analysis?.sleepDebt?.debt ?? analysis?.sleepDebtHours ?? 0;
 }
 
-/** Single bottleneck insight — the #1 limiting factor today */
-function getBottleneck(checkin, analysis, checkins = []) {
-  if (!checkin) return null;
-  const candidates = [];
+function getDailyVerdict({
+  checkin,
+  analysis,
+  phase,
+  intent,
+  locked,
+  displayedScore,
+  prescriptionScore,
+  deepSleepPct,
+  totalStrain,
+  todaySessions,
+}) {
+  const sleepDebt = getSleepDebtHours(analysis);
+  const acwr = analysis?.trainingLoad?.ratio ?? null;
+  const physioState = analysis?.physioState?.state ?? checkin?.current_body_state ?? null;
+  const recoveryDemand = checkin?.recovery_demand ?? 0;
+  const morningRecovery = checkin?.morning_recovery_score ?? checkin?.recovery_score ?? 0;
 
-  const sleepHrs = checkin.sleep_hours ?? null;
-  if (sleepHrs !== null && sleepHrs < 7) {
-    const deficit = (7.5 - sleepHrs).toFixed(1);
-    candidates.push({
-      score: (7.5 - sleepHrs) * 25,
-      icon: '🌙',
-      label: `Sono insuficiente`,
-      value: `${sleepHrs}h (−${deficit}h do ideal)`,
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/8 border-blue-500/20',
-    });
-  }
+  const forcedRecovery =
+    (intent === 'recovery' && locked) ||
+    phase === 'RECOVERY_DAY' ||
+    phase === 'OVERLOAD' ||
+    physioState === 'Overreached' ||
+    physioState === 'Fatigued' ||
+    recoveryDemand > morningRecovery;
 
-  const hrvDelta = analysis?.baselineInsights?.find(i => i.label === 'HRV')?.delta ?? null;
-  if (hrvDelta !== null && hrvDelta < -10) {
-    candidates.push({
-      score: Math.abs(hrvDelta),
-      icon: '💗',
-      label: 'HRV abaixo do seu normal',
-      value: `${Math.round(hrvDelta)}% vs semana`,
-      color: 'text-yellow-400',
-      bg: 'bg-yellow-500/8 border-yellow-500/20',
-    });
-  }
-
-  const fatigue = checkin.fatigue_score ?? checkin.fatigue ?? 0;
-  if (fatigue > 58) {
-    candidates.push({
-      score: fatigue,
-      icon: '🔋',
-      label: 'Fadiga acumulada',
-      value: `${Math.round(fatigue)}/100`,
-      color: 'text-orange-400',
-      bg: 'bg-orange-500/8 border-orange-500/20',
-    });
-  }
-
-  const sleepScore = checkin.sleep_score ?? null;
-  if (sleepScore !== null && sleepScore < 65) {
-    candidates.push({
-      score: 100 - sleepScore,
-      icon: '😴',
-      label: 'Qualidade do sono baixa',
-      value: `${Math.round(sleepScore)}/100`,
-      color: 'text-blue-300',
-      bg: 'bg-blue-500/8 border-blue-500/20',
-    });
-  }
-
-  if (candidates.length === 0) return null;
-  candidates.sort((a, b) => b.score - a.score);
-  return candidates[0];
-}
-
-/** Get training action config based on readiness + phase */
-function getActionConfig(phase, workoutIntensity, recommendation, isRestDay) {
-  if (isRestDay || phase === 'RECOVERY_DAY') {
+  if (forcedRecovery) {
     return {
-      emoji: '🌙',
-      badge: 'Recuperação',
-      badgeClass: 'bg-blue-500/15 text-blue-400',
-      title: 'Dia de descanso',
-      subtitle: recommendation || 'Hidrate, alongue, descanse. A adaptação acontece no repouso.',
-      ctaLabel: 'Protocolo de recuperação',
-      ctaClass: 'bg-secondary border border-border/60 text-muted-foreground hover:bg-secondary/80',
-      ctaIcon: Moon,
-      showAddBtn: false,
-      variant: 'rest',
+      mode: 'recover',
+      workoutIntensity: 'low',
+      headline: 'Hoje o foco é recuperar',
+      subheadline: 'Seu corpo se beneficia mais de descanso ou atividade leve do que de mais carga.',
+      rationale: 'Recuperação > treino hoje',
+      caution: 'Evite intensidade alta e preserve o sistema para os próximos 1–2 dias.',
     };
   }
-  if (phase === 'OVERLOAD') {
+
+  const deepSleepLow = deepSleepPct != null && deepSleepPct < 18;
+  const sleepIsLimiting = sleepDebt >= 4 || deepSleepLow;
+  const lowLoad = acwr != null && acwr <= 0.8;
+  const highLoad = acwr != null && acwr >= 1.3;
+
+  if (prescriptionScore >= 80 && !sleepIsLimiting && !highLoad) {
     return {
-      emoji: '⚠️',
-      badge: 'Atenção',
-      badgeClass: 'bg-orange-500/15 text-orange-400',
-      title: 'Carga máxima atingida',
-      subtitle: 'Adicionar mais volume hoje aumenta risco de overtraining.',
-      ctaLabel: 'Adicionar treino (cuidado)',
-      ctaClass: 'bg-secondary border border-orange-500/30 text-orange-400 hover:bg-orange-500/10',
-      ctaIcon: AlertTriangle,
-      showAddBtn: true,
-      variant: 'warning',
+      mode: 'train_high',
+      workoutIntensity: 'high',
+      headline: 'Hoje é uma boa janela para intensidade',
+      subheadline: 'Seu corpo acordou bem e tem margem para um estímulo mais forte com controle.',
+      rationale: 'Prontidão alta',
+      caution: lowLoad ? 'Há margem de carga, mas ainda vale respeitar sua percepção no aquecimento.' : 'Aqueça progressivamente e confirme a resposta do corpo.',
     };
   }
-  if (phase === 'OPTIMAL_LOAD') {
+
+  if (displayedScore >= 65) {
+    if (sleepIsLimiting || highLoad) {
+      return {
+        mode: 'train_moderate',
+        workoutIntensity: 'moderate',
+        headline: 'Treino moderado com cautela',
+        subheadline: 'Seu corpo está funcional, mas o sono ou a carga recente reduzem sua margem de intensidade.',
+        rationale: 'Moderado é a melhor dose hoje',
+        caution: 'Mantenha o treino sob controle e evite transformar o moderado em forte.',
+      };
+    }
+
     return {
-      emoji: '✅',
-      badge: 'Missão cumprida',
-      badgeClass: 'bg-emerald-500/15 text-emerald-400',
-      title: 'Carga do dia completa',
-      subtitle: 'Ótimo trabalho. Agora deixe o corpo absorver o estímulo.',
-      ctaLabel: 'Adicionar outro treino',
-      ctaClass: 'bg-secondary border border-border/40 text-muted-foreground hover:bg-secondary/80',
-      ctaIcon: Dumbbell,
-      showAddBtn: true,
-      variant: 'done',
+      mode: 'train_moderate',
+      workoutIntensity: 'moderate',
+      headline: 'Treino moderado recomendado',
+      subheadline: 'Seu sistema está estável para manter ritmo e consistência hoje.',
+      rationale: 'Melhor dose para hoje',
+      caution: 'Se o aquecimento não encaixar, reduza um nível.',
     };
   }
-  // PLANNING
-  const map = {
-    high: {
-      emoji: '🔥',
-      badge: 'Alta prontidão',
-      badgeClass: 'bg-emerald-500/15 text-emerald-400',
-      title: 'Treino forte recomendado',
-      subtitle: recommendation || 'Janela de performance aberta — aproveite o estímulo.',
-      ctaLabel: 'Registrar treino',
-      ctaClass: 'bg-emerald-500 text-black font-bold hover:bg-emerald-400',
-      ctaIcon: Flame,
-      showAddBtn: true,
-      variant: 'high',
-    },
-    moderate: {
-      emoji: '⚡',
-      badge: 'Prontidão moderada',
-      badgeClass: 'bg-yellow-500/15 text-yellow-400',
-      title: 'Treino moderado',
-      subtitle: recommendation || 'Ritmo sustentável. Foque na qualidade de execução.',
-      ctaLabel: 'Registrar treino',
-      ctaClass: 'bg-primary text-primary-foreground hover:bg-primary/90',
-      ctaIcon: Dumbbell,
-      showAddBtn: true,
-      variant: 'moderate',
-    },
-    low: {
-      emoji: '🚶',
-      badge: 'Prontidão baixa',
-      badgeClass: 'bg-red-500/15 text-red-400',
-      title: 'Treino leve',
-      subtitle: recommendation || 'Estimule sem sobrecarregar. Menos é mais hoje.',
-      ctaLabel: 'Registrar treino',
-      ctaClass: 'bg-secondary border border-border/60 text-foreground hover:bg-secondary/80',
-      ctaIcon: Activity,
-      showAddBtn: true,
-      variant: 'low',
-    },
+
+  if (displayedScore >= 50) {
+    return {
+      mode: 'train_light',
+      workoutIntensity: 'low',
+      headline: 'Hoje vale manter leve',
+      subheadline: 'Há espaço para movimento, mas não para insistir em intensidade.',
+      rationale: 'Leve para preservar amanhã',
+      caution: 'Use o treino como manutenção, não como teste.',
+    };
+  }
+
+  return {
+    mode: 'recover',
+    workoutIntensity: 'low',
+    headline: 'Recuperação é a melhor decisão',
+    subheadline: 'Seu corpo não mostra boa margem para carga útil hoje.',
+    rationale: 'Baixa prontidão',
+    caution: 'Sono, hidratação e redução de estresse geram mais retorno do que forçar treino.',
   };
-  return map[workoutIntensity] ?? map.moderate;
 }
-
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Today() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const today = getTodayLocal();
 
-  // ── Data fetching ──────────────────────────────────────────────────────────
   const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(30);
   const { data: allSessions = [], isLoading: loadingSessions } = useUserTrainingSessions(100);
 
-  const todayCheckins = checkins.filter(c => c.date === today);
-  const rawCheckin = todayCheckins[0];
-  const computed = useMemo(
-    () => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])),
-    [checkins]
-  );
-  const todaySessions = allSessions.filter(s => s.date === today);
+  const sortedCheckins = useMemo(() => {
+    return [...checkins].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [checkins]);
+
+  const sortedSessions = useMemo(() => {
+    return [...allSessions].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [allSessions]);
+
+  const todayCheckins = sortedCheckins.filter((c) => c.date === today);
+  const rawCheckin = todayCheckins[0] || null;
+
+  const computed = useMemo(() => {
+    return sortedCheckins.map((c, i) => computeCheckinScores(c, sortedCheckins.slice(i + 1), []));
+  }, [sortedCheckins]);
+
+  const todaySessions = sortedSessions.filter((s) => s.date === today);
 
   const weekSessions = useMemo(() => {
     const now = new Date();
@@ -260,220 +165,721 @@ export default function Today() {
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     const monday = new Date(now);
     monday.setDate(now.getDate() + mondayOffset);
-    const mondayStr = monday.toISOString().slice(0, 10);
-    return allSessions.filter(s => s.date >= mondayStr);
-  }, [allSessions]);
 
-  // ── Engine scores ──────────────────────────────────────────────────────────
+    const yyyy = monday.getFullYear();
+    const mm = String(monday.getMonth() + 1).padStart(2, '0');
+    const dd = String(monday.getDate()).padStart(2, '0');
+    const mondayStr = `${yyyy}-${mm}-${dd}`;
+
+    return sortedSessions.filter((s) => s.date >= mondayStr);
+  }, [sortedSessions]);
+
   const engineScores = rawCheckin
-    ? computeCheckinScores(rawCheckin, checkins.slice(1), todaySessions)
+    ? computeCheckinScores(rawCheckin, sortedCheckins.slice(1), todaySessions)
     : null;
 
-  const checkin = rawCheckin ? (() => {
-    const base = { ...rawCheckin };
-    const engine = engineScores || {};
-    for (const k of ['readiness_score','fatigue_score','stress_score','sleep_quality','recovery_score','morning_recovery_score']) {
-      if (engine[k] != null) base[k] = engine[k];
-    }
-    return base;
-  })() : null;
+  const checkin = rawCheckin
+    ? (() => {
+        const base = { ...rawCheckin };
+        const engine = engineScores || {};
+        const approvedEngineFields = [
+          'readiness_score',
+          'fatigue_score',
+          'stress_score',
+          'sleep_quality',
+          'recovery_score',
+          'morning_recovery_score',
+        ];
+
+        for (const k of approvedEngineFields) {
+          if (typeof engine[k] !== 'undefined' && engine[k] !== null) {
+            base[k] = engine[k];
+          }
+        }
+
+        return base;
+      })()
+    : null;
 
   const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
 
-  const liveBodyState    = checkin ? calculateBodyState(morningRecovery, totalStrain) : null;
-  const liveCapacity     = checkin ? calculateRemainingCapacity(morningRecovery, totalStrain) : null;
+  const liveBodyState = checkin ? calculateBodyState(morningRecovery, totalStrain) : null;
+  const liveCapacity = checkin ? calculateRemainingCapacity(morningRecovery, totalStrain) : null;
   const liveRecoveryDemand = checkin ? calculateRecoveryDemand(totalStrain, morningRecovery) : null;
-  const liveSleepNeed    = checkin ? calculateSleepNeed(totalStrain, morningRecovery) : null;
+  const liveSleepNeed = checkin ? calculateSleepNeed(totalStrain, morningRecovery) : null;
 
-  const enrichedCheckin = checkin ? {
-    ...checkin,
-    current_body_state:  checkin.current_body_state  || liveBodyState,
-    remaining_capacity:  checkin.remaining_capacity  || liveCapacity,
-    recovery_demand:     checkin.recovery_demand     ?? liveRecoveryDemand,
-    sleep_need_tonight:  checkin.sleep_need_tonight  ?? liveSleepNeed,
-  } : null;
+  const enrichedCheckin = checkin
+    ? {
+        ...checkin,
+        current_body_state: checkin.current_body_state || liveBodyState,
+        remaining_capacity: checkin.remaining_capacity || liveCapacity,
+        recovery_demand: checkin.recovery_demand ?? liveRecoveryDemand,
+        sleep_need_tonight: checkin.sleep_need_tonight ?? liveSleepNeed,
+      }
+    : null;
 
   const isLoading = loadingCheckins || loadingSessions;
 
-  // ── Async analysis ─────────────────────────────────────────────────────────
   const [analysis, setAnalysis] = useState(null);
-  const computedKey  = computed.length + ':' + (computed[0]?.date || '');
-  const sessionsKey  = allSessions.length + ':' + (allSessions[0]?.date || '');
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState(null);
+
+  const computedKey = `${computed.length}:${computed[0]?.date || ''}:${computed[0]?.recovery_score || ''}`;
+  const sessionsKey = `${sortedSessions.length}:${sortedSessions[0]?.date || ''}:${sortedSessions[0]?.strain_score || ''}`;
 
   useEffect(() => {
-    if (computed.length === 0) { setAnalysis(null); return; }
-    let cancelled = false;
-    runPhysiologicalAnalysisAsync(computed, allSessions, { useWorker: true, cacheTTLMinutes: 15 })
-      .then(r => { if (!cancelled) setAnalysis(r); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [computedKey, sessionsKey]); // eslint-disable-line
+    if (computed.length === 0) {
+      setAnalysis(null);
+      return;
+    }
 
-  // ── Derived values ─────────────────────────────────────────────────────────
-  const last7 = checkins.filter(c => c.date !== today).slice(0, 7);
+    let cancelled = false;
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+
+    runPhysiologicalAnalysisAsync(computed, sortedSessions, { useWorker: true, cacheTTLMinutes: 15 })
+      .then((result) => {
+        if (!cancelled) setAnalysis(result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.warn('Today: analysis failed', err);
+          setAnalysisError(err?.message || 'analysis_failed');
+          setAnalysis(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAnalysisLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [computedKey, sessionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const recoveryDelta = analysis?.baselineInsights?.find((i) => i.label === 'Recovery')?.delta ?? null;
+
+  const last7Checkins = sortedCheckins.filter((c) => c.date !== today).slice(0, 7);
 
   const biochargeTrend = useMemo(() => {
-    const vals = last7.map(c => c.biocharge_morning).filter(v => v != null);
-    if (vals.length < 2 || rawCheckin?.biocharge_morning == null) return null;
-    const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-    const diff = Math.round(rawCheckin.biocharge_morning - avg);
-    if (diff > 5)  return { text: `↑ +${diff} pts acima da média`, color: 'text-emerald-400' };
-    if (diff < -5) return { text: `↓ ${diff} pts abaixo da média`, color: 'text-red-400' };
-    return { text: '→ Dentro da sua média', color: 'text-muted-foreground/70' };
-  }, [last7, rawCheckin?.biocharge_morning]); // eslint-disable-line
+    const values = last7Checkins.map((c) => c.biocharge_morning).filter((v) => v != null);
+    if (values.length < 2 || rawCheckin?.biocharge_morning == null) return null;
 
-  const cappedStrain = Math.min(21, totalStrain);
-  const displayedScore = checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
+    const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+    const diff = Math.round(rawCheckin.biocharge_morning - avg);
+
+    if (diff > 5) return { text: `↑ +${diff} pts acima da sua média da semana`, color: 'text-emerald-400' };
+    if (diff < -5) return { text: `↓ ${diff} pts abaixo da sua média da semana`, color: 'text-red-400' };
+    return { text: '→ Dentro da sua média da semana', color: 'text-muted-foreground' };
+  }, [last7Checkins, rawCheckin?.biocharge_morning]); // eslint-disable-line
+
+  const hrvTrend = useMemo(() => {
+    if (!rawCheckin?.hrv) return null;
+
+    const values = last7Checkins.map((c) => c.hrv).filter((v) => v != null);
+    if (values.length < 2) return null;
+
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const diff = rawCheckin.hrv - avg;
+
+    if (diff > 5) return { text: 'HRV acima do normal — bom sinal de recuperação', color: 'text-emerald-400' };
+    if (diff < -5) return { text: 'HRV abaixo do normal — preserve a intensidade', color: 'text-yellow-400' };
+    return null;
+  }, [last7Checkins, rawCheckin?.hrv]); // eslint-disable-line
+
+  const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
+
+  const [deepSleepAlertDismissed, setDeepSleepAlertDismissed] = useState(false);
+  const deepSleepAlert = useMemo(() => {
+    if (!rawCheckin?.deep_sleep_pct) return null;
+
+    const sorted = [...sortedCheckins].sort((a, b) => b.date.localeCompare(a.date));
+    let consecutiveNights = 0;
+
+    for (const c of sorted) {
+      if (c.deep_sleep_pct != null && c.deep_sleep_pct < 18) {
+        consecutiveNights++;
+      } else {
+        break;
+      }
+    }
+
+    if (consecutiveNights < 2) return null;
+
+    const pct = rawCheckin.deep_sleep_pct;
+    const recentPcts = sorted
+      .slice(0, consecutiveNights)
+      .map((c) => c.deep_sleep_pct)
+      .filter((v) => v != null);
+
+    const isImproving = recentPcts.length >= 2 && recentPcts[0] > recentPcts[1];
+
+    let framing;
+    if (isImproving) {
+      framing = `Sono melhorando. Continue assim.`;
+    } else if (consecutiveNights >= 7) {
+      framing = `Uma semana de sono fragmentado.`;
+    } else if (consecutiveNights >= 4) {
+      framing = `Dia ${consecutiveNights} de uma sequência ruim de sono.`;
+    } else {
+      framing = `Noite ${consecutiveNights} de sono fragmentado.`;
+    }
+
+    return `${framing} Hoje isso pede mais controle da intensidade. (sono profundo: ${pct}%)`;
+  }, [sortedCheckins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
+
+  const capacityContradictionNote = useMemo(() => {
+    if (!rawCheckin) return null;
+
+    const bio = rawCheckin.biocharge_morning ?? 0;
+    const cap = enrichedCheckin?.remaining_capacity;
+    const sleep = rawCheckin.sleep_score ?? rawCheckin.sleep_quality ?? 100;
+
+    if (bio < 70 && ['High', 'Alta'].includes(cap) && sleep < 75) {
+      return 'Sua capacidade muscular parece melhor do que o sono sugere. Se treinar, mantenha o foco em controle e não em intensidade máxima.';
+    }
+
+    return null;
+  }, [
+    rawCheckin?.biocharge_morning,
+    enrichedCheckin?.remaining_capacity,
+    rawCheckin?.sleep_score,
+    rawCheckin?.sleep_quality,
+  ]); // eslint-disable-line
+
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  const displayedScore =
+    checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
+
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
+  const readinessFaixa = prescriptionScore >= 80 ? 'Alta' : prescriptionScore >= 65 ? 'Moderada' : 'Baixa';
 
   const strainTarget =
     prescriptionScore >= 80 ? 16 :
     prescriptionScore >= 65 ? 13 :
-    prescriptionScore >= 50 ? 10 : 7;
+    prescriptionScore >= 50 ? 10 :
+    7;
 
-  const dayMetrics = enrichedCheckin ? {
-    currentStrain: cappedStrain, strainTarget,
-    readiness: prescriptionScore,
-    hrv: enrichedCheckin.hrv ?? null,
-    hasSessions: todaySessions.length > 0,
-  } : null;
+  const cappedStrain = Math.min(21, totalStrain);
 
-  const { intent, locked, setDayIntent, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
-  const { streak, hasCheckedInToday } = useStreak(checkins);
+  const dayMetrics = enrichedCheckin
+    ? {
+        currentStrain: cappedStrain,
+        strainTarget,
+        readiness: prescriptionScore,
+        hrv: enrichedCheckin.hrv ?? enrichedCheckin.hrv_manual ?? null,
+        hasSessions: todaySessions.length > 0,
+      }
+    : null;
+
+  const { intent, locked, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
+  const { streak, hasCheckedInToday } = useStreak(sortedCheckins);
+
+  const BODY_STATE_PT = {
+    Recovered: 'Recuperado',
+    Activated: 'Ativado',
+    Balanced: 'Equilibrado',
+    Loaded: 'Carregado',
+    Sympathetic_Load: 'Carga simpática',
+    Fatigued: 'Fatigado',
+    Overreached: 'Sobrecarga',
+  };
+
+  const BODY_STATE_HINT = {
+    Recovered: 'Bom momento para estímulo alto, desde que o resto do contexto acompanhe.',
+    Activated: 'Corpo responsivo — confirme no aquecimento.',
+    Balanced: 'Ritmo sustentável hoje.',
+    Loaded: 'Monitore a intensidade e evite empilhar carga.',
+    Sympathetic_Load: 'Sistema nervoso sobrecarregado — prefira leveza.',
+    Fatigued: 'Evite alta intensidade; priorize recuperação.',
+    Overreached: 'Descanso obrigatório — mais carga agrava o quadro.',
+  };
+
+  const CAPACITY_PT = {
+    High: 'Alta',
+    Moderate: 'Moderada',
+    Low: 'Baixa',
+    Minimal: 'Mínima',
+  };
+
+  const PHASE_CONFIG = {
+    PLANNING: {
+      headerTitle: 'Hoje',
+      headerSub: 'Decisão do dia',
+      ctaLabel: 'Adicionar treino',
+      ctaIcon: Dumbbell,
+      ctaClass: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      showCta: true,
+      accentBorder: 'border-border',
+      accentBg: 'bg-card',
+      bannerClass: null,
+      bannerText: null,
+    },
+    OPTIMAL_LOAD: {
+      headerTitle: 'Hoje',
+      headerSub: 'Carga útil atingida',
+      ctaLabel: 'Adicionar treino',
+      ctaIcon: Dumbbell,
+      ctaClass: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+      showCta: true,
+      accentBorder: 'border-border',
+      accentBg: 'bg-card',
+      bannerClass: null,
+      bannerText: null,
+    },
+    OVERLOAD: {
+      headerTitle: 'Hoje',
+      headerSub: 'Recuperação acima de execução',
+      ctaLabel: 'Recuperação em foco',
+      ctaIcon: Heart,
+      ctaClass: 'bg-secondary text-muted-foreground border border-border',
+      showCta: false,
+      accentBorder: 'border-blue-500/20',
+      accentBg: 'bg-card',
+      bannerClass: 'border-orange-500/30 bg-orange-500/5 text-orange-400',
+      bannerText: '⚡ Sua carga já chegou num ponto em que mais treino tende a render menos recuperação amanhã.',
+    },
+    RECOVERY_DAY: {
+      headerTitle: 'Hoje',
+      headerSub: 'Dia de recuperação',
+      ctaLabel: 'Recuperação em foco',
+      ctaIcon: Moon,
+      ctaClass: 'bg-secondary text-muted-foreground border border-border',
+      showCta: false,
+      accentBorder: 'border-blue-500/15',
+      accentBg: 'bg-card',
+      bannerClass: 'border-blue-500/25 bg-blue-500/5 text-blue-300',
+      bannerText: '🌙 Hoje o melhor retorno vem de reduzir estresse, recuperar energia e dormir bem.',
+    },
+  };
 
   const phase = (locked && intent === 'recovery')
     ? 'RECOVERY_DAY'
     : Phase ? (dayPhase ?? 'PLANNING') : (intent === 'recovery' ? 'RECOVERY_DAY' : 'PLANNING');
 
-  const isRestDay = checkin?.rest_day || phase === 'RECOVERY_DAY';
+  const phaseCfg = PHASE_CONFIG[phase] ?? PHASE_CONFIG.PLANNING;
+  const CtaIcon = phaseCfg.ctaIcon;
 
-  const workoutIntensity = useMemo(() => resolveWorkoutIntensity(analysis, null), [analysis]);
+  const isRestMode = phase === 'OVERLOAD' || phase === 'RECOVERY_DAY';
+
+  const dailyVerdict = useMemo(() => {
+    return getDailyVerdict({
+      checkin: enrichedCheckin,
+      analysis,
+      phase,
+      intent,
+      locked,
+      displayedScore,
+      prescriptionScore,
+      deepSleepPct: rawCheckin?.deep_sleep_pct ?? null,
+      totalStrain,
+      todaySessions,
+    });
+  }, [
+    enrichedCheckin,
+    analysis,
+    phase,
+    intent,
+    locked,
+    displayedScore,
+    prescriptionScore,
+    rawCheckin?.deep_sleep_pct,
+    totalStrain,
+    todaySessions,
+  ]);
+
   const scheduledSport = todaySessions[0]?.sport ?? undefined;
 
-  const { primary: primaryCards } = useMemo(() => {
+  const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
     if (!enrichedCheckin) return { primary: [], secondary: [] };
+
     return buildCardLayout({
-      phase, workoutIntensity, scheduledSport,
+      phase,
+      workoutIntensity: dailyVerdict?.workoutIntensity ?? 'unknown',
+      scheduledSport,
       hasWorkoutSessions: todaySessions.length > 0,
       hasAnalysis: !!analysis,
       hasHrvAnomaly: !!analysis?.hrvAnomaly,
       hasNarrative: !!analysis?.narrative,
       hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
     });
-  }, [phase, workoutIntensity, scheduledSport, todaySessions.length, analysis, enrichedCheckin, morningRecovery]); // eslint-disable-line
+  }, [phase, dailyVerdict, scheduledSport, todaySessions.length, analysis, enrichedCheckin, morningRecovery]); // eslint-disable-line
 
-  // Deep sleep alert
-  const [deepSleepAlertDismissed, setDeepSleepAlertDismissed] = useState(false);
-  const deepSleepAlert = useMemo(() => {
-    if (!rawCheckin?.deep_sleep_pct) return null;
-    const sorted = [...checkins].sort((a, b) => b.date.localeCompare(a.date));
-    let n = 0;
-    for (const c of sorted) {
-      if (c.deep_sleep_pct != null && c.deep_sleep_pct < 18) n++;
-      else break;
-    }
-    if (n < 2) return null;
-    const pct = rawCheckin.deep_sleep_pct;
-    if (n >= 4) return `${n} noites de sono raso seguidas (${pct}% profundo). Seu HRV está sentindo.`;
-    return `Noite ${n} de sono fragmentado (${pct}% profundo) — fique atento.`;
-  }, [checkins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
-
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-
-  // Computed helpers for render
-  const scoreColor =
-    displayedScore >= 80 ? 'text-emerald-400' :
-    displayedScore >= 65 ? 'text-yellow-400' :
-                           'text-red-400';
-
-  const scoreLabel =
-    displayedScore >= 80 ? 'Alta' :
-    displayedScore >= 65 ? 'Moderada' : 'Baixa';
-
-  const scoreLabelClass =
-    displayedScore >= 80 ? 'bg-emerald-500/15 text-emerald-400' :
-    displayedScore >= 65 ? 'bg-yellow-500/15 text-yellow-400' :
-                           'bg-red-500/15 text-red-400';
-
-  const BODY_STATE_PT = {
-    Recovered: 'Recuperado', Activated: 'Ativado', Balanced: 'Equilibrado',
-    Loaded: 'Carregado', Sympathetic_Load: 'Carga simpática',
-    Fatigued: 'Fatigado', Overreached: 'Sobrecarga',
-  };
-  const BODY_STATE_HINT = {
-    Recovered: 'Bom momento para estímulo alto.',
-    Activated: 'Corpo responsivo — aproveite.',
-    Balanced: 'Ritmo sustentável hoje.',
-    Loaded: 'Monitore a intensidade.',
-    Sympathetic_Load: 'Prefira leveza hoje.',
-    Fatigued: 'Evite alta intensidade.',
-    Overreached: 'Descanso obrigatório.',
-  };
-
-  const bottleneck = useMemo(
-    () => getBottleneck(checkin, analysis, checkins),
-    [checkin, analysis, checkins.length] // eslint-disable-line
-  );
-
-  const actionCfg = useMemo(
-    () => getActionConfig(
-      phase,
-      workoutIntensity,
-      checkin?.recommendation,
-      isRestDay
-    ),
-    [phase, workoutIntensity, checkin?.recommendation, isRestDay]
-  );
-
-  const weeklyMsg = useMemo(() => {
+  const weeklyContextMsg = useMemo(() => {
     if (!enrichedCheckin) return null;
-    const n = weekSessions.length;
-    if (n === 0) return `Primeiro treino da semana — bom momento para começar.`;
-    if (n >= 4) return `Meta semanal atingida. Hoje pode ser leve ou descanso.`;
-    return `${n} de 3 treinos esta semana — você está no ritmo.`;
-  }, [weekSessions.length, enrichedCheckin]); // eslint-disable-line
 
-  const sleepNeed = enrichedCheckin?.sleep_need_tonight ?? liveSleepNeed;
-  const acwr = analysis?.trainingLoad?.ratio ?? null;
-  const acwrRisk = analysis?.trainingLoad?.risk ?? null;
+    const sessionsCount = weekSessions.length;
+    const fatigue = enrichedCheckin.fatigue_score ?? enrichedCheckin.fatigue ?? 0;
+    const readiness = prescriptionScore;
 
-  const CtaIcon = actionCfg.ctaIcon;
+    const recentCheckins = sortedCheckins.filter((c) => c.date !== today).slice(0, 5);
+    let trend = '';
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+    if (recentCheckins.length >= 3) {
+      const scores = recentCheckins.slice(0, 3).map((c) => c.recovery_score ?? c.readiness_score ?? 0);
+      if (scores[0] > scores[2] + 3) trend = ' · tendência positiva';
+      else if (scores[0] < scores[2] - 3) trend = ' · atenção à recuperação';
+    }
+
+    if (fatigue > 60 || sessionsCount >= 4) return `Carga alta na semana — hoje vale dose controlada.${trend}`;
+    if (readiness >= 85 && sessionsCount <= 1) return `Boa prontidão com volume baixo — há margem para progredir.${trend}`;
+    if (sessionsCount === 0) return `Primeiro treino da semana — bom momento para começar com controle.${trend}`;
+    if (sessionsCount >= 3) return `Volume semanal já está bem encaminhado.${trend}`;
+    return `${sessionsCount} de 3 treinos esta semana — você está no ritmo.${trend}`;
+  }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]); // eslint-disable-line
+
+  function renderCard(desc) {
+    if (!desc || desc.action === 'exclude') return null;
+
+    const workoutProps = {
+      checkin: enrichedCheckin,
+      actionableRecs: analysis?.actionableRecs || [],
+      strainTarget,
+      currentStrain: cappedStrain,
+      analysis,
+      userPrefs: user?.preferences || {},
+      todaySessions,
+      allSessions: sortedSessions,
+      dailyVerdict,
+    };
+
+    switch (desc.id) {
+      case 'execution':
+        return <ExecutionCard key="execution" />;
+
+      case 'workout': {
+        const workoutEl = desc.action === 'mutate'
+          ? <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
+          : <WorkoutSuggestionCard key="workout" {...workoutProps} />;
+
+        return (
+          <React.Fragment key="workout-wrapper">
+            {workoutEl}
+            {weeklyContextMsg && (
+              <p className="text-xs text-muted-foreground mt-2 px-1">{weeklyContextMsg}</p>
+            )}
+          </React.Fragment>
+        );
+      }
+
+      case 'morning_recovery':
+        return <MorningRecoveryCard key="morning_recovery" checkin={enrichedCheckin} delta={recoveryDelta} />;
+
+      case 'sleep_forecast':
+        return <SleepForecastCard key="sleep_forecast" checkin={enrichedCheckin} />;
+
+      case 'training_sessions':
+        return (
+          <div key="training_sessions" className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}>
+            <TrainingSessionsList
+              checkin={enrichedCheckin}
+              sessions={todaySessions}
+              onUpdate={() => {
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+              }}
+            />
+          </div>
+        );
+
+      case 'narrative':
+        return analysis?.narrative ? <NarrativeCard key="narrative" narrative={analysis.narrative} /> : null;
+
+      case 'why_score':
+        return (analysis?.whyScore?.length > 0)
+          ? <WhyScoreCard key="why_score" whyScore={analysis.whyScore} recoveryScore={displayedScore} />
+          : null;
+
+      case 'current_state':
+        return <CurrentStateCard key="current_state" checkin={enrichedCheckin} totalStrain={totalStrain} />;
+
+      case 'hrv_anomaly':
+        return analysis?.hrvAnomaly ? (
+          <motion.div
+            key="hrv_anomaly"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-2xl border p-4 flex gap-3 ${
+              analysis.hrvAnomaly.alert.type === 'critical'
+                ? 'border-red-500/40 bg-red-500/8'
+                : 'border-yellow-500/40 bg-yellow-500/8'
+            }`}
+          >
+            <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
+            <div>
+              <p className={`text-sm font-semibold ${
+                analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
+              }`}>
+                {analysis.hrvAnomaly.alert.title}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
+            </div>
+          </motion.div>
+        ) : null;
+
+      case 'recovery_demand':
+        return (enrichedCheckin.recovery_demand || 0) > morningRecovery ? (
+          <motion.div
+            key="recovery_demand"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
+          >
+            <span className="text-xl">🚨</span>
+            <div>
+              <p className="text-sm font-semibold text-red-400">Carga acima da recuperação disponível</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Demanda {enrichedCheckin.recovery_demand} vs recuperação da manhã {displayedScore}. Hoje vale proteger.
+              </p>
+            </div>
+          </motion.div>
+        ) : null;
+
+      case 'post_workout_cta':
+        return todaySessions.length > 0 ? (
+          <Link
+            key="post_workout_cta"
+            to="/checkin?mode=post"
+            className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">🏁</span>
+              <div>
+                <p className="text-sm font-semibold">Registrar pós-treino</p>
+                <p className="text-xs text-muted-foreground">~30s · melhora os insights de amanhã</p>
+              </div>
+            </div>
+            <span className="text-primary text-sm font-bold">→</span>
+          </Link>
+        ) : null;
+
+      default:
+        return null;
+    }
+  }
+
+  function ExecutionCard() {
+    return (
+      <motion.div
+        key={phase + '-card'}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
+      >
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Decisão do dia
+              </span>
+              <h2 className="text-xl font-black mt-1 leading-tight">
+                {dailyVerdict.headline}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {dailyVerdict.subheadline}
+              </p>
+            </div>
+
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              prescriptionScore >= 80 ? 'bg-emerald-500/15 text-emerald-400' :
+              prescriptionScore >= 65 ? 'bg-yellow-500/15 text-yellow-400' :
+              'bg-red-500/15 text-red-400'
+            }`}>
+              {readinessFaixa}
+            </span>
+          </div>
+
+          <div className="flex items-end gap-3">
+            <p className="text-3xl font-mono font-black flex items-center gap-2">
+              <span>{displayedScore}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button aria-label="Sobre Prontidão" className="text-muted-foreground">
+                    <Info className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Decisão de treino de hoje: combina recuperação, sono e fadiga da manhã.
+                  <div style={{ marginTop: 6 }}>
+                    <small className="text-[10px] text-muted-foreground">
+                      A pontuação do wearable é ajustada com seu histórico para melhorar a recomendação.
+                    </small>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </p>
+
+            {checkin?.recovery_score != null && (
+              <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                recuperação {checkin.recovery_score}
+              </span>
+            )}
+          </div>
+
+          {(biochargeTrend || hrvTrend) && (
+            <div className="space-y-0.5 mt-1">
+              {biochargeTrend && (
+                <p className={`text-[11px] font-medium ${biochargeTrend.color}`}>{biochargeTrend.text}</p>
+              )}
+              {hrvTrend && (
+                <p className={`text-[11px] font-medium ${hrvTrend.color}`}>{hrvTrend.text}</p>
+              )}
+            </div>
+          )}
+
+          <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${displayedScore}%`,
+                backgroundColor: isRestMode
+                  ? 'hsl(215,30%,45%)'
+                  : prescriptionScore >= 80 ? 'hsl(142,70%,50%)'
+                  : prescriptionScore >= 65 ? 'hsl(45,93%,58%)'
+                  : 'hsl(0,72%,55%)',
+              }}
+            />
+          </div>
+
+          {phase !== 'RECOVERY_DAY' && phase !== 'OVERLOAD' && dailyVerdict.caution && (
+            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug">
+              <span className="font-semibold">Cuidado do dia:</span> {dailyVerdict.caution}
+            </div>
+          )}
+
+          {enrichedCheckin.current_body_state && BODY_STATE_PT[enrichedCheckin.current_body_state] && (
+            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
+              <span className="text-foreground/90">
+                <span className="font-semibold">Estado atual:</span> {BODY_STATE_PT[enrichedCheckin.current_body_state]}
+                {enrichedCheckin.remaining_capacity && CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
+                  <>
+                    {' '}· <span className="font-semibold">capacidade restante:</span>{' '}
+                    {CAPACITY_PT[enrichedCheckin.remaining_capacity]}
+                  </>
+                )}
+              </span>
+              <p className="text-muted-foreground">{BODY_STATE_HINT[enrichedCheckin.current_body_state]}</p>
+            </div>
+          )}
+
+          {capacityContradictionNote && (
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {capacityContradictionNote}
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              Strain acumulado
+            </p>
+            <p className={`text-xl font-mono font-bold ${
+              cappedStrain >= 18 ? 'text-red-400' :
+              cappedStrain >= 14 ? 'text-orange-400' :
+              cappedStrain >= 10 ? 'text-yellow-400' :
+              'text-emerald-400'
+            }`}>
+              ⚡ {cappedStrain}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              Capacidade restante
+            </p>
+            <p className="text-xl font-bold">
+              {enrichedCheckin.remaining_capacity
+                ? ({ High: 'Alta', Moderate: 'Moderada', Low: 'Baixa', Minimal: 'Mínima' }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity)
+                : '—'}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-secondary p-3">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              ACWR
+            </p>
+            {analysis?.trainingLoad?.risk === 'insufficient_data' || analysis?.trainingLoad?.ratio == null ? (
+              <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
+            ) : (
+              <>
+                <p className={`text-xl font-mono font-bold ${
+                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
+                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
+                  'text-emerald-400'
+                }`}>
+                  {analysis.trainingLoad.ratio.toFixed(2)}
+                </p>
+                <p className={`text-[10px] mt-0.5 ${
+                  analysis.trainingLoad.ratio > 1.5 ? 'text-red-400' :
+                  analysis.trainingLoad.ratio > 1.3 ? 'text-yellow-400' :
+                  'text-emerald-400'
+                }`}>
+                  {analysis.trainingLoad.ratio > 1.5 ? 'Alto risco' :
+                   analysis.trainingLoad.ratio > 1.3 ? 'Atenção' : 'Seguro'}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {phaseCfg.showCta ? (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className={cn('w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all', phaseCfg.ctaClass)}
+          >
+            <CtaIcon className="w-4 h-4" /> {phaseCfg.ctaLabel}
+          </button>
+        ) : (
+          <button
+            disabled
+            className={cn(
+              'w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60 cursor-not-allowed',
+              phaseCfg.ctaClass
+            )}
+          >
+            <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
+          </button>
+        )}
+      </motion.div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-xl mx-auto pt-2">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-6 w-20 rounded-xl" />
-          <Skeleton className="h-6 w-12 rounded-xl" />
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <Skeleton className="h-8 w-40 rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-3xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
         </div>
-        <Skeleton className="h-56 w-full rounded-3xl" />
-        <Skeleton className="h-28 w-full rounded-2xl" />
-        <Skeleton className="h-12 w-full rounded-2xl" />
+        <Skeleton className="h-16 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
       </div>
     );
   }
 
-  // ── No checkin ─────────────────────────────────────────────────────────────
   if (!enrichedCheckin) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center h-[72vh] text-center px-6"
+        className="flex flex-col items-center justify-center h-[70vh] text-center px-6"
       >
         <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
           <Zap className="w-10 h-10 text-primary" />
         </div>
         <h2 className="text-xl font-black mb-2">Sem check-in hoje</h2>
-        <p className="text-sm text-muted-foreground mb-7 max-w-xs">
-          Faça o check-in para calcular sua prontidão e receber seu plano do dia.
+        <p className="text-muted-foreground mb-6 text-sm">
+          Faça seu check-in para calcular sua prontidão e decidir melhor o treino do dia.
         </p>
         <Link
           to="/checkin"
-          className="flex items-center gap-2 px-6 py-3.5 bg-primary text-primary-foreground rounded-2xl font-bold text-sm hover:bg-primary/90 transition-all hover:scale-[1.02]"
+          className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-2xl font-semibold hover:bg-primary/90 transition-all"
         >
           <Plus className="w-4 h-4" /> Fazer check-in
         </Link>
@@ -481,442 +887,106 @@ export default function Today() {
     );
   }
 
-  // ── Main render ────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-3 max-w-xl mx-auto pb-8">
+    <div className={cn(
+      'space-y-4 max-w-2xl mx-auto transition-all duration-500',
+      isSilentMode && 'opacity-90',
+      isRestMode && 'saturate-[0.7]'
+    )}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
-      {/* ── 1. TOP BAR ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between pt-1">
-        <div>
-          <h1 className="text-lg font-black tracking-tight">Hoje</h1>
-          {checkin?.created_at && (
-            <p className="text-[10px] text-muted-foreground">
-              Check-in às {new Date(checkin.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          {checkin?.created_at ? (
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+              <span>Check-in às</span>
+              <span className="font-medium text-foreground/60">
+                {new Date(checkin.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </p>
-          )}
+          ) : checkin?.date ? (
+            <p className="text-[10px] text-muted-foreground mt-1">Check-in de hoje registrado</p>
+          ) : null}
         </div>
-        <div className="flex items-center gap-2">
-          {/* Streak badge */}
-          {hasCheckedInToday && streak >= 3 && (
-            <Link
-              to="/insights"
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors"
-            >
-              <span className="text-sm leading-none">🔥</span>
-              <span className="text-xs font-bold text-orange-400">{streak}</span>
-            </Link>
-          )}
-          {/* Check-in edit link */}
+
+        {hasCheckedInToday && streak >= 3 && (
           <Link
-            to="/checkin"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-xl hover:bg-secondary"
+            to="/insights"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
+            title={`${streak} dias seguidos`}
           >
-            Editar
+            <span className="text-sm leading-none">🔥</span>
+            <span className="text-xs font-bold text-orange-400">{streak}</span>
           </Link>
-        </div>
+        )}
       </div>
 
-      {/* ── 2. HERO CARD — Como estou? ──────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [.4,0,.2,1] }}
-        className="relative rounded-3xl border border-border/50 bg-card overflow-hidden"
-      >
-        {/* Subtle top glow based on score */}
-        <div
-          className="absolute top-0 left-0 right-0 h-px opacity-60"
-          style={{
-            background: displayedScore >= 80
-              ? 'linear-gradient(90deg, transparent, #34d399, transparent)'
-              : displayedScore >= 65
-              ? 'linear-gradient(90deg, transparent, #fbbf24, transparent)'
-              : 'linear-gradient(90deg, transparent, #f87171, transparent)'
-          }}
-        />
+      {phaseCfg.bannerText && (
+        <motion.div
+          key={phase}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', phaseCfg.bannerClass)}
+        >
+          {phaseCfg.bannerText}
+        </motion.div>
+      )}
 
-        <div className="flex items-center px-5 pt-5 pb-4 gap-4">
-          {/* Gauge */}
-          <div className="relative shrink-0" style={{ width: 112, height: 112 }}>
-            <ScoreArc score={displayedScore} size={112} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={cn('text-3xl font-black font-mono leading-none', scoreColor)}>
-                {displayedScore}
-              </span>
-              <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mt-0.5">
-                prontidão
-              </span>
-            </div>
-          </div>
+      <QuickIntentEdit />
 
-          {/* Score context */}
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Headline or status */}
-            {checkin?.headline_today ? (
-              <p className="text-sm font-semibold leading-snug line-clamp-2">
-                {checkin.headline_today}
-              </p>
-            ) : (
-              <div>
-                <span className={cn('text-xs font-bold px-2.5 py-1 rounded-full', scoreLabelClass)}>
-                  {scoreLabel}
-                </span>
-              </div>
-            )}
-
-            {/* Trend */}
-            {biochargeTrend && (
-              <p className={cn('text-[11px] font-medium', biochargeTrend.color)}>
-                {biochargeTrend.text}
-              </p>
-            )}
-
-            {/* Body state — minimal */}
-            {enrichedCheckin.current_body_state && BODY_STATE_PT[enrichedCheckin.current_body_state] && (
-              <p className="text-[11px] text-muted-foreground leading-snug">
-                <span className="font-medium text-foreground/70">Estado: </span>
-                {BODY_STATE_PT[enrichedCheckin.current_body_state]} ·{' '}
-                {BODY_STATE_HINT[enrichedCheckin.current_body_state]}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* ── Bottleneck pill ── */}
-        {bottleneck && (
-          <div className={cn(
-            'mx-4 mb-4 px-3.5 py-2.5 rounded-xl border flex items-center gap-2.5',
-            bottleneck.bg
-          )}>
-            <span className="text-base shrink-0">{bottleneck.icon}</span>
-            <div className="flex-1 min-w-0">
-              <span className="text-[11px] font-semibold text-foreground/80">
-                Gargalo hoje:{' '}
-              </span>
-              <span className={cn('text-[11px]', bottleneck.color)}>
-                {bottleneck.label} · {bottleneck.value}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* ── Sleep alert strip ── */}
-        {deepSleepAlert && !deepSleepAlertDismissed && (
-          <div className="mx-4 mb-4 px-3.5 py-2.5 rounded-xl border border-blue-500/20 bg-blue-500/8 flex items-start gap-2.5">
-            <Moon className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
-            <button
-              onClick={() => setDeepSleepAlertDismissed(true)}
-              className="text-blue-400/50 hover:text-blue-300 transition-colors shrink-0"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-      </motion.div>
-
-      {/* ── 3. ACTION CARD — O que fazer? ───────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.45, ease: [.4,0,.2,1] }}
-        className="rounded-3xl border border-border/50 bg-card p-5 space-y-4"
-      >
-        {/* Action header */}
-        <div className="flex items-start gap-3">
-          <span className="text-2xl leading-none mt-0.5">{actionCfg.emoji}</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-black tracking-tight">{actionCfg.title}</h2>
-              <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', actionCfg.badgeClass)}>
-                {actionCfg.badge}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">
-              {actionCfg.subtitle}
-            </p>
-          </div>
-        </div>
-
-        {/* Weekly context micro-line */}
-        {weeklyMsg && (
-          <p className="text-[11px] text-muted-foreground/80 -mt-1 pl-9">
-            {weeklyMsg}
-          </p>
-        )}
-
-        {/* CTA button */}
-        {actionCfg.showAddBtn && (
+      {deepSleepAlert && !deepSleepAlertDismissed && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-blue-500/25 bg-blue-500/8 px-4 py-3 flex items-start gap-3"
+        >
+          <Moon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
           <button
-            onClick={() => setShowAddModal(true)}
-            className={cn(
-              'w-full flex items-center justify-center gap-2 h-12 rounded-2xl text-sm font-bold transition-all hover:scale-[1.01] active:scale-[0.99]',
-              actionCfg.ctaClass
-            )}
+            onClick={() => setDeepSleepAlertDismissed(true)}
+            className="text-blue-400/60 hover:text-blue-300 transition-colors shrink-0"
+            aria-label="Fechar alerta"
           >
-            <CtaIcon className="w-4 h-4" />
-            {actionCfg.ctaLabel}
+            <X className="w-3.5 h-3.5" />
           </button>
-        )}
-      </motion.div>
-
-      {/* ── 4. WORKOUT SUGGESTION (if planning phase and no sessions yet) ────── */}
-      {phase === 'PLANNING' && todaySessions.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18 }}
-        >
-          <WorkoutSuggestionCard
-            checkin={enrichedCheckin}
-            actionableRecs={analysis?.actionableRecs || []}
-            strainTarget={strainTarget}
-            currentStrain={cappedStrain}
-            analysis={analysis}
-            userPrefs={user?.preferences || {}}
-            todaySessions={todaySessions}
-            allSessions={allSessions}
-          />
         </motion.div>
       )}
 
-      {/* ── 5. TODAY'S SESSIONS (if any) ────────────────────────────────────── */}
-      {todaySessions.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-border/50 bg-card p-4"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Treinos de hoje
-            </p>
-            <span className="text-[10px] text-muted-foreground">
-              Strain: <span className={cn(
-                'font-mono font-bold',
-                cappedStrain >= 18 ? 'text-red-400' :
-                cappedStrain >= 14 ? 'text-orange-400' :
-                cappedStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'
-              )}>⚡{cappedStrain}</span> / {strainTarget}
-            </span>
-          </div>
-          <TrainingSessionsList
-            checkin={enrichedCheckin}
-            sessions={todaySessions}
-            onUpdate={() => {
-              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-            }}
-          />
+      {primaryCards.map((desc) => renderCard(desc))}
 
-          {/* Post-workout CTA */}
-          <Link
-            to="/checkin?mode=post"
-            className="mt-3 flex items-center justify-between p-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">🏁</span>
-              <div>
-                <p className="text-xs font-semibold">Registrar pós-treino</p>
-                <p className="text-[10px] text-muted-foreground">~30s · melhora seus insights</p>
-              </div>
-            </div>
-            <ArrowRight className="w-3.5 h-3.5 text-primary" />
-          </Link>
-        </motion.div>
+      {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
+        <Link
+          to="/insights"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+        >
+          Quer entender melhor por que a recomendação de hoje é essa?
+          <span className="text-primary font-medium">→ Ver análise detalhada</span>
+        </Link>
       )}
 
-      {/* ── 6. HRV ANOMALY ALERT ────────────────────────────────────────────── */}
-      {analysis?.hrvAnomaly && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-          className={cn(
-            'rounded-2xl border p-4 flex gap-3 items-start',
-            analysis.hrvAnomaly.alert.type === 'critical'
-              ? 'border-red-500/40 bg-red-500/8'
-              : 'border-yellow-500/40 bg-yellow-500/8'
-          )}
-        >
-          <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
-          <div>
-            <p className={cn('text-sm font-semibold',
-              analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
-            )}>{analysis.hrvAnomaly.alert.title}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
-          </div>
-        </motion.div>
+      <SecondaryMetrics count={secondaryCards.filter((d) => d.action !== 'exclude').length}>
+        {secondaryCards.map((desc) => renderCard(desc))}
+      </SecondaryMetrics>
+
+      {analysisError && (
+        <p className="text-[11px] text-yellow-400/80 px-1">
+          Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
+        </p>
       )}
 
-      {/* ── 7. DETAILS COLLAPSIBLE ──────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.28 }}
-        className="rounded-2xl border border-border/40 bg-card/60 overflow-hidden"
-      >
-        <button
-          onClick={() => setDetailsOpen(o => !o)}
-          className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold hover:bg-secondary/40 transition-colors"
-        >
-          <span className="flex items-center gap-2 text-muted-foreground">
-            <Activity className="w-3.5 h-3.5" />
-            Detalhes & métricas
-          </span>
-          <motion.div animate={{ rotate: detailsOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence>
-          {detailsOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3, ease: [.4,0,.2,1] }}
-              style={{ overflow: 'hidden' }}
-            >
-              <div className="px-4 pb-5 space-y-4 border-t border-border/30 pt-4">
-
-                {/* Metrics grid */}
-                <div className="grid grid-cols-3 gap-2.5">
-                  {/* Strain */}
-                  <div className="rounded-xl bg-secondary/60 p-3">
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">Strain</p>
-                    <p className={cn('text-xl font-mono font-bold',
-                      cappedStrain >= 18 ? 'text-red-400' :
-                      cappedStrain >= 14 ? 'text-orange-400' :
-                      cappedStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'
-                    )}>⚡{cappedStrain}</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">meta: {strainTarget}</p>
-                  </div>
-
-                  {/* ACWR */}
-                  <div className="rounded-xl bg-secondary/60 p-3">
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">ACWR</p>
-                    {acwr == null || acwrRisk === 'insufficient_data' ? (
-                      <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
-                    ) : (
-                      <>
-                        <p className={cn('text-xl font-mono font-bold',
-                          acwr > 1.5 ? 'text-red-400' :
-                          acwr > 1.3 ? 'text-yellow-400' : 'text-emerald-400'
-                        )}>{acwr.toFixed(2)}</p>
-                        <p className={cn('text-[9px] mt-0.5',
-                          acwr > 1.5 ? 'text-red-400' :
-                          acwr > 1.3 ? 'text-yellow-400' : 'text-emerald-400'
-                        )}>{acwr > 1.5 ? 'Alto risco' : acwr > 1.3 ? 'Moderado' : 'Seguro'}</p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Sleep need */}
-                  <div className="rounded-xl bg-secondary/60 p-3">
-                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">Sono meta</p>
-                    <p className="text-xl font-mono font-bold text-blue-400">
-                      {sleepNeed != null ? `${sleepNeed}h` : '—'}
-                    </p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">esta noite</p>
-                  </div>
-                </div>
-
-                {/* Recovery & capacity row */}
-                {enrichedCheckin.current_body_state && (
-                  <div className="px-3 py-2.5 rounded-xl bg-secondary/40 border border-border/30 text-xs space-y-0.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Estado corporal</span>
-                      <span className="font-semibold text-foreground/80">
-                        {BODY_STATE_PT[enrichedCheckin.current_body_state] ?? enrichedCheckin.current_body_state}
-                      </span>
-                    </div>
-                    {enrichedCheckin.remaining_capacity && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Capacidade restante</span>
-                        <span className="font-semibold text-foreground/80">
-                          {{ High: 'Alta', Moderate: 'Moderada', Low: 'Baixa', Minimal: 'Mínima' }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity}
-                        </span>
-                      </div>
-                    )}
-                    {checkin?.sleep_hours != null && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Sono de ontem</span>
-                        <span className="font-semibold text-foreground/80">{checkin.sleep_hours}h</span>
-                      </div>
-                    )}
-                    {checkin?.hrv != null && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">HRV</span>
-                        <span className="font-semibold text-foreground/80">{checkin.hrv} ms</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Sleep forecast */}
-                {enrichedCheckin.next_day_forecast && (
-                  <div className="px-3 py-2.5 rounded-xl border border-blue-500/15 bg-blue-500/5 flex gap-2.5">
-                    <Moon className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-blue-200 leading-relaxed">
-                      {enrichedCheckin.next_day_forecast}
-                    </p>
-                  </div>
-                )}
-
-                {/* Narrative */}
-                {analysis?.narrative && (
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Contexto fisiológico
-                    </p>
-                    <p className="text-xs text-muted-foreground/80 leading-relaxed">
-                      {typeof analysis.narrative === 'string'
-                        ? analysis.narrative
-                        : analysis.narrative?.summary ?? ''}
-                    </p>
-                  </div>
-                )}
-
-                {/* Recovery demand alert */}
-                {(enrichedCheckin.recovery_demand || 0) > morningRecovery && (
-                  <div className="px-3 py-2.5 rounded-xl border border-red-500/25 bg-red-500/8 flex gap-2.5 items-start">
-                    <span className="text-base shrink-0">🚨</span>
-                    <div>
-                      <p className="text-xs font-semibold text-red-400">Carga acima da recuperação</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Demanda: {enrichedCheckin.recovery_demand} vs Prontidão: {displayedScore}. Priorize descanso.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Link to insights */}
-                <Link
-                  to="/insights"
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
-                >
-                  <span>Ver análise completa no Inteligência IA</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-
-      {/* ── 8. ADD TRAINING MODAL ───────────────────────────────────────────── */}
       {showAddModal && (
         <AddTrainingModal
           checkin={enrichedCheckin}
           existingSessions={todaySessions}
           onClose={() => setShowAddModal(false)}
-          onAdded={() => setShowAddModal(false)}
+          onAdded={() => {
+            setShowAddModal(false);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+          }}
         />
       )}
-
     </div>
   );
 }
