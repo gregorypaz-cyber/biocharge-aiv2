@@ -124,7 +124,11 @@ const recovery =
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
                 Prontidão estimada
               </p>
-              <p className="text-3xl font-black font-mono">{score}</p>
+              <p className="text-3xl font-black font-mono">{readiness}</p>
+<p className="text-[11px] text-muted-foreground">
+  recuperação {recovery}
+</p>
+
             </div>
 
             <div className="text-right">
