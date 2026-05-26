@@ -85,6 +85,12 @@ const { data: recentCheckins = [] } = useUserCheckins(30);
 const msg = await generateTrainingImpactMessage(created, checkin, allSessions);
 setImpactMsg(msg);
 
+// ✅ salvar impacto no banco
+await base44.entities.TrainingSession.update(created.id, {
+  impact_message: msg,
+});
+
+
 // ✅ salvar no banco (isso estava faltando)
 await base44.entities.TrainingSession.update(created.id, {
   impact_message: msg,
