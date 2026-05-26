@@ -745,3 +745,547 @@ function PrescriptionBlock({
         {showCommitmentPicker && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="rounded-xl border border-primary/25 bg-primary/5 p-3.5 space-y-3"
+          >
+            <p className="text-xs font-bold">Compromisso rápido: quando você vai executar?</p>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              {(() => {
+                const r = analysis?.today?.recovery_score ?? analysis?.today?.readiness_score ?? 50;
+                return r >= 70 ? SLOT_COPY.high : r >= 50 ? SLOT_COPY.medium : SLOT_COPY.low;
+              })()}
+            </p>
+
+            <div className="grid grid-cols-4 gap-1.5">
+              {[['now', 'Agora'], ['morning', 'Manhã'], ['afternoon', 'Tarde'], ['evening', 'Noite']].map(([slot, label]) => (
+                <button
+                  key={slot}
+                  disabled={commitmentSaving}
+                  onClick={() => handleCommitSlot(slot)}
+                  className="px-2 py-2 rounded-lg bg-secondary border border-border text-[11px] font-semibold hover:bg-primary/10 hover:border-primary/40 disabled:opacity-50 transition-all"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              disabled={commitmentSaving}
+              onClick={() => setShowCommitmentPicker(false)}
+              className="text-[10px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              Pular
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!showCommitmentPicker && commitmentStatus === 'committed' && commitmentSlot && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-secondary/60 border border-border/40">
+          <span className="text-[11px] text-foreground/80">
+            🎯 Compromisso: Opção {selected} · {humanizeSlot(commitmentSlot)}
+          </span>
+          <button
+            onClick={handleCancelCommitment}
+            className="text-[10px] text-muted-foreground hover:text-red-400 transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
+
+      {commitmentStatus === 'completed' && (
+        <p className="text-xs font-semibold text-emerald-400">
+          Executado ✅ Consistência +1
+        </p>
+      )}
+
+      {commitmentMsg && commitmentStatus !== 'completed' && commitmentStatus !== 'committed' && (
+        <p className="text-[10px] text-muted-foreground/80 italic">{commitmentMsg}</p>
+      )}
+
+      {(() => {
+        const explanation = [];
+        if ((analysis?.trainingLoad?.ratio ?? 0) > 1.3) explanation.push('Carga recente elevada');
+        if (getSleepDebtHours(analysis) > 2) explanation.push('Déficit de sono acumulado');
+        if (analysis?.physioState?.state === 'Fatigued') explanation.push('Sinais de fadiga');
+        if (analysis?.physioState?.state === 'Recovered') explanation.push('Boa recuperação disponível');
+
+        return explanation.length > 0 ? (
+          <div className="text-xs text-muted-foreground">
+            {explanation.join(' • ')}
+          </div>
+        ) : null;
+      })()}
+
+      <div className="space-y-2" role="radiogroup" aria-label="Opções de treino">
+        {(() => {
+          const recOpt = presc.options.find((o) => o.key === recommendedKey) || presc.options[0];
+          const otherOpts = presc.options.filter((o) => o.key !== recOpt.key);
+
+          const renderOption = (o, isRecommended) => {
+            const isActive = o.key === selected;
+            const impact = isRecommended ? null : predictOptionImpact(o, analysis, intent);
+
+            return (
+              <button
+                key={o.key}
+                role="radio"
+                aria-checked={isActive}
+                aria-label={`Opção ${o.key}: ${o.title}`}
+                disabled={savingSelect}
+                onClick={() => handleSelectOption(o.key)}
+                className={`w-full rounded-xl p-3 text-left transition-all border disabled:opacity-60 ${
+                  isRecommended
+                    ? isActive
+                      ? 'border-primary/60 bg-primary/10'
+                      : 'border-primary/40 bg-primary/5 hover:bg-primary/10'
+                    : isActive
+                    ? 'border-primary/50 bg-primary/8'
+                    : 'border-border/50 bg-secondary/50 hover:bg-secondary'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black text-muted-foreground">{o.key}</span>
+                    <span className="text-xs">{MODALITY_EMOJI[o.modality] || '🏃'}</span>
+                    {isRecommended && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary uppercase tracking-wide">
+                        recomendado
+                      </span>
+                    )}
+                  </div>
+                  {o.duration_min && (
+                    <span className="text-[10px] text-muted-foreground shrink-0">{o.duration_min}min</span>
+                  )}
+                </div>
+
+                <p className={`text-xs font-semibold leading-tight ${isActive || isRecommended ? 'text-primary' : 'text-foreground/80'}`}>
+                  {o.title}
+                </p>
+
+                {impact && (
+                  <div className={`text-xs mt-1 ${
+                    impact === 'up' ? 'text-emerald-400' :
+                    impact === 'down' ? 'text-yellow-400' :
+                    'text-muted-foreground'
+                  }`}>
+                    {impact === 'up' && '⬆️ tende a proteger a recuperação'}
+                    {impact === 'down' && '⚠️ pode pesar mais na recuperação'}
+                    {impact === 'stable' && '➡️ tende a manter o estado atual'}
+                  </div>
+                )}
+              </button>
+            );
+          };
+
+          return (
+            <>
+              {renderOption(recOpt, true)}
+
+              <button
+                onClick={() => setShowOtherOptions((v) => !v)}
+                className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors px-1"
+              >
+                <span>{showOtherOptions ? '▾' : '▸'}</span>
+                outras opções ({otherOpts.length})
+              </button>
+
+              <AnimatePresence>
+                {showOtherOptions && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden space-y-2"
+                  >
+                    {otherOpts.map((o) => renderOption(o, false))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          );
+        })()}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={selected}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.18 }}
+          className="rounded-xl bg-secondary/40 border border-border/40 p-3.5 space-y-2"
+          aria-live="polite"
+          aria-label={`Detalhes da opção ${selected}`}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-semibold">{opt.title}</p>
+            {opt.intensity && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                {opt.intensity.type === 'strain' ? 'Strain' : 'RPE'} {opt.intensity.range[0]}–{opt.intensity.range[1]}
+              </span>
+            )}
+          </div>
+
+          {(opt.structure?.warmup || opt.structure?.main || opt.structure?.cooldown) && (
+            <div className="space-y-1 text-xs text-muted-foreground">
+              {opt.structure.warmup && (
+                <p>🔥 <span className="font-medium text-foreground/70">Aquecimento:</span> {opt.structure.warmup}</p>
+              )}
+              {opt.structure.main && (
+                <p>💪 <span className="font-medium text-foreground/70">Principal:</span> {opt.structure.main}</p>
+              )}
+              {opt.structure.cooldown && (
+                <p>🧊 <span className="font-medium text-foreground/70">Volta à calma:</span> {opt.structure.cooldown}</p>
+              )}
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground italic">{opt.rationale}</p>
+
+          {opt.riskNote && (
+            <p className="text-xs text-amber-400/90 flex items-center gap-1">
+              <span>⚠️</span> {opt.riskNote}
+            </p>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCompletion && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <CompletionForm
+              optKey={selected}
+              saving={savingComplete}
+              onSave={handleSaveCompletion}
+              onCancel={() => setShowCompletion(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <WorkoutCompletionToast
+        message={celebrationMsg}
+        onClose={() => setCelebrationMsg(null)}
+      />
+
+      <div className="flex flex-wrap gap-2 items-center">
+        {(onScheduleOption || onSchedule) && (
+          <button
+            onClick={handleSchedule}
+            aria-label={`Agendar opção ${opt.key}: ${opt.title}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all"
+          >
+            <Calendar className="w-3.5 h-3.5" /> Agendar
+          </button>
+        )}
+
+        {!savedToday && !showCompletion && (
+          <button
+            onClick={() => setShowCompletion(true)}
+            aria-label={`Marcar opção ${opt.key} como feito`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-all"
+          >
+            <Check className="w-3.5 h-3.5" /> Marcar como feito
+          </button>
+        )}
+
+        {savedToday && (
+          <span className="text-xs text-emerald-400 font-semibold">Salvo ✅</span>
+        )}
+      </div>
+
+      {dbError && (
+        <p className="text-[10px] text-amber-400/80">
+          Não foi possível salvar agora. Tente novamente.
+        </p>
+      )}
+
+      <p className="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/20 pt-2">
+        Isto não é aconselhamento médico. Se sentir dor, tontura ou falta de ar, pare e procure assistência.
+      </p>
+    </div>
+  );
+}
+
+export default function WorkoutSuggestionCard({
+  checkin,
+  actionableRecs = [],
+  strainTarget,
+  currentStrain = 0,
+  analysis,
+  workoutPrescription,
+  userPrefs,
+  todaySessions = [],
+  allSessions = [],
+  onScheduleOption,
+  onCompleteOption,
+  onSchedule,
+  dailyVerdict = null,
+}) {
+  const { intent } = useDayContext();
+
+  const bodyState = checkin?.current_body_state || 'default';
+  const cfg = INTENSITY_MAP[bodyState] || INTENSITY_MAP.default;
+  const unifiedHeader = getHeaderFromVerdict(dailyVerdict, cfg);
+  const { initial, transition: reducedTransition } = useMotionSafe();
+
+  const [historyHint, setHistoryHint] = useState(null);
+  const [yesterdayFeedback, setYesterdayFeedback] = useState(null);
+
+  const prediction = predictTomorrow({ analysis, intent });
+
+  useEffect(() => {
+    async function loadYesterday() {
+      try {
+        const userId = await getUserIdOrDeviceId();
+        const data = await getFeedbackByDate(userId, yesterdayKey());
+        setYesterdayFeedback(data);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    loadYesterday();
+  }, []);
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const userId = await getUserIdOrDeviceId();
+        const recent = await getRecentFeedback(userId, 7);
+        if (!recent || recent.length < 3) return;
+
+        const completed = recent.filter((r) => r.completed && r.perceived_rpe != null);
+        if (completed.length < 3) return;
+
+        const avgRpe = completed.reduce((sum, r) => sum + r.perceived_rpe, 0) / completed.length;
+        if (avgRpe > 8) setHistoryHint('Seu histórico recente mostra esforço alto com frequência.');
+        else if (avgRpe < 5) setHistoryHint('Seu histórico recente está mais leve do que o usual.');
+      } catch (e) {
+        console.warn('history load failed', e);
+      }
+    }
+    loadHistory();
+  }, []);
+
+  const presc = useMemo(() => {
+    if (workoutPrescription !== undefined) return workoutPrescription;
+    if (analysis) return prescribeWorkout(analysis, userPrefs || {});
+    return null;
+  }, [analysis, workoutPrescription, userPrefs]);
+
+  const lookback = useMemo(() => {
+    if (!allSessions || allSessions.length === 0) return null;
+    return applyYesterdayLookback(allSessions, todayKey(), checkin);
+  }, [allSessions, checkin]);
+
+  const trainingRecs = actionableRecs.filter((r) =>
+    ['Treino', 'Mobilidade', 'Recuperação'].includes(r.category)
+  );
+
+  if (checkin?.rest_day || intent === 'recovery') {
+    return <RecoveryProtocolCard checkin={checkin} analysis={analysis} />;
+  }
+
+  if (todaySessions.length > 0) {
+    return (
+      <WorkoutLoggedState
+        sessions={todaySessions}
+        checkin={checkin}
+        analysis={analysis}
+      />
+    );
+  }
+
+  return (
+    <motion.div
+      initial={initial ?? { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={reducedTransition ?? { delay: 0.1 }}
+      className="rounded-2xl border p-5 space-y-4"
+      style={{ background: cfg.bg, borderColor: cfg.border }}
+    >
+      <AcwrAlert
+        allSessions={allSessions}
+        todaySessions={todaySessions}
+        analysisRatio={analysis?.trainingLoad?.ratio ?? null}
+      />
+
+      <YesterdayContextBanner lookback={lookback} />
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Dumbbell className="w-4 h-4" style={{ color: unifiedHeader.color }} />
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Treino sugerido
+          </span>
+        </div>
+
+        <div
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+          style={{ background: `${unifiedHeader.color}20`, color: unifiedHeader.color }}
+        >
+          <span>{unifiedHeader.emoji}</span>
+          {unifiedHeader.title}
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-foreground/90">
+          Melhor dose para hoje
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {unifiedHeader.subtitle || cfg.detail}
+        </p>
+      </div>
+
+      {checkin?.recommendation && (
+        <p className="text-xs text-muted-foreground italic leading-relaxed">
+          {checkin.recommendation}
+        </p>
+      )}
+
+      {yesterdayFeedback?.completed && (
+        <div className="text-xs text-muted-foreground">
+          Ontem você treinou (RPE {yesterdayFeedback.perceived_rpe})
+        </div>
+      )}
+
+      {historyHint && (
+        <div className="text-xs text-muted-foreground">
+          {historyHint}
+        </div>
+      )}
+
+      {prediction && (
+        <div className={`text-xs flex items-center gap-2 ${
+          prediction.trend === 'up'
+            ? 'text-emerald-400'
+            : prediction.trend === 'down'
+            ? 'text-yellow-400'
+            : 'text-muted-foreground'
+        }`}>
+          <span>
+            {prediction.trend === 'up' && '⬆️'}
+            {prediction.trend === 'down' && '⚠️'}
+            {prediction.trend === 'stable' && '➡️'}
+          </span>
+          <span>{prediction.message}</span>
+        </div>
+      )}
+
+      <div className="h-px bg-border/40" />
+
+      {(() => {
+        const rec = resolveReadinessRecommendation(checkin, analysis);
+        return (
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
+              {rec.text}
+            </p>
+            {rec.acwrContext && (
+              <p className="text-[11px] leading-snug" style={{ color: rec.acwrContext.color }}>
+                {rec.acwrContext.text}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+      {strainTarget != null && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+              Strain alvo hoje
+            </p>
+            <p className="text-lg font-mono font-bold" style={{ color: unifiedHeader.color }}>
+              até {strainTarget}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {STRAIN_ZONE(strainTarget)}
+            </p>
+          </div>
+
+          {currentStrain > 0 && (
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Acumulado
+              </p>
+              <p className={`text-lg font-mono font-bold ${currentStrain >= strainTarget ? 'text-red-400' : 'text-emerald-400'}`}>
+                {currentStrain}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {STRAIN_ZONE(currentStrain)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(() => {
+        const raw = checkin?.contextual_bullets;
+        const bullets = raw ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : null;
+
+        if (bullets?.length) {
+          return (
+            <ul className="space-y-2">
+              {bullets.slice(0, 2).map((tip, i) => (
+                <li key={i} className="text-sm text-foreground/80 leading-snug">
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <ul className="space-y-1.5">
+            {cfg.tips.slice(0, 2).map((tip, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: unifiedHeader.color }} />
+                {tip}
+              </li>
+            ))}
+          </ul>
+        );
+      })()}
+
+      {trainingRecs.length > 0 && (
+        <div className="pt-2 border-t border-border/30 space-y-2">
+          {trainingRecs.slice(0, 2).map((rec, i) => (
+            <div key={i} className="flex items-start gap-2.5">
+              <span className="text-base leading-none mt-0.5">{rec.icon}</span>
+              <p className="text-xs text-foreground/75 leading-snug">{rec.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {presc && (
+        <div className="pt-3 border-t border-border/30">
+          <PrescriptionBlock
+            presc={presc}
+            analysis={analysis}
+            intent={intent}
+            checkin={checkin}
+            strainTarget={strainTarget}
+            currentStrain={currentStrain}
+            lookbackRecommendKey={lookback?.recommendKey ?? null}
+            onScheduleOption={onScheduleOption}
+            onCompleteOption={onCompleteOption}
+            onSchedule={onSchedule}
+          />
+        </div>
+      )}
+    </motion.div>
+  );
+}
