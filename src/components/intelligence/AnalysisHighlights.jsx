@@ -1,85 +1,6 @@
-import { motion } from 'framer-motion';import { motion } from || '')
-    .replace(/#+\s*/g, '')
-    .replace(/\*\*/g, '')
-    .replace(/\*/g, '')
-    .trim();
-}
-
-function splitSentences(text) {
-  return normalizeText(text)
-    .split(/\n|(?<=\.)\s+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 20 && s.length < 240);
-}
-
-function pickAlerts(sentences) {
-  return sentences
-    .map((s) => {
-      const l = s.toLowerCase();
-      let score = 0;
-
-      if (/alerta|atenção|risco|sobrecarga|overreach|fadiga|déficit/i.test(l)) score += 25;
-      if (/reduzir|evitar|proteger|pausar|descanso/i.test(l)) score += 18;
-      if (/sono.*curto|sono.*ruim|stress alto|hrv.*baixo/i.test(l)) score += 12;
-      if (/\d+/.test(s)) score += 4;
-
-      return { text: s, score };
-    })
-    .filter((x) => x.score >= 18)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 2)
-    .map((x) => x.text);
-}
-
-function pickPatterns(sentences, used) {
-  const usedSet = new Set(used);
-
-  return sentences
-    .filter((s) => !usedSet.has(s))
-    .map((s) => {
-      const l = s.toLowerCase();
-      let score = 0;
-
-      if (/padrão|tendência|responde|associad|correlação/i.test(l)) score += 20;
-      if (/melhorando|piorando|acima|abaixo|média/i.test(l)) score += 12;
-      if (/sono|hrv|recovery|carga|stress/i.test(l)) score += 10;
-      if (/\d+/.test(s)) score += 4;
-
-      return { text: s, score };
-    })
-    .filter((x) => x.score >= 14)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map((x) => x.text);
-}
-
-function pickActions(sentences, used) {
-  const usedSet = new Set(used);
-
-  return sentences
-    .filter((s) => !usedSet.has(s))
-    .map((s) => {
-      const l = s.toLowerCase();
-      let score = 0;
-
-      if (/priorize|tente|observe|reduza|mantenha|ajuste|durma|hidrate/i.test(l)) score += 20;
-      if (/próximos 7 dias|esta semana|hoje à noite/i.test(l)) score += 10;
-
-      return { text: s, score };
-    })
-    .filter((x) => x.score >= 16)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map((x) => x.text);
-}
-
-function shortTitle(sentence) {
-  const cleaned = sentence.replace(/^[-–•]\s*/, '');
-  const words = cleaned.split(' ');
-  return words.slice(0, 5).join(' ').replace(/[,:;]$/, '') + (words.length > 5 ? '…' : '');
-}
-
-function Section({ icon: Icon, label, color, dotColor, items }) {
+import { motion } from 'framer-motion';
+import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
+/* ────────────────────────────────────────────────────────────────────────── *//* ─────────────────────────────────────────────────: Icon, label, color, dotColor, items }) {
   if (!items.length) return null;
 
   return (
@@ -160,10 +81,88 @@ export default function AnalysisHighlights({ analysisText }) {
     </motion.div>
   );
 }
-import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
-
-/* ────────────────────────────────────────────────────────────────────────── */
 /* Helpers */
 /* ────────────────────────────────────────────────────────────────────────── */
 
 function normalizeText(text) {
+  return String(text || '')
+    .replace(/#+\s*/g, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .trim();
+}
+
+function splitSentences(text) {
+  return normalizeText(text)
+    .split(/\n|(?<=\.)\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 20 && s.length < 240);
+}
+
+function pickAlerts(sentences) {
+  return sentences
+    .map((s) => {
+      const l = s.toLowerCase();
+      let score = 0;
+
+      if (/alerta|atenção|risco|sobrecarga|overreach|fadiga|déficit/i.test(l)) score += 25;
+      if (/reduzir|evitar|proteger|pausar|descanso/i.test(l)) score += 18;
+      if (/sono.*curto|sono.*ruim|stress alto|hrv.*baixo/i.test(l)) score += 12;
+      if (/\d+/.test(s)) score += 4;
+
+      return { text: s, score };
+    })
+    .filter((x) => x.score >= 18)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .map((x) => x.text);
+}
+
+function pickPatterns(sentences, used) {
+  const usedSet = new Set(used);
+
+  return sentences
+    .filter((s) => !usedSet.has(s))
+    .map((s) => {
+      const l = s.toLowerCase();
+      let score = 0;
+
+      if (/padrão|tendência|responde|associad|correlação/i.test(l)) score += 20;
+      if (/melhorando|piorando|acima|abaixo|média/i.test(l)) score += 12;
+      if (/sono|hrv|recovery|carga|stress/i.test(l)) score += 10;
+      if (/\d+/.test(s)) score += 4;
+
+      return { text: s, score };
+    })
+    .filter((x) => x.score >= 14)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((x) => x.text);
+}
+
+function pickActions(sentences, used) {
+  const usedSet = new Set(used);
+
+  return sentences
+    .filter((s) => !usedSet.has(s))
+    .map((s) => {
+      const l = s.toLowerCase();
+      let score = 0;
+
+      if (/priorize|tente|observe|reduza|mantenha|ajuste|durma|hidrate/i.test(l)) score += 20;
+      if (/próximos 7 dias|esta semana|hoje à noite/i.test(l)) score += 10;
+
+      return { text: s, score };
+    })
+    .filter((x) => x.score >= 16)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((x) => x.text);
+}
+
+function shortTitle(sentence) {
+  const cleaned = sentence.replace(/^[-–•]\s*/, '');
+  const words = cleaned.split(' ');
+  return words.slice(0, 5).join(' ').replace(/[,:;]$/, '') + (words.length > 5 ? '…' : '');
+}
+
