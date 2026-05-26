@@ -183,13 +183,22 @@ export default function Today() {
         const base = { ...rawCheckin };
         const engine = engineScores || {};
         const approvedEngineFields = [
-          'readiness_score',
-          'fatigue_score',
-          'stress_score',
-          'sleep_quality',
-          'recovery_score',
-          'morning_recovery_score',
-        ];
+  'readiness_score',
+  'fatigue_score',
+  'stress_score',
+  'sleep_quality',
+  'recovery_score',
+  'morning_recovery_score',
+  'zone',
+  'alert',
+  'recommendation',
+  'training_load',
+  'sleep_need_tonight',
+  'next_day_forecast',
+  'delayed_fatigue_alert',
+  'headline_today',
+  'decision_mode',
+];
 
         for (const k of approvedEngineFields) {
           if (typeof engine[k] !== 'undefined' && engine[k] !== null) {
