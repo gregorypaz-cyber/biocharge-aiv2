@@ -330,8 +330,10 @@ export function calculateReadinessScore(checkin, recentCheckins = []) {
 
 export function getZone(recoveryScore) {
   const score = clamp(recoveryScore ?? 0);
-  if (score >= 80) return 'green';
-  if (score >= 65) return 'yellow';
+
+  // Mais conservador que WHOOP oficial porque aqui os dados são majoritariamente manuais.
+  if (score >= 75) return 'green';
+  if (score >= 55) return 'yellow';
   return 'red';
 }
 
