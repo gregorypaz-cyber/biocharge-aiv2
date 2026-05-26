@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
 import { getTodayLocal } from '@/lib/date-utils';
 import { calculateStrainScore, generateTrainingImpactMessage } from '@/lib/training-impact-engine';
+import { useUserCheckins } from '@/hooks/useUserData';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useAuth } from '@/lib/AuthContext';
