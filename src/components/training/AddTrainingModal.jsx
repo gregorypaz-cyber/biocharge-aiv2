@@ -96,14 +96,40 @@ await base44.entities.TrainingSession.update(created.id, {
         const { calcNextDayForecast } = await import('@/lib/biocharge-utils');
         const morningRecovery = checkin.morning_recovery_score || checkin.recovery_score || 70;
         const sleepNeed = calculateSleepNeed(totalStrain, morningRecovery);
-        await base44.entities.DailyCheckin.update(checkin.id, {
-          daily_strain_accumulated: totalStrain,
-          current_body_state: calculateBodyState(morningRecovery, totalStrain),
-          remaining_capacity: calculateRemainingCapacity(morningRecovery, totalStrain),
-          recovery_demand: calculateRecoveryDemand(totalStrain, morningRecovery),
-          sleep_need_tonight: sleepNeed,
-          next_day_forecast: calcNextDayForecast(morningRecovery, sleepNeed),
-        });
+// ✅ importar normalizador
+const { normalizeDailySignals, computeCheckinScores } = await import('@/lib/biocharge-utils');
+
+const updatedBase = {
+  ...checkin,
+  daily_strain_accumulated: totalStrain,
+  current_body_state: calculateBodyState(morningRecovery, totalStrain),
+  remaining_capacity: calculateRemainingCapacity(morningRecovery, totalStrain),
+  recovery_demand: calculateRecoveryDemand(totalStrain, morningRecovery),
+  sleep_need_tonight: sleepNeed,
+  next_day_forecast: calcNextDayForecast(morningRecovery, sleepNeed),
+};
+
+// ✅ recalcular TODOS os sinais corretamente
+const normalized = computeCheckinScores(
+  updatedBase,
+  [], // pode melhorar depois com histórico
+  allSessions
+);
+
+await base44.entities.DailyCheckin.update(checkin.id, {
+  daily_strain_accumulated: normalized.daily_strain_accumulated,
+  current_body_state: normalized.current_body_state,
+  remaining_capacity: normalized.remaining_capacity,
+  recovery_demand: normalized.recovery_demand,
+
+  // ✅ sinais coerentes
+  zone: normalized.zone,
+  recommendation: normalized.recommendation,
+  training_load: normalized.training_load,
+  headline_today: normalized.headline_today,
+  sleep_need_tonight: normalized.sleep_need_tonight,
+  next_day_forecast: normalized.next_day_forecast,
+});
       }
 
       return created;
