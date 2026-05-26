@@ -50,6 +50,23 @@ function getDailyVerdict({
   totalStrain,
   todaySessions,
 }) {
+  
+// ✅ COLE EXATAMENTE AQUI
+  if (checkin?.decision_mode) {
+    return {
+      mode: checkin.decision_mode,
+      workoutIntensity:
+        checkin.decision_mode === 'train_high' ? 'high' :
+        checkin.decision_mode === 'train_moderate' ? 'moderate' :
+        checkin.decision_mode === 'train_light' ? 'low' :
+        'low',
+      headline: checkin.headline_today || 'Direção do dia definida',
+      subheadline: 'Baseado no seu check-in mais recente.',
+      rationale: 'Engine principal',
+      caution: null,
+    };
+  }
+
   const sleepDebt = getSleepDebtHours(analysis);
   const acwr = analysis?.trainingLoad?.ratio ?? null;
   const physioState = analysis?.physioState?.state ?? checkin?.current_body_state ?? null;
