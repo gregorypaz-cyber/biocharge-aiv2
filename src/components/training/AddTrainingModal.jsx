@@ -81,8 +81,13 @@ export default function AddTrainingModal({ checkin, existingSessions, onClose, o
 
       // Generate AI impact message
       const allSessions = [...(existingSessions || []), { ...sessionData, strain_score: strainScore }];
-      const msg = await generateTrainingImpactMessage(created, checkin, allSessions);
-      setImpactMsg(msg);
+const msg = await generateTrainingImpactMessage(created, checkin, allSessions);
+setImpactMsg(msg);
+
+// ✅ salvar no banco (isso estava faltando)
+await base44.entities.TrainingSession.update(created.id, {
+  impact_message: msg,
+});
 
       // Update checkin with new strain/state
       if (checkin?.id) {
