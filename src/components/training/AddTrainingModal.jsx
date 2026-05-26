@@ -48,7 +48,7 @@ function StrainPreview({ form, maxHr }) {
 
 export default function AddTrainingModal({ checkin, existingSessions, onClose, onAdded }) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+const { data: recentCheckins = [] } = useUserCheckins(30);
   const [form, setForm] = useState({
     sport: '',
     intensity: 'moderate',
