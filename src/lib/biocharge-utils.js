@@ -28,18 +28,170 @@ export function resolveCheckinField(checkin, fieldName) {
 }
 
 function normalizeMoodOrEnergy(v) {
-  if (v == null) return 50;
+  if (v == null) return null;
   return clamp((Number(v) / 5) * 100);
 }
 
 function normalizeDeepSleep(deepSleepPct) {
-  if (deepSleepPct == null) return 50;
-  return clamp((Number(deepSleepPct) / 25) * 100);
+  if (deepSleepPct == null) return null;
+
+  const v = Number(deepSleepPct);
+
+  if (v < 10) return 25;
+  if (v < 15) return 42;
+  if (v < 18) return 55;
+  if (v < 22) return 68;
+  if (v < 26) return 80;
+  if (v < 30) return 88;
+
+  // acima disso, não seguimos premiando muito
+  return 92;
 }
 
-function normalizeHrv(hrv) {
-  if (hrv == null) return 50;
-  return clamp((Number(hrv) / 80) * 100);
+function getRecentHrvBaseline(recentCheckins = []) {
+  const values = (recentCheckins || [])
+    .slice(0, 14)
+    .map((c) => c.hrv)
+    .filter((v) => v != null && v > 0);
+
+  if (values.length < 5) return null;
+  return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
+function getRecentRhrBaseline(recentCheckins = []) {
+  const values = (recentCheckins || [])
+    .slice(0, 14)
+    .map((c) => resolveCheckinField(c, 'resting_hr'))
+    .filter((v) => v != null && v > 0);
+
+  if (values.length < 5) return null;
+  return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
+function normalizeHrv(hrv, recentCheckins = []) {
+  if (hrv == null || hrv <= 0) return null;
+
+  const baseline = getRecentHrvBaseline(recentCheckins);
+
+  // sem baseline: leitura conservadora
+  if (!baseline) {
+    const raw = Number(hrv);
+    if (raw < 25) return 32;
+    if (raw < 35) return 42;
+    if (raw < 45) return 52;
+    if (raw < 55) return 60;
+    if (raw < 65) return 68;
+    if (raw < 80) return 76;
+    return 82;
+  }
+
+  const deltaPct = ((Number(hrv) - baseline) / baseline) * 100;
+
+  if (deltaPct <= -20) return 18;
+  if (deltaPct <= -10) return 30;
+  if (deltaPct <= -5) return 42;
+  if (deltaPct < 5) return 58;
+  if (deltaPct < 10) return 70;
+  if (deltaPct < 20) return 82;
+  return 90;
+}
+
+function normalizeRhr(rhr, recentCheckins = []) {
+  if (rhr == null || rhr <= 0) return null;
+
+  const baseline = getRecentRhrBaseline(recentCheckins);
+
+  // sem baseline: leitura conservadora
+  if (!baseline) {
+    const raw = Number(rhr);
+    if (raw <= 50) return 76;
+    if (raw <= 56) return 68;
+    if (raw <= 62) return 60;
+    if (raw <= 68) return 50;
+    if (raw <= 74) return 40;
+    return 30;
+  }
+
+  const deltaPct = ((Number(rhr) - baseline) / baseline) * 100;
+
+  // RHR menor que o baseline = melhor
+  if (deltaPct <= -8) return 88;
+  if (deltaPct <= -4) return 76;
+  if (deltaPct < 4) return 58;
+  if (deltaPct < 8) return 40;
+  return 22;
+}
+
+function getSleepHoursScore(hours) {
+  const h = Number(hours ?? 0);
+  if (!h || h <= 0) return null;
+
+  if (h < 5.5) return 20;
+  if (h < 6.0) return 35;
+  if (h < 6.5) return 48;
+  if (h < 7.0) return 60;
+  if (h < 7.5) return 72;
+  if (h < 8.0) return 82;
+  if (h < 8.5) return 88;
+  return 92;
+}
+
+function getPreviewConfidence(checkin, recentCheckins = []) {
+  const hasHrv = !!(checkin?.hrv && checkin.hrv > 0);
+  const hasRhr = !!(resolveCheckinField(checkin, 'resting_hr') && resolveCheckinField(checkin, 'resting_hr') > 0);
+  const hasSleepHours = !!(checkin?.sleep_hours && checkin.sleep_hours > 0);
+  const hasSleepScore = !!(checkin?.sleep_score != null);
+  const hasDeepSleep = !!(checkin?.deep_sleep_pct != null);
+
+  const hrvBaseline = getRecentHrvBaseline(recentCheckins);
+  const rhrBaseline = getRecentRhrBaseline(recentCheckins);
+
+  const physiologicalCount =
+    (hasHrv ? 1 : 0) +
+    (hasRhr ? 1 : 0) +
+    (hasSleepHours ? 1 : 0) +
+    (hasSleepScore ? 1 : 0) +
+    (hasDeepSleep ? 1 : 0);
+
+  if (physiologicalCount >= 4 && (hrvBaseline || rhrBaseline || (hasHrv && hasRhr))) {
+    return 'high';
+  }
+
+  if (physiologicalCount >= 3) {
+    return 'medium';
+  }
+
+  return 'low';
+}
+
+function getPreviewConfidenceReason(checkin, recentCheckins = []) {
+  const confidence = getPreviewConfidence(checkin, recentCheckins);
+  const hasHrv = !!(checkin?.hrv && checkin.hrv > 0);
+  const hasRhr = !!(resolveCheckinField(checkin, 'resting_hr') && resolveCheckinField(checkin, 'resting_hr') > 0);
+
+  if (confidence === 'high') {
+    return 'HRV, FC de repouso e sono dão boa sustentação para esta leitura.';
+  }
+
+  if (confidence === 'medium') {
+    return hasHrv || hasRhr
+      ? 'A leitura já tem alguma base fisiológica, mas ainda não está completa.'
+      : 'Boa parte da leitura ainda depende do que você informou manualmente.';
+  }
+
+  return 'Faltam HRV e/ou FC de repouso. Esta leitura está mais apoiada em percepção e sono informado.';
+}
+
+function applyConfidenceCap(score, confidence, hasStrongPhysiology) {
+  const raw = clamp(score);
+
+  if (confidence === 'high') return raw;
+
+  if (confidence === 'medium') {
+    return Math.min(raw, hasStrongPhysiology ? 90 : 88);
+  }
+
+  return Math.min(raw, hasStrongPhysiology ? 86 : 82);
 }
 
 // ─── Core scores ───────────────────────────────────────────────────────────
