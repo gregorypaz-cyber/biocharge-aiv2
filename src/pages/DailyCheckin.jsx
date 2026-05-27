@@ -245,6 +245,7 @@ const saveMorningMutation = useMutation({
         rpe: c.rpe,
         zone: c.zone,
         deep_sleep: c.deep_sleep_pct,
+        rem_sleep: c.rem_sleep_pct,
         mood: c.mood,
         energy: c.energy,
         sleep_hours: c.sleep_hours,
