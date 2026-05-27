@@ -203,10 +203,23 @@ export default function DailyCheckin() {
 
   const [savedCheckin, setSavedCheckin] = useState(null);
 
+  const [profile, setProfile] = useState(() => loadCheckinProfile());
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
 
   const { intent: dayIntent, setDayIntent } = useDayContext();
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(CHECKIN_PROFILE_KEY, JSON.stringify(profile));
+    } catch {
+      // noop
+    }
+  }, [profile]);
+
+  const profileComplete = !!(profile.sport && profile.level && profile.goal);
 
   const isRestDay = form.rest_day;
   const preview = computeCheckinScores(form);
