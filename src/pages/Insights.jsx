@@ -84,10 +84,10 @@ function getTodayLocalString() {
 
 function SectionHeader({ title, subtitle }) {
   return (
-    <div className="space-y-1">
-      <h2 className="text-sm font-semibold">{title}</h2>
+    <div className="space-y-0.5">
+      <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
       {subtitle ? (
-        <p className="text-xs text-muted-foreground leading-relaxed">{subtitle}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">{subtitle}</p>
       ) : null}
     </div>
   );
