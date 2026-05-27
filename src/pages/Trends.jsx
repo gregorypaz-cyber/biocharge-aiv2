@@ -900,7 +900,7 @@ export default function Trends() {
   const trendColor = trend === null ? 'text-muted-foreground' : trend > 2 ? 'text-[hsl(142,70%,55%)]' : trend < -2 ? 'text-[hsl(0,72%,60%)]' : 'text-muted-foreground';
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
+    <div className="space-y-4 max-w-3xl mx-auto">
 <div>
         <h1 className="text-2xl font-black tracking-tight">Tendências</h1>
         <p className="text-sm text-muted-foreground mt-1">
