@@ -982,6 +982,9 @@ export default function Trends() {
       {/* Recovery Influencers */}
       <RecoveryInfluencersCard checkins={computed} />
 
+      {/* Recovery D+1 Predictor */}
+      <RecoveryTomorrowPredictorCard checkins={computed} />
+
       {/* Empty state */}
       {filtered.length < 5 && (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6">
