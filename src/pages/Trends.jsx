@@ -20,7 +20,6 @@ import {
   Loader2,
   Moon,
 } from 'lucide-react';
-import DetectedPatternBlock from '@/components/trends/DetectedPatternBlock';
 
 const timeFilters = [
   { label: '7D', days: 7 },
@@ -1054,9 +1053,6 @@ export default function Trends() {
           <p>Registre mais check-ins para ver tendências</p>
         </div>
       )}
-
-      {/* Detected Pattern Block */}
-      <DetectedPatternBlock checkins={filtered} allCheckins={computed} />
 
       {/* Recovery vs Fatigue Bar */}
       {chartData.length >= 2 && (
