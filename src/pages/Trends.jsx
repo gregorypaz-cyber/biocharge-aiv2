@@ -234,11 +234,12 @@ Responda APENAS em JSON:
   const zone = zoneTone(result?.predicted_zone || 'yellow');
 
   return (
-    <motion.div
+<motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-5 space-y-4"
+      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
     >
+
       <div className="flex items-start gap-3">
         <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
         <div>
