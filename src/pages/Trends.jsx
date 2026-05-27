@@ -9,7 +9,17 @@ import {
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Minus, Gauge, ShieldCheck, ShieldAlert } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Gauge,
+  ShieldCheck,
+  ShieldAlert,
+  Sparkles,
+  Loader2,
+  Moon,
+} from 'lucide-react';
 import DetectedPatternBlock from '@/components/trends/DetectedPatternBlock';
 
 const timeFilters = [
