@@ -590,18 +590,40 @@ export default function Today() {
       case 'execution':
         return <ExecutionCard key="execution" />;
 
-      case 'workout': {
-        const workoutEl = desc.action === 'mutate'
-          ? <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
-          : <WorkoutSuggestionCard key="workout" {...workoutProps} />;
+case 'workout': {
+        const workoutEl =
+          desc.action === 'mutate' ? (
+            <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
+          ) : (
+            <WorkoutSuggestionCard key="workout" {...workoutProps} />
+          );
 
         return (
-          <React.Fragment key="workout-wrapper">
+          <section
+            key="workout-wrapper"
+            id="today-workout-prescription"
+            className="space-y-3"
+          >
+            <div className="px-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Prescrição do dia
+              </p>
+              <h3 className="text-base font-black tracking-tight mt-1">
+                Escolha sua melhor dose de treino
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Estas opções já levam em conta seu estado fisiológico e a margem do dia.
+              </p>
+            </div>
+
             {workoutEl}
+
             {weeklyContextMsg && (
-              <p className="text-xs text-muted-foreground mt-2 px-1">{weeklyContextMsg}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed px-1">
+                {weeklyContextMsg}
+              </p>
             )}
-          </React.Fragment>
+          </section>
         );
       }
 
