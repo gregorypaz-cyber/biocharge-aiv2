@@ -1211,5 +1211,153 @@ function ExecutionCard() {
     </motion.div>
   );
 }
+if (isLoading) {
+    return (
+      <div className="space-y-4 max-w-2xl mx-auto">
+        <Skeleton className="h-8 w-40 rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-3xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+        </div>
+        <Skeleton className="h-16 w-full rounded-2xl" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+      </div>
+    );
+  }
 
+  if (!enrichedCheckin) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center h-[70vh] text-center px-6"
+      >
+        <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
+          <Zap className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-xl font-black mb-2">Sem check-in hoje</h2>
+        <p className="text-muted-foreground mb-6 text-sm">
+          Faça seu check-in para calcular sua prontidão e decidir melhor o treino do dia.
+        </p>
+        <Link
+          to="/checkin"
+          className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-2xl font-semibold hover:bg-primary/90 transition-all"
+        >
+          <Plus className="w-4 h-4" /> Fazer check-in
+        </Link>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'space-y-4 max-w-2xl mx-auto transition-all duration-500',
+        isSilentMode && 'opacity-90',
+        isRestMode && 'saturate-[0.7]'
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
+
+          {checkin?.created_at ? (
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+              <span>Check-in às</span>
+              <span className="font-medium text-foreground/60">
+                {new Date(checkin.created_at).toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </p>
+          ) : checkin?.date ? (
+            <p className="text-[10px] text-muted-foreground mt-1">Check-in de hoje registrado</p>
+          ) : null}
+        </div>
+
+        {hasCheckedInToday && streak >= 3 && (
+          <Link
+            to="/insights"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
+            title={`${streak} dias seguidos`}
+          >
+            <span className="text-sm leading-none">🔥</span>
+            <span className="text-xs font-bold text-orange-400">{streak}</span>
+          </Link>
+        )}
+      </div>
+
+      {phaseCfg.bannerText && (
+        <motion.div
+          key={phase}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', phaseCfg.bannerClass)}
+        >
+          {phaseCfg.bannerText}
+        </motion.div>
+      )}
+
+      <QuickIntentEdit />
+
+      {deepSleepAlert && !deepSleepAlertDismissed && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-blue-500/25 bg-blue-500/8 px-4 py-3 flex items-start gap-3"
+        >
+          <Moon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
+          <button
+            onClick={() => setDeepSleepAlertDismissed(true)}
+            className="text-blue-400/60 hover:text-blue-300 transition-colors shrink-0"
+            aria-label="Fechar alerta"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </motion.div>
+      )}
+
+      {orderedPrimaryCards.map((desc) => renderCard(desc))}
+
+      <TomorrowHookCard hook={tomorrowHook} />
+
+      {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
+        <Link
+          to="/insights"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+        >
+          Quer entender melhor por que a recomendação de hoje é essa?
+          <span className="text-primary font-medium">→ Ver análise detalhada</span>
+        </Link>
+      )}
+
+      <SecondaryMetrics count={secondaryCards.filter((d) => d.action !== 'exclude').length}>
+        {secondaryCards.map((desc) => renderCard(desc))}
+      </SecondaryMetrics>
+
+      {analysisError && (
+        <p className="text-[11px] text-yellow-400/80 px-1">
+          Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
+        </p>
+      )}
+
+      {showAddModal && (
+        <AddTrainingModal
+          checkin={enrichedCheckin}
+          existingSessions={todaySessions}
+          onClose={() => setShowAddModal(false)}
+          onAdded={() => {
+            setShowAddModal(false);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+          }}
+        />
+      )}
+    </div>
+  );
 }
