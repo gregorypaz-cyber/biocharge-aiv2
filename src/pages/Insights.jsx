@@ -159,17 +159,18 @@ function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
       : 'text-primary';
 
   return (
-    <div className={`rounded-2xl border p-4 ${cls}`}>
-      <div className="flex items-start gap-3">
+    <div className={`rounded-xl border px-4 py-3 ${cls}`}>
+      <div className="flex items-start gap-2.5">
         <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconCls}`} />
         <div>
-          <p className="text-sm font-semibold">{title}</p>
-          <p className="text-sm text-muted-foreground leading-relaxed mt-1">{text}</p>
+          <p className="text-sm font-semibold leading-snug">{title}</p>
+          <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">{text}</p>
         </div>
       </div>
     </div>
   );
 }
+
 
 function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
