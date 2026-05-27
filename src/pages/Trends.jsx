@@ -901,10 +901,13 @@ export default function Trends() {
 
   return (
     <div className="space-y-5 max-w-3xl mx-auto">
-      <div>
+<div>
         <h1 className="text-2xl font-black tracking-tight">Tendências</h1>
-        <p className="text-sm text-muted-foreground mt-1">Evolução e padrões da sua performance</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Evolução, equilíbrio de carga e padrões dos seus dados ao longo do tempo.
+        </p>
       </div>
+
 
       {/* Period + Metric selectors */}
       <div className="space-y-3">
