@@ -947,7 +947,7 @@ Regras:
         transition={{ delay: 0.12 }}
         className="rounded-xl border border-border/60 bg-card overflow-hidden"
       >
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40">
+        <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
           <Brain className="w-4 h-4 text-primary" />
           <h2 className="text-sm font-semibold">Coach IA</h2>
         </div>
