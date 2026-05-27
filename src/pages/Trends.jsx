@@ -762,13 +762,13 @@ function StrainRecoveryBalanceCard({ checkins = [] }) {
       animate={{ opacity: 1, y: 0 }}
       className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <Gauge className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+<div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <Gauge className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
           <div>
-            <h3 className="text-sm font-semibold">Balance de carga e recuperação</h3>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Recovery médio vs strain médio dos últimos 7 dias.
+            <h3 className="text-sm font-semibold tracking-tight">Balance de carga e recuperação</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+              Recovery médio vs strain médio nos últimos 7 dias.
             </p>
           </div>
         </div>
