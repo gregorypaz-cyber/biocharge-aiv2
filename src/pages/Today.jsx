@@ -642,22 +642,22 @@ case 'workout': {
             id="today-workout-prescription"
             className="space-y-3"
           >
-            <div className="px-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <div className="px-1 space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
                 Prescrição do dia
               </p>
-              <h3 className="text-base font-black tracking-tight mt-1">
-                Escolha sua melhor dose de treino
+              <h3 className="text-base font-black tracking-tight">
+                Escolha a melhor opção para hoje
               </h3>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                Estas opções já levam em conta seu estado fisiológico e a margem do dia.
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                A leitura de prontidão define a margem. Abaixo, você escolhe a dose que melhor encaixa no seu contexto.
               </p>
             </div>
 
             {workoutEl}
 
             {weeklyContextMsg && (
-              <p className="text-xs text-muted-foreground leading-relaxed px-1">
+              <p className="text-[11px] text-muted-foreground leading-relaxed px-1">
                 {weeklyContextMsg}
               </p>
             )}
