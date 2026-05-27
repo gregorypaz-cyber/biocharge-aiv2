@@ -36,6 +36,206 @@ const tooltipStyle = {
   padding: '8px 12px',
 };
 
+function avgList(values) {
+  const valid = values.filter((v) => v != null && !isNaN(v));
+  if (!valid.length) return null;
+  return valid.reduce((sum, v) => sum + v, 0) / valid.length;
+}
+
+function clampRange(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getBalanceClassification(balanceIndex) {
+  if (balanceIndex > 20) {
+    return {
+      label: 'Subutilizado',
+      color: 'text-sky-400',
+      bg: 'bg-sky-500/10',
+      border: 'border-sky-500/20',
+      icon: TrendingUp,
+      summary: 'Seu corpo parece estar suportando mais do que você vem exigindo.',
+      recommendation: 'Há margem para aumentar a carga de forma progressiva e controlada.',
+    };
+  }
+
+  if (balanceIndex >= -10 && balanceIndex <= 20) {
+    return {
+      label: 'Em equilíbrio',
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      icon: ShieldCheck,
+      summary: 'Sua relação entre carga e recuperação está em uma faixa saudável.',
+      recommendation: 'A tendência é boa para sustentar consistência sem forçar demais.',
+    };
+  }
+
+  if (balanceIndex >= -30 && balanceIndex < -10) {
+    return {
+      label: 'Carga elevada',
+      color: 'text-yellow-400',
+      bg: 'bg-yellow-500/10',
+      border: 'border-yellow-500/20',
+      icon: ShieldAlert,
+      summary: 'A carga recente já está começando a pressionar sua capacidade de recuperação.',
+      recommendation: 'Vale moderar a intensidade ou reduzir volume antes de empilhar mais fadiga.',
+    };
+  }
+
+  return {
+    label: 'Overreaching',
+    color: 'text-red-400',
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/20',
+    icon: TrendingDown,
+    summary: 'Sua carga recente está acima do que sua recuperação vem sustentando.',
+    recommendation: 'Priorize recuperação e evite continuar acumulando carga até estabilizar.',
+  };
+}
+
+function getBalancePointerPercent(balanceIndex) {
+  // escala visual fixa entre -40 e +40
+  const clamped = clampRange(balanceIndex, -40, 40);
+  return ((clamped + 40) / 80) * 100;
+}
+
+function StrainRecoveryBalanceCard({ checkins = [] }) {
+  const sorted = [...checkins]
+    .filter((c) => c?.date)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  const last7 = sorted.slice(0, 7);
+  const validRecovery = last7.filter((c) => c?.recovery_score != null);
+
+  if (validRecovery.length < 4) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-border/60 bg-card p-5"
+      >
+        <div className="flex items-start gap-3">
+          <Gauge className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold">Balance de carga e recuperação</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Ainda faltam registros suficientes para calcular seu equilíbrio semanal com confiança.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const avgRecovery = avgList(last7.map((c) => c.recovery_score));
+  const avgStrain = avgList(last7.map((c) => Number(c.daily_strain_accumulated ?? 0)));
+
+  const balanceIndex = Number(((avgRecovery ?? 0) - (avgStrain ?? 0)).toFixed(1));
+  const classification = getBalanceClassification(balanceIndex);
+  const pointerPercent = getBalancePointerPercent(balanceIndex);
+  const Icon = classification.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-border/60 bg-card p-5 space-y-4"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <Gauge className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold">Balance de carga e recuperação</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Recovery médio vs strain médio dos últimos 7 dias.
+            </p>
+          </div>
+        </div>
+
+        <span
+          className={`text-[10px] font-bold px-2 py-1 rounded-full border ${classification.bg} ${classification.border} ${classification.color}`}
+        >
+          {classification.label}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Recovery médio
+          </p>
+          <p className="text-xl font-mono font-black text-foreground">
+            {avgRecovery != null ? avgRecovery.toFixed(1) : '—'}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Strain médio
+          </p>
+          <p className="text-xl font-mono font-black text-foreground">
+            {avgStrain != null ? avgStrain.toFixed(1) : '—'}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Índice
+          </p>
+          <p className={`text-xl font-mono font-black ${classification.color}`}>
+            {balanceIndex > 0 ? `+${balanceIndex}` : balanceIndex}
+          </p>
+        </div>
+      </div>
+
+      {/* Gauge */}
+      <div className="space-y-2">
+        <div className="relative">
+          <div className="h-3 w-full rounded-full overflow-hidden border border-border/40 flex">
+            <div className="w-[12.5%] bg-red-500/75" />
+            <div className="w-[25%] bg-yellow-500/75" />
+            <div className="w-[37.5%] bg-emerald-500/75" />
+            <div className="w-[25%] bg-sky-500/75" />
+          </div>
+
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+            style={{ left: `${pointerPercent}%` }}
+          >
+            <div className="w-3.5 h-3.5 rounded-full bg-background border-2 border-white shadow" />
+          </div>
+        </div>
+
+        <div className="flex justify-between text-[10px] text-muted-foreground">
+          <span>Over</span>
+          <span>Carga</span>
+          <span>Equilíbrio</span>
+          <span>Subutil.</span>
+        </div>
+      </div>
+
+      <div className={`rounded-xl border px-4 py-3 ${classification.bg} ${classification.border}`}>
+        <div className="flex items-start gap-3">
+          <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${classification.color}`} />
+          <div>
+            <p className={`text-sm font-semibold ${classification.color}`}>
+              {classification.summary}
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+              {classification.recommendation}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[10px] text-muted-foreground">
+        Baseado nos seus últimos {last7.length} check-ins com recovery e strain diário.
+      </p>
+    </motion.div>
+  );
+}
+
 export default function Trends() {
   const [period, setPeriod] = useState(30);
   const [selectedMetric, setSelectedMetric] = useState('recovery_score');
