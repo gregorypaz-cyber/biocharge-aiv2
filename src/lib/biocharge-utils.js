@@ -230,13 +230,14 @@ const deepSleepScore = normalizeDeepSleep(checkin.deep_sleep_pct);
   const energy = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'energy'));
 
   // WHOOP-like na intenção: biometria manda, subjetividade ajusta levemente
-  const weighted = [
+const weighted = [
     { value: hrvScore, weight: 0.26 },
     { value: rhrScore, weight: 0.18 },
     { value: sleepScore, weight: 0.18 },
     { value: sleepHoursScore, weight: 0.12 },
-    { value: deepSleepScore, weight: 0.08 },
-    { value: morning, weight: 0.10 },
+    { value: deepSleepScore, weight: 0.06 },
+    { value: remSleepScore, weight: 0.04 },
+    { value: morning, weight: 0.08 },
     { value: fatigueInverse, weight: 0.06 },
     { value: mood, weight: 0.01 },
     { value: energy, weight: 0.01 },
