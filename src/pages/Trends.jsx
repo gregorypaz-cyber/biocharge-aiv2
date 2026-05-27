@@ -557,10 +557,10 @@ function RecoveryInfluencersCard({ checkins = [] }) {
 
   if (!ranked.length) {
     return (
-      <motion.div
+<motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card p-5"
+        className="rounded-xl border border-border/60 bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <TrendingUp className="w-5 h-5 text-primary mt-0.5 shrink-0" />
@@ -730,10 +730,10 @@ function StrainRecoveryBalanceCard({ checkins = [] }) {
 
   if (validRecovery.length < 4) {
     return (
-      <motion.div
+<motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card p-5"
+        className="rounded-xl border border-border/60 bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <Gauge className="w-5 h-5 text-primary mt-0.5 shrink-0" />
