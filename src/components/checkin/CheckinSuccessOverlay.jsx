@@ -41,6 +41,22 @@ function getMainText(checkin) {
   );
 }
 
+function getTomorrowReason(checkin) {
+  if (checkin?.delayed_fatigue_alert) {
+    return checkin.delayed_fatigue_alert;
+  }
+
+  if (checkin?.next_day_forecast) {
+    return checkin.next_day_forecast;
+  }
+
+  if (checkin?.sleep_need_tonight != null) {
+    return `A resposta do seu corpo amanhã vai depender muito de como você dormir hoje. Meta sugerida: ${checkin.sleep_need_tonight}h.`;
+  }
+
+  return 'A leitura de amanhã pode mudar bastante com base no que você fizer hoje.';
+}
+
 export default function CheckinSuccessOverlay({ checkin, onContinue }) {
   const [progress, setProgress] = useState(0);
 
@@ -64,6 +80,8 @@ const recovery =
     checkin?.recommendation && checkin?.recommendation !== checkin?.headline_today
       ? checkin.recommendation
       : null;
+
+const tomorrowReason = getTomorrowReason(checkin);
 
   const secondsLeft = useMemo(() => {
     const remaining = Math.max(0, AUTO_REDIRECT_MS - (progress / 100) * AUTO_REDIRECT_MS);
