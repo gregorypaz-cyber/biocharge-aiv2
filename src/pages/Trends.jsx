@@ -240,12 +240,12 @@ Responda APENAS em JSON:
       className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
     >
 
-      <div className="flex items-start gap-3">
-        <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+<div className="flex items-start gap-2.5">
+        <Sparkles className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
         <div>
-          <h3 className="text-sm font-semibold">Prever amanhã</h3>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            Simule como sono planejado e strain previsto podem influenciar sua recuperação amanhã.
+          <h3 className="text-sm font-semibold tracking-tight">Prever amanhã</h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+            Simule como sono planejado e carga prevista podem influenciar sua recuperação.
           </p>
         </div>
       </div>
