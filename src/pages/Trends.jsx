@@ -47,6 +47,359 @@ const tooltipStyle = {
   padding: '8px 12px',
 };
 
+function safeJsonFromText(text) {
+  if (!text || typeof text !== 'string') return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function averageField(items, getter) {
+  const values = items
+    .map(getter)
+    .filter((v) => v != null && !isNaN(v));
+
+  if (!values.length) return null;
+  return values.reduce((sum, v) => sum + Number(v), 0) / values.length;
+}
+
+function zoneTone(zone) {
+  if (zone === 'green') {
+    return {
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      label: 'Green',
+    };
+  }
+
+  if (zone === 'yellow') {
+    return {
+      color: 'text-yellow-400',
+      bg: 'bg-yellow-500/10',
+      border: 'border-yellow-500/20',
+      label: 'Yellow',
+    };
+  }
+
+  return {
+    color: 'text-red-400',
+    bg: 'bg-red-500/10',
+    border: 'border-red-500/20',
+    label: 'Red',
+  };
+}
+
+function confidenceTone(confidence) {
+  if (confidence === 'high') {
+    return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+  }
+
+  if (confidence === 'medium') {
+    return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+  }
+
+  return 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20';
+}
+
+function RecoveryTomorrowPredictorCard({ checkins = [] }) {
+  const [plannedSleep, setPlannedSleep] = useState(7.5);
+  const [plannedStrain, setPlannedStrain] = useState(50);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+
+  const sorted = [...checkins]
+    .filter((c) => c?.date)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+  const today = sorted[0] || null;
+  const prior3 = sorted.slice(1, 4);
+
+  const canPredict = !!today && prior3.length >= 2;
+
+  async function handlePredict() {
+    if (!today) return;
+
+    setLoading(true);
+    setError('');
+    setResult(null);
+
+    const todayData = {
+      biocharge_morning: today.biocharge_morning ?? null,
+      recovery_score: today.recovery_score ?? null,
+      hrv: today.hrv ?? null,
+      sleep_hours: today.sleep_hours ?? null,
+      deep_sleep_pct: today.deep_sleep_pct ?? null,
+      rem_sleep_pct: today.rem_sleep_pct ?? null,
+      daily_strain_accumulated: today.daily_strain_accumulated ?? 0,
+      fatigue: today.fatigue_score ?? today.fatigue ?? null,
+      soreness: today.muscle_soreness ?? today.muscle_soreness_level ?? null,
+      stress: today.stress_score ?? today.stress ?? null,
+      hydration: today.hydration ?? today.hydration_liters ?? null,
+    };
+
+    const trendData = {
+      biocharge_morning_avg_3d: averageField(prior3, (c) => c.biocharge_morning),
+      recovery_score_avg_3d: averageField(prior3, (c) => c.recovery_score),
+      hrv_avg_3d: averageField(prior3, (c) => c.hrv),
+      sleep_hours_avg_3d: averageField(prior3, (c) => c.sleep_hours),
+      deep_sleep_pct_avg_3d: averageField(prior3, (c) => c.deep_sleep_pct),
+      rem_sleep_pct_avg_3d: averageField(prior3, (c) => c.rem_sleep_pct),
+      strain_avg_3d: averageField(prior3, (c) => c.daily_strain_accumulated),
+      fatigue_avg_3d: averageField(prior3, (c) => c.fatigue_score ?? c.fatigue),
+      soreness_avg_3d: averageField(prior3, (c) => c.muscle_soreness ?? c.muscle_soreness_level),
+      stress_avg_3d: averageField(prior3, (c) => c.stress_score ?? c.stress),
+      hydration_avg_3d: averageField(prior3, (c) => c.hydration ?? c.hydration_liters),
+    };
+
+    const prompt = `Você é um motor fisiológico de predição de recuperação atlética.
+Com base nos dados abaixo, preveja o BioCharge score de amanhã (0-100)
+e a zona de recuperação (green/yellow/red).
+
+Dados de hoje:
+${JSON.stringify(todayData, null, 2)}
+
+Tendência dos últimos 3 dias:
+${JSON.stringify(trendData, null, 2)}
+
+Sono planejado: ${plannedSleep}h
+Strain planejado amanhã: ${plannedStrain}/100
+
+Regras:
+- trate como tendência, não como certeza
+- seja conservador
+- use os dados de hoje e a tendência para modular a previsão
+- se os dados forem incompletos, reduza a confiança
+- NÃO escreva nada fora do JSON
+
+Responda APENAS em JSON:
+{
+  "predicted_score": number,
+  "predicted_zone": "green"|"yellow"|"red",
+  "confidence": "high"|"medium"|"low",
+  "key_factors": ["fator1", "fator2"],
+  "recommendation": "frase curta de recomendação"
+}`;
+
+    try {
+      const raw = await base44.integrations.Core.InvokeLLM({ prompt });
+      const parsed = safeJsonFromText(raw);
+
+      if (!parsed) {
+        throw new Error('Resposta inválida do modelo');
+      }
+
+      const normalized = {
+        predicted_score: Number(parsed.predicted_score ?? 0),
+        predicted_zone: ['green', 'yellow', 'red'].includes(parsed.predicted_zone)
+          ? parsed.predicted_zone
+          : 'yellow',
+        confidence: ['high', 'medium', 'low'].includes(parsed.confidence)
+          ? parsed.confidence
+          : 'low',
+        key_factors: Array.isArray(parsed.key_factors)
+          ? parsed.key_factors.slice(0, 3)
+          : [],
+        recommendation:
+          typeof parsed.recommendation === 'string'
+            ? parsed.recommendation
+            : 'Use esta previsão como tendência, não como garantia.',
+      };
+
+      if (isNaN(normalized.predicted_score)) {
+        throw new Error('Predicted score inválido');
+      }
+
+      normalized.predicted_score = Math.max(0, Math.min(100, Math.round(normalized.predicted_score)));
+
+      setResult(normalized);
+    } catch (err) {
+      console.warn('RecoveryTomorrowPredictorCard failed', err);
+      setError('Não foi possível gerar a previsão agora. Tente novamente em instantes.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const zone = zoneTone(result?.predicted_zone || 'yellow');
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-border/60 bg-card p-5 space-y-4"
+    >
+      <div className="flex items-start gap-3">
+        <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+        <div>
+          <h3 className="text-sm font-semibold">Prever amanhã</h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            Simule como sono planejado e strain previsto podem influenciar sua recuperação amanhã.
+          </p>
+        </div>
+      </div>
+
+      {!canPredict && (
+        <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Ainda faltam dados suficientes para gerar uma previsão útil. Registre mais alguns check-ins.
+          </p>
+        </div>
+      )}
+
+      {canPredict && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Sono planejado
+                </p>
+                <p className="text-sm font-mono font-bold">{plannedSleep}h</p>
+              </div>
+
+              <input
+                type="range"
+                min={4}
+                max={10}
+                step={0.5}
+                value={plannedSleep}
+                onChange={(e) => setPlannedSleep(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>4h</span>
+                <span>10h</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Strain planejado
+                </p>
+                <p className="text-sm font-mono font-bold">{plannedStrain}/100</p>
+              </div>
+
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={plannedStrain}
+                onChange={(e) => setPlannedStrain(Number(e.target.value))}
+                className="w-full accent-primary"
+              />
+
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>Leve</span>
+                <span>Alto</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handlePredict}
+            disabled={loading}
+            className="w-full h-11 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Gerando previsão...
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4" />
+                Prever amanhã
+              </>
+            )}
+          </button>
+
+          {error && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {result && (
+            <div className="space-y-4">
+              <div className={`rounded-2xl border px-4 py-4 ${zone.bg} ${zone.border}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                      Recovery previsto
+                    </p>
+                    <div className="flex items-end gap-2">
+                      <span className={`text-4xl font-black font-mono ${zone.color}`}>
+                        {result.predicted_score}
+                      </span>
+                      <span className={`text-sm font-semibold mb-1 ${zone.color}`}>
+                        {zone.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-bold px-2 py-1 rounded-full border ${confidenceTone(result.confidence)}`}
+                  >
+                    {result.confidence === 'high'
+                      ? 'Confiança alta'
+                      : result.confidence === 'medium'
+                      ? 'Confiança média'
+                      : 'Confiança baixa'}
+                  </span>
+                </div>
+              </div>
+
+              {result.key_factors?.length > 0 && (
+                <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                    Fatores-chave
+                  </p>
+                  <ul className="space-y-1.5">
+                    {result.key_factors.map((factor, i) => (
+                      <li key={i} className="text-sm text-foreground/85 flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                        {factor}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  Recomendação
+                </p>
+                <p className="text-sm text-foreground/85 leading-relaxed">
+                  {result.recommendation}
+                </p>
+              </div>
+
+              <p className="text-[10px] text-muted-foreground">
+                Esta previsão é uma tendência gerada a partir do seu estado atual e do plano informado — não é garantia.
+              </p>
+            </div>
+          )}
+        </>
+      )}
+    </motion.div>
+  );
+}
+
 function pearson(x, y) {
   const n = x.length;
   if (n < 2) return 0;
