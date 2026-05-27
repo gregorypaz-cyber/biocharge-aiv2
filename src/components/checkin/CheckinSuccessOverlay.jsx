@@ -157,7 +157,7 @@ const tomorrowReason = getTomorrowReason(checkin);
               </span>
 
               <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
-                Direção do dia
+                Prescrição do dia
               </p>
               <p className="text-sm font-semibold">{decisionLabel}</p>
             </div>
