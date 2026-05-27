@@ -110,29 +110,32 @@ function InsightChip({ confidence }) {
 
 function DiscoveryCard({ item }) {
   const negative = item.sentiment === 'negative';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'rounded-2xl border p-4 space-y-2',
+        'rounded-xl border p-3.5 space-y-2',
         negative
           ? 'border-red-500/20 bg-red-500/5'
           : 'border-emerald-500/20 bg-emerald-500/5'
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <span className="text-xl leading-none mt-0.5">{item.icon}</span>
+        <div className="flex items-start gap-2.5">
+          <span className="text-lg leading-none mt-0.5">{item.icon}</span>
           <div>
-            <p className="text-sm font-semibold">{item.title}</p>
-            <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+            <p className="text-sm font-semibold leading-snug">{item.title}</p>
+            <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">
               {item.text}
             </p>
           </div>
         </div>
+
         <InsightChip confidence={item.confidence} />
       </div>
+
       <p className="text-[10px] text-muted-foreground">
         Baseado em {item.days} {item.days === 1 ? 'registro' : 'registros'} úteis.
       </p>
