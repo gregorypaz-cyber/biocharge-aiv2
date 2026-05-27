@@ -38,6 +38,98 @@ function getSleepDebtHours(analysis) {
   return analysis?.sleepDebt?.debt ?? analysis?.sleepDebtHours ?? 0;
 }
 
+function getTomorrowHook({ checkin, analysis, todaySessions, isRestMode }) {
+  const delayedFatigue = checkin?.delayed_fatigue_alert || null;
+  const forecast = checkin?.next_day_forecast || null;
+  const sleepNeed = checkin?.sleep_need_tonight ?? null;
+  const ratio = analysis?.trainingLoad?.ratio ?? null;
+
+  if (delayedFatigue) {
+    return {
+      tone: 'warning',
+      title: 'Sinal para amanhã',
+      text: delayedFatigue,
+      footer: 'Vale voltar amanhã cedo para confirmar como seu corpo respondeu.',
+    };
+  }
+
+  if (forecast) {
+    return {
+      tone: 'info',
+      title: 'Prévia de amanhã',
+      text: forecast,
+      footer: 'Abra o app amanhã cedo para verificar se a leitura se confirmou.',
+    };
+  }
+
+  if (todaySessions.length > 0 && ratio != null && ratio > 1.25) {
+    return {
+      tone: 'warning',
+      title: 'Atenção para amanhã',
+      text: 'Sua carga de hoje já foi relevante. O dia seguinte pode pedir mais controle do que parece agora.',
+      footer: 'Volte amanhã para ver se sua margem realmente abriu ou fechou.',
+    };
+  }
+
+  if (isRestMode && sleepNeed != null) {
+    return {
+      tone: 'positive',
+      title: 'Recuperação em construção',
+      text: `Se você proteger o sono hoje, há boa chance de melhorar a leitura de amanhã. Meta de sono sugerida: ${sleepNeed}h.`,
+      footer: 'Amanhã cedo você confirma se seu corpo respondeu como esperado.',
+    };
+  }
+
+  return {
+    tone: 'neutral',
+    title: 'O dia não termina aqui',
+    text: 'A leitura de amanhã depende do que você fizer hoje: carga, sono e estresse ainda podem mudar bastante sua margem.',
+    footer: 'Volte amanhã cedo para ver a resposta real do seu corpo.',
+  };
+}
+
+function TomorrowHookCard({ hook }) {
+  if (!hook) return null;
+
+  const toneClass =
+    hook.tone === 'warning'
+      ? 'border-yellow-500/25 bg-yellow-500/8'
+      : hook.tone === 'positive'
+      ? 'border-emerald-500/25 bg-emerald-500/8'
+      : hook.tone === 'info'
+      ? 'border-primary/20 bg-primary/5'
+      : 'border-border/40 bg-card';
+
+  const titleClass =
+    hook.tone === 'warning'
+      ? 'text-yellow-300'
+      : hook.tone === 'positive'
+      ? 'text-emerald-300'
+      : hook.tone === 'info'
+      ? 'text-primary'
+      : 'text-foreground';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn('rounded-2xl border px-4 py-3 space-y-2', toneClass)}
+    >
+      <div>
+        <p className={cn('text-[10px] font-bold uppercase tracking-widest', titleClass)}>
+          {hook.title}
+        </p>
+        <p className="text-sm leading-relaxed mt-1">{hook.text}</p>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
+        {hook.footer}
+      </p>
+    </motion.div>
+  );
+}
+
+
 function getDailyVerdict({
   checkin,
   analysis,
