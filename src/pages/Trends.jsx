@@ -904,7 +904,7 @@ export default function Trends() {
 <div>
         <h1 className="text-2xl font-black tracking-tight">Tendências</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Evolução, equilíbrio de carga e padrões dos seus dados ao longo do tempo.
+          Evolução, equilíbrio de carga e sinais recorrentes ao longo do tempo.
         </p>
       </div>
 
