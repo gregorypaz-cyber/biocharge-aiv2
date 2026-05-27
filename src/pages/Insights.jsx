@@ -987,7 +987,8 @@ Regras:
                 <button
                   key={q}
                   onClick={() => setCoachInput(q)}
-                  className="px-3 py-1.5 rounded-xl bg-secondary border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors whitespace-nowrap shrink-0"
+                  className="px-2.5 py-1 rounded-lg bg-secondary border border-border/60 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors whitespace-nowrap shrink-0"
+
                 >
                   {q}
                 </button>
