@@ -48,6 +48,23 @@ function normalizeDeepSleep(deepSleepPct) {
   return 92;
 }
 
+function normalizeRemSleep(remSleepPct) {
+  if (remSleepPct == null) return null;
+
+  const v = Number(remSleepPct);
+
+  if (v < 10) return 28;
+  if (v < 15) return 42;
+  if (v < 18) return 56;
+  if (v < 22) return 68;
+  if (v < 26) return 78;
+  if (v < 30) return 86;
+
+  // acima disso, não seguimos premiando muito
+  return 90;
+}
+
+
 function getRecentHrvBaseline(recentCheckins = []) {
   const values = (recentCheckins || [])
     .slice(0, 14)
