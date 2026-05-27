@@ -757,10 +757,10 @@ function StrainRecoveryBalanceCard({ checkins = [] }) {
   const Icon = classification.icon;
 
   return (
-    <motion.div
+<motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-5 space-y-4"
+      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
