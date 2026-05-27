@@ -531,7 +531,30 @@ export default function Today() {
     todaySessions,
   ]);
 
-  const scheduledSport = todaySessions[0]?.sport ?? undefined;
+const scheduledSport = todaySessions[0]?.sport ?? undefined;
+
+  const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
+    if (!enrichedCheckin) return { primary: [], secondary: [] };
+
+    return buildCardLayout({
+      phase,
+      workoutIntensity: dailyVerdict?.workoutIntensity ?? 'unknown',
+      scheduledSport,
+      hasWorkoutSessions: todaySessions.length > 0,
+      hasAnalysis: !!analysis,
+      hasHrvAnomaly: !!analysis?.hrvAnomaly,
+      hasNarrative: !!analysis?.narrative,
+      hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
+    });
+  }, [
+    enrichedCheckin,
+    phase,
+    dailyVerdict?.workoutIntensity,
+    scheduledSport,
+    todaySessions.length,
+    analysis,
+    morningRecovery,
+  ]);
 
   const orderedPrimaryCards = useMemo(() => {
     if (!primaryCards?.length) return [];
@@ -559,17 +582,32 @@ export default function Today() {
     let trend = '';
 
     if (recentCheckins.length >= 3) {
-      const scores = recentCheckins.slice(0, 3).map((c) => c.recovery_score ?? c.readiness_score ?? 0);
+      const scores = recentCheckins
+        .slice(0, 3)
+        .map((c) => c.recovery_score ?? c.readiness_score ?? 0);
+
       if (scores[0] > scores[2] + 3) trend = ' · tendência positiva';
       else if (scores[0] < scores[2] - 3) trend = ' · atenção à recuperação';
     }
 
-    if (fatigue > 60 || sessionsCount >= 4) return `Carga alta na semana — hoje vale dose controlada.${trend}`;
-    if (readiness >= 85 && sessionsCount <= 1) return `Boa prontidão com volume baixo — há margem para progredir.${trend}`;
-    if (sessionsCount === 0) return `Primeiro treino da semana — bom momento para começar com controle.${trend}`;
-    if (sessionsCount >= 3) return `Volume semanal já está bem encaminhado.${trend}`;
+    if (fatigue > 60 || sessionsCount >= 4) {
+      return `Carga alta na semana — hoje vale dose controlada.${trend}`;
+    }
+
+    if (readiness >= 85 && sessionsCount <= 1) {
+      return `Boa prontidão com volume baixo — há margem para progredir.${trend}`;
+    }
+
+    if (sessionsCount === 0) {
+      return `Primeiro treino da semana — bom momento para começar com controle.${trend}`;
+    }
+
+    if (sessionsCount >= 3) {
+      return `Volume semanal já está bem encaminhado.${trend}`;
+    }
+
     return `${sessionsCount} de 3 treinos esta semana — você está no ritmo.${trend}`;
-  }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]); // eslint-disable-line
+  }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]);
 
   function renderCard(desc) {
     if (!desc || desc.action === 'exclude') return null;
