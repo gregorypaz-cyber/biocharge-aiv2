@@ -909,15 +909,15 @@ export default function Trends() {
       </div>
 
 
-      {/* Period + Metric selectors */}
-      <div className="space-y-3">
-        <div className="flex gap-2">
+{/* Period + Metric selectors */}
+      <div className="space-y-2.5">
+        <div className="flex gap-1.5">
           {timeFilters.map(f => (
             <button
               key={f.days}
               onClick={() => setPeriod(f.days)}
               className={cn(
-                'px-4 py-2 rounded-xl text-sm font-semibold transition-all',
+                'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all',
                 period === f.days
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
@@ -928,13 +928,13 @@ export default function Trends() {
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {metrics.map(m => (
             <button
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border',
+                'px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border',
                 selectedMetric === m.key
                   ? 'border-primary/40 bg-primary/10 text-foreground'
                   : 'border-border/40 bg-card text-muted-foreground hover:text-foreground'
