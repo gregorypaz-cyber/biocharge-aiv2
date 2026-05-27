@@ -263,12 +263,14 @@ const weighted = [
 export function calculateSleepScore(checkin) {
   const base = clamp(checkin.sleep_score ?? 0);
   const deep = normalizeDeepSleep(checkin.deep_sleep_pct);
+  const rem = normalizeRemSleep(checkin.rem_sleep_pct);
   const hours = getSleepHoursScore(checkin.sleep_hours);
 
   const weighted = [
-    { value: base, weight: 0.65 },
+    { value: base, weight: 0.55 },
     { value: hours, weight: 0.20 },
     { value: deep, weight: 0.15 },
+    { value: rem, weight: 0.10 },
   ];
 
   let total = 0;
