@@ -166,7 +166,7 @@ const tomorrowReason = getTomorrowReason(checkin);
           {recommendation && (
             <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                Contexto principal
+                Linha do dia
               </p>
               <p className="text-sm leading-snug font-medium">{recommendation}</p>
             </div>
