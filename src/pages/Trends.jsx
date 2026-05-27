@@ -578,17 +578,17 @@ function RecoveryInfluencersCard({ checkins = [] }) {
   }
 
   return (
-    <motion.div
+<motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-5 space-y-4"
+      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
     >
-      <div>
-        <h3 className="text-sm font-semibold">
-          Seus maiores influenciadores de recuperação (30 dias)
+<div>
+        <h3 className="text-sm font-semibold tracking-tight">
+          Influenciadores da recuperação
         </h3>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          Ranking das variáveis que mais se moveram junto com seu recovery nos dados recentes.
+        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+          Top 3 fatores dos últimos 30 dias com associação mais forte ao seu recovery.
         </p>
       </div>
 
