@@ -1004,20 +1004,20 @@ export default function Trends() {
       )}
 
       {/* Main Area Chart */}
-      {chartData.length >= 2 ? (
+{chartData.length >= 2 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-border/60 bg-card p-5"
+          className="rounded-xl border border-border/60 bg-card p-4"
         >
-          <div className="flex items-baseline gap-2 mb-1">
-            <h3 className="text-sm font-semibold">{metricConfig?.label}</h3>
+          <div className="flex items-baseline gap-2 mb-0.5">
+            <h3 className="text-sm font-semibold tracking-tight">{metricConfig?.label}</h3>
             {(selectedMetric === 'fatigue_score' || selectedMetric === 'stress_score') && (
               <span className="text-[10px] text-muted-foreground">(quanto menor, melhor)</span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mb-4">Área + média móvel 3 dias</p>
-          <div role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-56">
+          <p className="text-[11px] text-muted-foreground mb-3">Área + média móvel 3 dias</p>
+          <div role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={movingAvg}>
                 <defs>
@@ -1067,11 +1067,11 @@ export default function Trends() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-border/60 bg-card p-5"
+          className="rounded-xl border border-border/60 bg-card p-4"
         >
-          <h3 className="text-sm font-semibold mb-1">Recovery vs Fadiga</h3>
-          <p className="text-xs text-muted-foreground mb-4">Equilíbrio carga-recuperação diário</p>
-          <div role="img" aria-label="Gráfico de barras comparando Recovery e Fadiga diários" className="h-44">
+          <h3 className="text-sm font-semibold mb-0.5 tracking-tight">Recovery vs Fadiga</h3>
+          <p className="text-[11px] text-muted-foreground mb-3">Equilíbrio carga-recuperação diário</p>
+          <div role="img" aria-label="Gráfico de barras comparando Recovery e Fadiga diários" className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} barGap={2}>
                 <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
@@ -1128,15 +1128,15 @@ export default function Trends() {
         if (scatterPoints.length < 3) return null;
 
         return (
-          <motion.div
+<motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="rounded-2xl border border-border/60 bg-card p-5"
+            className="rounded-xl border border-border/60 bg-card p-4"
           >
-            <h3 className="text-sm font-semibold mb-0.5">Impacto do Sono no Recovery</h3>
-            <p className="text-xs text-muted-foreground mb-4">Cada ponto = um dia dos seus dados</p>
-            <div role="img" aria-label="Gráfico de dispersão mostrando relação entre horas de sono e recovery do dia seguinte" className="h-56">
+            <h3 className="text-sm font-semibold mb-0.5 tracking-tight">Impacto do Sono no Recovery</h3>
+            <p className="text-[11px] text-muted-foreground mb-3">Cada ponto representa um dia com dados válidos</p>
+            <div role="img" aria-label="Gráfico de dispersão mostrando relação entre horas de sono e recovery do dia seguinte" className="h-52">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
