@@ -38,6 +38,76 @@ function getSleepDebtHours(analysis) {
   return analysis?.sleepDebt?.debt ?? analysis?.sleepDebtHours ?? 0;
 }
 
+function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions, isRestMode }) {
+  const delayedFatigue = checkin?.delayed_fatigue_alert || null;
+  const forecast = checkin?.next_day_forecast || null;
+  const sleepNeed = checkin?.sleep_need_tonight ?? null;
+  const ratio = analysis?.trainingLoad?.ratio ?? null;
+
+  if (delayedFatigue) {
+    return {
+      tone: 'warning',
+      heroLine: 'Hoje pede mais controle porque o custo pode aparecer amanhã.',
+      title: 'Sinal para amanhã',
+      text: delayedFatigue,
+    };
+  }
+
+  if (forecast) {
+    return {
+      tone: 'info',
+      heroLine: 'O que você fizer hoje influencia diretamente a leitura de amanhã.',
+      title: 'Prévia de amanhã',
+      text: forecast,
+    };
+  }
+
+  if (todaySessions.length > 0 && ratio != null && ratio > 1.25) {
+    return {
+      tone: 'warning',
+      heroLine: 'A carga de hoje já merece respeito para proteger a recuperação seguinte.',
+      title: 'Atenção para amanhã',
+      text: 'Sua carga de hoje já foi relevante. Amanhã pode exigir mais controle do que parece agora.',
+    };
+  }
+
+  if (isRestMode && sleepNeed != null) {
+    return {
+      tone: 'positive',
+      heroLine: 'Recuperar bem hoje pode abrir uma margem melhor amanhã.',
+      title: 'Janela de recuperação',
+      text: `Se você proteger o sono hoje, há boa chance de melhorar a leitura de amanhã. Meta sugerida: ${sleepNeed}h.`,
+    };
+  }
+
+  if (dailyVerdict?.mode === 'train_high') {
+    return {
+      tone: 'positive',
+      heroLine: 'Se você dosar bem hoje, a tendência é sustentar uma boa linha amanhã.',
+      title: 'Proteja a resposta',
+      text: 'A oportunidade de hoje é boa, mas ela rende mais se vier com execução controlada e sono forte à noite.',
+    };
+  }
+
+  return null;
+}
+
+function getHeroDynamicToneClass(tone) {
+  if (tone === 'warning') {
+    return 'bg-yellow-500/8 border-yellow-500/20 text-yellow-100';
+  }
+
+  if (tone === 'positive') {
+    return 'bg-emerald-500/8 border-emerald-500/20 text-emerald-100';
+  }
+
+  if (tone === 'info') {
+    return 'bg-primary/5 border-primary/10 text-foreground';
+  }
+
+  return 'bg-secondary/60 border-border/40 text-foreground';
+}
+
 function getTomorrowHook({ checkin, analysis, todaySessions, isRestMode }) {
   const delayedFatigue = checkin?.delayed_fatigue_alert || null;
   const forecast = checkin?.next_day_forecast || null;
