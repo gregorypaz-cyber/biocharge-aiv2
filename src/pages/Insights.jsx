@@ -785,10 +785,10 @@ Regras:
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
       {/* Header */}
-      <div>
+<div>
         <h1 className="text-2xl font-black tracking-tight">Insights</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Aprendizados, padrões e sinais que realmente ajudam a entender seu corpo.
+          Menos dashboard, mais aprendizado: o que realmente está guiando sua recuperação agora.
         </p>
       </div>
 
