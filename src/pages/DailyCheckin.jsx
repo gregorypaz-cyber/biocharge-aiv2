@@ -419,7 +419,6 @@ const savePostMutation = useMutation({
     navigate('/today');
   },
 });
-``
 
   // Post mode: no morning checkin guard
   if (isPostMode && !loadingCheckins && !todayRecord) {
@@ -961,7 +960,9 @@ const savePostMutation = useMutation({
         )}
       </div>
     </>
-  );
+);
+}
+
 
 // ── Today Preview Block ────────────────────────────────────────────────────────
 function TodayPreviewBlock({ checkin, onGoToToday }) {
