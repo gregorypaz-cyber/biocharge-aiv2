@@ -892,7 +892,7 @@ Regras:
           )}
         </div>
 
-        <div className="p-5">
+        <div className="p-4">
           <p className="text-[10px] text-muted-foreground mb-3">
             Esta seção resume padrões, limitações e ajustes relevantes com mais profundidade.
           </p>
