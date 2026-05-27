@@ -789,8 +789,8 @@ Regras:
     }
   }
 
-  return (
-    <div className="space-y-5 max-w-2xl mx-auto">
+ return (
+    <div className="space-y-4 max-w-2xl mx-auto">
       {/* Header */}
 <div>
         <h1 className="text-2xl font-black tracking-tight">Insights</h1>
