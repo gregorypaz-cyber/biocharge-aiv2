@@ -600,6 +600,8 @@ export default function Today() {
     Overreached: 'Descanso obrigatório — mais carga agrava o quadro.',
   };
 
+
+
   const CAPACITY_PT = {
     High: 'Alta',
     Moderate: 'Moderada',
@@ -1076,26 +1078,48 @@ function ExecutionCard() {
             </div>
           )}
 
-        {enrichedCheckin.current_body_state &&
-          BODY_STATE_PT[enrichedCheckin.current_body_state] && (
-            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
-              <span className="text-foreground/90">
-                <span className="font-semibold">Estado do corpo:</span>{' '}
-                {BODY_STATE_PT[enrichedCheckin.current_body_state]}
-                {enrichedCheckin.remaining_capacity &&
-                  CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
-                    <>
-                      {' '}
-                      · <span className="font-semibold">capacidade restante:</span>{' '}
-                      {CAPACITY_PT[enrichedCheckin.remaining_capacity]}
-                    </>
-                  )}
-              </span>
-              <p className="text-muted-foreground">
-                {BODY_STATE_HINT[enrichedCheckin.current_body_state]}
-              </p>
-            </div>
-          )}
+{enrichedCheckin.current_body_state &&
+          BODY_STATE_PT[enrichedCheckin.current_body_state] && (() => {
+            const stateKey = enrichedCheckin.current_body_state;
+            const meta = BODY_STATE_META[stateKey] || BODY_STATE_META.Balanced;
+
+            return (
+              <div className={cn('rounded-xl border px-3 py-3 space-y-2', meta.tone)}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                      Estado do corpo
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm leading-none">{meta.emoji}</span>
+                      <p className="text-sm font-semibold">
+                        {BODY_STATE_PT[stateKey]}
+                      </p>
+                    </div>
+                    <p className="text-[11px] mt-1 opacity-90">
+                      {meta.short}
+                    </p>
+                  </div>
+
+                  {enrichedCheckin.remaining_capacity &&
+                    CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] uppercase tracking-wider opacity-70">
+                          Capacidade
+                        </p>
+                        <p className="text-sm font-bold">
+                          {CAPACITY_PT[enrichedCheckin.remaining_capacity]}
+                        </p>
+                      </div>
+                    )}
+                </div>
+
+                <p className="text-[11px] leading-relaxed opacity-80">
+                  {BODY_STATE_HINT[stateKey]}
+                </p>
+              </div>
+            );
+          })()}
 
         {capacityContradictionNote && (
           <p className="text-[11px] text-muted-foreground leading-relaxed">
