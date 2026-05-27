@@ -944,399 +944,272 @@ case 'workout': {
   }
 
 function ExecutionCard() {
-    return (
-      <motion.div
-        key={phase + '-card'}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
-      >
-        <div className="space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Prontidão de hoje
-              </span>
-              <h2 className="text-xl font-black mt-1 leading-tight">
-                {dailyVerdict.headline}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {dailyVerdict.subheadline}
-              </p>
-            </div>
-
-            <span
-              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                prescriptionScore >= 82
-                  ? 'bg-emerald-500/15 text-emerald-400'
-                  : prescriptionScore >= 65
-                  ? 'bg-yellow-500/15 text-yellow-400'
-                  : 'bg-red-500/15 text-red-400'
-              }`}
-            >
-              {readinessFaixa}
+  return (
+    <motion.div
+      key={phase + '-card'}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
+    >
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Prontidão de hoje
             </span>
+            <h2 className="text-xl font-black mt-1 leading-tight">
+              {dailyVerdict.headline}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {heroDynamicContext?.heroLine || dailyVerdict.subheadline}
+            </p>
           </div>
 
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                Prontidão
-              </p>
+          <span
+            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              prescriptionScore >= 82
+                ? 'bg-emerald-500/15 text-emerald-400'
+                : prescriptionScore >= 65
+                ? 'bg-yellow-500/15 text-yellow-400'
+                : 'bg-red-500/15 text-red-400'
+            }`}
+          >
+            {readinessFaixa}
+          </span>
+        </div>
 
-              <p className="text-3xl font-mono font-black flex items-center gap-2">
-                <span>{displayedScore}</span>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              Prontidão
+            </p>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button aria-label="Sobre Prontidão" className="text-muted-foreground">
-                      <Info className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    Prontidão é a leitura que orienta a decisão de treino de hoje.
-                    <div style={{ marginTop: 6 }}>
-                      <small className="text-[10px] text-muted-foreground">
-                        Ela combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
-                      </small>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </p>
-            </div>
+            <p className="text-3xl font-mono font-black flex items-center gap-2">
+              <span>{displayedScore}</span>
 
-            <div className="text-right">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                Recovery base
-              </p>
-              <p className="text-lg font-mono font-bold text-foreground">
-                {checkin?.recovery_score ?? '—'}
-              </p>
-            </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button aria-label="Sobre Prontidão" className="text-muted-foreground">
+                    <Info className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  Prontidão é a leitura que orienta a decisão de treino de hoje.
+                  <div style={{ marginTop: 6 }}>
+                    <small className="text-[10px] text-muted-foreground">
+                      Ela combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
+                    </small>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </p>
           </div>
 
-          {(biochargeTrend || hrvTrend) && (
-            <div className="space-y-0.5 mt-1">
-              {biochargeTrend && (
-                <p className={`text-[11px] font-medium ${biochargeTrend.color}`}>
-                  {biochargeTrend.text}
-                </p>
-              )}
-              {hrvTrend && (
-                <p className={`text-[11px] font-medium ${hrvTrend.color}`}>
-                  {hrvTrend.text}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${displayedScore}%`,
-                backgroundColor: isRestMode
-                  ? 'hsl(215,30%,45%)'
-                  : prescriptionScore >= 82
-                  ? 'hsl(142,70%,50%)'
-                  : prescriptionScore >= 65
-                  ? 'hsl(45,93%,58%)'
-                  : 'hsl(0,72%,55%)',
-              }}
-            />
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              Recovery base
+            </p>
+            <p className="text-lg font-mono font-bold text-foreground">
+              {checkin?.recovery_score ?? '—'}
+            </p>
           </div>
+        </div>
 
-          {!todaySessions.length && !isRestMode && (
+        {(biochargeTrend || hrvTrend) && (
+          <div className="space-y-0.5 mt-1">
+            {biochargeTrend && (
+              <p className={`text-[11px] font-medium ${biochargeTrend.color}`}>
+                {biochargeTrend.text}
+              </p>
+            )}
+            {hrvTrend && (
+              <p className={`text-[11px] font-medium ${hrvTrend.color}`}>
+                {hrvTrend.text}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${displayedScore}%`,
+              backgroundColor: isRestMode
+                ? 'hsl(215,30%,45%)'
+                : prescriptionScore >= 82
+                ? 'hsl(142,70%,50%)'
+                : prescriptionScore >= 65
+                ? 'hsl(45,93%,58%)'
+                : 'hsl(0,72%,55%)',
+            }}
+          />
+        </div>
+
+        {heroDynamicContext ? (
+          <div
+            className={cn(
+              'px-3 py-2.5 rounded-xl border text-xs leading-snug',
+              getHeroDynamicToneClass(heroDynamicContext.tone)
+            )}
+          >
+            <span className="font-semibold">
+              {heroDynamicContext.title}:
+            </span>{' '}
+            {heroDynamicContext.text}
+          </div>
+        ) : (
+          !todaySessions.length && !isRestMode && (
             <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
               <span className="font-semibold text-primary">Linha do dia:</span>{' '}
               a prontidão define sua margem. A prescrição logo abaixo transforma isso em opções A, B e C.
             </div>
-          )}
+          )
+        )}
 
-          {phase !== 'RECOVERY_DAY' && phase !== 'OVERLOAD' && dailyVerdict.caution && (
+        {!heroDynamicContext &&
+          phase !== 'RECOVERY_DAY' &&
+          phase !== 'OVERLOAD' &&
+          dailyVerdict.caution && (
             <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug">
               <span className="font-semibold">Cuidado do dia:</span> {dailyVerdict.caution}
             </div>
           )}
 
-          {enrichedCheckin.current_body_state &&
-            BODY_STATE_PT[enrichedCheckin.current_body_state] && (
-              <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
-                <span className="text-foreground/90">
-                  <span className="font-semibold">Estado do corpo:</span>{' '}
-                  {BODY_STATE_PT[enrichedCheckin.current_body_state]}
-                  {enrichedCheckin.remaining_capacity &&
-                    CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
-                      <>
-                        {' '}
-                        · <span className="font-semibold">capacidade restante:</span>{' '}
-                        {CAPACITY_PT[enrichedCheckin.remaining_capacity]}
-                      </>
-                    )}
-                </span>
-                <p className="text-muted-foreground">
-                  {BODY_STATE_HINT[enrichedCheckin.current_body_state]}
-                </p>
-              </div>
-            )}
+        {enrichedCheckin.current_body_state &&
+          BODY_STATE_PT[enrichedCheckin.current_body_state] && (
+            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
+              <span className="text-foreground/90">
+                <span className="font-semibold">Estado do corpo:</span>{' '}
+                {BODY_STATE_PT[enrichedCheckin.current_body_state]}
+                {enrichedCheckin.remaining_capacity &&
+                  CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
+                    <>
+                      {' '}
+                      · <span className="font-semibold">capacidade restante:</span>{' '}
+                      {CAPACITY_PT[enrichedCheckin.remaining_capacity]}
+                    </>
+                  )}
+              </span>
+              <p className="text-muted-foreground">
+                {BODY_STATE_HINT[enrichedCheckin.current_body_state]}
+              </p>
+            </div>
+          )}
 
-          {capacityContradictionNote && (
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              {capacityContradictionNote}
-            </p>
+        {capacityContradictionNote && (
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            {capacityContradictionNote}
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-2xl bg-secondary p-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Strain acumulado
+          </p>
+          <p
+            className={`text-xl font-mono font-bold ${
+              cappedStrain >= 18
+                ? 'text-red-400'
+                : cappedStrain >= 14
+                ? 'text-orange-400'
+                : cappedStrain >= 10
+                ? 'text-yellow-400'
+                : 'text-emerald-400'
+            }`}
+          >
+            ⚡ {cappedStrain}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-secondary p-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Capacidade restante
+          </p>
+          <p className="text-xl font-bold">
+            {enrichedCheckin.remaining_capacity
+              ? ({
+                  High: 'Alta',
+                  Moderate: 'Moderada',
+                  Low: 'Baixa',
+                  Minimal: 'Mínima',
+                }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity)
+              : '—'}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-secondary p-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            ACWR
+          </p>
+          {analysis?.trainingLoad?.risk === 'insufficient_data' ||
+          analysis?.trainingLoad?.ratio == null ? (
+            <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
+          ) : (
+            <>
+              <p
+                className={`text-xl font-mono font-bold ${
+                  analysis.trainingLoad.ratio > 1.5
+                    ? 'text-red-400'
+                    : analysis.trainingLoad.ratio > 1.3
+                    ? 'text-yellow-400'
+                    : 'text-emerald-400'
+                }`}
+              >
+                {analysis.trainingLoad.ratio.toFixed(2)}
+              </p>
+              <p
+                className={`text-[10px] mt-0.5 ${
+                  analysis.trainingLoad.ratio > 1.5
+                    ? 'text-red-400'
+                    : analysis.trainingLoad.ratio > 1.3
+                    ? 'text-yellow-400'
+                    : 'text-emerald-400'
+                }`}
+              >
+                {analysis.trainingLoad.ratio > 1.5
+                  ? 'Alto risco'
+                  : analysis.trainingLoad.ratio > 1.3
+                  ? 'Atenção'
+                  : 'Seguro'}
+              </p>
+            </>
           )}
         </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl bg-secondary p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Strain acumulado
-            </p>
-            <p
-              className={`text-xl font-mono font-bold ${
-                cappedStrain >= 18
-                  ? 'text-red-400'
-                  : cappedStrain >= 14
-                  ? 'text-orange-400'
-                  : cappedStrain >= 10
-                  ? 'text-yellow-400'
-                  : 'text-emerald-400'
-              }`}
-            >
-              ⚡ {cappedStrain}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-secondary p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Capacidade restante
-            </p>
-            <p className="text-xl font-bold">
-              {enrichedCheckin.remaining_capacity
-                ? ({
-                    High: 'Alta',
-                    Moderate: 'Moderada',
-                    Low: 'Baixa',
-                    Minimal: 'Mínima',
-                  }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity)
-                : '—'}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-secondary p-3">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              ACWR
-            </p>
-            {analysis?.trainingLoad?.risk === 'insufficient_data' ||
-            analysis?.trainingLoad?.ratio == null ? (
-              <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
-            ) : (
-              <>
-                <p
-                  className={`text-xl font-mono font-bold ${
-                    analysis.trainingLoad.ratio > 1.5
-                      ? 'text-red-400'
-                      : analysis.trainingLoad.ratio > 1.3
-                      ? 'text-yellow-400'
-                      : 'text-emerald-400'
-                  }`}
-                >
-                  {analysis.trainingLoad.ratio.toFixed(2)}
-                </p>
-                <p
-                  className={`text-[10px] mt-0.5 ${
-                    analysis.trainingLoad.ratio > 1.5
-                      ? 'text-red-400'
-                      : analysis.trainingLoad.ratio > 1.3
-                      ? 'text-yellow-400'
-                      : 'text-emerald-400'
-                  }`}
-                >
-                  {analysis.trainingLoad.ratio > 1.5
-                    ? 'Alto risco'
-                    : analysis.trainingLoad.ratio > 1.3
-                    ? 'Atenção'
-                    : 'Seguro'}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {phaseCfg.showCta ? (
-          <button
-            onClick={() => {
-              if (!todaySessions.length && !isRestMode) {
-                scrollToWorkoutPrescription();
-                return;
-              }
-              setShowAddModal(true);
-            }}
-            className={cn(
-              'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
-              phaseCfg.ctaClass
-            )}
-          >
-            <CtaIcon className="w-4 h-4" />
-            {!todaySessions.length && !isRestMode ? 'Ver prescrição do dia' : phaseCfg.ctaLabel}
-          </button>
-        ) : (
-          <button
-            disabled
-            className={cn(
-              'w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60 cursor-not-allowed',
-              phaseCfg.ctaClass
-            )}
-          >
-            <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
-          </button>
-        )}
-      </motion.div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4 max-w-2xl mx-auto">
-        <Skeleton className="h-8 w-40 rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-3xl" />
-        <Skeleton className="h-24 w-full rounded-2xl" />
-        <div className="grid grid-cols-2 gap-3">
-          <Skeleton className="h-20 rounded-2xl" />
-          <Skeleton className="h-20 rounded-2xl" />
-        </div>
-        <Skeleton className="h-16 w-full rounded-2xl" />
-        <Skeleton className="h-24 w-full rounded-2xl" />
-      </div>
-    );
-  }
-
-  if (!enrichedCheckin) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center h-[70vh] text-center px-6"
-      >
-        <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
-          <Zap className="w-10 h-10 text-primary" />
-        </div>
-        <h2 className="text-xl font-black mb-2">Sem check-in hoje</h2>
-        <p className="text-muted-foreground mb-6 text-sm">
-          Faça seu check-in para calcular sua prontidão e decidir melhor o treino do dia.
-        </p>
-        <Link
-          to="/checkin"
-          className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-2xl font-semibold hover:bg-primary/90 transition-all"
-        >
-          <Plus className="w-4 h-4" /> Fazer check-in
-        </Link>
-      </motion.div>
-    );
-  }
-
-  return (
-    <div className={cn(
-      'space-y-4 max-w-2xl mx-auto transition-all duration-500',
-      isSilentMode && 'opacity-90',
-      isRestMode && 'saturate-[0.7]'
-    )}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
-
-          {checkin?.created_at ? (
-            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
-              <span>Check-in às</span>
-              <span className="font-medium text-foreground/60">
-                {new Date(checkin.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </p>
-          ) : checkin?.date ? (
-            <p className="text-[10px] text-muted-foreground mt-1">Check-in de hoje registrado</p>
-          ) : null}
-        </div>
-
-        {hasCheckedInToday && streak >= 3 && (
-          <Link
-            to="/insights"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
-            title={`${streak} dias seguidos`}
-          >
-            <span className="text-sm leading-none">🔥</span>
-            <span className="text-xs font-bold text-orange-400">{streak}</span>
-          </Link>
-        )}
       </div>
 
-      {phaseCfg.bannerText && (
-        <motion.div
-          key={phase}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', phaseCfg.bannerClass)}
-        >
-          {phaseCfg.bannerText}
-        </motion.div>
-      )}
-
-      <QuickIntentEdit />
-
-      {deepSleepAlert && !deepSleepAlertDismissed && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-blue-500/25 bg-blue-500/8 px-4 py-3 flex items-start gap-3"
-        >
-          <Moon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
-          <button
-            onClick={() => setDeepSleepAlertDismissed(true)}
-            className="text-blue-400/60 hover:text-blue-300 transition-colors shrink-0"
-            aria-label="Fechar alerta"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </motion.div>
-      )}
-
-      {orderedPrimaryCards.map((desc) => renderCard(desc))}
-
-      <TomorrowHookCard hook={tomorrowHook} />
-
-      {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
-        <Link
-          to="/insights"
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
-        >
-          Quer entender melhor por que a recomendação de hoje é essa?
-          <span className="text-primary font-medium">→ Ver análise detalhada</span>
-        </Link>
-      )}
-
-      <SecondaryMetrics count={secondaryCards.filter((d) => d.action !== 'exclude').length}>
-        {secondaryCards.map((desc) => renderCard(desc))}
-      </SecondaryMetrics>
-
-      {analysisError && (
-        <p className="text-[11px] text-yellow-400/80 px-1">
-          Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
-        </p>
-      )}
-
-      {showAddModal && (
-        <AddTrainingModal
-          checkin={enrichedCheckin}
-          existingSessions={todaySessions}
-          onClose={() => setShowAddModal(false)}
-          onAdded={() => {
-            setShowAddModal(false);
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+      {phaseCfg.showCta ? (
+        <button
+          onClick={() => {
+            if (!todaySessions.length && !isRestMode) {
+              scrollToWorkoutPrescription();
+              return;
+            }
+            setShowAddModal(true);
           }}
-        />
+          className={cn(
+            'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
+            phaseCfg.ctaClass
+          )}
+        >
+          <CtaIcon className="w-4 h-4" />
+          {!todaySessions.length && !isRestMode ? 'Ver prescrição do dia' : phaseCfg.ctaLabel}
+        </button>
+      ) : (
+        <button
+          disabled
+          className={cn(
+            'w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60 cursor-not-allowed',
+            phaseCfg.ctaClass
+          )}
+        >
+          <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
+        </button>
       )}
-    </div>
+    </motion.div>
   );
+}
+
 }
