@@ -1092,11 +1092,12 @@ Regras:
         </div>
       </motion.div>
 
-      {/* 6. Technical context */}
+{/* 6. Contexto técnico */}
       <ExpandableSection
         title="Contexto técnico"
-        subtitle="Detalhes fisiológicos e métricas avançadas. Útil para quem quer ir além da leitura principal."
+        subtitle="Use esta seção como apoio técnico. Para padrões e evolução temporal, prefira a aba Trends."
       >
+
         {analysis?.physioState ? <PhysioStateCard physioState={analysis.physioState} /> : null}
 
         {analysis ? (
