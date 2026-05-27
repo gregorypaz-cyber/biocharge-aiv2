@@ -806,11 +806,14 @@ case 'workout': {
             />
           </div>
 
-          {phase !== 'RECOVERY_DAY' && phase !== 'OVERLOAD' && dailyVerdict.caution && (
-            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug">
-              <span className="font-semibold">Cuidado do dia:</span> {dailyVerdict.caution}
+{!todaySessions.length && !isRestMode && (
+            <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
+              <span className="font-semibold text-primary">Próximo passo:</span>{' '}
+              escolha abaixo a opção A, B ou C que melhor encaixa no seu dia.
             </div>
           )}
+
+
 
           {enrichedCheckin.current_body_state && BODY_STATE_PT[enrichedCheckin.current_body_state] && (
             <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug space-y-0.5">
