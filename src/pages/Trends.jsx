@@ -356,6 +356,9 @@ export default function Trends() {
         ))}
       </div>
 
+{/* Strain vs Recovery Balance */}
+      <StrainRecoveryBalanceCard checkins={computed} />
+
       {/* Empty state */}
       {filtered.length < 5 && (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6">
