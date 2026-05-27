@@ -310,11 +310,12 @@ Responda APENAS em JSON:
             </div>
           </div>
 
-          <button
+<button
             onClick={handlePredict}
             disabled={loading}
-            className="w-full h-11 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full h-10 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
           >
+
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -1187,4 +1188,4 @@ export default function Trends() {
       })()}
     </div>
   );
-}
+}w-full h-11 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg
