@@ -1016,7 +1016,7 @@ case 'workout': {
         </motion.div>
       )}
 
-      {primaryCards.map((desc) => renderCard(desc))}
+      {orderedPrimaryCards.map((desc) => renderCard(desc))}
 
       {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
         <Link
