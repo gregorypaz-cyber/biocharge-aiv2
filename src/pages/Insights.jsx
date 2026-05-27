@@ -176,20 +176,23 @@ function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-secondary/30 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-secondary/30 transition-colors"
       >
         <div>
-          <p className="text-sm font-semibold">{title}</p>
+          <p className="text-sm font-semibold leading-snug">{title}</p>
           {subtitle ? (
-            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
           ) : null}
         </div>
 
         <ChevronDown
-          className={cn('w-4 h-4 text-muted-foreground transition-transform', open && 'rotate-180')}
+          className={cn(
+            'w-4 h-4 text-muted-foreground transition-transform shrink-0 ml-3',
+            open && 'rotate-180'
+          )}
         />
       </button>
 
@@ -202,7 +205,7 @@ function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 pt-1 space-y-4 border-t border-border/30">
+            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/30">
               {children}
             </div>
           </motion.div>
