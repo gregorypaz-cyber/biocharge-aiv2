@@ -139,8 +139,8 @@ const tomorrowReason = getTomorrowReason(checkin);
         <div className="rounded-2xl border border-border/50 bg-card px-4 py-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                Prontidão estimada
+<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                Prontidão do dia
               </p>
               <p className="text-3xl font-black font-mono">{readiness}</p>
 <p className="text-[11px] text-muted-foreground">
