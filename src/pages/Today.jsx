@@ -526,20 +526,20 @@ export default function Today() {
 
   const scheduledSport = todaySessions[0]?.sport ?? undefined;
 
-  const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
-    if (!enrichedCheckin) return { primary: [], secondary: [] };
+  const orderedPrimaryCards = useMemo(() => {
+    if (!primaryCards?.length) return [];
 
-    return buildCardLayout({
-      phase,
-      workoutIntensity: dailyVerdict?.workoutIntensity ?? 'unknown',
-      scheduledSport,
-      hasWorkoutSessions: todaySessions.length > 0,
-      hasAnalysis: !!analysis,
-      hasHrvAnomaly: !!analysis?.hrvAnomaly,
-      hasNarrative: !!analysis?.narrative,
-      hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
+    const priority = {
+      execution: 0,
+      workout: 1,
+    };
+
+    return [...primaryCards].sort((a, b) => {
+      const pa = priority[a.id] ?? 99;
+      const pb = priority[b.id] ?? 99;
+      return pa - pb;
     });
-  }, [phase, dailyVerdict, scheduledSport, todaySessions.length, analysis, enrichedCheckin, morningRecovery]); // eslint-disable-line
+  }, [primaryCards]);
 
   const weeklyContextMsg = useMemo(() => {
     if (!enrichedCheckin) return null;
