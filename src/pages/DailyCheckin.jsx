@@ -8,7 +8,20 @@ import { getTodayLocal } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Save, ArrowLeft, Moon, Activity, Heart, Scale, Info, Zap, SkipForward, ArrowRight } from 'lucide-react';
+import {
+  Save,
+  ArrowLeft,
+  Moon,
+  Activity,
+  Heart,
+  Scale,
+  Info,
+  Zap,
+  SkipForward,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
