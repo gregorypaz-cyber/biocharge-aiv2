@@ -650,7 +650,7 @@ case 'workout': {
                 Escolha a melhor opção para hoje
               </h3>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                A leitura de prontidão define a margem. Abaixo, você escolhe a dose que melhor encaixa no seu contexto.
+                A prontidão define a margem. Abaixo, você escolhe a dose que melhor encaixa no seu contexto.
               </p>
             </div>
 
