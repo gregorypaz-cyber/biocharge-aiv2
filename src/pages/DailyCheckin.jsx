@@ -549,227 +549,419 @@ const savePostMutation = useMutation({
     );
   }
 
-  // MORNING MODE UI
+// MORNING MODE UI
   return (
     <>
-    {savedCheckin && (
-      <CheckinSuccessOverlay
-        checkin={savedCheckin}
-        onContinue={() => navigate('/today')}
-      />
-    )}
-    <div className="space-y-4 max-w-xl mx-auto pb-8">
-      {/* Header */}
-      <div className="flex items-center justify-between pt-1">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar
-        </button>
-        <h1 className="text-base font-bold">Check-in da manhã</h1>
-        <div className="w-16" />
-      </div>
-
-      <div className="px-1">
-        <p className="text-sm text-muted-foreground">Leva ~2 min e gera seu plano do dia</p>
-      </div>
-
-      {/* Day Intent */}
-      <div className="rounded-2xl border border-border/60 bg-card p-4 mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold">Qual será o foco do seu dia?</span>
-          <span className="text-xs text-muted-foreground">Opcional</span>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setDayIntent('training')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${dayIntent === 'training' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-          >
-            Vou treinar
-          </button>
-          <button
-            type="button"
-            onClick={() => setDayIntent('undecided')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${dayIntent === 'undecided' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-          >
-            Ainda não decidi
-          </button>
-          <button
-            type="button"
-            onClick={() => setDayIntent('recovery')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${dayIntent === 'recovery' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'}`}
-          >
-            Hoje será recuperação
-          </button>
-        </div>
-        <p className="text-xs mt-2 text-muted-foreground">Você pode mudar isso a qualquer momento.</p>
-      </div>
-
-      {/* Live Preview */}
-      <LivePreview preview={preview} />
-
-      {/* Date */}
-      <div className="px-1">
-        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Data</label>
-        <Input
-          type="date"
-          value={form.date}
-          onChange={e => update('date', e.target.value)}
-          className="bg-card border-border/60 max-w-[200px]"
+      {savedCheckin && (
+        <CheckinSuccessOverlay
+          checkin={savedCheckin}
+          onContinue={() => navigate('/today')}
         />
-      </div>
+      )}
 
-      {/* BioCharge Manhã */}
-      <CheckinStep title="Energia Percebida" emoji="⚡" delay={0.05}>
-        <SliderField
-          label="Como você acordou? (0–100)"
-          hint="Sua percepção geral ao acordar"
-          value={form.biocharge_morning}
-          onChange={v => update('biocharge_morning', v)}
-        />
-      </CheckinStep>
+      <div className="space-y-4 max-w-xl mx-auto pb-8">
+        {/* Header */}
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </button>
+          <h1 className="text-base font-bold">Check-in da manhã</h1>
+          <div className="w-16" />
+        </div>
 
-      {/* Sleep */}
-      <CheckinStep title="Sono" emoji="🌙" delay={0.1}>
-<SliderField
-  label="Pontuação do Sono (Zepp)"
-  hint="Valor de 0-100 do app Zepp → Sono"
-  value={form.sleep_score}
-  onChange={v => update('sleep_score', v)}
-  icon={Moon}
-/>
+        <div className="px-1">
+          <p className="text-sm text-muted-foreground">
+            Comece com o essencial. Você pode refinar a leitura depois.
+          </p>
+        </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-  <SliderField
-    label="Sono Profundo"
-    hint="Percentual de sono profundo"
-    value={form.deep_sleep_pct}
-    onChange={v => update('deep_sleep_pct', v)}
-    unit="%"
-    max={60}
-  />
+        {/* Micro-onboarding inline */}
+        <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">Antes de começar</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Isso melhora a interpretação do seu dia sem criar uma página nova.
+              </p>
+            </div>
+            <span className="text-[10px] text-muted-foreground">
+              {profileComplete ? 'Perfil ok' : 'Opcional'}
+            </span>
+          </div>
 
-  <SliderField
-    label="Sono REM"
-    hint="Percentual de sono REM"
-    value={form.rem_sleep_pct ?? 20}
-    onChange={v => update('rem_sleep_pct', v)}
-    unit="%"
-    max={60}
-  />
-</div>
+          <div className="space-y-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                Esporte principal
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ['corrida', 'Corrida'],
+                  ['forca', 'Força'],
+                  ['misto', 'Misto'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setProfile((p) => ({ ...p, sport: value }))}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      profile.sport === value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-<div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-foreground flex-1">Horas de Sono</label>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                Nível
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ['iniciante', 'Iniciante'],
+                  ['intermediario', 'Intermediário'],
+                  ['avancado', 'Avançado'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setProfile((p) => ({ ...p, level: value }))}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      profile.level === value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                Objetivo
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ['performance', 'Render mais'],
+                  ['consistencia', 'Consistência'],
+                  ['recuperacao', 'Recuperar melhor'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setProfile((p) => ({ ...p, goal: value }))}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                      profile.goal === value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-muted-foreground">
+            Salvo localmente neste dispositivo por enquanto.
+          </p>
+        </div>
+
+        {/* Day Intent */}
+        <div className="rounded-2xl border border-border/60 bg-card p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold">Qual será o foco do seu dia?</span>
+            <span className="text-xs text-muted-foreground">Opcional</span>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setDayIntent('training')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                dayIntent === 'training'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
+            >
+              Vou treinar
+            </button>
+            <button
+              type="button"
+              onClick={() => setDayIntent('undecided')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                dayIntent === 'undecided'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
+            >
+              Ainda não decidi
+            </button>
+            <button
+              type="button"
+              onClick={() => setDayIntent('recovery')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                dayIntent === 'recovery'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground'
+              }`}
+            >
+              Hoje será recuperação
+            </button>
+          </div>
+          <p className="text-xs mt-2 text-muted-foreground">
+            Você pode mudar isso a qualquer momento.
+          </p>
+        </div>
+
+        {/* Date */}
+        <div className="px-1">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+            Data
+          </label>
           <Input
-            type="text"
-            inputMode="numeric"
-            placeholder="Ex: 7:45"
-            value={sleepHoursText}
-            onChange={e => {
-              setSleepHoursText(e.target.value);
-              update('sleep_hours', parseSleepDurationToHours(e.target.value));
-            }}
-            className="bg-secondary border-border/40 w-24 text-center font-mono"
+            type="date"
+            value={form.date}
+            onChange={(e) => update('date', e.target.value)}
+            className="bg-card border-border/60 max-w-[200px]"
           />
         </div>
-        <p className="text-[10px] text-muted-foreground -mt-1">Use 7:45 (ou 7.5). Encontre no Zepp → Sono.</p>
-        <div className="space-y-1.5">
-          <label className="text-xs text-muted-foreground">Hora de dormir (opcional)</label>
-          <Input
-            type="time"
-            value={form.sleep_start_time || ''}
-            onChange={e => update('sleep_start_time', e.target.value || null)}
-            className="bg-secondary border-border/40 font-mono w-36"
-          />
-          <p className="text-[10px] text-muted-foreground">Ex: 23:00 — encontre no Zepp → Sono</p>
-        </div>
-      </CheckinStep>
 
-      {/* Performance — hidden on rest day */}
-      {!isRestDay && (
-        <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
-          <SliderField label="Fadiga" value={form.fatigue} onChange={v => update('fatigue', v)} icon={Activity} />
+        {/* Quick Check-in */}
+        <CheckinStep title="Check-in rápido" emoji="⚡" delay={0.05}>
+          <SliderField
+            label="Como você acordou? (0–100)"
+            hint="Sua percepção geral ao acordar"
+            value={form.biocharge_morning}
+            onChange={(v) => update('biocharge_morning', v)}
+          />
+
+          <SliderField
+            label="Pontuação do Sono (Zepp)"
+            hint="Valor de 0–100 do app Zepp → Sono"
+            value={form.sleep_score}
+            onChange={(v) => update('sleep_score', v)}
+            icon={Moon}
+          />
+
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-foreground flex-1">
+              Horas de Sono
+            </label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="Ex: 7:45"
+              value={sleepHoursText}
+              onChange={(e) => {
+                setSleepHoursText(e.target.value);
+                update('sleep_hours', parseSleepDurationToHours(e.target.value));
+              }}
+              className="bg-secondary border-border/40 w-24 text-center font-mono"
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground -mt-1">
+            Use 7:45 (ou 7.5). Isso já basta para gerar uma leitura inicial.
+          </p>
         </CheckinStep>
-      )}
 
-      {/* Wellbeing */}
-      <CheckinStep title="Bem-estar" emoji="🧠" delay={0.2}>
-        <EmojiSelector label="Humor" type="mood" value={form.mood} onChange={v => update('mood', v)} />
-        <EmojiSelector label="Estresse" type="stress" value={form.stress} onChange={v => update('stress', v)} />
-        <EmojiSelector label="Energia" type="energy" value={form.energy} onChange={v => update('energy', v)} />
-        <EmojiSelector label="Hidratação" type="hydration" value={form.hydration} onChange={v => update('hydration', v)} />
-        <EmojiSelector label="Dor Muscular" type="soreness" value={form.muscle_soreness} onChange={v => update('muscle_soreness', v)} />
-      </CheckinStep>
+        {/* Live Preview */}
+        <LivePreview preview={preview} />
 
-      {/* Body metrics */}
-      <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Heart className="w-3 h-3" /> FC Repouso
-            </label>
-            <Input
-              type="number"
-              step="1"
-              value={form.resting_hr || ''}
-              onChange={e => update('resting_hr', parseFloat(e.target.value) || null)}
-              placeholder="—"
-              className="bg-secondary border-border/40 font-mono"
-            />
-          </div>
-          <HRVField value={form.hrv} onChange={v => update('hrv', v)} />
-          <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Scale className="w-3 h-3" /> Peso (kg)
-            </label>
-            <Input
-              type="number"
-              step="0.1"
-              value={form.body_weight || ''}
-              onChange={e => update('body_weight', parseFloat(e.target.value) || null)}
-              placeholder="—"
-              className="bg-secondary border-border/40 font-mono"
-            />
-          </div>
-        </div>
-      </CheckinStep>
+        {/* Advanced toggle */}
+        <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((v) => !v)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div>
+              <p className="text-sm font-semibold">Refinar precisão</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Adicione sinais avançados para melhorar a leitura do dia.
+              </p>
+            </div>
+            {advancedOpen ? (
+              <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+            )}
+          </button>
 
-      {/* Notes */}
-      <CheckinStep title="Observações" emoji="📝" delay={0.3}>
-        <p className="text-xs text-muted-foreground -mt-1 mb-2">Contexto da noite anterior — ajuda a IA a interpretar seus dados</p>
-        <Textarea
-          value={form.notes}
-          onChange={e => update('notes', e.target.value)}
-          placeholder="Como foi sua noite? Algo a registrar?"
-          className="bg-secondary border-border/40 min-h-[80px] resize-none"
-        />
-      </CheckinStep>
-
-      {/* Rest Day Toggle */}
-      <RestDayToggle value={isRestDay} onChange={v => dispatch({ type: 'SET_REST_DAY', value: v })} />
-
-      {/* Save */}
-      {!savedCheckin && (
-        <Button
-          onClick={() => saveMorningMutation.mutate(form)}
-          disabled={saveMorningMutation.isPending}
-          className="w-full h-13 bg-primary text-primary-foreground font-bold rounded-2xl text-base py-4 hover:bg-primary/90 transition-all hover:scale-[1.01]"
-        >
-          {saveMorningMutation.isPending ? (
-            <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <><Save className="w-5 h-5 mr-2" /> Salvar check-in da manhã</>
+          {!advancedOpen && (
+            <p className="text-[11px] text-muted-foreground">
+              Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC de repouso.
+            </p>
           )}
-        </Button>
-      )}
-    </div>
+        </div>
+
+        {/* Advanced fields */}
+        {advancedOpen && (
+          <>
+            <CheckinStep title="Sono — contexto avançado" emoji="🌙" delay={0.1}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <SliderField
+                  label="Sono Profundo"
+                  hint="Percentual de sono profundo"
+                  value={form.deep_sleep_pct}
+                  onChange={(v) => update('deep_sleep_pct', v)}
+                  unit="%"
+                  max={60}
+                />
+
+                <SliderField
+                  label="Sono REM"
+                  hint="Percentual de sono REM"
+                  value={form.rem_sleep_pct ?? 20}
+                  onChange={(v) => update('rem_sleep_pct', v)}
+                  unit="%"
+                  max={60}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground">
+                  Hora de dormir (opcional)
+                </label>
+                <Input
+                  type="time"
+                  value={form.sleep_start_time || ''}
+                  onChange={(e) => update('sleep_start_time', e.target.value || null)}
+                  className="bg-secondary border-border/40 font-mono w-36"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Ex: 23:00 — encontre no Zepp → Sono
+                </p>
+              </div>
+            </CheckinStep>
+
+            {!isRestDay && (
+              <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
+                <SliderField
+                  label="Fadiga"
+                  value={form.fatigue}
+                  onChange={(v) => update('fatigue', v)}
+                  icon={Activity}
+                />
+              </CheckinStep>
+            )}
+
+            <CheckinStep title="Bem-estar" emoji="🧠" delay={0.2}>
+              <EmojiSelector
+                label="Humor"
+                type="mood"
+                value={form.mood}
+                onChange={(v) => update('mood', v)}
+              />
+              <EmojiSelector
+                label="Estresse"
+                type="stress"
+                value={form.stress}
+                onChange={(v) => update('stress', v)}
+              />
+              <EmojiSelector
+                label="Energia"
+                type="energy"
+                value={form.energy}
+                onChange={(v) => update('energy', v)}
+              />
+              <EmojiSelector
+                label="Hidratação"
+                type="hydration"
+                value={form.hydration}
+                onChange={(v) => update('hydration', v)}
+              />
+              <EmojiSelector
+                label="Dor Muscular"
+                type="soreness"
+                value={form.muscle_soreness}
+                onChange={(v) => update('muscle_soreness', v)}
+              />
+            </CheckinStep>
+
+            <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Heart className="w-3 h-3" /> FC Repouso
+                  </label>
+                  <Input
+                    type="number"
+                    step="1"
+                    value={form.resting_hr || ''}
+                    onChange={(e) => update('resting_hr', parseFloat(e.target.value) || null)}
+                    placeholder="—"
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                </div>
+
+                <HRVField value={form.hrv} onChange={(v) => update('hrv', v)} />
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Scale className="w-3 h-3" /> Peso (kg)
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={form.body_weight || ''}
+                    onChange={(e) => update('body_weight', parseFloat(e.target.value) || null)}
+                    placeholder="—"
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                </div>
+              </div>
+            </CheckinStep>
+
+            <CheckinStep title="Observações" emoji="📝" delay={0.3}>
+              <p className="text-xs text-muted-foreground -mt-1 mb-2">
+                Contexto útil para interpretar a noite anterior
+              </p>
+              <Textarea
+                value={form.notes}
+                onChange={(e) => update('notes', e.target.value)}
+                placeholder="Como foi sua noite? Algo a registrar?"
+                className="bg-secondary border-border/40 min-h-[80px] resize-none"
+              />
+            </CheckinStep>
+
+            <RestDayToggle
+              value={isRestDay}
+              onChange={(v) => dispatch({ type: 'SET_REST_DAY', value: v })}
+            />
+          </>
+        )}
+
+        {/* Save */}
+        {!savedCheckin && (
+          <Button
+            onClick={() => saveMorningMutation.mutate(form)}
+            disabled={saveMorningMutation.isPending}
+            className="w-full h-13 bg-primary text-primary-foreground font-bold rounded-2xl text-base py-4 hover:bg-primary/90 transition-all hover:scale-[1.01]"
+          >
+            {saveMorningMutation.isPending ? (
+              <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <Save className="w-5 h-5 mr-2" />
+                Salvar plano do dia
+              </>
+            )}
+          </Button>
+        )}
+      </div>
     </>
   );
-}
 
 // ── Today Preview Block ────────────────────────────────────────────────────────
 function TodayPreviewBlock({ checkin, onGoToToday }) {
