@@ -861,10 +861,158 @@ Regras:
         )}
       </div>
 
-      {/* 3. Today detail - secondary */}
+     {/* 3. Deep analysis */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold">Análise profunda</h2>
+          </div>
+
+          {!todayCheckin?.deep_analysis_text && (
+            <Button
+              onClick={generateInsights}
+              disabled={isGenerating || computed.length < 5}
+              size="sm"
+              className="bg-primary text-primary-foreground h-8 px-4 text-xs"
+            >
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar análise'}
+            </Button>
+          )}
+        </div>
+
+        <div className="p-5">
+          <p className="text-[10px] text-muted-foreground mb-3">
+            Esta seção resume padrões, limitações e ajustes relevantes com mais profundidade.
+          </p>
+
+          {computed.length < 5 ? (
+            <p className="text-sm text-muted-foreground">
+              Registre ao menos 5 check-ins para uma análise profunda mais útil.
+            </p>
+          ) : todayCheckin?.deep_analysis_text ? (
+            <>
+              <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
+              <AnalysisBody
+                text={todayCheckin.deep_analysis_text}
+                expanded={analysisExpanded}
+                onExpand={() => setAnalysisExpanded(true)}
+              />
+            </>
+          ) : aiInsight ? (
+            <>
+              <AnalysisHighlights analysisText={aiInsight} />
+              <AnalysisBody
+                text={aiInsight}
+                expanded={analysisExpanded}
+                onExpand={() => setAnalysisExpanded(true)}
+              />
+              {analysisGeneratedAt && (
+                <p className="text-[10px] text-muted-foreground mt-3 text-right">
+                  Gerado em{' '}
+                  {analysisGeneratedAt.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              )}
+            </>
+          ) : aiInsightError ? (
+            <p className="text-sm text-red-400/80">{aiInsightError}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              A análise profunda aparece automaticamente após o check-in, quando disponível. Você também pode gerar uma nova leitura agora.
+            </p>
+          )}
+        </div>
+      </motion.div>
+
+      {/* 4. Coach IA */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
+      >
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40">
+          <Brain className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Coach IA</h2>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Use o coach para aprofundar padrões e dúvidas. Esta seção funciona melhor depois que você revisar os achados acima.
+          </p>
+
+          {coachResponse ? (
+            <>
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
+              </p>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
+              >
+                <ReactMarkdown>{coachResponse}</ReactMarkdown>
+              </motion.div>
+            </>
+          ) : null}
+
+          <div className="space-y-2">
+            <Input
+              placeholder="Pergunte algo mais profundo sobre seus padrões..."
+              value={coachInput}
+              onChange={(e) => setCoachInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && askCoach()}
+              className="bg-secondary border-border/40 flex-1"
+            />
+
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {suggestedQuestions.map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setCoachInput(q)}
+                  className="px-3 py-1.5 rounded-xl bg-secondary border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors whitespace-nowrap shrink-0"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+
+            <Button
+              onClick={askCoach}
+              disabled={isCoachThinking || !coachInput.trim()}
+              className="w-full bg-primary text-primary-foreground h-9 text-xs rounded-xl"
+            >
+              {isCoachThinking ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5 mr-1.5" />
+                  Enviar
+                </>
+              )}
+            </Button>
+          </div>
+
+          <p className="text-[10px] text-muted-foreground">
+            As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
+          </p>
+        </div>
+      </motion.div>
+
+      {/* 5. Modo técnico */}
       <ExpandableSection
-        title="Leitura detalhada de hoje"
-        subtitle="Use esta seção quando quiser entender melhor o dia atual, sem competir com a tela Today."
+        title="Modo técnico"
+        subtitle="Detalhes do dia e contexto mais analítico. Opcional para quando você quiser aprofundar."
       >
         {todayDetailInsights.baselineInsights?.length > 0 ? (
           <div className="space-y-2">
@@ -944,160 +1092,11 @@ Regras:
         ) : null}
       </ExpandableSection>
 
-      {/* 4. Coach IA */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12 }}
-        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
-      >
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border/40">
-          <Brain className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Coach IA</h2>
-        </div>
-
-        <div className="p-5 space-y-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Use o coach para aprofundar padrões e dúvidas. Esta seção funciona melhor depois que você revisar os achados acima.
-          </p>
-
-          {coachResponse ? (
-            <>
-              <p className="text-[10px] text-muted-foreground mb-2">
-                Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
-              </p>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
-              >
-                <ReactMarkdown>{coachResponse}</ReactMarkdown>
-              </motion.div>
-            </>
-          ) : null}
-
-          <div className="space-y-2">
-            <Input
-              placeholder="Pergunte algo mais profundo sobre seus padrões..."
-              value={coachInput}
-              onChange={(e) => setCoachInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && askCoach()}
-              className="bg-secondary border-border/40 flex-1"
-            />
-
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {suggestedQuestions.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => setCoachInput(q)}
-                  className="px-3 py-1.5 rounded-xl bg-secondary border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors whitespace-nowrap shrink-0"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-
-            <Button
-              onClick={askCoach}
-              disabled={isCoachThinking || !coachInput.trim()}
-              className="w-full bg-primary text-primary-foreground h-9 text-xs rounded-xl"
-            >
-              {isCoachThinking ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Send className="w-3.5 h-3.5 mr-1.5" />
-                  Enviar
-                </>
-              )}
-            </Button>
-          </div>
-
-          <p className="text-[10px] text-muted-foreground">
-            As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
-          </p>
-        </div>
-      </motion.div>
-
-      {/* 5. Deep analysis */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold">Análise profunda</h2>
-          </div>
-
-          {!todayCheckin?.deep_analysis_text && (
-            <Button
-              onClick={generateInsights}
-              disabled={isGenerating || computed.length < 5}
-              size="sm"
-              className="bg-primary text-primary-foreground h-8 px-4 text-xs"
-            >
-              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar análise'}
-            </Button>
-          )}
-        </div>
-
-        <div className="p-5">
-          <p className="text-[10px] text-muted-foreground mb-3">
-            Esta seção resume padrões, limitações e ajustes relevantes com mais profundidade.
-          </p>
-
-          {computed.length < 5 ? (
-            <p className="text-sm text-muted-foreground">
-              Registre ao menos 5 check-ins para uma análise profunda mais útil.
-            </p>
-          ) : todayCheckin?.deep_analysis_text ? (
-            <>
-              <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
-              <AnalysisBody
-                text={todayCheckin.deep_analysis_text}
-                expanded={analysisExpanded}
-                onExpand={() => setAnalysisExpanded(true)}
-              />
-            </>
-          ) : aiInsight ? (
-            <>
-              <AnalysisHighlights analysisText={aiInsight} />
-              <AnalysisBody
-                text={aiInsight}
-                expanded={analysisExpanded}
-                onExpand={() => setAnalysisExpanded(true)}
-              />
-              {analysisGeneratedAt && (
-                <p className="text-[10px] text-muted-foreground mt-3 text-right">
-                  Gerado em{' '}
-                  {analysisGeneratedAt.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              )}
-            </>
-          ) : aiInsightError ? (
-            <p className="text-sm text-red-400/80">{aiInsightError}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              A análise profunda aparece automaticamente após o check-in, quando disponível. Você também pode gerar uma nova leitura agora.
-            </p>
-          )}
-        </div>
-      </motion.div>
-
-{/* 6. Contexto técnico */}
+      {/* 6. Technical context */}
       <ExpandableSection
         title="Contexto técnico"
-        subtitle="Use esta seção como apoio técnico. Para padrões e evolução temporal, prefira a aba Trends."
+        subtitle="Detalhes fisiológicos e métricas avançadas. Útil para quem quer ir além da leitura principal."
       >
-
         {analysis?.physioState ? <PhysioStateCard physioState={analysis.physioState} /> : null}
 
         {analysis ? (
