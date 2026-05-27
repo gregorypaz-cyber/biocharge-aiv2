@@ -625,6 +625,15 @@ export default function Today() {
 
 const scheduledSport = todaySessions[0]?.sport ?? undefined;
 
+const tomorrowHook = useMemo(() => {
+    return getTomorrowHook({
+      checkin: enrichedCheckin,
+      analysis,
+      todaySessions,
+      isRestMode,
+    });
+  }, [enrichedCheckin, analysis, todaySessions, isRestMode]);
+
   const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
     if (!enrichedCheckin) return { primary: [], secondary: [] };
 
