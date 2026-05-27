@@ -164,12 +164,13 @@ const hasSleepHours = !!(checkin?.sleep_hours && checkin.sleep_hours > 0);
   const hrvBaseline = getRecentHrvBaseline(recentCheckins);
   const rhrBaseline = getRecentRhrBaseline(recentCheckins);
 
-  const physiologicalCount =
+const physiologicalCount =
     (hasHrv ? 1 : 0) +
     (hasRhr ? 1 : 0) +
     (hasSleepHours ? 1 : 0) +
     (hasSleepScore ? 1 : 0) +
-    (hasDeepSleep ? 1 : 0);
+    (hasDeepSleep ? 1 : 0) +
+    (hasRemSleep ? 1 : 0);
 
   if (physiologicalCount >= 4 && (hrvBaseline || rhrBaseline || (hasHrv && hasRhr))) {
     return 'high';
