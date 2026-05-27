@@ -483,6 +483,13 @@ function buildRecentShifts(computed, analysis) {
   if (!computed || computed.length < 8) return [];
 
   const items = [];
+  const topics = new Set();
+
+  const pushUnique = (topic, item) => {
+    if (topics.has(topic)) return;
+    topics.add(topic);
+    items.push(item);
+  };
 
   const last7 = computed.slice(0, 7);
   const prev7 = computed.slice(7, 14);
@@ -492,7 +499,7 @@ function buildRecentShifts(computed, analysis) {
     const prevRec7 = prev7.length >= 4 ? avg(prev7.map((c) => c.recovery_score || 0)) : null;
 
     if (rec7 != null && prevRec7 != null && Math.abs(rec7 - prevRec7) >= 5) {
-      items.push({
+      pushUnique('recovery', {
         icon: rec7 > prevRec7 ? TrendingUp : TrendingDown,
         title: rec7 > prevRec7 ? 'Recuperação melhorando' : 'Recuperação piorando',
         text: `Sua média de recuperação dos últimos 7 dias ${rec7 > prevRec7 ? 'subiu' : 'caiu'} de ${Math.round(prevRec7)} para ${Math.round(rec7)}.`,
@@ -502,7 +509,7 @@ function buildRecentShifts(computed, analysis) {
 
     const sleep7 = avg(last7.map((c) => c.sleep_hours || 0));
     if (sleep7 != null && sleep7 < 7) {
-      items.push({
+      pushUnique('sleep', {
         icon: Moon,
         title: 'Seu sono recente está curto',
         text: `Sua média de sono nos últimos 7 dias está em ${sleep7.toFixed(1)}h. Isso sozinho já pode limitar seu score de recuperação.`,
@@ -514,14 +521,14 @@ function buildRecentShifts(computed, analysis) {
   const ratio = analysis?.trainingLoad?.ratio ?? null;
   if (ratio != null) {
     if (ratio > 1.3) {
-      items.push({
+      pushUnique('load', {
         icon: AlertTriangle,
         title: 'Sua carga recente está acima do ideal',
         text: `O ratio aguda/crônica está em ${ratio.toFixed(2)}. Isso aumenta a chance de fadiga ou necessidade de redução de intensidade.`,
         tone: 'negative',
       });
     } else if (ratio < 0.9) {
-      items.push({
+      pushUnique('load', {
         icon: Activity,
         title: 'Sua carga recente está controlada',
         text: `O ratio aguda/crônica está em ${ratio.toFixed(2)}. Há boa chance de absorver carga sem excesso, se o resto do contexto acompanhar.`,
@@ -531,8 +538,8 @@ function buildRecentShifts(computed, analysis) {
   }
 
   const sleepDebt = analysis?.sleepDebt?.debt ?? null;
-  if (sleepDebt != null && sleepDebt >= 4) {
-    items.push({
+  if (sleepDebt != null && sleepDebt >= 4 && !topics.has('sleep')) {
+    pushUnique('sleep', {
       icon: Clock3,
       title: 'Sua dívida de sono já está relevante',
       text: `Você acumulou cerca de ${sleepDebt.toFixed(1)}h de sono abaixo do ideal. Isso provavelmente está pesando mais do que parece no seu dia.`,
@@ -540,7 +547,7 @@ function buildRecentShifts(computed, analysis) {
     });
   }
 
-  return items.slice(0, 4);
+  return items.slice(0, 2);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
