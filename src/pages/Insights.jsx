@@ -982,7 +982,7 @@ Regras:
               className="bg-secondary border-border/40 flex-1"
             />
 
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
               {suggestedQuestions.map((q) => (
                 <button
                   key={q}
