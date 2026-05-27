@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useUserCheckins } from '@/hooks/useUserData';
 import { motion } from 'framer-motion';
 import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
