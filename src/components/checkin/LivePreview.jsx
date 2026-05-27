@@ -145,8 +145,8 @@ export default function LivePreview({ preview }) {
       <ZoneBar value={recoveryScore} color={color} />
 
       <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-          Como o dia está ficando
+<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          Linha do dia
         </p>
         <p className="text-sm font-semibold leading-snug">{headline}</p>
       </div>
