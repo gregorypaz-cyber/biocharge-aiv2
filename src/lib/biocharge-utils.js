@@ -220,7 +220,8 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
   const sleepScore = clamp(checkin.sleep_score ?? 0);
   const fatigueInverse = 100 - clamp(checkin.fatigue ?? 0);
 
-  const deepSleepScore = normalizeDeepSleep(checkin.deep_sleep_pct);
+const deepSleepScore = normalizeDeepSleep(checkin.deep_sleep_pct);
+  const remSleepScore = normalizeRemSleep(checkin.rem_sleep_pct);
   const hrvScore = normalizeHrv(checkin.hrv, recentCheckins);
   const rhrScore = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
   const sleepHoursScore = getSleepHoursScore(checkin.sleep_hours);
