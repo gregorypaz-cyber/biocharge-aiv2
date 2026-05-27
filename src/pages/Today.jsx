@@ -381,6 +381,13 @@ export default function Today() {
 
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const scrollToWorkoutPrescription = () => {
+    const el = document.getElementById('today-workout-prescription');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const displayedScore =
     checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
 
