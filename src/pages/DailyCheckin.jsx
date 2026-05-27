@@ -585,9 +585,35 @@ const savePostMutation = useMutation({
 
       {/* Sleep */}
       <CheckinStep title="Sono" emoji="🌙" delay={0.1}>
-        <SliderField label="Pontuação do Sono (Zepp)" hint="Valor de 0-100 do app Zepp → Sono" value={form.sleep_score} onChange={v => update('sleep_score', v)} icon={Moon} />
-        <SliderField label="Sono Profundo" value={form.deep_sleep_pct} onChange={v => update('deep_sleep_pct', v)} unit="%" max={60} />
-        <div className="flex items-center gap-3">
+<SliderField
+  label="Pontuação do Sono (Zepp)"
+  hint="Valor de 0-100 do app Zepp → Sono"
+  value={form.sleep_score}
+  onChange={v => update('sleep_score', v)}
+  icon={Moon}
+/>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <SliderField
+    label="Sono Profundo"
+    hint="Percentual de sono profundo"
+    value={form.deep_sleep_pct}
+    onChange={v => update('deep_sleep_pct', v)}
+    unit="%"
+    max={60}
+  />
+
+  <SliderField
+    label="Sono REM"
+    hint="Percentual de sono REM"
+    value={form.rem_sleep_pct ?? 20}
+    onChange={v => update('rem_sleep_pct', v)}
+    unit="%"
+    max={60}
+  />
+</div>
+
+<div className="flex items-center gap-3">
           <label className="text-sm font-medium text-foreground flex-1">Horas de Sono</label>
           <Input
             type="text"
