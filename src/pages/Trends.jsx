@@ -947,10 +947,10 @@ export default function Trends() {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-3">
+{/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-2.5">
         {[
-          { label: 'Últimos 7 dias', val: last7Avg, trend: true },
+          { label: 'Últimos 7 dias', val: last7Avg },
           { label: 'Período selecionado', val: periodAvg },
           { label: 'vs. 7 dias anteriores', val: trend, isChange: true },
         ].map((s, i) => (
@@ -958,19 +958,22 @@ export default function Trends() {
             key={i}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
-            className="rounded-2xl border border-border/60 bg-card p-4 text-center"
+            transition={{ delay: i * 0.05 }}
+            className="rounded-xl border border-border/60 bg-card px-3 py-3 text-center"
           >
-            <span className="text-xs text-muted-foreground block mb-1">{s.label}</span>
+            <span className="text-[10px] text-muted-foreground block mb-1 leading-tight">
+              {s.label}
+            </span>
+
             {s.isChange ? (
               <div className="flex items-center justify-center gap-1">
-                <TrendIcon className={cn('w-4 h-4', trendColor)} />
-                <span className={cn('text-xl font-black font-mono', trendColor)}>
+                <TrendIcon className={cn('w-3.5 h-3.5', trendColor)} />
+                <span className={cn('text-lg font-black font-mono', trendColor)}>
                   {trend !== null ? (trend > 0 ? `+${trend}` : trend) : '—'}
                 </span>
               </div>
             ) : (
-              <p className="text-2xl font-black font-mono" style={{ color: metricConfig?.color }}>
+              <p className="text-xl font-black font-mono" style={{ color: metricConfig?.color }}>
                 {s.val ?? '—'}
               </p>
             )}
