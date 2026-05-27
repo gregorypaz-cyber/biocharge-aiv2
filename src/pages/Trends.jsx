@@ -336,7 +336,7 @@ Responda APENAS em JSON:
 
           {result && (
             <div className="space-y-4">
-              <div className={`rounded-2xl border px-4 py-4 ${zone.bg} ${zone.border}`}>
+              <div className={`rounded-xl border px-4 py-3.5 ${zone.bg} ${zone.border}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
@@ -508,10 +508,10 @@ function RecoveryInfluencersCard({ checkins = [] }) {
 
   if (recent30.length < 8) {
     return (
-      <motion.div
+<motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card p-5"
+        className="rounded-xl border border-border/60 bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <TrendingUp className="w-5 h-5 text-primary mt-0.5 shrink-0" />
