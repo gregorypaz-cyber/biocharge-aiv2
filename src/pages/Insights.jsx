@@ -869,10 +869,10 @@ Regras:
       </div>
 
      {/* 3. Deep analysis */}
-      <motion.div
+<motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/60 bg-card overflow-hidden"
+        className="rounded-xl border border-border/60 bg-card overflow-hidden"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
           <div className="flex items-center gap-2">
