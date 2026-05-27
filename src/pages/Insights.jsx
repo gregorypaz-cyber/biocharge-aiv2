@@ -952,7 +952,7 @@ Regras:
           <h2 className="text-sm font-semibold">Coach IA</h2>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 space-y-3.5">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Use o coach para aprofundar padrões e dúvidas. Esta seção funciona melhor depois que você revisar os achados acima.
           </p>
