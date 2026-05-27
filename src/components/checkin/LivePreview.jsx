@@ -151,14 +151,18 @@ export default function LivePreview({ preview }) {
         <p className="text-sm font-semibold leading-snug">{headline}</p>
       </div>
 
-      <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-          Qualidade da leitura
-        </p>
-        <p className="text-xs text-foreground/80 leading-relaxed">
-          {confidenceReason}
-        </p>
-      </div>
+{(preview.deep_sleep_pct != null || preview.rem_sleep_pct != null) && (
+        <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Estágios do sono
+          </p>
+          <p className="text-xs text-foreground/80 leading-relaxed">
+            {preview.deep_sleep_pct != null ? `Profundo: ${preview.deep_sleep_pct}%` : 'Profundo: —'}
+            {' · '}
+            {preview.rem_sleep_pct != null ? `REM: ${preview.rem_sleep_pct}%` : 'REM: —'}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-2">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
