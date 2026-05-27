@@ -118,8 +118,8 @@ export default function LivePreview({ preview }) {
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Recovery estimado
+<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Recovery base
           </p>
 
           <div className="flex items-end gap-2">
