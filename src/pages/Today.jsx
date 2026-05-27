@@ -693,6 +693,17 @@ export default function Today() {
     todaySessions,
   ]);
 
+const heroDynamicContext = useMemo(() => {
+    return getHeroDynamicContext({
+      checkin: enrichedCheckin,
+      analysis,
+      dailyVerdict,
+      todaySessions,
+      isRestMode,
+    });
+  }, [enrichedCheckin, analysis, dailyVerdict, todaySessions, isRestMode]);
+
+
 const scheduledSport = todaySessions[0]?.sport ?? undefined;
 
 const tomorrowHook = useMemo(() => {
