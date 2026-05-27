@@ -600,7 +600,43 @@ export default function Today() {
     Overreached: 'Descanso obrigatório — mais carga agrava o quadro.',
   };
 
-
+const BODY_STATE_META = {
+  Recovered: {
+    emoji: '🟢',
+    tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
+    short: 'Sistema pronto para render',
+  },
+  Activated: {
+    emoji: '⚡',
+    tone: 'bg-sky-500/10 border-sky-500/20 text-sky-300',
+    short: 'Boa responsividade hoje',
+  },
+  Balanced: {
+    emoji: '⚖️',
+    tone: 'bg-primary/10 border-primary/10 text-foreground',
+    short: 'Estado estável e sustentável',
+  },
+  Loaded: {
+    emoji: '🟠',
+    tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
+    short: 'Carga presente, margem menor',
+  },
+  Sympathetic_Load: {
+    emoji: '🌩️',
+    tone: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
+    short: 'Sistema sob carga nervosa',
+  },
+  Fatigued: {
+    emoji: '🔴',
+    tone: 'bg-red-500/10 border-red-500/20 text-red-300',
+    short: 'Fadiga acima do ideal',
+  },
+  Overreached: {
+    emoji: '🚨',
+    tone: 'bg-red-500/10 border-red-500/20 text-red-300',
+    short: 'Sobrecarga clara',
+  },
+};
 
   const CAPACITY_PT = {
     High: 'Alta',
