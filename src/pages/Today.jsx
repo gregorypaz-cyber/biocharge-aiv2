@@ -1054,16 +1054,32 @@ function ExecutionCard() {
           </div>
         </div>
 
-        {(biochargeTrend || hrvTrend) && (
-          <div className="space-y-0.5 mt-1">
+        {(biochargeTrend || hrvTrend || enrichedCheckin?.sleep_performance_pct != null) && (
+          <div className="space-y-1 mt-1">
             {biochargeTrend && (
               <p className={`text-[11px] font-medium ${biochargeTrend.color}`}>
                 {biochargeTrend.text}
               </p>
             )}
+
             {hrvTrend && (
               <p className={`text-[11px] font-medium ${hrvTrend.color}`}>
                 {hrvTrend.text}
+              </p>
+            )}
+
+            {enrichedCheckin?.sleep_performance_pct != null && (
+              <p
+                className={cn(
+                  'text-[11px] font-medium',
+                  enrichedCheckin.sleep_performance_pct >= 85
+                    ? 'text-emerald-400'
+                    : enrichedCheckin.sleep_performance_pct >= 70
+                    ? 'text-yellow-400'
+                    : 'text-red-400'
+                )}
+              >
+                Performance do sono: {enrichedCheckin.sleep_performance_pct}%
               </p>
             )}
           </div>
