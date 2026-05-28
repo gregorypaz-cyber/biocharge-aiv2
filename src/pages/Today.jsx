@@ -1502,7 +1502,7 @@ if (isLoading) {
 
       {orderedPrimaryCards.map((desc) => renderCard(desc))}
 
-      <TomorrowHookCard hook={tomorrowHook} />
+      {!shouldHideTomorrowHook && <TomorrowHookCard hook={tomorrowHook} />}
 
       {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
         <Link
