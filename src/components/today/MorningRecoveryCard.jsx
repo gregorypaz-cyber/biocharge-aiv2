@@ -132,8 +132,9 @@ export default function MorningRecoveryCard({ checkin, delta = null }) {
             </span>
           </div>
           <p className="text-sm font-semibold">
-            {checkin?.hrv ?? '—'}
+            {checkin?.hrv_manual ?? checkin?.hrv ?? '—'}
           </p>
+
         </div>
 
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
