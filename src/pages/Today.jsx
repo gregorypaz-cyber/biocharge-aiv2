@@ -260,8 +260,9 @@ function getDailyVerdict({
   const highLoad = acwr != null && acwr >= 1.3;
 
   const hasPhysio =
-  (checkin?.hrv && checkin.hrv > 0) ||
-  (checkin?.resting_hr && checkin.resting_hr > 0);
+    ((checkin?.hrv_manual && checkin.hrv_manual > 0) ||
+      (checkin?.hrv && checkin.hrv > 0)) ||
+    (checkin?.resting_hr && checkin.resting_hr > 0);
 
 if (prescriptionScore >= 82 && !sleepIsLimiting && !highLoad && hasPhysio) {
 
