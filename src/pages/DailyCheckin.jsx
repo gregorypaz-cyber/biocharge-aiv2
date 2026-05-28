@@ -98,13 +98,14 @@ function HRVField({ value, onChange }) {
         </button>
       </label>
       {showTip && (
-        <div className="text-[10px] text-muted-foreground bg-secondary rounded-xl p-3 leading-relaxed border border-border/40">
-          <p className="font-semibold text-foreground mb-1">Onde encontrar no Zepp:</p>
-          Abra o Zepp → aba BioCharge →<br />
-          Variabilidade da Frequência Cardíaca<br />
-          Digite o valor em ms mostrado na tela.
-        </div>
-      )}
+  <div className="text-[10px] text-muted-foreground bg-secondary rounded-xl p-3 leading-relaxed border border-border/40">
+    <p className="font-semibold text-foreground mb-1">Como medir RMSSD:</p>
+    Use apps como HRV4Training, Elite HRV ou seu wearable para medir RMSSD ao acordar,
+    sempre em repouso e antes de levantar.<br />
+    No Zepp, use o valor de HRV mostrado na manhã do dia.<br />
+    Faixa comum: 20–100 ms. Em geral, quanto maior em relação à sua média, melhor.
+  </div>
+)}
       <Input
         type="number"
         step="1"
