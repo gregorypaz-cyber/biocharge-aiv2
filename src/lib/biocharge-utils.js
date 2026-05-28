@@ -16,6 +16,18 @@ export function resolveCheckinField(checkin, fieldName) {
     hydration: ['hydration', 'hydration_liters'],
   };
 
+function resolveHrvValue(checkin) {
+  if (checkin?.hrv_manual != null && checkin.hrv_manual > 0) {
+    return Number(checkin.hrv_manual);
+  }
+
+  if (checkin?.hrv != null && checkin.hrv > 0) {
+    return Number(checkin.hrv);
+  }
+
+  return null;
+}
+
   const candidates = aliases[fieldName] || [fieldName];
 
   for (const candidate of candidates) {
