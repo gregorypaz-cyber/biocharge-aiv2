@@ -337,7 +337,12 @@ function resolveRecommendedKey(checkin) {
 
   if (state === 'Fatigued' || state === 'Overreached' || recoveryDemand >= 70) return 'C';
 
-  const score = checkin?.biocharge_morning ?? checkin?.recovery_score ?? checkin?.readiness_score ?? 0;
+  const score =
+    checkin?.readiness_score ??
+    checkin?.recovery_score ??
+    checkin?.morning_recovery_score ??
+    checkin?.biocharge_morning ??
+    0;
   if (score >= 80) return 'A';
   if (score >= 65) return 'B';
   return 'C';
