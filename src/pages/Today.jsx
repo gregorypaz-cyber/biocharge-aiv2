@@ -593,7 +593,7 @@ const hrvTrend = useMemo(() => {
         currentStrain: cappedStrain,
         strainTarget,
         readiness: prescriptionScore,
-        hrv: enrichedCheckin.hrv ?? enrichedCheckin.hrv_manual ?? null,
+        hrv: enrichedCheckin.hrv_manual ?? enrichedCheckin.hrv ?? null,
         hasSessions: todaySessions.length > 0,
       }
     : null;
