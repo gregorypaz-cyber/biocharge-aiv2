@@ -16,18 +16,6 @@ export function resolveCheckinField(checkin, fieldName) {
     hydration: ['hydration', 'hydration_liters'],
   };
 
-function resolveHrvValue(checkin) {
-  if (checkin?.hrv_manual != null && checkin.hrv_manual > 0) {
-    return Number(checkin.hrv_manual);
-  }
-
-  if (checkin?.hrv != null && checkin.hrv > 0) {
-    return Number(checkin.hrv);
-  }
-
-  return null;
-}
-
   const candidates = aliases[fieldName] || [fieldName];
 
   for (const candidate of candidates) {
@@ -51,26 +39,6 @@ function resolveHrvValue(checkin) {
   return null;
 }
 
-export function resolveCheckinField(checkin, fieldName) {
-  const aliases = {
-    energy: ['energy', 'energy_level'],
-    stress: ['stress', 'stress_level'],
-    muscle_soreness: ['muscle_soreness', 'muscle_soreness_level'],
-    mood: ['mood', 'mood_level'],
-    resting_hr: ['resting_hr', 'resting_heart_rate'],
-    hydration: ['hydration', 'hydration_liters'],
-  };
-
-  const candidates = aliases[fieldName] || [fieldName];
-
-  for (const candidate of candidates) {
-    if (checkin?.[candidate] !== null && checkin?.[candidate] !== undefined) {
-      return checkin[candidate];
-    }
-  }
-
-  return null;
-}
 
 function normalizeMoodOrEnergy(v) {
   if (v == null) return null;
