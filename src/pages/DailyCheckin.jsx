@@ -228,8 +228,20 @@ const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
 
   const profileComplete = !!(profile.sport && profile.level && profile.goal);
 
-  const isRestDay = form.rest_day;
-  const preview = computeCheckinScores(form);
+const isRestDay = form.rest_day;
+
+  const preview = useMemo(() => {
+    const recentCheckins = [...checkins]
+      .filter((c) => c.date !== form.date && c.id !== editData?.id)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 14);
+
+    const sortedSessions = [...allSessions].sort((a, b) =>
+      String(b.date).localeCompare(String(a.date))
+    );
+
+    return computeCheckinScores(form, recentCheckins, sortedSessions);
+  }, [form, checkins, allSessions, editData?.id]);
 
 const saveMorningMutation = useMutation({
   mutationFn: async (data) => {
