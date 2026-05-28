@@ -1042,7 +1042,7 @@ export function getSmartMessage(checkin, recentCheckins) {
     if (hrvValues.length >= 3) {
       const trend = hrvValues[0] - hrvValues[hrvValues.length - 1];
       if (trend < -10) {
-        messages.push(`Seu HRV caiu ${Math.abs(Math.round(trend))}ms nos últimos dias — sinal de estresse acumulado.`);
+        messages.push(`Seu RMSSD caiu ${Math.abs(Math.round(trend))}ms nos últimos dias — sinal de estresse acumulado.`);
       }
     }
 
