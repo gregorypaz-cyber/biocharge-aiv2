@@ -344,31 +344,51 @@ export function calculateSleepScore(checkin) {
 }
 
 export function calculateSleepPerformance(checkin) {
-  const sleepHours = Number(checkin?.sleep_hours ?? 0);
-  const deepSleepPct = Number(checkin?.deep_sleep_pct ?? 0);
-  const remSleepPct = Number(checkin?.rem_sleep_pct ?? 0);
-  const hrvValue = resolveHrvValue(checkin) ?? 0;
+  const sleepHours = checkin?.sleep_hours != null ? Number(checkin.sleep_hours) : null;
+  const deepSleepPct = checkin?.deep_sleep_pct != null ? Number(checkin.deep_sleep_pct) : null;
+  const remSleepPct = checkin?.rem_sleep_pct != null ? Number(checkin.rem_sleep_pct) : null;
+  const hrvValue = resolveHrvValue(checkin);
 
-  // Duração: 5h = 0 | 8h = 100
-  const durationScore = Math.min(100, Math.max(0, ((sleepHours - 5) / 3) * 100));
+  const durationScore =
+    sleepHours == null
+      ? null
+      : Math.min(100, Math.max(0, ((sleepHours - 5) / 3) * 100));
 
-  // Profundo: 5% = 0 | 25% = 100
-  const deepScore = Math.min(100, Math.max(0, ((deepSleepPct - 5) / 20) * 100));
+  const deepScore =
+    deepSleepPct == null
+      ? null
+      : Math.min(100, Math.max(0, ((deepSleepPct - 5) / 20) * 100));
 
-  // REM: 5% = 0 | 25% = 100
-  const remScore = Math.min(100, Math.max(0, ((remSleepPct - 5) / 20) * 100));
+  const remScore =
+    remSleepPct == null
+      ? null
+      : Math.min(100, Math.max(0, ((remSleepPct - 5) / 20) * 100));
 
-  // HRV: 20ms = 0 | 80ms = 100
-  const hrvScore = Math.min(100, Math.max(0, ((hrvValue - 20) / 60) * 100));
+  const hrvScore =
+    hrvValue == null
+      ? null
+      : Math.min(100, Math.max(0, ((hrvValue - 20) / 60) * 100));
 
-  const sleepPerformance = Math.round(
-    durationScore * 0.40 +
-    deepScore * 0.30 +
-    remScore * 0.20 +
-    hrvScore * 0.10
-  );
+  const weighted = [
+    { value: durationScore, weight: 0.40 },
+    { value: deepScore, weight: 0.30 },
+    { value: remScore, weight: 0.20 },
+    { value: hrvScore, weight: 0.10 },
+  ];
 
-  return clamp(sleepPerformance);
+  let total = 0;
+  let weightSum = 0;
+
+  for (const item of weighted) {
+    if (item.value != null) {
+      total += item.value * item.weight;
+      weightSum += item.weight;
+    }
+  }
+
+  if (weightSum <= 0) return null;
+
+  return clamp(Math.round(total / weightSum));
 }
 
 export function calculateBaevskyProxy(rmssd, restingHR) {
