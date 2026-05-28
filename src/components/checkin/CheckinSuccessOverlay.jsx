@@ -20,7 +20,7 @@ const ZONE_CONFIG = {
   },
 };
 
-const AUTO_REDIRECT_MS = 4500;
+const AUTO_REDIRECT_MS = 8000;
 
 function getDecisionLabel(mode, zone) {
   if (mode === 'train_high') return 'Treino mais forte';
