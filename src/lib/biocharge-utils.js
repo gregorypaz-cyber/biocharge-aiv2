@@ -988,6 +988,8 @@ const baevsky = calculateBaevskyProxy(
     readiness_score: readinessScore,
     hrv_7d_avg: hrv7dAvg != null ? Math.round(hrv7dAvg) : null,
     hrv_trend: hrvTrend,
+    baevsky_si: baevsky.si_proxy,
+    autonomic_state: baevsky.autonomic_state,
     delta_pre: deltaPre,
     delta_post: deltaPost,
     alert,
