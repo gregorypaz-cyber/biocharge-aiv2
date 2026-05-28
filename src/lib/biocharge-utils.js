@@ -1017,6 +1017,8 @@ const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, rec
     hrv_trend: hrvTrend,
     baevsky_si: baevsky.si_proxy,
     autonomic_state: baevsky.autonomic_state,
+    preview_confidence: previewConfidence,
+preview_confidence_reason: previewConfidenceReason,
     delta_pre: deltaPre,
     delta_post: deltaPost,
     alert,
