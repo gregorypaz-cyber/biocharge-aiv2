@@ -408,7 +408,13 @@ function resolveReadinessRecommendation(checkin, analysis) {
   if (state === 'Fatigued' || state === 'Overreached') {
     baseRec = { text: 'Recuperação ou movimento leve', color: '#ef4444' };
   } else {
-    const score = checkin?.biocharge_morning ?? checkin?.readiness_score ?? checkin?.recovery_score ?? 0;
+    const score =
+      checkin?.readiness_score ??
+      checkin?.recovery_score ??
+      checkin?.morning_recovery_score ??
+      checkin?.biocharge_morning ??
+      0;
+
     const soreness = checkin?.muscle_soreness ?? checkin?.muscle_soreness_level ?? 99;
     const fatigue = checkin?.fatigue ?? checkin?.fatigue_score ?? 99;
 
