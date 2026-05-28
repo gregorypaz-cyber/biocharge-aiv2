@@ -471,19 +471,34 @@ export default function Today() {
     return { text: '→ Dentro da sua média da semana', color: 'text-muted-foreground' };
   }, [last7Checkins, rawCheckin?.biocharge_morning]); // eslint-disable-line
 
-  const hrvTrend = useMemo(() => {
-    if (!rawCheckin?.hrv) return null;
+const hrvTrend = useMemo(() => {
+    const currentHrv = rawCheckin?.hrv_manual ?? rawCheckin?.hrv ?? null;
+    const avg7d = enrichedCheckin?.hrv_7d_avg ?? null;
+    const trend = enrichedCheckin?.hrv_trend ?? null;
 
-    const values = last7Checkins.map((c) => c.hrv).filter((v) => v != null);
-    if (values.length < 2) return null;
+    if (currentHrv == null || avg7d == null || !trend) return null;
 
-    const avg = values.reduce((a, b) => a + b, 0) / values.length;
-    const diff = rawCheckin.hrv - avg;
+    const pctDiff = Math.round(((currentHrv - avg7d) / avg7d) * 100);
 
-    if (diff > 5) return { text: 'HRV acima do normal — bom sinal de recuperação', color: 'text-emerald-400' };
-    if (diff < -5) return { text: 'HRV abaixo do normal — preserve a intensidade', color: 'text-yellow-400' };
-    return null;
-  }, [last7Checkins, rawCheckin?.hrv]); // eslint-disable-line
+    if (trend === 'above_avg') {
+      return {
+        text: `RMSSD ${Math.abs(pctDiff)}% acima da sua média (7d)`,
+        color: 'text-emerald-400',
+      };
+    }
+
+    if (trend === 'below_avg') {
+      return {
+        text: `RMSSD ${Math.abs(pctDiff)}% abaixo da sua média (7d)`,
+        color: 'text-red-400',
+      };
+    }
+
+    return {
+      text: 'RMSSD em linha com sua média (7d)',
+      color: 'text-yellow-400',
+    };
+  }, [rawCheckin?.hrv, rawCheckin?.hrv_manual, enrichedCheckin?.hrv_7d_avg, enrichedCheckin?.hrv_trend]);
 
   const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
 
