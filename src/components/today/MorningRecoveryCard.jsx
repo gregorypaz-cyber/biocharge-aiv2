@@ -128,7 +128,7 @@ export default function MorningRecoveryCard({ checkin, delta = null }) {
           <div className="flex items-center gap-1.5 mb-1">
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              HRV
+              RMSSD
             </span>
           </div>
           <p className="text-sm font-semibold">
