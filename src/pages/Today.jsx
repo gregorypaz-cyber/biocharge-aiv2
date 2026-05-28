@@ -914,12 +914,12 @@ case 'workout': {
               <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
                 Prescrição do dia
               </p>
-              <h3 className="text-base font-black tracking-tight">
-                Escolha a melhor opção para hoje
-              </h3>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                A prontidão define a margem. Abaixo, você escolhe a dose que melhor encaixa no seu contexto.
-              </p>
+<h3 className="text-base font-black tracking-tight">
+  Opções A, B e C para executar hoje
+</h3>
+<p className="text-[11px] text-muted-foreground leading-relaxed">
+  Seu estado do corpo define a margem. Agora escolha a dose que melhor encaixa no contexto de hoje.
+</p>
             </div>
 
             {workoutEl}
