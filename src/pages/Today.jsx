@@ -384,8 +384,9 @@ export default function Today() {
   'headline_today',
   'decision_mode',
   'hrv_7d_avg',
-'hrv_trend',
-
+  'hrv_trend',
+  'baevsky_si',
+  'autonomic_state',
 ];
 
         for (const k of approvedEngineFields) {
