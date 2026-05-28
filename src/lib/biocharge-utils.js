@@ -961,6 +961,10 @@ const recoveryScore = calculateRecoveryScore(canonicalCheckin, recentCheckins);
   const effectiveHrv = resolveHrvValue(canonicalCheckin);
 const hrv7dAvg = getRecentHrvBaseline(recentCheckins);
 const hrvTrend = getHrvTrend(effectiveHrv, hrv7dAvg);
+const baevsky = calculateBaevskyProxy(
+  effectiveHrv,
+  canonicalCheckin.resting_hr
+);
 
   const deltaPre = getDeltaPre(canonicalCheckin.biocharge_morning, canonicalCheckin.biocharge_pre_workout);
   const deltaPost = getDeltaPost(canonicalCheckin.biocharge_pre_workout, canonicalCheckin.biocharge_post_workout);
