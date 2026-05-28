@@ -79,14 +79,12 @@ function normalizeRemSleep(remSleepPct) {
 
 
 function getRecentHrvBaseline(recentCheckins = []) {
-
   const values = (recentCheckins || [])
-    .slice(0, 14)
+    .slice(0, 7)
     .map((c) => resolveHrvValue(c))
     .filter((v) => v != null && v > 0);
 
-
-  if (values.length < 5) return null;
+  if (values.length < 3) return null;
   return values.reduce((s, v) => s + v, 0) / values.length;
 }
 
