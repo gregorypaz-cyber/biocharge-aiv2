@@ -907,6 +907,7 @@ const recoveryScore = calculateRecoveryScore(canonicalCheckin, recentCheckins);
     ...canonicalCheckin,
     recovery_score: recoveryScore,
     sleep_quality: sleepScore,
+    sleep_performance_pct: sleepPerformance,
     fatigue_score: fatigueScore,
     stress_score: stressScore,
     readiness_score: readinessScore,
