@@ -88,7 +88,7 @@ function HRVField({ value, onChange }) {
   return (
     <div className="space-y-1.5">
       <label className="text-xs text-muted-foreground flex items-center gap-1">
-        <Activity className="w-3 h-3" /> HRV (ms)
+        <Activity className="w-3 h-3" /> HRV — RMSSD (ms)
         <button
           type="button"
           onClick={() => setShowTip(p => !p)}
