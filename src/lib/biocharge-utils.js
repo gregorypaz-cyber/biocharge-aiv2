@@ -957,6 +957,8 @@ const hrvTrend = getHrvTrend(effectiveHrv, hrv7dAvg);
     fatigue_score: fatigueScore,
     stress_score: stressScore,
     readiness_score: readinessScore,
+    hrv_7d_avg: hrv7dAvg != null ? Math.round(hrv7dAvg) : null,
+    hrv_trend: hrvTrend,
     delta_pre: deltaPre,
     delta_post: deltaPost,
     alert,
