@@ -659,6 +659,33 @@ const BODY_STATE_META = {
   },
 };
 
+const AUTONOMIC_PT = {
+    parasympathetic: 'Parassimpático',
+    balanced: 'Equilibrado',
+    sympathetic: 'Simpático',
+  };
+
+  const AUTONOMIC_META = {
+    parasympathetic: {
+      emoji: '🟢',
+      tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
+      short: 'Sistema em recuperação',
+      detail: 'Parassimpático dominante — boa recuperação',
+    },
+    balanced: {
+      emoji: '🟡',
+      tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
+      short: 'Sistema estável',
+      detail: 'Equilíbrio autonômico',
+    },
+    sympathetic: {
+      emoji: '🔴',
+      tone: 'bg-red-500/10 border-red-500/20 text-red-300',
+      short: 'Stress fisiológico elevado',
+      detail: 'Simpático dominante — carga / stress alto',
+    },
+  };
+
   const CAPACITY_PT = {
     High: 'Alta',
     Moderate: 'Moderada',
