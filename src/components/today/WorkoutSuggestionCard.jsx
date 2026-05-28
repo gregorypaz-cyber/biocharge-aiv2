@@ -1188,6 +1188,18 @@ export default function WorkoutSuggestionCard({
         </div>
       )}
 
+{checkin?.biocharge_morning >= 80 && checkin?.zone === 'yellow' && (
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Seu BioCharge acordou alto, mas sono, fadiga ou carga recente ainda reduzem a margem prática de hoje.
+        </p>
+      )}
+
+      {checkin?.energy === 5 && dailyVerdict?.mode === 'train_moderate' && (
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Sua energia subjetiva está alta, mas os sinais fisiológicos ainda pedem controle na dose de hoje.
+        </p>
+      )}
+
       <div className="h-px bg-border/40" />
 
       {(() => {
