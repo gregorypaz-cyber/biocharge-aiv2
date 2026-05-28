@@ -1159,12 +1159,6 @@ export default function WorkoutSuggestionCard({
         </p>
       </div>
 
-      {checkin?.recommendation && (
-        <p className="text-xs text-muted-foreground italic leading-relaxed">
-          {checkin.recommendation}
-        </p>
-      )}
-
       {yesterdayFeedback?.completed && (
         <div className="text-xs text-muted-foreground">
           Ontem você treinou (RPE {yesterdayFeedback.perceived_rpe})
