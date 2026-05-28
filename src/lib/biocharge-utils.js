@@ -560,7 +560,7 @@ function getDailyMasterSignal(checkinLike) {
   const restDay = !!checkinLike?.rest_day;
   const confidence = checkinLike?.preview_confidence ?? 'low';
 
-  const hasHrv = !!(checkinLike?.hrv && checkinLike.hrv > 0);
+  const hasHrv = !!(resolveHrvValue(checkinLike) && resolveHrvValue(checkinLike) > 0);
   const rhrValue = resolveCheckinField(checkinLike, 'resting_hr');
   const hasRhr = !!(rhrValue && rhrValue > 0);
   const strongPhysiology = hasHrv || hasRhr;
