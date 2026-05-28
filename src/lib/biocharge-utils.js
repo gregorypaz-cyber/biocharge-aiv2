@@ -788,7 +788,7 @@ const hrvToday = resolveHrvValue(checkin);
 Dados do dia:
 - Recovery: ${scores?.recovery_score ?? checkin.biocharge_morning ?? '—'}
 - Readiness: ${scores?.readiness_score ?? '—'}
-- HRV delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : '—'}
+- RMSSD delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : '—'}
 - ACWR: ${acwr != null ? acwr.toFixed(2) : '—'}
 - Dívida de sono (7 dias): ${sleepDebt.toFixed(1)}h
 - Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
@@ -840,7 +840,7 @@ const hrvToday = resolveHrvValue(checkin);
 Dados:
 - Recovery: ${scores?.recovery_score ?? checkin.biocharge_morning ?? '—'}
 - Readiness: ${scores?.readiness_score ?? '—'}
-- HRV delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : 'sem dados'}
+- RMSSD delta vs semana: ${hrvDeltaPct != null ? `${hrvDeltaPct >= 0 ? '+' : ''}${hrvDeltaPct}%` : 'sem dados'}
 - ACWR: ${acwr != null ? acwr.toFixed(2) : 'sem dados'}
 - Dívida de sono (7 dias): ${sleepDebt.toFixed(1)}h
 - Dor muscular: ${resolveCheckinField(checkin, 'muscle_soreness') ?? '—'}/5
