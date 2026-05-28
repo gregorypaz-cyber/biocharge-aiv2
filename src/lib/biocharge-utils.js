@@ -884,11 +884,12 @@ export function computeCheckinScores(checkin, recentCheckins, recentSessions) {
     hydration: resolveCheckinField(checkin, 'hydration'),
   };
 
-  const recoveryScore = calculateRecoveryScore(canonicalCheckin);
+const recoveryScore = calculateRecoveryScore(canonicalCheckin, recentCheckins);
   const sleepScore = calculateSleepScore(canonicalCheckin);
+  const sleepPerformance = calculateSleepPerformance(canonicalCheckin);
   const fatigueScore = calculateFatigueScore(canonicalCheckin);
   const stressScore = calculateStressScore(canonicalCheckin);
-  const readinessScore = calculateReadinessScore(canonicalCheckin);
+  const readinessScore = calculateReadinessScore(canonicalCheckin, recentCheckins);
 
   const deltaPre = getDeltaPre(canonicalCheckin.biocharge_morning, canonicalCheckin.biocharge_pre_workout);
   const deltaPost = getDeltaPost(canonicalCheckin.biocharge_pre_workout, canonicalCheckin.biocharge_post_workout);
