@@ -1221,6 +1221,49 @@ function ExecutionCard() {
             );
           })()}
 
+{enrichedCheckin.autonomic_state &&
+          enrichedCheckin.baevsky_si != null &&
+          AUTONOMIC_PT[enrichedCheckin.autonomic_state] &&
+          (() => {
+            const autoKey = enrichedCheckin.autonomic_state;
+            const autoMeta = AUTONOMIC_META[autoKey] || AUTONOMIC_META.balanced;
+
+            return (
+              <div className={cn('rounded-xl border px-3 py-3 space-y-2', autoMeta.tone)}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                      Estado autonômico
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm leading-none">{autoMeta.emoji}</span>
+                      <p className="text-sm font-semibold">
+                        {AUTONOMIC_PT[autoKey]}
+                      </p>
+                    </div>
+                    <p className="text-[11px] mt-1 opacity-90">
+                      {autoMeta.short}
+                    </p>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] uppercase tracking-wider opacity-70">
+                      Baevsky
+                    </p>
+                    <p className="text-sm font-bold">
+                      {enrichedCheckin.baevsky_si}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-[11px] leading-relaxed opacity-80">
+                  {autoMeta.detail}
+                </p>
+              </div>
+            );
+          })()}
+
+
         {capacityContradictionNote && (
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             {capacityContradictionNote}
