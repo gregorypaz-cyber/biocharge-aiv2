@@ -88,6 +88,48 @@ function getRecentHrvBaseline(recentCheckins = []) {
   return values.reduce((s, v) => s + v, 0) / values.length;
 }
 
+function getHrvTrend(hrvValue, hrv7dAvg) {
+  if (hrvValue == null || hrv7dAvg == null || hrv7dAvg <= 0) return null;
+
+  const pctDiff = ((Number(hrvValue) - Number(hrv7dAvg)) / Number(hrv7dAvg)) * 100;
+
+  if (pctDiff >= 10) return 'above_avg';
+  if (pctDiff <= -10) return 'below_avg';
+  return 'at_avg';
+}
+
+function getHrvTrendContext(hrvValue, hrv7dAvg) {
+  if (hrvValue == null || hrv7dAvg == null || hrv7dAvg <= 0) return null;
+
+  const pctDiff = Math.round(((Number(hrvValue) - Number(hrv7dAvg)) / Number(hrv7dAvg)) * 100);
+  const trend = getHrvTrend(hrvValue, hrv7dAvg);
+
+  if (trend === 'above_avg') {
+    return {
+      trend,
+      pctDiff,
+      label: `↑ ${Math.abs(pctDiff)}% acima da sua média (7d)`,
+      color: 'text-emerald-400',
+    };
+  }
+
+  if (trend === 'below_avg') {
+    return {
+      trend,
+      pctDiff,
+      label: `↓ ${Math.abs(pctDiff)}% abaixo da sua média (7d)`,
+      color: 'text-red-400',
+    };
+  }
+
+  return {
+    trend,
+    pctDiff,
+    label: `→ Na sua média (7d)`,
+    color: 'text-yellow-400',
+  };
+}
+
 function getRecentRhrBaseline(recentCheckins = []) {
   const values = (recentCheckins || [])
     .slice(0, 14)
