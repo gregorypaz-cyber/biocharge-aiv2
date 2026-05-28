@@ -165,14 +165,28 @@ export default function LivePreview({ preview }) {
       )}
 
       <div className="grid grid-cols-4 gap-2">
-        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
+<div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Sono
+            Perf. Sono
           </p>
-          <p className="text-sm font-mono font-bold">
-            {preview.sleep_quality ?? preview.sleep_score ?? '—'}
+          <p
+            className={cn(
+              'text-sm font-mono font-bold',
+              preview.sleep_performance_pct >= 85
+                ? 'text-emerald-400'
+                : preview.sleep_performance_pct >= 70
+                ? 'text-yellow-400'
+                : preview.sleep_performance_pct != null
+                ? 'text-red-400'
+                : 'text-foreground'
+            )}
+          >
+            {preview.sleep_performance_pct != null
+              ? `${preview.sleep_performance_pct}%`
+              : (preview.sleep_quality ?? preview.sleep_score ?? '—')}
           </p>
         </div>
+
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
