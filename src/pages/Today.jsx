@@ -371,6 +371,7 @@ export default function Today() {
   'fatigue_score',
   'stress_score',
   'sleep_quality',
+  'sleep_performance_pct',
   'recovery_score',
   'morning_recovery_score',
   'zone',
