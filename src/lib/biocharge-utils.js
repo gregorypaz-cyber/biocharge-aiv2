@@ -169,7 +169,7 @@ function getSleepHoursScore(hours) {
 }
 
 function getPreviewConfidence(checkin, recentCheckins = []) {
-  const hasHrv = !!(checkin?.hrv && checkin.hrv > 0);
+  const hasHrv = !!(resolveHrvValue(checkin) && resolveHrvValue(checkin) > 0);
   const hasRhr = !!(resolveCheckinField(checkin, 'resting_hr') && resolveCheckinField(checkin, 'resting_hr') > 0);
 const hasSleepHours = !!(checkin?.sleep_hours && checkin.sleep_hours > 0);
   const hasSleepScore = !!(checkin?.sleep_score != null);
@@ -200,7 +200,7 @@ const physiologicalCount =
 
 function getPreviewConfidenceReason(checkin, recentCheckins = []) {
   const confidence = getPreviewConfidence(checkin, recentCheckins);
-  const hasHrv = !!(checkin?.hrv && checkin.hrv > 0);
+  const hasHrv = !!(resolveHrvValue(checkin) && resolveHrvValue(checkin) > 0);
   const hasRhr = !!(resolveCheckinField(checkin, 'resting_hr') && resolveCheckinField(checkin, 'resting_hr') > 0);
 
   if (confidence === 'high') {
