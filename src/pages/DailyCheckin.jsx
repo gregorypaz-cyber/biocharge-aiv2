@@ -923,7 +923,10 @@ const savePostMutation = useMutation({
                   />
                 </div>
 
-                <HRVField value={form.hrv} onChange={(v) => update('hrv', v)} />
+                <HRVField
+                  value={form.hrv_manual ?? form.hrv}
+                  onChange={updateHrv}
+                />
 
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1">
