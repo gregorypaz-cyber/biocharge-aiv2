@@ -208,8 +208,13 @@ export default function DailyCheckin() {
   const [profile, setProfile] = useState(() => loadCheckinProfile());
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
+const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
+
+  const updateHrv = (value) => {
+    update('hrv_manual', value);
+    update('hrv', value); // espelha por compatibilidade com legado
+  };
 
   const { intent: dayIntent, setDayIntent } = useDayContext();
 
