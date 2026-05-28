@@ -801,6 +801,17 @@ const tomorrowHook = useMemo(() => {
     });
   }, [enrichedCheckin, analysis, todaySessions, isRestMode]);
 
+  const shouldHideTomorrowHook = useMemo(() => {
+    if (!heroDynamicContext) return false;
+
+    return (
+      heroDynamicContext.title === 'Sinal para amanhã' ||
+      heroDynamicContext.title === 'Prévia de amanhã' ||
+      heroDynamicContext.title === 'Atenção para amanhã' ||
+      heroDynamicContext.title === 'Janela de recuperação'
+    );
+  }, [heroDynamicContext]);
+
   const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
     if (!enrichedCheckin) return { primary: [], secondary: [] };
 
