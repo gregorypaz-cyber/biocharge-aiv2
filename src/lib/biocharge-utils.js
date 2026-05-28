@@ -753,9 +753,10 @@ export async function generateTrainingReasonAI(checkin, scores, recentCheckins, 
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
       : null;
 
+const hrvToday = resolveHrvValue(checkin);
   const hrvDeltaPct =
-    checkin.hrv && hrvAvg
-      ? Math.round(((checkin.hrv - hrvAvg) / hrvAvg) * 100)
+    hrvToday && hrvAvg
+      ? Math.round(((hrvToday - hrvAvg) / hrvAvg) * 100)
       : null;
 
   const sleepDebt = (recentCheckins || []).slice(0, 7).reduce((sum, c) => {
@@ -794,9 +795,10 @@ export async function generateContextualBulletsAI(checkin, scores, recentCheckin
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
       : null;
 
+const hrvToday = resolveHrvValue(checkin);
   const hrvDeltaPct =
-    checkin.hrv && hrvAvg
-      ? Math.round(((checkin.hrv - hrvAvg) / hrvAvg) * 100)
+    hrvToday && hrvAvg
+      ? Math.round(((hrvToday - hrvAvg) / hrvAvg) * 100)
       : null;
 
   const sleepDebt = (recentCheckins || []).slice(0, 7).reduce((sum, c) => {
@@ -859,11 +861,12 @@ export async function generateHeadlineTodayAI(checkin, scores, recentCheckins) {
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
       : null;
 
+const hrvToday = resolveHrvValue(checkin);
   const hrvStatus =
-    checkin.hrv && hrvAvg
-      ? checkin.hrv > hrvAvg + 5
+    hrvToday && hrvAvg
+      ? hrvToday > hrvAvg + 5
         ? 'alto'
-        : checkin.hrv < hrvAvg - 5
+        : hrvToday < hrvAvg - 5
         ? 'baixo'
         : 'normal'
       : null;
@@ -874,7 +877,7 @@ Dados:
 - Prontidão: ${scores?.readiness_score ?? checkin.biocharge_morning ?? '—'}
 - Recovery: ${scores?.recovery_score ?? '—'}
 - Zone: ${scores?.zone ?? checkin.zone ?? '—'}
-- HRV: ${checkin.hrv ?? '—'} ms${hrvStatus ? ` (${hrvStatus})` : ''}
+- HRV (RMSSD): ${hrvToday ?? '—'} ms${hrvStatus ? ` (${hrvStatus})` : ''}
 - Sono profundo: ${checkin.deep_sleep_pct ?? '—'}%${lowDeepSleepNights >= 2 ? ` (${lowDeepSleepNights} noites consecutivas baixas)` : ''}
 - Horas de sono: ${checkin.sleep_hours ?? '—'}h
 - Fadiga: ${checkin.fatigue ?? '—'}
@@ -910,9 +913,10 @@ export async function generateNextDayForecastAI(checkin, scores, recentCheckins)
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
       : null;
 
+const hrvToday = resolveHrvValue(checkin);
   const hrvDelta =
-    checkin.hrv && hrvAvg
-      ? checkin.hrv - hrvAvg
+    hrvToday && hrvAvg
+      ? hrvToday - hrvAvg
       : null;
 
   const deepSleepLow = (recentCheckins || []).slice(0, 3).filter((c) => (c.deep_sleep_pct || 0) < 15).length;
@@ -921,7 +925,7 @@ export async function generateNextDayForecastAI(checkin, scores, recentCheckins)
 
 Dados do check-in de hoje:
 - BioCharge manhã: ${checkin.biocharge_morning ?? '—'}
-- HRV: ${checkin.hrv ?? '—'} ms${hrvDelta != null ? ` (${hrvDelta >= 0 ? '+' : ''}${hrvDelta}ms vs média da semana)` : ''}
+- HRV (RMSSD): ${hrvToday ?? '—'} ms${hrvDelta != null ? ` (${hrvDelta >= 0 ? '+' : ''}${hrvDelta}ms vs média da semana)` : ''}
 - Horas de sono: ${checkin.sleep_hours ?? '—'}h
 - Sono profundo: ${checkin.deep_sleep_pct ?? '—'}%${deepSleepLow >= 3 ? ' (3ª noite baixa seguida)' : ''}
 - Fadiga: ${checkin.fatigue ?? '—'}
