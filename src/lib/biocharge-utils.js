@@ -39,6 +39,18 @@ function resolveHrvValue(checkin) {
   return null;
 }
 
+function resolveHrvValue(checkin) {
+  if (checkin?.hrv_manual != null && Number(checkin.hrv_manual) > 0) {
+    return Number(checkin.hrv_manual);
+  }
+
+  if (checkin?.hrv != null && Number(checkin.hrv) > 0) {
+    return Number(checkin.hrv);
+  }
+
+  return null;
+}
+
 export function resolveCheckinField(checkin, fieldName) {
   const aliases = {
     energy: ['energy', 'energy_level'],
