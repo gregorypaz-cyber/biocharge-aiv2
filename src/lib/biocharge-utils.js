@@ -371,6 +371,31 @@ export function calculateSleepPerformance(checkin) {
   return clamp(sleepPerformance);
 }
 
+export function calculateBaevskyProxy(rmssd, restingHR) {
+  if (rmssd == null || restingHR == null) {
+    return {
+      si_proxy: null,
+      autonomic_state: null,
+    };
+  }
+
+  const rmssdNorm = Math.max(0, Math.min(1, (Number(rmssd) - 15) / 85));
+  const rhrNorm = Math.max(0, Math.min(1, 1 - (Number(restingHR) - 40) / 50));
+
+  const si_proxy = Math.round((1 - (rmssdNorm * 0.65 + rhrNorm * 0.35)) * 100);
+
+  const autonomic_state =
+    si_proxy < 30
+      ? 'parasympathetic'
+      : si_proxy < 60
+      ? 'balanced'
+      : 'sympathetic';
+
+  return {
+    si_proxy,
+    autonomic_state,
+  };
+}
 
 export function calculateFatigueScore(checkin) {
   const base = clamp(checkin.fatigue ?? 0);
