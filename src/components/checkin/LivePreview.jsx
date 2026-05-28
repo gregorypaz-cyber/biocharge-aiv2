@@ -134,7 +134,7 @@ export default function LivePreview({ preview }) {
 
         <div className="text-right">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Readiness
+            Prontidão
           </p>
           <p className="text-lg font-mono font-bold text-foreground">
             {readinessScore}
@@ -144,12 +144,19 @@ export default function LivePreview({ preview }) {
 
       <ZoneBar value={recoveryScore} color={color} />
 
-      <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
-<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-          Linha do dia
+      <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5 space-y-1">
+        <div>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Linha do dia
+          </p>
+          <p className="text-sm font-semibold leading-snug">{headline}</p>
+        </div>
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          {confidenceReason}
         </p>
-        <p className="text-sm font-semibold leading-snug">{headline}</p>
       </div>
+
 
 {(preview.deep_sleep_pct != null || preview.rem_sleep_pct != null) && (
         <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
@@ -208,7 +215,7 @@ export default function LivePreview({ preview }) {
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Sono hoje
+              Meta de sono
           </p>
           <p className="text-sm font-mono font-bold">
             {sleepNeed != null ? `${sleepNeed}h` : '—'}
