@@ -202,7 +202,7 @@ export default function LivePreview({ preview }) {
             RMSSD
           </p>
           <p className="text-sm font-mono font-bold">
-            {preview.hrv ?? '—'}
+            {preview.hrv_manual ?? preview.hrv ?? '—'}
           </p>
         </div>
 
