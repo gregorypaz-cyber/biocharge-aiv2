@@ -843,8 +843,8 @@ export function computeCheckinScores(checkin, recentCheckins, recentSessions) {
     hydration: resolveCheckinField(checkin, 'hydration'),
   };
 
-const recoveryScore = calculateRecoveryScore(canonicalCheckin, recentCheckins);
-const readinessScore = calculateReadinessScore(canonicalCheckin, recentCheckins);
+  const recoveryScore = calculateRecoveryScore(canonicalCheckin);
+  const sleepScore = calculateSleepScore(canonicalCheckin);
   const fatigueScore = calculateFatigueScore(canonicalCheckin);
   const stressScore = calculateStressScore(canonicalCheckin);
   const readinessScore = calculateReadinessScore(canonicalCheckin);
