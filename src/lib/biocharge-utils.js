@@ -367,7 +367,7 @@ export function calculateReadinessScore(checkin, recentCheckins = []) {
   const recovery = calculateRecoveryScore(checkin, recentCheckins);
   const fatigue = calculateFatigueScore(checkin);
   const sleep = calculateSleepScore(checkin);
-  const hrv = normalizeHrv(checkin.hrv, recentCheckins);
+  const hrv = normalizeHrv(resolveHrvValue(checkin), recentCheckins);
   const rhr = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
 
   const weighted = [
