@@ -933,6 +933,9 @@ const recoveryScore = calculateRecoveryScore(canonicalCheckin, recentCheckins);
   const fatigueScore = calculateFatigueScore(canonicalCheckin);
   const stressScore = calculateStressScore(canonicalCheckin);
   const readinessScore = calculateReadinessScore(canonicalCheckin, recentCheckins);
+  const effectiveHrv = resolveHrvValue(canonicalCheckin);
+const hrv7dAvg = getRecentHrvBaseline(recentCheckins);
+const hrvTrend = getHrvTrend(effectiveHrv, hrv7dAvg);
 
   const deltaPre = getDeltaPre(canonicalCheckin.biocharge_morning, canonicalCheckin.biocharge_pre_workout);
   const deltaPost = getDeltaPost(canonicalCheckin.biocharge_pre_workout, canonicalCheckin.biocharge_post_workout);
