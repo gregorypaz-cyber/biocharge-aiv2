@@ -767,7 +767,7 @@ export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
 export async function generateTrainingReasonAI(checkin, scores, recentCheckins, acwr) {
   const { base44 } = await import('@/api/base44Client');
 
-  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => c.hrv).filter(Boolean);
+  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => resolveHrvValue(c)).filter(Boolean);
   const hrvAvg =
     hrvValues.length > 0
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
@@ -809,7 +809,7 @@ Frase:`;
 export async function generateContextualBulletsAI(checkin, scores, recentCheckins, recentSessions, acwr) {
   const { base44 } = await import('@/api/base44Client');
 
-  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => c.hrv).filter(Boolean);
+  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => resolveHrvValue(c)).filter(Boolean);
   const hrvAvg =
     hrvValues.length > 0
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
@@ -875,7 +875,7 @@ export async function generateHeadlineTodayAI(checkin, scores, recentCheckins) {
     else break;
   }
 
-  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => c.hrv).filter(Boolean);
+  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => resolveHrvValue(c)).filter(Boolean);
   const hrvAvg =
     hrvValues.length > 0
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
@@ -927,7 +927,7 @@ Headline:`;
 export async function generateNextDayForecastAI(checkin, scores, recentCheckins) {
   const { base44 } = await import('@/api/base44Client');
 
-  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => c.hrv).filter(Boolean);
+  const hrvValues = (recentCheckins || []).slice(0, 7).map((c) => resolveHrvValue(c)).filter(Boolean);
   const hrvAvg =
     hrvValues.length > 0
       ? Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)
@@ -1038,7 +1038,7 @@ export function getSmartMessage(checkin, recentCheckins) {
   const messages = [];
 
   if (recentCheckins && recentCheckins.length >= 4) {
-    const hrvValues = recentCheckins.slice(0, 4).map((c) => c.hrv).filter(Boolean);
+    const hrvValues = recentCheckins.slice(0, 4).map((c) => resolveHrvValue(c)).filter(Boolean);
     if (hrvValues.length >= 3) {
       const trend = hrvValues[0] - hrvValues[hrvValues.length - 1];
       if (trend < -10) {
