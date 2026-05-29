@@ -771,7 +771,7 @@ function buildTrainingLoadLabel(masterSignal) {
   return 'Descanso / recuperação ativa';
 }
 
-export function normalizeDailySignals(checkinLike) {
+export function normalizeDailySignals(checkinLike, recentCheckins = []) {
   const masterSignal = getDailyMasterSignal(checkinLike);
 
   const zone =
@@ -784,11 +784,12 @@ export function normalizeDailySignals(checkinLike) {
     ...checkinLike,
     decision_mode: masterSignal,
     zone,
-    headline_today: buildHeadline(masterSignal, checkinLike),
-    recommendation: buildRecommendation(masterSignal, checkinLike),
+    headline_today: buildHeadline(masterSignal, checkinLike, recentCheckins),
+    recommendation: buildRecommendation(masterSignal, checkinLike, recentCheckins),
     training_load: buildTrainingLoadLabel(masterSignal),
   };
 }
+
 
 // ─── Delayed Fatigue Alert ─────────────────────────────────────────────────
 
