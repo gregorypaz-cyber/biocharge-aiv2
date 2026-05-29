@@ -723,12 +723,12 @@ const savePostMutation = useMutation({
           </button>
 
           {!advancedOpen && (
-            <p className="text-[11px] text-muted-foreground">
-              {isRestDay
-  ? 'Opcional: sono profundo/REM, humor, stress, HRV e contexto para refinar a leitura da recuperação.'
-  : 'Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC de repouso para refinar a leitura.'}
-            </p>
-          )}
+  <p className="text-[11px] text-muted-foreground">
+    {isRestDay
+      ? 'Opcional: sono profundo/REM, humor, stress, HRV e FC para melhorar a leitura da recuperação.'
+      : 'Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC para melhorar a prescrição do dia.'}
+  </p>
+)}
 
         </div>
 
