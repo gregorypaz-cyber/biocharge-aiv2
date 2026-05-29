@@ -1106,7 +1106,7 @@ const previewConfidence = getPreviewConfidence(canonicalCheckin, recentCheckins)
 const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, recentCheckins);
 
 
-  const normalized = normalizeDailySignals({
+  const normalizedInput = {
     ...canonicalCheckin,
     recovery_score: recoveryScore,
     sleep_quality: sleepScore,
@@ -1119,7 +1119,7 @@ const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, rec
     baevsky_si: baevsky.si_proxy,
     autonomic_state: baevsky.autonomic_state,
     preview_confidence: previewConfidence,
-preview_confidence_reason: previewConfidenceReason,
+    preview_confidence_reason: previewConfidenceReason,
     delta_pre: deltaPre,
     delta_post: deltaPost,
     alert,
@@ -1128,10 +1128,11 @@ preview_confidence_reason: previewConfidenceReason,
     sleep_need_tonight: canonicalCheckin.sleep_need_tonight ?? sleepNeedTonight,
     next_day_forecast: canonicalCheckin.next_day_forecast ?? nextDayForecast,
     delayed_fatigue_alert: canonicalCheckin.delayed_fatigue_alert ?? delayedFatigueAlert,
-  });
+  };
+
+  const normalized = normalizeDailySignals(normalizedInput, recentCheckins);
 
   return normalized;
-}
 
 // ─── Smart insights ────────────────────────────────────────────────────────
 
