@@ -726,13 +726,16 @@ const savePostMutation = useMutation({
 
 
                 <SliderField
-                  label="Sono REM"
-                  hint="Percentual de sono REM"
-                  value={form.rem_sleep_pct ?? 20}
-                  onChange={(v) => update('rem_sleep_pct', v)}
-                  unit="%"
-                  max={60}
-                />
+  label="Sono REM"
+  hint="Percentual de sono REM"
+  value={form.rem_sleep_pct ?? 20}
+  onChange={(v) => update('rem_sleep_pct', v)}
+  unit="%"
+  max={60}
+  lowLabel="Baixo"
+  midLabel="Bom"
+  highLabel="Alto"
+/>
               </div>
 
               <div className="space-y-1.5">
