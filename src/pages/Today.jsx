@@ -1176,7 +1176,7 @@ function ExecutionCard() {
               Recovery base
             </p>
             <p className="text-lg font-mono font-bold text-foreground">
-              {checkin?.recovery_score ?? '—'}
+              {checkin?.morning_recovery_score ?? checkin?.recovery_score ?? '—'}
             </p>
           </div>
         </div>
