@@ -185,7 +185,7 @@ export default function DailyCheckin() {
   });
   const { form, postForm } = checkinState;
 
-const [sleepHoursText, setSleepHoursText] = useState(
+  const [sleepHoursText, setSleepHoursText] = useState(
     formatHoursToSleepDuration(editData?.sleep_hours ?? DEFAULT_FORM.sleep_hours)
   );
 
@@ -202,7 +202,17 @@ const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
     update('hrv', value); // espelha por compatibilidade com legado
   };
 
-  const { intent: dayIntent, setDayIntent } = useDayContext();
+const { intent: dayIntent, setDayIntent } = useDayContext();
+
+  const setDayPlan = (nextIntent) => {
+    setDayIntent(nextIntent);
+    dispatch({
+      type: 'SET_REST_DAY',
+      value: nextIntent === 'recovery',
+    });
+  };
+
+  const selectedIntent = form.rest_day ? 'recovery' : dayIntent;
 
 
 const isRestDay = form.rest_day;
