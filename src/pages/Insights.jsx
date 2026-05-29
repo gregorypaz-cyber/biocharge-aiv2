@@ -831,11 +831,11 @@ Regras:
           </div>
         ) : (
           <SmallInsightCard
-            icon={BarChart3}
-            title="Ainda falta evidência suficiente"
-            text="Você já tem dados úteis, mas ainda não há descobertas fortes o bastante para aparecer aqui com confiança."
-            tone="neutral"
-          />
+  icon={BarChart3}
+  title="Ainda calibrando seus padrões"
+  text="Já existem dados úteis, mas o app ainda está separando ruído de padrão real. Continue registrando sono, recuperação e treino para fortalecer esta leitura."
+  tone="neutral"
+/>
         )}
       </div>
 
