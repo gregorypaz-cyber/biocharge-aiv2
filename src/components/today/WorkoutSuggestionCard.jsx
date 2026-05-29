@@ -652,8 +652,17 @@ function PrescriptionBlock({
   currentStrain,
   lookbackRecommendKey, dailyVerdict,
 }) {
-  const baseRecommendedKey = presc?.recommendedKey ?? resolveRecommendedKey(checkin);
-  const recommendedKey = lookbackRecommendKey ?? baseRecommendedKey;
+  const baseRecommendedKey = resolveRecommendedKeyFromVerdict(
+  dailyVerdict,
+  presc,
+  checkin
+);
+
+const recommendedKey = mergeConservativeLookbackKey(
+  baseRecommendedKey,
+  lookbackRecommendKey,
+  presc
+);
 
   const [selected, setSelected] = useState(recommendedKey);
   const [savingSelect, setSavingSelect] = useState(false);
