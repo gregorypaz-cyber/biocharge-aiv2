@@ -53,7 +53,7 @@ function getConfidenceChip(confidence) {
   };
 }
 
-export default function LivePreview({ preview }) {
+export default function LivePreview({ preview, compact = false }) {
   if (!preview) return null;
 
   const recoveryScore = preview.recovery_score ?? 0;
@@ -76,6 +76,68 @@ export default function LivePreview({ preview }) {
 
   const confidenceChip = getConfidenceChip(confidence);
 
+  if (compact) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl border border-border/60 bg-card p-4 space-y-3"
+        style={{ boxShadow: `0 0 24px -12px ${color}22` }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+              Leitura inicial
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Você já pode salvar com estes dados.
+            </p>
+          </div>
+
+          <span
+            className={cn(
+              'text-[10px] font-bold px-2 py-1 rounded-full border',
+              confidenceChip.className
+            )}
+          >
+            {confidenceChip.label}
+          </span>
+        </div>
+
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              Recovery estimado
+            </p>
+            <div className="flex items-end gap-2">
+              <span className="text-3xl font-black font-mono leading-none" style={{ color }}>
+                {recoveryScore}
+              </span>
+              <span className="text-sm font-semibold mb-0.5" style={{ color }}>
+                {zoneLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              Decisão
+            </p>
+            <p className="text-sm font-semibold">
+              {decisionMode ? getDecisionLabel(decisionMode) : 'Em análise'}
+            </p>
+          </div>
+        </div>
+
+        <ZoneBar value={recoveryScore} color={color} />
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          {confidenceReason}
+        </p>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -89,7 +151,7 @@ export default function LivePreview({ preview }) {
             Prévia do dia
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Leitura provisória com o que já foi preenchido.
+            Esta é a leitura com os dados que serão salvos agora.
           </p>
         </div>
 
@@ -118,8 +180,8 @@ export default function LivePreview({ preview }) {
 
       <div className="flex items-end justify-between gap-4">
         <div>
-<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Recovery base
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Recovery estimado
           </p>
 
           <div className="flex items-end gap-2">
@@ -157,8 +219,7 @@ export default function LivePreview({ preview }) {
         </p>
       </div>
 
-
-{(preview.deep_sleep_pct != null || preview.rem_sleep_pct != null) && (
+      {(preview.deep_sleep_pct != null || preview.rem_sleep_pct != null) && (
         <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
             Estágios do sono
@@ -172,7 +233,7 @@ export default function LivePreview({ preview }) {
       )}
 
       <div className="grid grid-cols-4 gap-2">
-<div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
+        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
             Perf. Sono
           </p>
@@ -194,7 +255,6 @@ export default function LivePreview({ preview }) {
           </p>
         </div>
 
-
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
             Fadiga
@@ -215,7 +275,7 @@ export default function LivePreview({ preview }) {
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-              Meta de sono
+            Meta de sono
           </p>
           <p className="text-sm font-mono font-bold">
             {sleepNeed != null ? `${sleepNeed}h` : '—'}
