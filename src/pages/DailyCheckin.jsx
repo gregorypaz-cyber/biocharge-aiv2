@@ -566,19 +566,7 @@ const savePostMutation = useMutation({
           </p>
         </div>
 
-        {/* Micro-onboarding inline */}
-        <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold">Antes de começar</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Isso melhora a interpretação do seu dia sem criar uma página nova.
-              </p>
-            </div>
-            <span className="text-[10px] text-muted-foreground">
-              {profileComplete ? 'Perfil ok' : 'Opcional'}
-            </span>
-          </div>
+
 
           <div className="space-y-3">
             <div>
