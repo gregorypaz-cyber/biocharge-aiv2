@@ -6,8 +6,8 @@ const MICRO_INTERPRETATIONS = {
     1: '⚠️ Energia baixa — considere treino leve hoje',
     2: '⚠️ Energia baixa — considere treino leve hoje',
     3: 'Energia dentro do padrão',
-    4: '✅ Boa energia — favorável para treino intenso',
-    5: '✅ Boa energia — favorável para treino intenso',
+    4: '✅ Boa energia — favorável para treino mais forte',
+    5: '✅ Boa energia — favorável para treino mais forte',
   },
   stress: {
     1: '✅ Baixo stress favorece recuperação',
@@ -75,12 +75,12 @@ export default function EmojiSelector({ label, type, value, onChange }) {
 
         {selectedLabel && (
           <span className="text-[11px] text-primary font-semibold">
-            Selecionado: {selectedLabel}
+            {selectedLabel}
           </span>
         )}
       </div>
 
-      <div className="flex gap-2" role="group" aria-label={label}>
+      <div className="grid grid-cols-5 gap-2" role="group" aria-label={label}>
         {emojis.map((emoji, i) => {
           const level = i + 1;
           const isSelected = value === level;
@@ -93,14 +93,14 @@ export default function EmojiSelector({ label, type, value, onChange }) {
               aria-label={`${label}: ${labels[i]}`}
               onClick={() => onChange(level)}
               className={cn(
-                'flex-1 min-h-[68px] flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-lg transition-all border-2',
+                'min-h-[58px] flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-base transition-all border-2',
                 isSelected
-                  ? 'bg-primary/20 border-primary scale-[1.03]'
+                  ? 'bg-primary/20 border-primary scale-[1.02]'
                   : 'bg-secondary border-transparent hover:bg-secondary/80'
               )}
             >
-              <span>{emoji}</span>
-              <span className="text-[10px] text-muted-foreground leading-tight text-center px-1">
+              <span className="leading-none">{emoji}</span>
+              <span className="text-[9px] text-muted-foreground leading-tight text-center px-1">
                 {labels[i]}
               </span>
             </button>
