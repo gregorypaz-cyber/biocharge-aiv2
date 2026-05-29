@@ -386,6 +386,76 @@ function resolveRecommendedKey(checkin) {
   return 'C';
 }
 
+const OPTION_RANK = {
+  A: 3,
+  B: 2,
+  C: 1,
+};
+
+function hasPrescriptionOption(presc, key) {
+  return Boolean(presc?.options?.some((option) => option.key === key));
+}
+
+function getOptionRank(key) {
+  return OPTION_RANK[key] ?? 0;
+}
+
+function pickExistingOptionKey(presc, preferredKeys, fallbackKey) {
+  for (const key of preferredKeys) {
+    if (hasPrescriptionOption(presc, key)) return key;
+  }
+
+  if (fallbackKey && hasPrescriptionOption(presc, fallbackKey)) {
+    return fallbackKey;
+  }
+
+  return presc?.options?.[0]?.key ?? 'A';
+}
+
+function resolveRecommendedKeyFromVerdict(dailyVerdict, presc, checkin) {
+  const fallbackKey = presc?.recommendedKey ?? resolveRecommendedKey(checkin);
+
+  if (!dailyVerdict?.mode) {
+    return pickExistingOptionKey(presc, [fallbackKey], fallbackKey);
+  }
+
+  switch (dailyVerdict.mode) {
+    case 'train_high':
+      return pickExistingOptionKey(presc, ['A', 'B', 'C'], fallbackKey);
+
+    case 'train_moderate':
+      return pickExistingOptionKey(presc, ['B', 'C', 'A'], fallbackKey);
+
+    case 'train_light':
+      return pickExistingOptionKey(presc, ['C', 'B', 'A'], fallbackKey);
+
+    case 'recover':
+      return pickExistingOptionKey(presc, ['C', 'B', 'A'], fallbackKey);
+
+    default:
+      return pickExistingOptionKey(presc, [fallbackKey], fallbackKey);
+  }
+}
+
+function mergeConservativeLookbackKey(baseKey, lookbackKey, presc) {
+  if (!lookbackKey || !hasPrescriptionOption(presc, lookbackKey)) {
+    return baseKey;
+  }
+
+  const baseRank = getOptionRank(baseKey);
+  const lookbackRank = getOptionRank(lookbackKey);
+
+  /**
+   * Só permite o lookback rebaixar ou manter a dose.
+   * Nunca permite o lookback deixar o plano mais agressivo que a decisão do dia.
+   */
+  if (baseRank > 0 && lookbackRank > 0 && lookbackRank <= baseRank) {
+    return lookbackKey;
+  }
+
+  return baseKey;
+}
+
 function applyAcwrModifier(baseRec, acwr, hrvDeltaPositive) {
   if (acwr == null) return { ...baseRec, acwrContext: null };
 
