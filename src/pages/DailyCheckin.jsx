@@ -723,7 +723,7 @@ const savePostMutation = useMutation({
   midLabel="Bom"
   highLabel="Alto"
 />
-``
+
 
                 <SliderField
                   label="Sono REM"
