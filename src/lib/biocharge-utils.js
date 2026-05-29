@@ -941,6 +941,7 @@ export function computeCheckinScores(checkin, recentCheckins = [], recentSession
     mood: resolveCheckinField(checkin, 'mood'),
     resting_hr: resolveCheckinField(checkin, 'resting_hr'),
     hydration: resolveCheckinField(checkin, 'hydration'),
+    hrv: resolveHrvValue(checkin),
   };
 
 const recoveryScore = calculateRecoveryScore(canonicalCheckin, recentCheckins);
