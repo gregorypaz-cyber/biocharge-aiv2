@@ -650,7 +650,7 @@ function PrescriptionBlock({
   checkin,
   strainTarget,
   currentStrain,
-  lookbackRecommendKey,
+  lookbackRecommendKey, dailyVerdict,
 }) {
   const baseRecommendedKey = presc?.recommendedKey ?? resolveRecommendedKey(checkin);
   const recommendedKey = lookbackRecommendKey ?? baseRecommendedKey;
