@@ -93,7 +93,7 @@ export default function AppSettings() {
     <div className="space-y-5 max-w-lg mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-1">Conta e preferências fisiológicas</p>
+        <p className="text-sm text-muted-foreground mt-1">Conta, perfil esportivo e preferências fisiológicas</p>
       </div>
 
       {/* Profile */}
