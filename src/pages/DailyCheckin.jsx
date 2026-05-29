@@ -944,10 +944,7 @@ const savePostMutation = useMutation({
               />
             </CheckinStep>
 
-            <RestDayToggle
-              value={isRestDay}
-              onChange={(v) => dispatch({ type: 'SET_REST_DAY', value: v })}
-            />
+
           </>
         )}
 
