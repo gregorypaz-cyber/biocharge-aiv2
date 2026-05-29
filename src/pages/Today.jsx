@@ -469,7 +469,9 @@ export default function Today() {
     };
   }, [computedKey, sessionsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const recoveryDelta = analysis?.baselineInsights?.find((i) => i.label === 'Recovery')?.delta ?? null;
+  const recoveryDelta = Array.isArray(analysis?.baselineInsights)
+    ? analysis.baselineInsights.find((i) => i.label === 'Recovery')?.delta ?? null
+    : null;
 
   const last7Checkins = sortedCheckins.filter((c) => c.date !== today).slice(0, 7);
 
