@@ -954,8 +954,8 @@ Regras:
 
         <div className="p-4 space-y-3.5">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Use o coach para aprofundar padrões e dúvidas. Esta seção funciona melhor depois que você revisar os achados acima.
-          </p>
+  Use o Coach para entender recovery, sono, carga e decisões de treino com base nos seus dados recentes.
+</p>
 
           {coachResponse ? (
             <>
@@ -975,7 +975,7 @@ Regras:
 
           <div className="space-y-2">
             <Input
-              placeholder="Pergunte algo mais profundo sobre seus padrões..."
+              placeholder="Pergunte sobre recovery, sono, carga ou treino..."
               value={coachInput}
               onChange={(e) => setCoachInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && askCoach()}
