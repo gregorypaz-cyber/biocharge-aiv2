@@ -701,7 +701,7 @@ function PrescriptionBlock({
       });
       setCommitmentSlot(slot);
       setCommitmentStatus('committed');
-      setCommitmentMsg(`Compromisso marcado: ${humanizeSlot(slot)}. Agora execute.`);
+      setCommitmentMsg(`Compromisso marcado: ${humanizeSlot(slot)}. Agora é só executar.`);
     } catch (err) {
       console.warn('WorkoutSuggestionCard: handleCommitSlot error', err);
       setCommitmentMsg('Não foi possível salvar agora — continue mesmo assim.');
