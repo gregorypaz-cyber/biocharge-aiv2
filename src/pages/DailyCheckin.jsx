@@ -678,36 +678,39 @@ const savePostMutation = useMutation({
         <div className="rounded-2xl border border-border/60 bg-card p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold">Qual será o foco do seu dia?</span>
-            <span className="text-xs text-muted-foreground">Opcional</span>
+            <span className="text-xs text-muted-foreground">Define a leitura</span>
           </div>
+
           <div className="flex gap-2 flex-wrap">
             <button
               type="button"
-              onClick={() => setDayIntent('training')}
+              onClick={() => setDayPlan('training')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                dayIntent === 'training'
+                selectedIntent === 'training'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground'
               }`}
             >
               Vou treinar
             </button>
+
             <button
               type="button"
-              onClick={() => setDayIntent('undecided')}
+              onClick={() => setDayPlan('undecided')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                dayIntent === 'undecided'
+                selectedIntent === 'undecided'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground'
               }`}
             >
               Ainda não decidi
             </button>
+
             <button
               type="button"
-              onClick={() => setDayIntent('recovery')}
+              onClick={() => setDayPlan('recovery')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                dayIntent === 'recovery'
+                selectedIntent === 'recovery'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground'
               }`}
@@ -715,10 +718,12 @@ const savePostMutation = useMutation({
               Hoje será recuperação
             </button>
           </div>
+
           <p className="text-xs mt-2 text-muted-foreground">
-            Você pode mudar isso a qualquer momento.
+            Se marcar recuperação, o check-in se adapta automaticamente.
           </p>
         </div>
+
 
         {/* Date */}
         <div className="px-1">
@@ -750,25 +755,29 @@ const savePostMutation = useMutation({
             icon={Moon}
           />
 
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-foreground flex-1">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">
               Horas de Sono
             </label>
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="Ex: 7:45"
-              value={sleepHoursText}
-              onChange={(e) => {
-                setSleepHoursText(e.target.value);
-                update('sleep_hours', parseSleepDurationToHours(e.target.value));
-              }}
-              className="bg-secondary border-border/40 w-24 text-center font-mono"
-            />
+
+            <select
+              value={form.sleep_hours ?? ''}
+              onChange={(e) => update('sleep_hours', Number(e.target.value) || null)}
+              className="w-full h-11 rounded-xl bg-secondary border border-border/40 px-3 text-sm font-mono text-foreground"
+            >
+              <option value="">Selecione...</option>
+              {SLEEP_DURATION_OPTIONS.map((opt) => (
+                <option key={opt.label} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            <p className="text-[10px] text-muted-foreground">
+              Escolha a duração aproximada do seu sono desta noite.
+            </p>
           </div>
-          <p className="text-[10px] text-muted-foreground -mt-1">
-            Use 7:45 (ou 7.5). Isso já basta para gerar uma leitura inicial.
-          </p>
+
         </CheckinStep>
 
         {/* Live Preview */}
