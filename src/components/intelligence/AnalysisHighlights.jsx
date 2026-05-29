@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sparkles, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Sparkles, AlertTriangle, ChevronRight, Target } from 'lucide-react';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Helpers */
@@ -10,6 +10,7 @@ function normalizeText(text) {
     .replace(/#+\s*/g, '')
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
+    .replace(/`/g, '')
     .trim();
 }
 
@@ -17,81 +18,67 @@ function splitSentences(text) {
   return normalizeText(text)
     .split(/\n|(?<=\.)\s+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 20 && s.length < 240);
+    .filter((s) => s.length > 18 && s.length < 260);
 }
 
-function pickAlerts(sentences) {
-  return sentences
-    .map((s) => {
-      const l = s.toLowerCase();
-      let score = 0;
+function scoreMainReading(sentence) {
+  const l = sentence.toLowerCase();
+  let score = 0;
 
-      if (/alerta|atenção|risco|sobrecarga|overreach|fadiga|déficit/i.test(l)) score += 25;
-      if (/reduzir|evitar|proteger|pausar|descanso/i.test(l)) score += 18;
-      if (/sono.*curto|sono.*ruim|stress alto|hrv.*baixo/i.test(l)) score += 12;
-      if (/\d+/.test(s)) score += 4;
+  if (/principal|mais importante|padrão|tendência|agora|momento/i.test(l)) score += 18;
+  if (/sono|recovery|recuperação|hrv|carga|fadiga|stress|strain/i.test(l)) score += 14;
+  if (/limitando|segurando|melhorando|piorando|associado|responde/i.test(l)) score += 12;
+  if (/\d+/.test(sentence)) score += 4;
 
-      return { text: s, score };
-    })
-    .filter((x) => x.score >= 18)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 2)
-    .map((x) => x.text);
+  return score;
 }
 
-function pickPatterns(sentences, used) {
-  const usedSet = new Set(used);
+function scoreAlert(sentence) {
+  const l = sentence.toLowerCase();
+  let score = 0;
 
-  return sentences
-    .filter((s) => !usedSet.has(s))
-    .map((s) => {
-      const l = s.toLowerCase();
-      let score = 0;
+  if (/atenção|alerta|risco|sobrecarga|overreach|fadiga|déficit|dívida/i.test(l)) score += 22;
+  if (/reduzir|evitar|proteger|pausar|descanso|controle|cautela/i.test(l)) score += 16;
+  if (/sono.*curto|sono.*ruim|stress alto|hrv.*baixo|carga.*alta/i.test(l)) score += 12;
+  if (/\d+/.test(sentence)) score += 4;
 
-      if (/padrão|tendência|responde|associad|correlação/i.test(l)) score += 20;
-      if (/melhorando|piorando|acima|abaixo|média/i.test(l)) score += 12;
-      if (/sono|hrv|recovery|carga|stress/i.test(l)) score += 10;
-      if (/\d+/.test(s)) score += 4;
-
-      return { text: s, score };
-    })
-    .filter((x) => x.score >= 14)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map((x) => x.text);
+  return score;
 }
 
-function pickActions(sentences, used) {
-  const usedSet = new Set(used);
+function scoreAction(sentence) {
+  const l = sentence.toLowerCase();
+  let score = 0;
+
+  if (/priorize|tente|observe|reduza|mantenha|ajuste|durma|hidrate|faça|evite/i.test(l)) score += 22;
+  if (/próximos 3 dias|próximos 7 dias|esta semana|hoje à noite|amanhã/i.test(l)) score += 12;
+  if (/sono|treino|carga|recuperação|stress|hidratação/i.test(l)) score += 8;
+
+  return score;
+}
+
+function pickBest(sentences, scorer, limit, usedTexts = []) {
+  const used = new Set(usedTexts);
 
   return sentences
-    .filter((s) => !usedSet.has(s))
-    .map((s) => {
-      const l = s.toLowerCase();
-      let score = 0;
-
-      if (/priorize|tente|observe|reduza|mantenha|ajuste|durma|hidrate/i.test(l)) score += 20;
-      if (/próximos 7 dias|esta semana|hoje à noite/i.test(l)) score += 10;
-
-      return { text: s, score };
-    })
-    .filter((x) => x.score >= 16)
+    .filter((s) => !used.has(s))
+    .map((s) => ({ text: s, score: scorer(s) }))
+    .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map((x) => x.text);
+    .slice(0, limit)
+    .map((item) => item.text);
 }
 
 function shortTitle(sentence) {
-  const cleaned = sentence.replace(/^[-–•]\s*/, '');
-  const words = cleaned.split(' ');
-  return words.slice(0, 5).join(' ').replace(/[,:;]$/, '') + (words.length > 5 ? '…' : '');
+  const cleaned = sentence.replace(/^[-–•]\s*/, '').trim();
+  const words = cleaned.split(/\s+/);
+  return words.slice(0, 6).join(' ').replace(/[,:;]$/, '') + (words.length > 6 ? '…' : '');
 }
 
-function Section({ icon: Icon, label, color, dotColor, items }) {
-  if (!items.length) return null;
+function HighlightBlock({ icon: Icon, label, color, bg, border, items, maxItems = 2 }) {
+  if (!items?.length) return null;
 
   return (
-    <div className="space-y-2">
+    <div className={`rounded-xl border px-3 py-3 space-y-2 ${bg} ${border}`}>
       <div className="flex items-center gap-1.5">
         <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
         <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>
@@ -100,15 +87,14 @@ function Section({ icon: Icon, label, color, dotColor, items }) {
       </div>
 
       <ul className="space-y-2">
-        {items.map((text, i) => (
-          <li key={i} className="flex items-start gap-2">
-            <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-            <div>
-              <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-wide leading-none mb-0.5">
-                {shortTitle(text)}
-              </p>
-              <p className="text-xs text-foreground/85 leading-snug">{text}</p>
-            </div>
+        {items.slice(0, maxItems).map((text, i) => (
+          <li key={i} className="space-y-0.5">
+            <p className="text-[10px] font-bold text-foreground/55 uppercase tracking-wide leading-none">
+              {shortTitle(text)}
+            </p>
+            <p className="text-xs text-foreground/85 leading-snug">
+              {text}
+            </p>
           </li>
         ))}
       </ul>
@@ -122,49 +108,60 @@ export default function AnalysisHighlights({ analysisText }) {
   const sentences = splitSentences(analysisText);
   if (!sentences.length) return null;
 
-  const alerts = pickAlerts(sentences);
-  const patterns = pickPatterns(sentences, alerts);
-  const actions = pickActions(sentences, [...alerts, ...patterns]);
+  const mainReading = pickBest(sentences, scoreMainReading, 1);
+  const alerts = pickBest(sentences, scoreAlert, 2, mainReading);
+  const actions = pickBest(sentences, scoreAction, 2, [...mainReading, ...alerts]);
 
-  if (!alerts.length && !patterns.length && !actions.length) return null;
+  if (!mainReading.length && !alerts.length && !actions.length) return null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border/50 bg-secondary/40 px-4 py-4 space-y-4 mb-4"
+      className="rounded-xl border border-border/50 bg-secondary/30 px-4 py-4 space-y-3 mb-4"
     >
-      <Section
-        icon={AlertTriangle}
-        label="Sinais de atenção"
-        color="text-red-400"
-        dotColor="bg-red-400/70"
-        items={alerts}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+            Resumo da análise
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            O que mais importa antes de abrir o relatório completo.
+          </p>
+        </div>
 
-      {alerts.length > 0 && patterns.length > 0 && <div className="h-px bg-border/40" />}
+        <Sparkles className="w-4 h-4 text-primary shrink-0" />
+      </div>
 
-      <Section
-        icon={Sparkles}
-        label="O que vale observar"
+      <HighlightBlock
+        icon={Target}
+        label="Leitura principal"
         color="text-primary"
-        dotColor="bg-primary/60"
-        items={patterns}
+        bg="bg-primary/5"
+        border="border-primary/15"
+        items={mainReading}
+        maxItems={1}
       />
 
-      {(alerts.length > 0 || patterns.length > 0) && actions.length > 0 && (
-        <div className="h-px bg-border/40" />
-      )}
+      <HighlightBlock
+        icon={AlertTriangle}
+        label="Pede atenção"
+        color="text-yellow-400"
+        bg="bg-yellow-500/5"
+        border="border-yellow-500/15"
+        items={alerts}
+        maxItems={2}
+      />
 
-      {actions.length > 0 && (
-        <Section
-          icon={ChevronRight}
-          label="Ajustes práticos"
-          color="text-yellow-400"
-          dotColor="bg-yellow-400/60"
-          items={actions}
-        />
-      )}
+      <HighlightBlock
+        icon={ChevronRight}
+        label="Próxima ação"
+        color="text-emerald-400"
+        bg="bg-emerald-500/5"
+        border="border-emerald-500/15"
+        items={actions}
+        maxItems={2}
+      />
     </motion.div>
   );
 }
