@@ -405,7 +405,7 @@ export default function Today() {
       })()
     : null;
 
-  const totalStrain = todaySessions.reduce((s, t) => s + (t.strain_score || 0), 0);
+  const totalStrain = todaySessions.reduce((sum, session) => sum + (session.strain_score ?? 0), 0);
   const morningRecovery = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
 
   const liveBodyState = checkin ? calculateBodyState(morningRecovery, totalStrain) : null;
