@@ -69,7 +69,7 @@ const recovery =
   checkin?.recovery_score ??
   checkin?.morning_recovery_score ??
   readiness;
-``
+
 
   const zone = checkin?.zone ?? 'yellow';
   const zoneCfg = ZONE_CONFIG[zone] || ZONE_CONFIG.yellow;
@@ -215,4 +215,3 @@ const tomorrowReason = getTomorrowReason(checkin);
     </motion.div>
   );
 }
-``
