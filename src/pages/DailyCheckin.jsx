@@ -18,7 +18,6 @@ import {
   Info,
   Zap,
   SkipForward,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
