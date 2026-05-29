@@ -1594,7 +1594,7 @@ if (isLoading) {
           to="/insights"
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
         >
-          Quer entender melhor por que a recomendação de hoje é essa?
+          Quer entender o que está guiando seu recovery?
           <span className="text-primary font-medium">→ Ver análise detalhada</span>
         </Link>
       )}
