@@ -916,6 +916,12 @@ const tomorrowHook = useMemo(() => {
         todaySessions,
         allSessions: sortedSessions,
         dailyVerdict,
+} catch (err) {
+      console.warn('Today: renderCard failed', desc?.id, err);
+      return null;
+    }
+  }
+
       };
 
 
