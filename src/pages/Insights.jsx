@@ -1140,18 +1140,18 @@ Regras:
               className="bg-secondary border-border/40 flex-1"
             />
 
-            <div className="flex gap-1.5 overflow-x-auto pb-1">
-              {suggestedQuestions.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => setCoachInput(q)}
-                  className="px-2.5 py-1 rounded-lg bg-secondary border border-border/60 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors whitespace-nowrap shrink-0"
-
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+            <div className="grid grid-cols-1 gap-2">
+  {suggestedQuestions.map((q) => (
+    <button
+      key={q}
+      type="button"
+      onClick={() => setCoachInput(q)}
+      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+    >
+      {q}
+    </button>
+  ))}
+</div>
 
             <Button
               onClick={askCoach}
