@@ -715,6 +715,73 @@ export default function Insights() {
     return buildRecentShifts(computed, analysis);
   }, [computedKey, analysis]);
 
+const primaryInsight = useMemo(() => {
+  const topDiscovery = discoveries?.[0] || null;
+  const topShift = recentShifts?.[0] || null;
+  const sleepDebt = analysis?.sleepDebt?.debt ?? null;
+  const loadRatio = analysis?.trainingLoad?.ratio ?? null;
+
+  if (topDiscovery) {
+    return {
+      eyebrow: 'Leitura principal',
+      icon: topDiscovery.icon || Sparkles,
+      title: topDiscovery.title,
+      text: topDiscovery.text,
+      tone: topDiscovery.sentiment === 'negative' ? 'negative' : 'positive',
+      badge: topDiscovery.confidence || null,
+      meta: topDiscovery.days
+        ? `Baseado em ${topDiscovery.days} registros úteis.`
+        : 'Baseado nos seus dados recentes.',
+    };
+  }
+
+  if (topShift) {
+    return {
+      eyebrow: 'Mudança mais relevante',
+      icon: topShift.icon || TrendingUp,
+      title: topShift.title,
+      text: topShift.text,
+      tone: topShift.tone || 'neutral',
+      badge: '7 dias',
+      meta: 'Comparação recente para entender o que mudou no seu corpo.',
+    };
+  }
+
+  if (sleepDebt != null && sleepDebt >= 4) {
+    return {
+      eyebrow: 'Leitura principal',
+      icon: Moon,
+      title: 'Sua dívida de sono está virando o principal limitador',
+      text: `Você acumulou cerca de ${sleepDebt.toFixed(1)}h abaixo do ideal. Antes de buscar mais carga, o maior ganho agora provavelmente vem de recuperar sono.`,
+      tone: 'warning',
+      badge: 'Sono',
+      meta: 'Sono acumulado pode afetar recovery, energia e resposta ao treino.',
+    };
+  }
+
+  if (loadRatio != null && loadRatio > 1.3) {
+    return {
+      eyebrow: 'Leitura principal',
+      icon: AlertTriangle,
+      title: 'Sua carga recente está acima da zona ideal',
+      text: `Seu ratio aguda/crônica está em ${loadRatio.toFixed(2)}. Isso sugere que hoje vale proteger a recuperação e evitar empilhar intensidade.`,
+      tone: 'warning',
+      badge: 'Carga',
+      meta: 'Carga elevada aumenta a chance de fadiga acumulada nos próximos dias.',
+    };
+  }
+
+  return {
+    eyebrow: 'Leitura principal',
+    icon: BarChart3,
+    title: 'Ainda calibrando seus padrões individuais',
+    text: 'Continue registrando check-ins, sono e treinos. O app já consegue orientar o dia, mas precisa de mais consistência para detectar padrões fortes com confiança.',
+    tone: 'neutral',
+    badge: `${computed.length} registros`,
+    meta: 'Quanto mais consistente o registro, melhores ficam as leituras de recovery, carga e sono.',
+  };
+}, [discoveries, recentShifts, analysis, computed.length]);
+
   const todayDetailInsights = useMemo(() => {
     const baselineInsights = analysis?.baselineInsights || [];
     const whyScore = analysis?.whyScore || [];
