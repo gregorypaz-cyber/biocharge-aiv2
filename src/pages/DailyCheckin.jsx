@@ -577,7 +577,7 @@ const savePostMutation = useMutation({
                   : 'bg-secondary text-muted-foreground'
               }`}
             >
-              Vou treinar
+              Treinar
             </button>
 
             <button
@@ -589,7 +589,7 @@ const savePostMutation = useMutation({
                   : 'bg-secondary text-muted-foreground'
               }`}
             >
-              Ainda não decidi
+              Decidir depois
             </button>
 
             <button
@@ -601,7 +601,7 @@ const savePostMutation = useMutation({
                   : 'bg-secondary text-muted-foreground'
               }`}
             >
-              Hoje será recuperação
+              Recuperar
             </button>
           </div>
 
@@ -613,16 +613,18 @@ const savePostMutation = useMutation({
 
         {/* Date */}
         <div className="px-1">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-            Data
-          </label>
-          <Input
-            type="date"
-            value={form.date}
-            onChange={(e) => update('date', e.target.value)}
-            className="bg-card border-border/60 max-w-[200px]"
-          />
-        </div>
+  <div className="flex items-center gap-3">
+    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+      Data
+    </span>
+    <Input
+      type="date"
+      value={form.date}
+      onChange={(e) => update('date', e.target.value)}
+      className="bg-card border-border/60 max-w-[180px] h-9 text-sm"
+    />
+  </div>
+</div>
 
         {/* Quick Check-in */}
         <CheckinStep title="Check-in rápido" emoji="⚡" delay={0.05}>
