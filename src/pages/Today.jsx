@@ -1097,7 +1097,7 @@ function ExecutionCard() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Prontidão de hoje
+               Decisão de hoje
             </span>
             <h2 className="text-xl font-black mt-1 leading-tight">
               {dailyVerdict.headline}
@@ -1123,7 +1123,7 @@ function ExecutionCard() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Prontidão
+              Score do dia
             </p>
 
             <p className="text-3xl font-mono font-black flex items-center gap-2">
@@ -1220,7 +1220,7 @@ function ExecutionCard() {
           !todaySessions.length && !isRestMode && (
             <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
               <span className="font-semibold text-primary">Linha do dia:</span>{' '}
-              a prontidão define sua margem. A prescrição logo abaixo transforma isso em opções A, B e C.
+              sua recuperação define a margem do dia. O plano logo abaixo transforma isso na melhor dose para hoje.
             </div>
           )
         )}
@@ -1230,7 +1230,7 @@ function ExecutionCard() {
           phase !== 'OVERLOAD' &&
           dailyVerdict.caution && (
             <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug">
-              <span className="font-semibold">Cuidado do dia:</span> {dailyVerdict.caution}
+              <span className="font-semibold">O que pede controle hoje:</span> {dailyVerdict.caution}
             </div>
           )}
 
