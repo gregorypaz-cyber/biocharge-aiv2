@@ -940,7 +940,7 @@ function PrescriptionBlock({
                 className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors px-1"
               >
                 <span>{showOtherOptions ? '▾' : '▸'}</span>
-                outras opções ({otherOpts.length})
+                ajustar dose ({otherOpts.length})
               </button>
 
               <AnimatePresence>
