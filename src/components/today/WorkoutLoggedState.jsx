@@ -96,7 +96,12 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
   const acwrInterpretation = interpretAcwr(acwr);
   const verdict = getPostWorkoutVerdict(checkin, analysis, totalStrain);
   const sleepNeed = checkin?.sleep_need_tonight ?? null;
-  const recoveryScore = checkin?.recovery_score ?? checkin?.morning_recovery_score ?? '—';
+const recoveryScore = checkin?.recovery_score ?? checkin?.morning_recovery_score ?? '—';
+
+const hasPostWorkout =
+  checkin?.biocharge_post_workout > 0 ||
+  checkin?.delta_post != null ||
+  String(checkin?.notes || '').includes('[PÓS-TREINO]');
 
   return (
     <motion.div
