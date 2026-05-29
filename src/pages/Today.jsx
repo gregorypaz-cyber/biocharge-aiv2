@@ -1060,25 +1060,65 @@ function renderCard(desc) {
           </motion.div>
         ) : null;
 
-      case 'post_workout_cta':
-        return todaySessions.length > 0 ? (
-          <Link
-            key="post_workout_cta"
-            to="/checkin?mode=post"
-            className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-lg">🏁</span>
-              <div>
-                <p className="text-sm font-semibold">Registrar pós-treino</p>
-                <p className="text-xs text-muted-foreground">
-                  ~30s · melhora os insights de amanhã
-                </p>
-              </div>
-            </div>
-            <span className="text-primary text-sm font-bold">→</span>
-          </Link>
-        ) : null;
+      case 'post_workout_cta': {
+  if (todaySessions.length === 0) return null;
+
+  const hasPostWorkout =
+    enrichedCheckin?.biocharge_post_workout > 0 ||
+    enrichedCheckin?.delta_post != null ||
+    String(enrichedCheckin?.notes || '').includes('[PÓS-TREINO]');
+
+  if (hasPostWorkout) {
+    return (
+      <div
+        key="post_workout_done"
+        className="flex items-center justify-between p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-lg">✅</span>
+
+          <div>
+            <p className="text-sm font-semibold text-emerald-400">
+              Pós-treino registrado
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              Sua resposta ao treino já entrou na leitura de amanhã.
+            </p>
+          </div>
+        </div>
+
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          Salvo
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      key="post_workout_cta"
+      to="/checkin?mode=post"
+      className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-lg">🏁</span>
+
+        <div>
+          <p className="text-sm font-semibold">
+            Registrar pós-treino
+          </p>
+
+          <p className="text-xs text-muted-foreground">
+            ~30s · RPE, energia e dor muscular para melhorar amanhã
+          </p>
+        </div>
+      </div>
+
+      <span className="text-primary text-sm font-bold">→</span>
+    </Link>
+  );
+}
 
       default:
         return null;
