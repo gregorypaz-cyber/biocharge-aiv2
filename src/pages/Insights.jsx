@@ -894,7 +894,7 @@ Regras:
 
         <div className="p-4">
           <p className="text-[10px] text-muted-foreground mb-3">
-            Esta seção resume padrões, limitações e ajustes relevantes com mais profundidade.
+            Uma leitura mais detalhada dos padrões recentes de recovery, sono, carga e comportamento.
           </p>
 
           {computed.length < 5 ? (
