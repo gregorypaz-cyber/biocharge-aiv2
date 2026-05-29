@@ -35,13 +35,6 @@ import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
 
 
-function formatHoursToSleepDuration(hoursFloat) {
-  if (hoursFloat == null || isNaN(hoursFloat)) return '';
-  const h = Math.floor(hoursFloat);
-  const m = Math.round((hoursFloat - h) * 60);
-  return `${h}:${m.toString().padStart(2, '0')}`;
-}
-
 const SLEEP_DURATION_OPTIONS = Array.from({ length: 33 }, (_, i) => {
   const totalMinutes = 4 * 60 + i * 15; // de 4h até 12h em steps de 15 min
   const hours = Math.floor(totalMinutes / 60);
@@ -100,7 +93,7 @@ const DEFAULT_FORM = {
   biocharge_morning: 70,
   biocharge_pre_workout: null,
   biocharge_post_workout: null,
-sleep_score: 70,
+  sleep_score: 70,
   fatigue: 30,
   deep_sleep_pct: 25,
   rem_sleep_pct: 20,
@@ -112,7 +105,7 @@ sleep_score: 70,
   muscle_soreness: 1,
   sleep_hours: 7,
   sleep_start_time: null,
-resting_hr: null,
+  resting_hr: null,
   hrv: null,
   hrv_manual: null,
   body_weight: null,
