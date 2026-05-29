@@ -659,23 +659,57 @@ function pickNarrativeVariant(options, avoidValues = [], seed = 0) {
   return preferred;
 }
 
-function buildHeadline(masterSignal, checkinLike) {
-  const sleepDebtHint = checkinLike?.sleep_need_tonight;
+function buildHeadline(masterSignal, checkinLike, recentCheckins = []) {
+  const ctx = buildNarrativeContext(checkinLike);
+  const recentHeadlines = getRecentTextValues(recentCheckins, 'headline_today', 3);
+
+  let options = [];
+
   if (masterSignal === 'train_high') {
-    return 'Boa janela para intensidade hoje';
-  }
-  if (masterSignal === 'train_moderate') {
-    return 'Moderado é a melhor dose hoje';
-  }
-  if (masterSignal === 'train_light') {
-    return 'Hoje vale manter leve';
+    options = [
+      'Boa janela para intensidade hoje',
+      'Seu corpo acordou com margem hoje',
+      'Hoje existe espaço para acelerar',
+      ctx.hrvHigh ? 'RMSSD favorece intensidade hoje' : null,
+      ctx.sleepPerfHigh ? 'Seu sono abriu margem hoje' : null,
+    ].filter(Boolean);
+  } else if (masterSignal === 'train_moderate') {
+    if (ctx.deepSleepLow || ctx.hrvLow || ctx.sleepPerfLow) {
+      options = [
+        'Moderado protege sua margem hoje',
+        'Seu corpo pede controle na dose hoje',
+        'Hoje vale sustentar sem exagerar',
+        'Recuperação parcial pede moderação',
+      ];
+    } else {
+      options = [
+        'Moderado é a melhor dose hoje',
+        'Hoje o ganho está na consistência',
+        'Treino controlado rende mais hoje',
+        'Dose certa hoje: moderado',
+      ];
+    }
+  } else if (masterSignal === 'train_light') {
+    options = [
+      'Hoje vale manter leve',
+      'Movimento leve faz mais sentido hoje',
+      'Seu corpo pede leveza hoje',
+      ctx.sorenessHigh ? 'Leve para absorver melhor hoje' : null,
+    ].filter(Boolean);
+  } else {
+    options = [
+      'Seu corpo pede recuperação hoje',
+      'Hoje recuperar vale mais do que insistir',
+      'Recuperação gera mais retorno hoje',
+      ctx.sleepNeedHigh ? 'Sono e calma rendem mais hoje' : null,
+    ].filter(Boolean);
   }
 
-  if (sleepDebtHint && sleepDebtHint >= 8) {
-    return 'Hoje recuperar vale mais do que insistir';
-  }
-
-  return 'Seu corpo pede recuperação hoje';
+  return pickNarrativeVariant(
+    options,
+    recentHeadlines,
+    makeNarrativeSeed(checkinLike, 11)
+  );
 }
 
 function buildRecommendation(masterSignal, checkinLike) {
