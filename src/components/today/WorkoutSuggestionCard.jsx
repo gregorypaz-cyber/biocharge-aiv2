@@ -1433,16 +1433,19 @@ export default function WorkoutSuggestionCard({
       {presc && (
         <div className="pt-3 border-t border-border/30">
           <PrescriptionBlock
-            presc={presc}
-            analysis={analysis}
-            intent={intent}
-            checkin={checkin}
-            strainTarget={strainTarget}
-            currentStrain={currentStrain}
-            lookbackRecommendKey={lookback?.recommendKey ?? null}
-            onScheduleOption={onScheduleOption}
-            onCompleteOption={onCompleteOption}
-            onSchedule={onSchedule}
+            
+presc={presc}
+  analysis={analysis}
+  intent={intent}
+  checkin={checkin}
+  strainTarget={strainTarget}
+  currentStrain={currentStrain}
+  lookbackRecommendKey={lookback?.recommendKey ?? null}
+  dailyVerdict={dailyVerdict}
+  onScheduleOption={onScheduleOption}
+  onCompleteOption={onCompleteOption}
+  onSchedule={onSchedule}
+
           />
         </div>
       )}
