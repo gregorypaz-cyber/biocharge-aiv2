@@ -174,7 +174,7 @@
     },
     "sleep_quality": {
       "type": "number",
-      "description": "Subjective sleep quality (1-5)"
+      "description": "Calculated sleep quality score (0-100), derived from sleep score, duration and sleep stages"
     },
     "energy_level": {
       "type": "number",
