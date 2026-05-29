@@ -588,9 +588,6 @@ const savePostMutation = useMutation({
         </div>
 
 
-
-          <div className="space-y-3">
-            <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                 Esporte principal
               </p>
