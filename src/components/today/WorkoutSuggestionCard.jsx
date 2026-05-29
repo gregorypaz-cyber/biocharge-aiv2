@@ -1045,7 +1045,7 @@ function PrescriptionBlock({
             aria-label={`Marcar opção ${opt.key} como feito`}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-all"
           >
-            <Check className="w-3.5 h-3.5" /> Marcar como feito
+            <Check className="w-3.5 h-3.5" /> Registrar treino feito
           </button>
         )}
 
