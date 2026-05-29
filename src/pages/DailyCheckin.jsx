@@ -627,11 +627,15 @@ const savePostMutation = useMutation({
         {/* Quick Check-in */}
         <CheckinStep title="Check-in rápido" emoji="⚡" delay={0.05}>
           <SliderField
-            label="Como você acordou? (0–100)"
-            hint="Sua percepção geral ao acordar"
-            value={form.biocharge_morning}
-            onChange={(v) => update('biocharge_morning', v)}
-          />
+  label="Como você acordou? (0–100)"
+  hint="Sua percepção geral ao acordar"
+  value={form.biocharge_morning}
+  onChange={(v) => update('biocharge_morning', v)}
+  lowLabel="Baixo"
+  midLabel="Médio"
+  highLabel="Alto"
+/>
+
 
           <SliderField
             label="Pontuação do Sono (Zepp)"
