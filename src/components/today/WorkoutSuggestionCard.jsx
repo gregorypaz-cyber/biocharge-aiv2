@@ -767,10 +767,11 @@ function PrescriptionBlock({
   return (
     <div className="space-y-4">
       <DailyInsightBlock
-        presc={presc}
-        analysis={analysis}
-        recommendedKey={recommendedKey}
-        onMarkDone={() => setShowCompletion(true)}
+
+  presc={presc}
+  analysis={analysis}
+  recommendedKey={recommendedKey}
+
       />
 
       <div className="flex items-center justify-between gap-2">
