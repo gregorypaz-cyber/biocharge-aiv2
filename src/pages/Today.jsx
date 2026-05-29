@@ -1417,7 +1417,7 @@ function ExecutionCard() {
                 }`}
               >
                 {analysis.trainingLoad.ratio > 1.5
-                  ? 'Alto risco'
+                  ? 'Muito alto'
                   : analysis.trainingLoad.ratio > 1.3
                   ? 'Atenção'
                   : 'Seguro'}
