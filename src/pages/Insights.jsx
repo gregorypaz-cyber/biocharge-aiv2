@@ -171,6 +171,75 @@ function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
   );
 }
 
+function PrimaryInsightCard({ item }) {
+  if (!item) return null;
+
+  const toneClass =
+    item.tone === 'negative'
+      ? 'border-red-500/25 bg-red-500/8'
+      : item.tone === 'positive'
+      ? 'border-emerald-500/25 bg-emerald-500/8'
+      : item.tone === 'warning'
+      ? 'border-yellow-500/25 bg-yellow-500/8'
+      : 'border-primary/20 bg-primary/5';
+
+  const iconClass =
+    item.tone === 'negative'
+      ? 'text-red-400'
+      : item.tone === 'positive'
+      ? 'text-emerald-400'
+      : item.tone === 'warning'
+      ? 'text-yellow-400'
+      : 'text-primary';
+
+  const Icon = typeof item.icon === 'function' ? item.icon : null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn('rounded-2xl border p-4 space-y-3', toneClass)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-background/30 border border-border/30 flex items-center justify-center shrink-0">
+            {Icon ? (
+              <Icon className={cn('w-4 h-4', iconClass)} />
+            ) : (
+              <span className="text-lg leading-none">{item.icon || '✨'}</span>
+            )}
+          </div>
+
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              {item.eyebrow || 'Leitura principal'}
+            </p>
+
+            <h2 className="text-lg font-black tracking-tight leading-tight mt-1">
+              {item.title}
+            </h2>
+
+            <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">
+              {item.text}
+            </p>
+          </div>
+        </div>
+
+        {item.badge ? (
+          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-background/40 border border-border/40 text-muted-foreground shrink-0">
+            {item.badge}
+          </span>
+        ) : null}
+      </div>
+
+      {item.meta ? (
+        <p className="text-[11px] text-muted-foreground border-t border-border/25 pt-2">
+          {item.meta}
+        </p>
+      ) : null}
+    </motion.div>
+  );
+}
 
 function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
