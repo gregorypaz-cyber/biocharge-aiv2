@@ -877,7 +877,7 @@ Regras:
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/40">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="text-sm font-semibold">Análise profunda</h2>
+            <h2 className="text-sm font-semibold">Leitura completa</h2>
           </div>
 
           {!todayCheckin?.deep_analysis_text && (
