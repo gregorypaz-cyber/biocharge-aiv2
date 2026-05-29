@@ -1068,32 +1068,11 @@ function renderCard(desc) {
     enrichedCheckin?.delta_post != null ||
     String(enrichedCheckin?.notes || '').includes('[PÓS-TREINO]');
 
-  if (hasPostWorkout) {
-    return (
-      <div
-        key="post_workout_done"
-        className="flex items-center justify-between p-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/5"
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-lg">✅</span>
+  
+if (hasPostWorkout) {
+  return null;
+}
 
-          <div>
-            <p className="text-sm font-semibold text-emerald-400">
-              Pós-treino registrado
-            </p>
-
-            <p className="text-xs text-muted-foreground">
-              Sua resposta ao treino já entrou na leitura de amanhã.
-            </p>
-          </div>
-        </div>
-
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          Salvo
-        </span>
-      </div>
-    );
-  }
 
   return (
     <Link
