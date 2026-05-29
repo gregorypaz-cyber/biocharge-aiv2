@@ -22,6 +22,19 @@ const RECOVERY_GOALS = [
   { value: 'rehab', label: 'Reabilitação', desc: 'Recuperação de lesão', emoji: '🩺' },
 ];
 
+const EXPERIENCE_LEVELS = [
+  { value: 'iniciante', label: 'Iniciante' },
+  { value: 'intermediario', label: 'Intermediário' },
+  { value: 'avancado', label: 'Avançado' },
+];
+
+const GUIDANCE_GOALS = [
+  { value: 'performance', label: 'Render mais', desc: 'Priorizar performance e evolução' },
+  { value: 'consistencia', label: 'Consistência', desc: 'Treinar com regularidade e sustentabilidade' },
+  { value: 'recuperacao', label: 'Recuperar melhor', desc: 'Melhorar sono, absorção de carga e margem diária' },
+];
+
+
 export default function AppSettings() {
   const { user } = useAuth();
   const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
