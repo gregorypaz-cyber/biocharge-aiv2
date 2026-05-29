@@ -903,7 +903,7 @@ function PrescriptionBlock({
                     <span className="text-xs">{MODALITY_EMOJI[o.modality] || '🏃'}</span>
                     {isRecommended && (
                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary uppercase tracking-wide">
-                        recomendado
+                        melhor hoje
                       </span>
                     )}
                   </div>
