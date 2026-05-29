@@ -60,28 +60,6 @@ function formatHoursToSleepDuration(hoursFloat) {
   return `${h}:${m.toString().padStart(2, '0')}`;
 }
 
-const CHECKIN_PROFILE_KEY = 'biocharge_checkin_profile_v1';
-
-const DEFAULT_PROFILE = {
-  sport: '',
-  level: '',
-  goal: '',
-};
-
-function loadCheckinProfile() {
-  try {
-    const raw = localStorage.getItem(CHECKIN_PROFILE_KEY);
-    if (!raw) return DEFAULT_PROFILE;
-    const parsed = JSON.parse(raw);
-    return {
-      sport: parsed?.sport || '',
-      level: parsed?.level || '',
-      goal: parsed?.goal || '',
-    };
-  } catch {
-    return DEFAULT_PROFILE;
-  }
-}
 
 function HRVField({ value, onChange }) {
   const [showTip, setShowTip] = useState(false);
