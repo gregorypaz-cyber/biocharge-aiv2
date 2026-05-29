@@ -819,9 +819,9 @@ Regras:
       {/* 1. High-value discoveries */}
       <div className="space-y-3">
         <SectionHeader
-          title="Achados que realmente importam"
-          subtitle="Só entram aqui padrões com sinal suficiente para valer sua atenção."
-        />
+  title="O que seu corpo está mostrando"
+  subtitle="Padrões e sinais recentes que ajudam a explicar sua recuperação."
+/>
 
         {discoveries.length > 0 ? (
           <div className="space-y-3">
