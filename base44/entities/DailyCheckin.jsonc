@@ -86,7 +86,7 @@
     },
     "morning_recovery_score": {
       "type": "number",
-      "description": "Fixed morning recovery score \u2014 never changes after check-in"
+      "description": "Frozen morning recovery anchor saved at check-in time and preserved during the day"
     },
     "zone": {
       "type": "string",
