@@ -166,7 +166,7 @@
     },
     "hrv_manual": {
       "type": "number",
-      "description": "HRV in ms entered manually"
+      "description": "RMSSD in ms entered manually by the user"
     },
     "resting_heart_rate": {
       "type": "number",
