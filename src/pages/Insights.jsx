@@ -949,7 +949,7 @@ Regras:
       >
         <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
           <Brain className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Coach IA</h2>
+          <h2 className="text-sm font-semibold">Pergunte ao Coach</h2>
         </div>
 
         <div className="p-4 space-y-3.5">
