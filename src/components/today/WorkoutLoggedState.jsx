@@ -134,24 +134,48 @@ const hasPostWorkout =
       </div>
 
       {/* Primary CTA */}
-      <Link
-        to="/checkin?mode=post"
-        className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors group"
-      >
-        <div className="flex items-center gap-2">
-          <ClipboardCheck className="w-4 h-4 shrink-0" />
-          <div>
-            <p className="text-sm font-bold leading-tight">
-              Registrar pós-treino
-            </p>
-            <p className="text-[11px] opacity-85 leading-tight mt-0.5">
-              RPE, energia e dor muscular · melhora a leitura de amanhã
-            </p>
-          </div>
-        </div>
+{hasPostWorkout ? (
+  <div className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25">
+    <div className="flex items-center gap-2">
+      <ClipboardCheck className="w-4 h-4 text-emerald-400 shrink-0" />
 
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
-      </Link>
+      <div>
+        <p className="text-sm font-bold leading-tight text-emerald-400">
+          Pós-treino registrado
+        </p>
+
+        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+          Sua resposta ao treino já entrou na leitura de amanhã.
+        </p>
+      </div>
+    </div>
+
+    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+      Salvo
+    </span>
+  </div>
+) : (
+  <Link
+    to="/checkin?mode=post"
+    className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors group"
+  >
+    <div className="flex items-center gap-2">
+      <ClipboardCheck className="w-4 h-4 shrink-0" />
+
+      <div>
+        <p className="text-sm font-bold leading-tight">
+          Registrar pós-treino
+        </p>
+
+        <p className="text-[11px] opacity-85 leading-tight mt-0.5">
+          RPE, energia e dor muscular · melhora a leitura de amanhã
+        </p>
+      </div>
+    </div>
+
+    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
+  </Link>
+)}
 
       {/* Session summary */}
       <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-3 space-y-2">
