@@ -98,37 +98,6 @@ function getHrvTrend(hrvValue, hrv7dAvg) {
   return 'at_avg';
 }
 
-function getHrvTrendContext(hrvValue, hrv7dAvg) {
-  if (hrvValue == null || hrv7dAvg == null || hrv7dAvg <= 0) return null;
-
-  const pctDiff = Math.round(((Number(hrvValue) - Number(hrv7dAvg)) / Number(hrv7dAvg)) * 100);
-  const trend = getHrvTrend(hrvValue, hrv7dAvg);
-
-  if (trend === 'above_avg') {
-    return {
-      trend,
-      pctDiff,
-      label: `↑ ${Math.abs(pctDiff)}% acima da sua média (7d)`,
-      color: 'text-emerald-400',
-    };
-  }
-
-  if (trend === 'below_avg') {
-    return {
-      trend,
-      pctDiff,
-      label: `↓ ${Math.abs(pctDiff)}% abaixo da sua média (7d)`,
-      color: 'text-red-400',
-    };
-  }
-
-  return {
-    trend,
-    pctDiff,
-    label: `→ Na sua média (7d)`,
-    color: 'text-yellow-400',
-  };
-}
 
 function getRecentRhrBaseline(recentCheckins = []) {
   const values = (recentCheckins || [])
@@ -259,17 +228,6 @@ function getPreviewConfidenceReason(checkin, recentCheckins = []) {
   return 'Faltam HRV e/ou FC de repouso. Esta leitura está mais apoiada em percepção e sono informado.';
 }
 
-function applyConfidenceCap(score, confidence, hasStrongPhysiology) {
-  const raw = clamp(score);
-
-  if (confidence === 'high') return raw;
-
-  if (confidence === 'medium') {
-    return Math.min(raw, hasStrongPhysiology ? 90 : 88);
-  }
-
-  return Math.min(raw, hasStrongPhysiology ? 86 : 82);
-}
 
 // ─── Core scores ───────────────────────────────────────────────────────────
 
