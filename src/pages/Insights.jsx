@@ -1133,7 +1133,7 @@ Regras:
 
           <div className="space-y-2">
             <Input
-              placeholder="Pergunte sobre recovery, sono, carga ou treino..."
+              placeholder="Digite sua pergunta ou escolha uma sugestão abaixo..."
               value={coachInput}
               onChange={(e) => setCoachInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && askCoach()}
