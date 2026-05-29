@@ -240,7 +240,7 @@ function CompletionForm({ optKey, onSave, onCancel, saving }) {
   );
 }
 
-function DailyInsightBlock({ presc, analysis, onMarkDone, recommendedKey }) {
+function DailyInsightBlock({ presc, analysis, recommendedKey }) {
   if (!presc || !analysis) return null;
 
   try {
@@ -258,71 +258,109 @@ function DailyInsightBlock({ presc, analysis, onMarkDone, recommendedKey }) {
     const confStyle = CONF_STYLE[conf] || CONF_STYLE.Baixa;
 
     const isLowRecovery = recovery != null && recovery < 55;
-    const headline = recommendedKey && !isLowRecovery
-      ? `Hoje o plano principal é ${recommendedKey}.`
-      : 'Hoje o foco é preservar para recuperar melhor.';
 
-    const bullets = [];
-    if (recovery != null) bullets.push(`Recovery: ${recovery} pts`);
-    if (hrvDelta != null) bullets.push(`HRV delta: ${hrvDelta >= 0 ? '+' : ''}${hrvDelta}%`);
-    if (sleepDebt != null && sleepDebt > 0) bullets.push(`Dívida de sono: ${sleepDebt}h`);
-    if (ratio != null && ratio > 0) bullets.push(`ACWR: ${ratio.toFixed(2)}`);
-    if (!bullets.length) return null;
+    const headline =
+      recommendedKey && !isLowRecovery
+        ? `Opção ${recommendedKey} é a melhor dose para hoje.`
+        : 'Hoje o foco é preservar e recuperar melhor.';
+
+    const positives = [];
+    const cautions = [];
+
+    if (recovery != null) {
+      if (recovery >= 70) positives.push(`Recovery ${recovery}`);
+      else cautions.push(`Recovery ${recovery}`);
+    }
+
+    if (hrvDelta != null) {
+      if (hrvDelta >= 0) positives.push(`HRV ${hrvDelta >= 0 ? '+' : ''}${hrvDelta}%`);
+      else cautions.push(`HRV ${hrvDelta}%`);
+    }
+
+    if (ratio != null && ratio > 0) {
+      if (ratio <= 1.25) positives.push(`ACWR ${ratio.toFixed(2)} seguro`);
+      else cautions.push(`ACWR ${ratio.toFixed(2)} elevado`);
+    }
+
+    if (sleepDebt != null && sleepDebt > 0) {
+      cautions.push(`Dívida de sono ${sleepDebt}h`);
+    }
+
+    if (state === 'Fatigued') cautions.push('Sinais de fadiga');
+    if (state === 'Overreached') cautions.push('Sobrecarga fisiológica');
+    if (state === 'Recovered') positives.push('Boa recuperação disponível');
+
+    if (!positives.length && !cautions.length) return null;
 
     const microAction = (() => {
-      if (state === 'Overreached' || risk === 'high') return '1 min: respire fundo e reduza o estresse antes de decidir treinar.';
-      if (state === 'Fatigued' || isLowRecovery) return '1 min: hidrate-se agora e reavalie a intensidade no aquecimento.';
-      if (recovery != null && recovery >= 80) return '1 min: faça um aquecimento progressivo e confirme se o corpo responde bem.';
-      return '1 min: defina a intenção do treino antes de começar.';
-    })();
+      if (state === 'Overreached' || risk === 'high') {
+        return 'Antes de treinar: reduza a ambição e proteja a recuperação.';
+      }
 
-    const counterfactual = (() => {
-      if (ratio != null && ratio > 1.3) return 'Se você reduzir a dose hoje, a chance de recuperar melhor nas próximas 24–48h aumenta.';
-      if (recovery != null && recovery >= 80) return 'Se você treinar bem e dormir o suficiente, a tendência de manter boa prontidão amanhã melhora.';
-      return null;
+      if (state === 'Fatigued' || isLowRecovery) {
+        return 'Antes de treinar: hidrate-se e reavalie a intensidade no aquecimento.';
+      }
+
+      if (recovery != null && recovery >= 80) {
+        return 'Antes de treinar: aqueça progressivamente e confirme se o corpo responde bem.';
+      }
+
+      return 'Antes de treinar: defina a intenção do treino e não transforme controle em exagero.';
     })();
 
     return (
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-            Insight do dia
+            Decisão do treino
           </span>
+
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>
             {conf}
           </span>
         </div>
 
-        <p className="text-sm font-bold leading-snug">{headline}</p>
+        <p className="text-sm font-bold leading-snug">
+          {headline}
+        </p>
 
-        <ul className="space-y-0.5">
-          {bullets.map((b, i) => (
-            <li key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="w-1 h-1 rounded-full bg-primary/50 shrink-0" />
-              {b}
-            </li>
-          ))}
-        </ul>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {positives.length > 0 && (
+            <div className="rounded-lg bg-emerald-500/8 border border-emerald-500/15 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">
+                A favor
+              </p>
 
-        {counterfactual && (
-          <p className="text-[11px] text-foreground/60 italic border-l-2 border-primary/30 pl-2">
-            {counterfactual}
-          </p>
-        )}
+              <ul className="space-y-0.5">
+                {positives.slice(0, 3).map((item, i) => (
+                  <li key={i} className="text-[11px] text-muted-foreground">
+                    ↑ {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        <p className="text-[11px] text-foreground/70">⚡ {microAction}</p>
+          {cautions.length > 0 && (
+            <div className="rounded-lg bg-yellow-500/8 border border-yellow-500/15 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-yellow-400 mb-1">
+                Pede controle
+              </p>
 
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
-          <p className="text-[10px] text-muted-foreground/70">
-            Depois do treino, marque o RPE para melhorar o modelo de amanhã.
-          </p>
-          <button
-            onClick={onMarkDone}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold whitespace-nowrap hover:bg-primary/90 transition-all"
-          >
-            <Check className="w-3 h-3" /> Marcar feito
-          </button>
+              <ul className="space-y-0.5">
+                {cautions.slice(0, 3).map((item, i) => (
+                  <li key={i} className="text-[11px] text-muted-foreground">
+                    ↓ {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
+
+        <p className="text-[11px] text-foreground/75 border-t border-border/20 pt-2">
+          ⚡ {microAction}
+        </p>
       </div>
     );
   } catch (e) {
