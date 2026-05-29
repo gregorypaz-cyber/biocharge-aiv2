@@ -842,9 +842,9 @@ Regras:
       {/* 2. Recent shifts */}
       <div className="space-y-3">
         <SectionHeader
-          title="O que mudou recentemente"
-          subtitle="Leituras dos últimos 7–14 dias para te ajudar a perceber tendências, não só o dia de hoje."
-        />
+  title="Mudança recente"
+  subtitle="O sinal mais relevante dos últimos 7–14 dias para ajustar sua rotina."
+/>
 
         {recentShifts.length > 0 ? (
           <div className="space-y-3">
