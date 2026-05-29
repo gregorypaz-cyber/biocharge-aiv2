@@ -17,9 +17,9 @@ function ZoneBar({ value, color }) {
 }
 
 function getDecisionLabel(mode) {
-  if (mode === 'train_high') return 'Treino mais forte';
-  if (mode === 'train_moderate') return 'Treino moderado';
-  if (mode === 'train_light') return 'Treino leve';
+  if (mode === 'train_high') return 'Dose alta';
+  if (mode === 'train_moderate') return 'Dose moderada';
+  if (mode === 'train_light') return 'Dose leve';
   if (mode === 'recover') return 'Recuperação';
   return 'Em análise';
 }
@@ -66,7 +66,7 @@ export default function LivePreview({ preview, compact = false }) {
   const headline =
     preview.headline_today ||
     preview.recommendation ||
-    'Complete seu check-in para ver como o dia está se desenhando.';
+    'Complete os sinais essenciais para calcular a dose do dia.';
 
   const sleepNeed = preview.sleep_need_tonight ?? null;
   const confidence = preview.preview_confidence || 'low';
@@ -87,10 +87,10 @@ export default function LivePreview({ preview, compact = false }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-              Leitura inicial
+              Plano preliminar
             </p>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Você já pode salvar com estes dados.
+              Você já pode salvar com estes dados e refinar depois.
             </p>
           </div>
 
@@ -107,7 +107,7 @@ export default function LivePreview({ preview, compact = false }) {
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Recovery estimado
+              Recovery do dia
             </p>
             <div className="flex items-end gap-2">
               <span className="text-3xl font-black font-mono leading-none" style={{ color }}>
@@ -121,7 +121,7 @@ export default function LivePreview({ preview, compact = false }) {
 
           <div className="text-right">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Decisão
+              Dose
             </p>
             <p className="text-sm font-semibold">
               {decisionMode ? getDecisionLabel(decisionMode) : 'Em análise'}
@@ -131,9 +131,15 @@ export default function LivePreview({ preview, compact = false }) {
 
         <ZoneBar value={recoveryScore} color={color} />
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          {confidenceReason}
-        </p>
+        <div className="rounded-xl bg-secondary/35 border border-border/40 px-3 py-2.5">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            Linha da manhã
+          </p>
+          <p className="text-sm font-semibold leading-snug">{headline}</p>
+          <p className="text-[11px] text-muted-foreground leading-relaxed mt-1.5">
+            {confidenceReason}
+          </p>
+        </div>
       </motion.div>
     );
   }
@@ -148,7 +154,7 @@ export default function LivePreview({ preview, compact = false }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-            Prévia do dia
+            Plano do dia
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
             Esta é a leitura com os dados que serão salvos agora.
@@ -181,7 +187,7 @@ export default function LivePreview({ preview, compact = false }) {
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Recovery estimado
+            Recovery do dia
           </p>
 
           <div className="flex items-end gap-2">
@@ -222,7 +228,7 @@ export default function LivePreview({ preview, compact = false }) {
       {(preview.deep_sleep_pct != null || preview.rem_sleep_pct != null) && (
         <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Estágios do sono
+            Sono avançado
           </p>
           <p className="text-xs text-foreground/80 leading-relaxed">
             {preview.deep_sleep_pct != null ? `Profundo: ${preview.deep_sleep_pct}%` : 'Profundo: —'}
@@ -232,10 +238,10 @@ export default function LivePreview({ preview, compact = false }) {
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Perf. Sono
+            Sono
           </p>
           <p
             className={cn(
@@ -257,15 +263,6 @@ export default function LivePreview({ preview, compact = false }) {
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Fadiga
-          </p>
-          <p className="text-sm font-mono font-bold">
-            {preview.fatigue_score ?? preview.fatigue ?? '—'}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
             RMSSD
           </p>
           <p className="text-sm font-mono font-bold">
@@ -275,7 +272,7 @@ export default function LivePreview({ preview, compact = false }) {
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Meta de sono
+            Sono hoje
           </p>
           <p className="text-sm font-mono font-bold">
             {sleepNeed != null ? `${sleepNeed}h` : '—'}
