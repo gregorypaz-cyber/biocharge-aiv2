@@ -60,6 +60,14 @@ function formatHoursToSleepDuration(hoursFloat) {
   return `${h}:${m.toString().padStart(2, '0')}`;
 }
 
+const SLEEP_DURATION_OPTIONS = Array.from({ length: 33 }, (_, i) => {
+  const totalMinutes = 4 * 60 + i * 15; // de 4h até 12h em steps de 15 min
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const value = Number((totalMinutes / 60).toFixed(2));
+  const label = `${hours}:${String(minutes).padStart(2, '0')}`;
+  return { value, label };
+});
 
 function HRVField({ value, onChange }) {
   const [showTip, setShowTip] = useState(false);
