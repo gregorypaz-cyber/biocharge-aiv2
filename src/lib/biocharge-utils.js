@@ -712,30 +712,57 @@ function buildHeadline(masterSignal, checkinLike, recentCheckins = []) {
   );
 }
 
-function buildRecommendation(masterSignal, checkinLike) {
-  const deepSleep = Number(checkinLike?.deep_sleep_pct ?? 0);
-  const soreness = Number(resolveCheckinField(checkinLike, 'muscle_soreness') ?? 0);
+function buildRecommendation(masterSignal, checkinLike, recentCheckins = []) {
+  const ctx = buildNarrativeContext(checkinLike);
+  const recentRecommendations = getRecentTextValues(recentCheckins, 'recommendation', 3);
+
+  let options = [];
 
   if (masterSignal === 'train_high') {
-    return 'Seu corpo acordou com boa margem. Se o aquecimento confirmar, hoje é um bom dia para um estímulo mais forte.';
-  }
-
-  if (masterSignal === 'train_moderate') {
-    if (deepSleep > 0 && deepSleep < 18) {
-      return 'Seu corpo está funcional, mas o sono reduz a margem de intensidade. Moderado é a melhor dose hoje.';
+    options = [
+      'Seu corpo acordou com boa margem. Se o aquecimento confirmar, hoje é um bom dia para um estímulo mais forte.',
+      'Os sinais da manhã sugerem boa capacidade de absorver carga. Se o corpo responder bem no aquecimento, hoje há espaço para intensidade.',
+      'Hoje o contexto favorece um treino mais forte, desde que a execução continue controlada e técnica.',
+      ctx.hrvHigh ? 'Seu RMSSD está favorecendo prontidão. Se o aquecimento encaixar, intensidade pode fazer sentido hoje.' : null,
+    ].filter(Boolean);
+  } else if (masterSignal === 'train_moderate') {
+    if (ctx.deepSleepLow || ctx.hrvLow || ctx.sleepPerfLow) {
+      options = [
+        'Seu corpo está funcional, mas o sono ou os sinais fisiológicos reduzem a margem de intensidade. Moderado é a melhor dose hoje.',
+        'Hoje existe espaço para treinar, mas a recuperação não está larga o suficiente para exagero. Moderado tende a render melhor.',
+        'A leitura do dia favorece consistência com controle. Vale manter o treino sob medida, sem transformar moderado em forte.',
+      ];
+    } else {
+      options = [
+        'Hoje o ganho está em consistência, não em exagero. Um treino moderado tende a render mais do que forçar.',
+        'Seu sistema está estável para sustentar um treino moderado. A melhor resposta hoje vem de controle, não de excesso.',
+        'Você tem margem para treinar bem hoje, mas o melhor custo-benefício ainda está numa dose moderada.',
+      ];
     }
-    return 'Hoje o ganho está em consistência, não em exagero. Um treino moderado tende a render mais do que forçar.';
+  } else if (masterSignal === 'train_light') {
+    options = [
+      'Hoje vale usar movimento leve como manutenção, sem exigir demais do sistema.',
+      'A melhor escolha de hoje é manter o corpo ativo com leveza, priorizando absorção e não intensidade.',
+      'Há espaço para se mover, mas o retorno maior hoje está em preservar margem para amanhã.',
+      ctx.sorenessHigh ? 'Há espaço para movimento, mas a dor muscular sugere manter a sessão curta e leve.' : null,
+    ].filter(Boolean);
+  } else {
+    options = [
+      'Hoje faz mais sentido priorizar descanso ou recuperação ativa do que buscar intensidade.',
+      'Seu corpo tende a responder melhor a recuperação do que a mais carga hoje.',
+      'A melhor decisão hoje é proteger o sistema: recuperar gera mais retorno do que insistir em treino.',
+      ctx.sleepNeedHigh ? 'O sono desta noite pode ter mais impacto do que qualquer treino hoje. Vale priorizar recuperação.' : null,
+      ctx.stressHigh ? 'O stress atual reduz a margem útil do dia. Recuperação e redução de carga fazem mais sentido agora.' : null,
+    ].filter(Boolean);
   }
 
-  if (masterSignal === 'train_light') {
-    if (soreness >= 3) {
-      return 'Há espaço para movimento, mas a dor muscular sugere manter a sessão curta e leve.';
-    }
-    return 'Hoje vale usar movimento leve como manutenção, sem exigir demais do sistema.';
-  }
-
-  return 'Hoje faz mais sentido priorizar descanso ou recuperação ativa do que buscar intensidade.';
+  return pickNarrativeVariant(
+    options,
+    recentRecommendations,
+    makeNarrativeSeed(checkinLike, 29)
+  );
 }
+
 
 function buildTrainingLoadLabel(masterSignal) {
   if (masterSignal === 'train_high') return 'Boa carga / recuperação sustentável';
