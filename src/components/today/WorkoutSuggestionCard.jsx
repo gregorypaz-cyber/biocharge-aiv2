@@ -1079,7 +1079,7 @@ function PrescriptionBlock({
       )}
 
       <p className="text-[10px] text-muted-foreground/60 leading-relaxed border-t border-border/20 pt-2">
-        Isto não é aconselhamento médico. Se sentir dor, tontura ou falta de ar, pare e procure assistência.
+        Use a prescrição como guia de treino. Se algo parecer fora do normal durante a execução, reduza a intensidade ou encerre a sessão.
       </p>
     </div>
   );
