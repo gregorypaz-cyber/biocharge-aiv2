@@ -1246,8 +1246,8 @@ export default function WorkoutSuggestionCard({
         return (
           <div className="space-y-1.5">
             <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
-              {rec.text}
-            </p>
+  Dose sugerida: {rec.text}
+</p>
             {rec.acwrContext && (
               <p className="text-[11px] leading-snug" style={{ color: rec.acwrContext.color }}>
                 {rec.acwrContext.text}
