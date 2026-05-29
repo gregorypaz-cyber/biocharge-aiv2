@@ -588,6 +588,77 @@ function getDailyMasterSignal(checkinLike) {
   return 'recover';
 }
 
+function getRecentTextValues(recentCheckins = [], fieldName, limit = 3) {
+  return (recentCheckins || [])
+    .slice(0, limit)
+    .map((c) => c?.[fieldName])
+    .filter((v) => typeof v === 'string' && v.trim().length > 0);
+}
+
+function buildNarrativeContext(checkinLike) {
+  const deepSleep = Number(checkinLike?.deep_sleep_pct ?? 0);
+  const remSleep = Number(checkinLike?.rem_sleep_pct ?? 0);
+  const soreness = Number(resolveCheckinField(checkinLike, 'muscle_soreness') ?? 0);
+  const stress = Number(resolveCheckinField(checkinLike, 'stress') ?? 0);
+  const sleepNeed = Number(checkinLike?.sleep_need_tonight ?? 0);
+  const fatigue = clamp(checkinLike?.fatigue_score ?? checkinLike?.fatigue ?? 0);
+  const readiness = clamp(checkinLike?.readiness_score ?? checkinLike?.recovery_score ?? 0);
+  const sleepPerf = checkinLike?.sleep_performance_pct ?? null;
+  const hrvTrend = checkinLike?.hrv_trend ?? null;
+  const confidence = checkinLike?.preview_confidence ?? 'low';
+
+  return {
+    deepSleepLow: deepSleep > 0 && deepSleep < 18,
+    remSleepLow: remSleep > 0 && remSleep < 18,
+    sorenessHigh: soreness >= 3,
+    stressHigh: stress >= 4,
+    sleepNeedHigh: sleepNeed >= 8,
+    fatigueHigh: fatigue >= 65,
+    fatigueLow: fatigue > 0 && fatigue <= 25,
+    readinessHigh: readiness >= 82,
+    readinessMid: readiness >= 65,
+    sleepPerfHigh: sleepPerf != null && sleepPerf >= 85,
+    sleepPerfLow: sleepPerf != null && sleepPerf < 70,
+    hrvHigh: hrvTrend === 'above_avg',
+    hrvLow: hrvTrend === 'below_avg',
+    confidence,
+    restDay: !!checkinLike?.rest_day,
+  };
+}
+
+function makeNarrativeSeed(checkinLike, salt = 0) {
+  const dateStr = String(checkinLike?.date || '');
+  const dateSeed = dateStr.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+  const readiness = Math.round(Number(checkinLike?.readiness_score ?? 0));
+  const recovery = Math.round(Number(checkinLike?.recovery_score ?? 0));
+  const sleep = Math.round(Number(checkinLike?.sleep_score ?? 0));
+  const fatigue = Math.round(Number(checkinLike?.fatigue_score ?? checkinLike?.fatigue ?? 0));
+
+  return dateSeed + readiness + recovery + sleep + fatigue + salt;
+}
+
+function pickNarrativeVariant(options, avoidValues = [], seed = 0) {
+  if (!options || options.length === 0) return null;
+  if (options.length === 1) return options[0];
+
+  const normalizedSeed = Math.abs(seed) % options.length;
+  const avoidSet = new Set((avoidValues || []).map((v) => String(v).trim()));
+
+  // tenta primeiro a escolha determinística
+  const preferred = options[normalizedSeed];
+  if (!avoidSet.has(preferred)) return preferred;
+
+  // se bateu num texto repetido, busca o próximo diferente
+  for (let offset = 1; offset < options.length; offset++) {
+    const candidate = options[(normalizedSeed + offset) % options.length];
+    if (!avoidSet.has(candidate)) return candidate;
+  }
+
+  // fallback: aceita a escolha determinística se todas já apareceram
+  return preferred;
+}
+
 function buildHeadline(masterSignal, checkinLike) {
   const sleepDebtHint = checkinLike?.sleep_need_tonight;
   if (masterSignal === 'train_high') {
