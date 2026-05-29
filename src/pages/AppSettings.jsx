@@ -222,7 +222,13 @@ export default function AppSettings() {
             {['Corrida', 'Musculação', 'Ciclismo', 'Misto'].map((sport) => (
               <button
                 key={sport}
-                onClick={() => setPrefs((p) => ({ ...p, primary_sport: sport }))}
+                onClick={() =>
+  setPrefs((p) => ({
+    ...p,
+    primary_sport: sport,
+    sports: p.sports.includes(sport) ? p.sports : [...p.sports, sport],
+  }))
+}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
                   prefs.primary_sport === sport
                     ? 'border-primary/50 bg-primary/15 text-foreground'
