@@ -1177,9 +1177,9 @@ Regras:
 
       {/* 5. Modo técnico */}
       <ExpandableSection
-        title="Modo técnico"
-        subtitle="Detalhes do dia e contexto mais analítico. Opcional para quando você quiser aprofundar."
-      >
+  title="Detalhes de hoje"
+  subtitle="Baseline, fatores do score e pontos de atenção do check-in atual."
+>
         {todayDetailInsights.baselineInsights?.length > 0 ? (
           <div className="space-y-2">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
