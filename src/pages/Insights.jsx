@@ -797,30 +797,34 @@ const primaryInsight = useMemo(() => {
   }, [analysis]);
 
   const suggestedQuestions = useMemo(() => {
-    const state = analysis?.physioState?.state;
-    const sleepDebt = analysis?.sleepDebt?.debt;
-    const ratio = analysis?.trainingLoad?.ratio ?? null;
+  const state = analysis?.physioState?.state;
+  const sleepDebt = analysis?.sleepDebt?.debt ?? null;
+  const ratio = analysis?.trainingLoad?.ratio ?? null;
 
-    const qs = [];
+  const qs = [];
 
-    if (discoveries[0]?.title) {
-      qs.push(`Explique melhor: ${discoveries[0].title}`);
-    }
+  if (discoveries[0]?.title) {
+    qs.push(`O que significa: ${discoveries[0].title}?`);
+  }
 
-    if (sleepDebt >= 4) {
-      qs.push(`Como reduzir ${Math.round(sleepDebt)}h de dívida de sono?`);
-    }
+  if (sleepDebt != null && sleepDebt >= 4) {
+    qs.push(`Como recuperar ${Math.round(sleepDebt)}h de dívida de sono?`);
+  }
 
-    if (ratio != null && ratio > 1.3) {
-      qs.push('O que a minha carga recente está fazendo com a recuperação?');
-    } else if (state === 'Fatigued' || state === 'Overreached') {
-      qs.push('Por que meu corpo está em fadiga agora?');
-    } else {
-      qs.push('Qual padrão dos meus dados mais merece atenção?');
-    }
+  if (ratio != null && ratio > 1.3) {
+    qs.push('Como ajustar minha carga sem perder evolução?');
+  }
 
-    return qs.slice(0, 3);
-  }, [analysis, discoveries]);
+  if (state === 'Fatigued' || state === 'Overreached') {
+    qs.push('Por que minha recuperação está limitada agora?');
+  }
+
+  qs.push('Qual é o principal limitador da minha performance?');
+  qs.push('O que devo observar nos próximos 7 dias?');
+  qs.push('Como melhorar meu recovery sem parar de treinar?');
+
+  return Array.from(new Set(qs)).slice(0, 4);
+}, [analysis, discoveries]);
 
   async function generateInsights() {
     if (computed.length < 5) return;
