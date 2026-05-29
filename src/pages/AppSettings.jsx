@@ -193,6 +193,86 @@ export default function AppSettings() {
         )}
       </motion.div>
 
+{/* Daily Guidance Profile */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-4"
+      >
+        <div>
+          <p className="font-semibold text-sm">Perfil para leitura diária</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Esses dados substituem o antigo bloco do check-in e ajudam a personalizar a leitura do dia.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Esporte principal
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {['Corrida', 'Musculação', 'Ciclismo', 'Misto'].map((sport) => (
+              <button
+                key={sport}
+                onClick={() => setPrefs((p) => ({ ...p, primary_sport: sport }))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                  prefs.primary_sport === sport
+                    ? 'border-primary/50 bg-primary/15 text-foreground'
+                    : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {sport}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Nível
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {EXPERIENCE_LEVELS.map((level) => (
+              <button
+                key={level.value}
+                onClick={() => setPrefs((p) => ({ ...p, experience_level: level.value }))}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                  prefs.experience_level === level.value
+                    ? 'border-primary/50 bg-primary/15 text-foreground'
+                    : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Objetivo da leitura
+          </p>
+          <div className="space-y-2">
+            {GUIDANCE_GOALS.map((goal) => (
+              <button
+                key={goal.value}
+                onClick={() => setPrefs((p) => ({ ...p, guidance_goal: goal.value }))}
+                className={`w-full text-left p-3 rounded-xl border transition-all ${
+                  prefs.guidance_goal === goal.value
+                    ? 'border-primary/50 bg-primary/10'
+                    : 'border-border bg-secondary hover:border-border/80'
+                }`}
+              >
+                <p className="text-sm font-semibold">{goal.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{goal.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+
       {/* Typical Training Times */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
