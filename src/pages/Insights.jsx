@@ -192,7 +192,8 @@ function PrimaryInsightCard({ item }) {
       ? 'text-yellow-400'
       : 'text-primary';
 
-  const Icon = typeof item.icon === 'function' ? item.icon : null;
+  const iconIsText = typeof item.icon === 'string';
+  const IconComponent = !iconIsText && item.icon ? item.icon : Sparkles;
 
   return (
     <motion.div
@@ -203,10 +204,10 @@ function PrimaryInsightCard({ item }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-2xl bg-background/30 border border-border/30 flex items-center justify-center shrink-0">
-            {Icon ? (
-              <Icon className={cn('w-4 h-4', iconClass)} />
+            {iconIsText ? (
+              <span className="text-lg leading-none">{item.icon}</span>
             ) : (
-              <span className="text-lg leading-none">{item.icon || '✨'}</span>
+              <IconComponent className={cn('w-4 h-4', iconClass)} />
             )}
           </div>
 
