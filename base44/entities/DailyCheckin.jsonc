@@ -70,7 +70,7 @@
     },
     "hrv": {
       "type": "number",
-      "description": "Heart rate variability"
+      "description": "Legacy HRV field kept for compatibility. Prefer hrv_manual / RMSSD when available."
     },
     "body_weight": {
       "type": "number",
