@@ -966,6 +966,9 @@ Regras:
         </div>
       )}
 
+{/* Primary insight */}
+<PrimaryInsightCard item={primaryInsight} />
+
       {/* 1. High-value discoveries */}
       <div className="space-y-3">
         <SectionHeader
