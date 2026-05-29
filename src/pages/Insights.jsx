@@ -1112,7 +1112,7 @@ Regras:
 
         <div className="p-4 space-y-3.5">
           <p className="text-xs text-muted-foreground leading-relaxed">
-  Use o Coach para entender recovery, sono, carga e decisões de treino com base nos seus dados recentes.
+  Use o Coach para transformar seus dados recentes em decisões práticas: recovery, sono, carga e treino.
 </p>
 
           {coachResponse ? (
