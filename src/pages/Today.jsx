@@ -903,19 +903,21 @@ const tomorrowHook = useMemo(() => {
   }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]);
 
   function renderCard(desc) {
-    if (!desc || desc.action === 'exclude') return null;
+    try {
+      if (!desc || desc.action === 'exclude') return null;
 
-    const workoutProps = {
-      checkin: enrichedCheckin,
-      actionableRecs: analysis?.actionableRecs || [],
-      strainTarget,
-      currentStrain: cappedStrain,
-      analysis,
-      userPrefs: user?.preferences || {},
-      todaySessions,
-      allSessions: sortedSessions,
-      dailyVerdict,
-    };
+      const workoutProps = {
+        checkin: enrichedCheckin,
+        actionableRecs: Array.isArray(analysis?.actionableRecs) ? analysis.actionableRecs : [],
+        strainTarget,
+        currentStrain: cappedStrain,
+        analysis,
+        userPrefs: user?.preferences || {},
+        todaySessions,
+        allSessions: sortedSessions,
+        dailyVerdict,
+      };
+
 
     switch (desc.id) {
       case 'execution':
