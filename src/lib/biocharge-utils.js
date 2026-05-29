@@ -932,7 +932,7 @@ Responda apenas com a projeção, sem título, sem bullet points.`;
 
 // ─── Main compute ──────────────────────────────────────────────────────────
 
-export function computeCheckinScores(checkin, recentCheckins, recentSessions) {
+export function computeCheckinScores(checkin, recentCheckins = [], recentSessions = []) {
   const canonicalCheckin = {
     ...checkin,
     energy: resolveCheckinField(checkin, 'energy'),
