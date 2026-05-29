@@ -144,7 +144,7 @@ const tomorrowReason = getTomorrowReason(checkin);
               </p>
               <p className="text-3xl font-black font-mono">{readiness}</p>
 <p className="text-[11px] text-muted-foreground">
-  recuperação {recovery}
+  Recovery base {recovery}
 </p>
 
             </div>
