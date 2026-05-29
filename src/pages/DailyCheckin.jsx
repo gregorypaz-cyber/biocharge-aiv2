@@ -881,31 +881,7 @@ const savePostMutation = useMutation({
           </>
         )}
 
-{/* Preview final */}
-        <div className="space-y-2">
-          <p className="text-[11px] text-muted-foreground px-1">
-            Esta é a leitura que será salva com os dados atuais.
-          </p>
-          <LivePreview preview={preview} />
-        </div>
 
-        {/* Save */}
-        {!savedCheckin && (
-          <Button
-            onClick={() => saveMorningMutation.mutate(form)}
-            disabled={saveMorningMutation.isPending}
-            className="w-full h-13 bg-primary text-primary-foreground font-bold rounded-2xl text-base py-4 hover:bg-primary/90 transition-all hover:scale-[1.01]"
-          >
-            {saveMorningMutation.isPending ? (
-              <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <Save className="w-5 h-5 mr-2" />
-                Salvar plano do dia
-              </>
-            )}
-          </Button>
-        )}
       </div>
     </>
 );
