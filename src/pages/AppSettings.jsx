@@ -84,9 +84,16 @@ export default function AppSettings() {
 
   const savePrefs = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ preferences: prefs });
-    setSaving(false);
-    toast.success('Preferências salvas!');
+
+    try {
+      await base44.auth.updateMe({ preferences: prefs });
+      toast.success('Preferências salvas!');
+    } catch (err) {
+      console.error('savePrefs failed', err);
+      toast.error('Não foi possível salvar agora. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
