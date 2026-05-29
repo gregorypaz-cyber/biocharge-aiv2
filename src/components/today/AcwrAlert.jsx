@@ -1,79 +1,105 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ShieldAlert } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 
 /**
- * Verifica se ACWR ficou acima de 1.30 por 2 ou mais dias consecutivos
- * usando as TrainingSessions dos últimos 28 dias.
+ * Formata uma data local no padrão YYYY-MM-DD.
+ * Evita o uso de toISOString(), que pode deslocar a data por causa de UTC.
+ */
+function formatLocalDate(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Calcula histórico local de ACWR usando TrainingSessions.
  *
- * Não altera o cálculo existente de ACWR — usa apenas TrainingSession.strain_score
- * para replicar a lógica de ACWR local (acute/chronic ratio).
+ * Observação:
+ * - Este cálculo é usado apenas para detectar consecutividade.
+ * - O ratio de hoje pode ser substituído por analysisRatio vindo da engine principal.
+ * - Não altera o cálculo oficial do app.
  */
 function computeAcwrHistory(sessions) {
   if (!sessions || sessions.length === 0) return [];
 
-  // Agrupar strain por data
   const strainByDate = {};
-  for (const s of sessions) {
-    if (!s.date || !s.strain_score) continue;
-    strainByDate[s.date] = (strainByDate[s.date] || 0) + s.strain_score;
+
+  for (const session of sessions) {
+    if (!session.date || session.strain_score == null) continue;
+
+    strainByDate[session.date] =
+      (strainByDate[session.date] || 0) + session.strain_score;
   }
 
-  // Últimos 28 dias
   const results = [];
   const today = new Date();
-  for (let i = 0; i < 28; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
 
-    // Acute: média dos últimos 7 dias a partir de `key`
-    let acuteSum = 0, acuteDays = 0;
+  for (let i = 0; i < 28; i++) {
+    const currentDate = new Date(today);
+    currentDate.setDate(today.getDate() - i);
+
+    const key = formatLocalDate(currentDate);
+
+    let acuteSum = 0;
+    let acuteDays = 0;
+
     for (let j = 0; j < 7; j++) {
-      const dd = new Date(d);
-      dd.setDate(d.getDate() - j);
-      const dk = dd.toISOString().slice(0, 10);
-      acuteSum += strainByDate[dk] || 0;
-      acuteDays++;
+      const date = new Date(currentDate);
+      date.setDate(currentDate.getDate() - j);
+
+      const dateKey = formatLocalDate(date);
+
+      acuteSum += strainByDate[dateKey] || 0;
+      acuteDays += 1;
     }
+
     const acute = acuteDays > 0 ? acuteSum / acuteDays : 0;
 
-    // Chronic: média dos últimos 28 dias a partir de `key`
-    let chronicSum = 0, chronicDays = 0;
-    for (let j = 0; j < 28; j++) {
-      const dd = new Date(d);
-      dd.setDate(d.getDate() - j);
-      const dk = dd.toISOString().slice(0, 10);
-      chronicSum += strainByDate[dk] || 0;
-      chronicDays++;
-    }
-    const chronic = chronicDays > 0 ? chronicSum / chronicDays : 0;
+    let chronicSum = 0;
+    let chronicDays = 0;
 
+    for (let j = 0; j < 28; j++) {
+      const date = new Date(currentDate);
+      date.setDate(currentDate.getDate() - j);
+
+      const dateKey = formatLocalDate(date);
+
+      chronicSum += strainByDate[dateKey] || 0;
+      chronicDays += 1;
+    }
+
+    const chronic = chronicDays > 0 ? chronicSum / chronicDays : 0;
     const ratio = chronic > 0.5 ? acute / chronic : null;
-    results.push({ date: key, ratio });
+
+    results.push({
+      date: key,
+      ratio,
+    });
   }
 
-  return results; // índice 0 = hoje, 1 = ontem, ...
+  return results;
 }
 
 /**
  * Retorna o alerta de ACWR consecutivo, ou null se não aplicável.
- * - level: 'warning' (>=1.30 por 2+ dias) | 'critical' (>=1.50 por 2+ dias)
- * - ratio: valor atual
- * - consecutiveDays: quantos dias consecutivos acima do threshold
+ *
+ * level:
+ * - warning: >= 1.30 por 2+ dias
+ * - critical: >= 1.50 hoje, com 2+ dias acima de 1.30
  */
 export function resolveAcwrAlert(acwrHistory) {
   if (!acwrHistory || acwrHistory.length < 2) return null;
 
   const today = acwrHistory[0];
-  if (!today?.ratio) return null;
+  if (today?.ratio == null) return null;
 
-  // Contar dias consecutivos acima de 1.30 (incluindo hoje)
   let consecutiveDays = 0;
+
   for (const entry of acwrHistory) {
-    if (entry.ratio != null && entry.ratio >= 1.30) {
-      consecutiveDays++;
+    if (entry.ratio != null && entry.ratio >= 1.3) {
+      consecutiveDays += 1;
     } else {
       break;
     }
@@ -82,10 +108,29 @@ export function resolveAcwrAlert(acwrHistory) {
   if (consecutiveDays < 2) return null;
 
   const ratio = today.ratio;
+
   return {
-    level: ratio >= 1.50 ? 'critical' : 'warning',
+    level: ratio >= 1.5 ? 'critical' : 'warning',
     ratio,
     consecutiveDays,
+  };
+}
+
+function buildAlertCopy(alert) {
+  const isCritical = alert.level === 'critical';
+
+  if (isCritical) {
+    return {
+      title: `Carga recente muito alta — ACWR ${alert.ratio.toFixed(2)}`,
+      body: 'Seu volume recente está acima da zona ideal. Hoje faz mais sentido proteger recuperação do que adicionar intensidade.',
+      footer: `${alert.consecutiveDays} dias seguidos acima do limite de controle · prefira recuperação ou opção C.`,
+    };
+  }
+
+  return {
+    title: `Carga recente acima do ideal — ACWR ${alert.ratio.toFixed(2)}`,
+    body: 'Sua carga está elevada por mais de um dia seguido. Reduzir a dose hoje ajuda a evitar fadiga acumulada nos próximos dias.',
+    footer: `${alert.consecutiveDays} dias seguidos acima da zona de controle · opções B ou C fazem mais sentido.`,
   };
 }
 
@@ -93,14 +138,14 @@ export default function AcwrAlert({ todaySessions, allSessions, analysisRatio })
   const [alert, setAlert] = useState(null);
 
   useEffect(() => {
-    // Preferir analysisRatio (já calculado) para comparação de hoje,
-    // mas calcular histórico via sessions para detectar consecutividade
     const sessions = allSessions || todaySessions || [];
     const history = computeAcwrHistory(sessions);
 
-    // Sobrescrever o ratio de hoje com o do analysis engine se disponível
     if (analysisRatio != null && history.length > 0) {
-      history[0] = { ...history[0], ratio: analysisRatio };
+      history[0] = {
+        ...history[0],
+        ratio: analysisRatio,
+      };
     }
 
     const result = resolveAcwrAlert(history);
@@ -110,6 +155,7 @@ export default function AcwrAlert({ todaySessions, allSessions, analysisRatio })
   if (!alert) return null;
 
   const isCritical = alert.level === 'critical';
+  const copy = buildAlertCopy(alert);
 
   return (
     <motion.div
@@ -122,20 +168,28 @@ export default function AcwrAlert({ todaySessions, allSessions, analysisRatio })
       }`}
     >
       <div className="shrink-0 mt-0.5">
-        {isCritical
-          ? <ShieldAlert className="w-4 h-4 text-red-400" />
-          : <AlertTriangle className="w-4 h-4 text-orange-400" />
-        }
+        {isCritical ? (
+          <ShieldAlert className="w-4 h-4 text-red-400" />
+        ) : (
+          <AlertTriangle className="w-4 h-4 text-orange-400" />
+        )}
       </div>
-      <div className="space-y-0.5">
-        <p className={`text-sm font-bold leading-snug ${isCritical ? 'text-red-400' : 'text-orange-400'}`}>
-          {isCritical
-            ? `Sua carga acumulada está em zona de risco (ACWR: ${alert.ratio.toFixed(2)}). O app recomenda fortemente descanso ou recuperação ativa hoje.`
-            : `Atenção: sua carga das últimas 2 semanas está acima do ideal (ACWR: ${alert.ratio.toFixed(2)}). Reduzir a intensidade hoje diminui o risco de lesão.`
-          }
+
+      <div className="space-y-1">
+        <p
+          className={`text-sm font-bold leading-snug ${
+            isCritical ? 'text-red-400' : 'text-orange-400'
+          }`}
+        >
+          {copy.title}
         </p>
+
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {copy.body}
+        </p>
+
         <p className="text-[11px] text-muted-foreground">
-          {alert.consecutiveDays} dias consecutivos acima do limite seguro · Opções B ou C recomendadas
+          {copy.footer}
         </p>
       </div>
     </motion.div>
