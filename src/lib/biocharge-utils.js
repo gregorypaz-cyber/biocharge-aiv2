@@ -1133,10 +1133,12 @@ const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, rec
   const normalized = normalizeDailySignals(normalizedInput, recentCheckins);
 
   return normalized;
+}
 
 // ─── Smart insights ────────────────────────────────────────────────────────
 
 export function getSmartMessage(checkin, recentCheckins) {
+
   const messages = [];
 
   if (recentCheckins && recentCheckins.length >= 4) {
