@@ -1145,10 +1145,30 @@ const baevsky = calculateBaevskyProxy(
 
   const strainAccumulated = canonicalCheckin.daily_strain_accumulated ?? 0;
   const sleepNeedTonight = calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins);
-  const nextDayForecast = calcNextDayForecast(checkinLike, recentCheckins);
-  const delayedFatigueAlert = calcDelayedFatigueAlert(canonicalCheckin, recentCheckins, recentSessions);
-const previewConfidence = getPreviewConfidence(canonicalCheckin, recentCheckins);
-const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, recentCheckins);
+  const previewConfidence = getPreviewConfidence(canonicalCheckin, recentCheckins);
+  const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, recentCheckins);
+
+  const forecastInput = {
+    ...canonicalCheckin,
+    recovery_score: recoveryScore,
+    readiness_score: readinessScore,
+    sleep_performance_pct: sleepPerformance,
+    fatigue_score: fatigueScore,
+    stress_score: stressScore,
+    sleep_need_tonight: sleepNeedTonight,
+    hrv_trend: hrvTrend,
+    preview_confidence: previewConfidence,
+  };
+
+  const nextDayForecast =
+    canonicalCheckin.next_day_forecast ??
+    calcNextDayForecast(forecastInput, recentCheckins);
+
+  const delayedFatigueAlert = calcDelayedFatigueAlert(
+    canonicalCheckin,
+    recentCheckins,
+    recentSessions
+  );
 
 
   const normalizedInput = {
