@@ -676,11 +676,34 @@ const savePostMutation = useMutation({
         </CheckinStep>
 
 {/* Mini Preview */}
-        <LivePreview preview={preview} compact />
+<LivePreview preview={preview} compact />
 
+{/* Quick save */}
+{!savedCheckin && (
+  <div className="space-y-2">
+    <Button
+      onClick={() => saveMorningMutation.mutate(form)}
+      disabled={saveMorningMutation.isPending}
+      className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all"
+    >
+      {saveMorningMutation.isPending ? (
+        <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+      ) : (
+        <>
+          <Save className="w-4 h-4 mr-2" />
+          Salvar plano do dia
+        </>
+      )}
+    </Button>
 
-        {/* Advanced toggle */}
-        <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+    <p className="text-[11px] text-muted-foreground px-1">
+      Se quiser, refine a leitura abaixo antes de salvar.
+    </p>
+  </div>
+)}
+
+{/* Advanced toggle */}
+<div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
           <button
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
