@@ -776,7 +776,7 @@ function PrescriptionBlock({
 
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Plano de treino de hoje
+          Plano recomendado de hoje
         </span>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>
           {conf}
