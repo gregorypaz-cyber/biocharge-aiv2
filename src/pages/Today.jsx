@@ -1133,11 +1133,11 @@ function ExecutionCard() {
 
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              prescriptionScore >= 82
-                ? 'bg-emerald-500/15 text-emerald-400'
-                : prescriptionScore >= 65
-                ? 'bg-yellow-500/15 text-yellow-400'
-                : 'bg-red-500/15 text-red-400'
+              displayedScore >= 82
+  ? 'bg-emerald-500/15 text-emerald-400'
+  : displayedScore >= 65
+  ? 'bg-yellow-500/15 text-yellow-400'
+  : 'bg-red-500/15 text-red-400'
             }`}
           >
             {readinessFaixa}
