@@ -1,6 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 
-const PREVIEW_CHARS = 420;
+const PREVIEW_CHARS = 360;
 
 function stripMarkdown(text) {
   return String(text || '')
@@ -31,15 +31,17 @@ export default function AnalysisBody({ text, expanded, onExpand }) {
           {isLong && (
             <button
               onClick={onExpand}
-              className="w-full text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10"
+              className="w-full text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10"
             >
-              Ver análise completa ↓
+              Abrir leitura completa
             </button>
           )}
         </div>
       ) : (
-        <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85">
-          <ReactMarkdown>{text}</ReactMarkdown>
+        <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-4">
+          <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85 [&_li]:text-foreground/80">
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
         </div>
       )}
     </div>
