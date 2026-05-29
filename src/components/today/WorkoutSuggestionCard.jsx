@@ -240,7 +240,7 @@ function CompletionForm({ optKey, onSave, onCancel, saving }) {
   );
 }
 
-function DailyInsightBlock({ presc, analysis, recommendedKey }) {
+function DailyInsightBlock({ presc, analysis, onMarkDone, recommendedKey }) {
   if (!presc || !analysis) return null;
 
   try {
