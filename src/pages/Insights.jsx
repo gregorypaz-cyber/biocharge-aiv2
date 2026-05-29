@@ -800,11 +800,11 @@ Regras:
     <div className="space-y-4 max-w-2xl mx-auto">
       {/* Header */}
 <div>
-        <h1 className="text-2xl font-black tracking-tight">Insights</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Menos dashboard, mais aprendizado: o que realmente está guiando sua recuperação agora.
-        </p>
-      </div>
+  <h1 className="text-2xl font-black tracking-tight">Insights</h1>
+  <p className="text-sm text-muted-foreground mt-1">
+    Padrões de recovery, sono e carga para entender o que está mudando no seu corpo.
+  </p>
+</div>
 
       {/* Loading */}
       {analysisLoading && (
