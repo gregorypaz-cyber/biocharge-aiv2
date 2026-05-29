@@ -428,8 +428,11 @@ export default function Today() {
   const sessionsKey = `${sortedSessions.length}:${sortedSessions[0]?.date || ''}:${sortedSessions[0]?.strain_score || ''}`;
 
   useEffect(() => {
-    if (computed.length === 0) {
+    // Sem check-ins suficientes para análise histórica robusta
+    if (computed.length < 2) {
       setAnalysis(null);
+      setAnalysisLoading(false);
+      setAnalysisError(null);
       return;
     }
 
@@ -437,9 +440,18 @@ export default function Today() {
     setAnalysisLoading(true);
     setAnalysisError(null);
 
-    runPhysiologicalAnalysisAsync(computed, sortedSessions, { useWorker: true, cacheTTLMinutes: 15 })
+    runPhysiologicalAnalysisAsync(computed, sortedSessions, {
+      useWorker: true,
+      cacheTTLMinutes: 15,
+    })
       .then((result) => {
-        if (!cancelled) setAnalysis(result);
+        if (!cancelled) {
+          if (result && typeof result === 'object') {
+            setAnalysis(result);
+          } else {
+            setAnalysis(null);
+          }
+        }
       })
       .catch((err) => {
         if (!cancelled) {
