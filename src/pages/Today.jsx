@@ -1218,12 +1218,12 @@ function ExecutionCard() {
             style={{
               width: `${displayedScore}%`,
               backgroundColor: isRestMode
-                ? 'hsl(215,30%,45%)'
-                : prescriptionScore >= 82
-                ? 'hsl(142,70%,50%)'
-                : prescriptionScore >= 65
-                ? 'hsl(45,93%,58%)'
-                : 'hsl(0,72%,55%)',
+  ? 'hsl(215,30%,45%)'
+  : displayedScore >= 82
+  ? 'hsl(142,70%,50%)'
+  : displayedScore >= 65
+  ? 'hsl(45,93%,58%)'
+  : 'hsl(0,72%,55%)',
             }}
           />
         </div>
