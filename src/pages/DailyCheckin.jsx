@@ -948,6 +948,15 @@ const savePostMutation = useMutation({
           </>
         )}
 
+{/* Preview final */}
+        <div className="space-y-2">
+          <p className="text-[11px] text-muted-foreground px-1">
+            Esta é a leitura que será salva com os dados atuais.
+          </p>
+          <LivePreview preview={preview} />
+        </div>
+``
+
         {/* Save */}
         {!savedCheckin && (
           <Button
@@ -1014,4 +1023,3 @@ function TodayPreviewBlock({ checkin, onGoToToday }) {
       </button>
     </div>
   );
-}
