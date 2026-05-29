@@ -393,7 +393,7 @@ const savePostMutation = useMutation({
 
     if (navigator.vibrate) navigator.vibrate(40);
 
-    toast.success('✅ Pós-treino salvo!');
+    toast.success('✅ Resposta pós-treino salva — a leitura de amanhã ficou mais precisa.')
     navigate('/today');
   },
 });
