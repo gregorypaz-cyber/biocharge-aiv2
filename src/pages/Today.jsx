@@ -213,21 +213,26 @@ function getDailyVerdict({
   todaySessions,
 }) {
   
-// ✅ COLE EXATAMENTE AQUI
-  if (checkin?.decision_mode) {
-    return {
-      mode: checkin.decision_mode,
-      workoutIntensity:
-        checkin.decision_mode === 'train_high' ? 'high' :
-        checkin.decision_mode === 'train_moderate' ? 'moderate' :
-        checkin.decision_mode === 'train_light' ? 'low' :
-        'low',
-      headline: checkin.headline_today || 'Direção do dia definida',
-      subheadline: 'Baseado no seu check-in mais recente.',
-      rationale: 'Engine principal',
-      caution: null,
-    };
-  }
+ const canUseStoredDecision =
+  checkin?.decision_mode &&
+  todaySessions.length === 0 &&
+  phase === 'PLANNING' &&
+  !(intent === 'recovery' && locked);
+
+if (canUseStoredDecision) {
+  return {
+    mode: checkin.decision_mode,
+    workoutIntensity:
+      checkin.decision_mode === 'train_high' ? 'high' :
+      checkin.decision_mode === 'train_moderate' ? 'moderate' :
+      checkin.decision_mode === 'train_light' ? 'low' :
+      'low',
+    headline: checkin.headline_today || 'Direção do dia definida',
+    subheadline: 'Baseado no seu check-in mais recente.',
+    rationale: 'Engine principal',
+    caution: null,
+  };
+}
 
   const sleepDebt = getSleepDebtHours(analysis);
   const acwr = analysis?.trainingLoad?.ratio ?? null;
