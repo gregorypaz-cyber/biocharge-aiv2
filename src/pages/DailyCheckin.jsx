@@ -780,8 +780,9 @@ const savePostMutation = useMutation({
 
         </CheckinStep>
 
-        {/* Live Preview */}
-        <LivePreview preview={preview} />
+{/* Mini Preview */}
+        <LivePreview preview={preview} compact />
+
 
         {/* Advanced toggle */}
         <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
