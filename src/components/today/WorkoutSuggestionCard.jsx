@@ -857,18 +857,36 @@ function PrescriptionBlock({
       )}
 
       {(() => {
-        const explanation = [];
-        if ((analysis?.trainingLoad?.ratio ?? 0) > 1.3) explanation.push('Carga recente elevada');
-        if (getSleepDebtHours(analysis) > 2) explanation.push('Déficit de sono acumulado');
-        if (analysis?.physioState?.state === 'Fatigued') explanation.push('Sinais de fadiga');
-        if (analysis?.physioState?.state === 'Recovered') explanation.push('Boa recuperação disponível');
+  const factors = [];
 
-        return explanation.length > 0 ? (
-          <div className="text-xs text-muted-foreground">
-            {explanation.join(' • ')}
-          </div>
-        ) : null;
-      })()}
+  if ((analysis?.trainingLoad?.ratio ?? 0) > 1.3) {
+    factors.push('carga recente elevada');
+  }
+
+  if (getSleepDebtHours(analysis) > 2) {
+    factors.push('déficit de sono acumulado');
+  }
+
+  if (analysis?.physioState?.state === 'Fatigued') {
+    factors.push('sinais de fadiga');
+  }
+
+  if (analysis?.physioState?.state === 'Recovered') {
+    factors.push('boa recuperação disponível');
+  }
+
+  return factors.length > 0 ? (
+    <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
+        Fatores considerados
+      </p>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {factors.join(' · ')}
+      </p>
+    </div>
+  ) : null;
+})()}
 
       <div className="space-y-2" role="radiogroup" aria-label="Opções de treino">
         {(() => {
