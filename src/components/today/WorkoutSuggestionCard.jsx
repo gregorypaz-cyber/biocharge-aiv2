@@ -1242,20 +1242,27 @@ export default function WorkoutSuggestionCard({
       <div className="h-px bg-border/40" />
 
       {(() => {
-        const rec = resolveReadinessRecommendation(checkin, analysis);
-        return (
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
-  Dose sugerida: {rec.text}
-</p>
-            {rec.acwrContext && (
-              <p className="text-[11px] leading-snug" style={{ color: rec.acwrContext.color }}>
-                {rec.acwrContext.text}
-              </p>
-            )}
-          </div>
-        );
-      })()}
+  const rec = resolveReadinessRecommendation(checkin, analysis);
+
+  return (
+    <div className="rounded-xl bg-secondary/35 border border-border/35 px-3 py-2.5 space-y-1.5">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        Contexto da dose
+      </p>
+
+      <p className="text-xs font-semibold leading-relaxed" style={{ color: rec.color }}>
+        {rec.text}
+      </p>
+
+      {rec.acwrContext && (
+        <p className="text-[11px] leading-snug" style={{ color: rec.acwrContext.color }}>
+          {rec.acwrContext.text}
+        </p>
+      )}
+    </div>
+  );
+})()}
+
 
       {strainTarget != null && (
         <div className="flex items-center justify-between p-3 rounded-xl bg-black/20 border border-white/5">
