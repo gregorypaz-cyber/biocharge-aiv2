@@ -16,10 +16,10 @@ export default function SecondaryMetrics({ children, count = 0 }) {
   if (!children || count === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-secondary/30 overflow-hidden">
+    <div className="rounded-2xl border border-border/40 bg-secondary/25 overflow-hidden">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-secondary/45 transition-colors"
         aria-expanded={open}
       >
         <div className="flex items-start gap-3">
@@ -30,7 +30,7 @@ export default function SecondaryMetrics({ children, count = 0 }) {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Detalhes do dia
+                Dados avançados
               </span>
 
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-border text-muted-foreground">
@@ -39,7 +39,7 @@ export default function SecondaryMetrics({ children, count = 0 }) {
             </div>
 
             <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-              Métricas, contexto fisiológico e projeções complementares.
+              Métricas, contexto fisiológico e explicação da recomendação.
             </p>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default function SecondaryMetrics({ children, count = 0 }) {
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-1 space-y-3">
+            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border/25">
               {children}
             </div>
           </motion.div>
