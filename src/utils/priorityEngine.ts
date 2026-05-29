@@ -1,13 +1,20 @@
 /**
  * Priority Engine — BioCharge AI
  *
- * Objetivo desta versão:
- * - reduzir contradições na Home
- * - garantir que RECOVERY_DAY e OVERLOAD não exibam treino "normal"
- * - manter no topo apenas 3 blocos principais:
- *   1) execution
- *   2) workout (ou proteção)
- *   3) sleep_forecast
+ * Objetivo:
+ * - manter a tela Hoje simples e orientada à decisão
+ * - garantir que RECOVERY_DAY e OVERLOAD não exibam treino normal
+ * - priorizar pós-treino quando já existe treino registrado no dia
+ *
+ * Fluxo principal sem treino registrado:
+ * 1) execution
+ * 2) workout
+ * 3) sleep_forecast
+ *
+ * Fluxo principal com treino registrado:
+ * 1) execution
+ * 2) workout
+ * 3) post_workout_cta
  */
 
 export type DayPhase = 'PLANNING' | 'OPTIMAL_LOAD' | 'OVERLOAD' | 'RECOVERY_DAY';
@@ -71,39 +78,71 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
   switch (phase) {
     case 'PLANNING':
       return [
-        { id: 'execution',         action: 'show', priority: 1 },
-        { id: 'workout',           action: 'show', priority: 2 },
-        { id: 'sleep_forecast',    action: 'show', priority: 3 },
+        { id: 'execution', action: 'show', priority: 1 },
+        { id: 'workout', action: 'show', priority: 2 },
 
-        { id: 'training_sessions', action: 'show', priority: 4 },
-        { id: 'morning_recovery',  action: 'show', priority: 5 },
-        { id: 'current_state',     action: 'show', priority: 6 },
-        { id: 'why_score',         action: hasAnalysis ? 'show' : 'exclude', priority: 7 },
-        { id: 'hrv_anomaly',       action: hasHrvAnomaly ? 'show' : 'exclude', priority: 8 },
-        { id: 'recovery_demand',   action: hasRecoveryDemandAlert ? 'show' : 'exclude', priority: 9 },
-        { id: 'post_workout_cta',  action: hasWorkoutSessions ? 'show' : 'exclude', priority: 10 },
-        { id: 'narrative',         action: 'exclude', priority: 11 },
+        /**
+         * Se já existe treino registrado hoje, o próximo passo mais importante
+         * é registrar pós-treino. Isso sobe para o bloco principal.
+         */
+        {
+          id: 'post_workout_cta',
+          action: hasWorkoutSessions ? 'show' : 'exclude',
+          priority: 3,
+        },
+
+        /**
+         * Se ainda não existe treino registrado, sono continua como terceiro bloco principal.
+         * Se já existe treino registrado, sono desce para detalhes.
+         */
+        {
+          id: 'sleep_forecast',
+          action: 'show',
+          priority: hasWorkoutSessions ? 4 : 3,
+        },
+
+        { id: 'training_sessions', action: 'show', priority: 5 },
+        { id: 'morning_recovery', action: 'show', priority: 6 },
+        { id: 'current_state', action: 'show', priority: 7 },
+        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 8 },
+        { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
+        {
+          id: 'recovery_demand',
+          action: hasRecoveryDemandAlert ? 'show' : 'exclude',
+          priority: 10,
+        },
+        { id: 'narrative', action: 'exclude', priority: 11 },
       ];
 
     case 'OPTIMAL_LOAD':
       return [
-        { id: 'execution',         action: 'show', priority: 1 },
-        { id: 'workout',           action: 'show', priority: 2 },
-        { id: 'sleep_forecast',    action: 'show', priority: 3 },
+        { id: 'execution', action: 'show', priority: 1 },
+        { id: 'workout', action: 'show', priority: 2 },
 
-        { id: 'post_workout_cta',  action: hasWorkoutSessions ? 'show' : 'exclude', priority: 4 },
+        {
+          id: 'post_workout_cta',
+          action: hasWorkoutSessions ? 'show' : 'exclude',
+          priority: 3,
+        },
+
+        {
+          id: 'sleep_forecast',
+          action: 'show',
+          priority: hasWorkoutSessions ? 4 : 3,
+        },
+
         { id: 'training_sessions', action: 'show', priority: 5 },
-        { id: 'morning_recovery',  action: 'show', priority: 6 },
-        { id: 'current_state',     action: 'show', priority: 7 },
-        { id: 'why_score',         action: hasAnalysis ? 'show' : 'exclude', priority: 8 },
-        { id: 'hrv_anomaly',       action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
-        { id: 'recovery_demand',   action: 'exclude', priority: 10 },
-        { id: 'narrative',         action: 'exclude', priority: 11 },
+        { id: 'morning_recovery', action: 'show', priority: 6 },
+        { id: 'current_state', action: 'show', priority: 7 },
+        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 8 },
+        { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
+        { id: 'recovery_demand', action: 'exclude', priority: 10 },
+        { id: 'narrative', action: 'exclude', priority: 11 },
       ];
 
     case 'OVERLOAD':
       return [
-        { id: 'execution',         action: 'show', priority: 1 },
+        { id: 'execution', action: 'show', priority: 1 },
         {
           id: 'workout',
           action: 'mutate',
@@ -115,21 +154,31 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
             variant: 'protection',
           },
         },
-        { id: 'sleep_forecast',    action: 'show', priority: 3 },
 
-        { id: 'hrv_anomaly',       action: hasHrvAnomaly ? 'show' : 'exclude', priority: 4 },
-        { id: 'training_sessions', action: 'show', priority: 5 },
-        { id: 'post_workout_cta',  action: hasWorkoutSessions ? 'show' : 'exclude', priority: 6 },
-        { id: 'morning_recovery',  action: 'show', priority: 7 },
-        { id: 'current_state',     action: 'show', priority: 8 },
-        { id: 'why_score',         action: hasAnalysis ? 'show' : 'exclude', priority: 9 },
-        { id: 'recovery_demand',   action: 'exclude', priority: 10 },
-        { id: 'narrative',         action: 'exclude', priority: 11 },
+        {
+          id: 'post_workout_cta',
+          action: hasWorkoutSessions ? 'show' : 'exclude',
+          priority: 3,
+        },
+
+        {
+          id: 'sleep_forecast',
+          action: 'show',
+          priority: hasWorkoutSessions ? 4 : 3,
+        },
+
+        { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 5 },
+        { id: 'training_sessions', action: 'show', priority: 6 },
+        { id: 'morning_recovery', action: 'show', priority: 7 },
+        { id: 'current_state', action: 'show', priority: 8 },
+        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 9 },
+        { id: 'recovery_demand', action: 'exclude', priority: 10 },
+        { id: 'narrative', action: 'exclude', priority: 11 },
       ];
 
     case 'RECOVERY_DAY':
       return [
-        { id: 'execution',         action: 'show', priority: 1 },
+        { id: 'execution', action: 'show', priority: 1 },
         {
           id: 'workout',
           action: 'mutate',
@@ -141,16 +190,26 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
             variant: 'protection',
           },
         },
-        { id: 'sleep_forecast',    action: 'show', priority: 3 },
 
-        { id: 'hrv_anomaly',       action: hasHrvAnomaly ? 'show' : 'exclude', priority: 4 },
-        { id: 'training_sessions', action: 'show', priority: 5 },
-        { id: 'post_workout_cta',  action: hasWorkoutSessions ? 'show' : 'exclude', priority: 6 },
-        { id: 'morning_recovery',  action: 'show', priority: 7 },
-        { id: 'current_state',     action: 'show', priority: 8 },
-        { id: 'why_score',         action: hasAnalysis ? 'show' : 'exclude', priority: 9 },
-        { id: 'recovery_demand',   action: 'exclude', priority: 10 },
-        { id: 'narrative',         action: 'exclude', priority: 11 },
+        {
+          id: 'post_workout_cta',
+          action: hasWorkoutSessions ? 'show' : 'exclude',
+          priority: 3,
+        },
+
+        {
+          id: 'sleep_forecast',
+          action: 'show',
+          priority: hasWorkoutSessions ? 4 : 3,
+        },
+
+        { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 5 },
+        { id: 'training_sessions', action: 'show', priority: 6 },
+        { id: 'morning_recovery', action: 'show', priority: 7 },
+        { id: 'current_state', action: 'show', priority: 8 },
+        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 9 },
+        { id: 'recovery_demand', action: 'exclude', priority: 10 },
+        { id: 'narrative', action: 'exclude', priority: 11 },
       ];
 
     default:
@@ -162,7 +221,7 @@ const MAX_PRIMARY = 3;
 
 export function buildCardLayout(input: PriorityEngineInput): PriorityResult {
   const allCards = rulesForPhase(input.phase, input)
-    .filter((c) => c.action !== 'exclude')
+    .filter((card) => card.action !== 'exclude')
     .sort((a, b) => a.priority - b.priority);
 
   const primary = allCards.slice(0, MAX_PRIMARY);
@@ -173,9 +232,11 @@ export function buildCardLayout(input: PriorityEngineInput): PriorityResult {
 
 export function resolveWorkoutIntensity(analysis: any, prescription: any): WorkoutIntensity {
   if (prescription?.recommendedKey) {
-    const opt = prescription.options?.find((o: any) => o.key === prescription.recommendedKey);
+    const opt = prescription.options?.find((option: any) => option.key === prescription.recommendedKey);
+
     if (opt?.intensity?.range) {
       const max = opt.intensity.range[1];
+
       if (max >= 8) return 'high';
       if (max >= 6) return 'moderate';
       return 'low';
@@ -183,6 +244,7 @@ export function resolveWorkoutIntensity(analysis: any, prescription: any): Worko
   }
 
   const state = analysis?.physioState?.state;
+
   if (!state) return 'unknown';
 
   if (['Recovered', 'Activated'].includes(state)) return 'high';
