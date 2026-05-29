@@ -1145,7 +1145,7 @@ const baevsky = calculateBaevskyProxy(
 
   const strainAccumulated = canonicalCheckin.daily_strain_accumulated ?? 0;
   const sleepNeedTonight = calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins);
-  const nextDayForecast = calcNextDayForecast(recoveryScore, sleepNeedTonight);
+  const nextDayForecast = calcNextDayForecast(checkinLike, recentCheckins);
   const delayedFatigueAlert = calcDelayedFatigueAlert(canonicalCheckin, recentCheckins, recentSessions);
 const previewConfidence = getPreviewConfidence(canonicalCheckin, recentCheckins);
 const previewConfidenceReason = getPreviewConfidenceReason(canonicalCheckin, recentCheckins);
