@@ -185,7 +185,7 @@ export default function DailyCheckin() {
   });
   const { form, postForm } = checkinState;
 
-  const [sleepHoursText, setSleepHoursText] = useState(
+const [sleepHoursText, setSleepHoursText] = useState(
     formatHoursToSleepDuration(editData?.sleep_hours ?? DEFAULT_FORM.sleep_hours)
   );
 
