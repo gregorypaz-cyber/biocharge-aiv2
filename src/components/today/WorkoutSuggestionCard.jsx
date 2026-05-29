@@ -1176,7 +1176,7 @@ export default function WorkoutSuggestionCard({
         <div className="flex items-center gap-2">
           <Dumbbell className="w-4 h-4" style={{ color: unifiedHeader.color }} />
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Treino sugerido
+            Plano recomendado
           </span>
         </div>
 
@@ -1191,7 +1191,7 @@ export default function WorkoutSuggestionCard({
 
       <div className="space-y-1">
         <p className="text-sm font-semibold text-foreground/90">
-          Melhor dose para hoje
+          Execute esta dose hoje
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           {unifiedHeader.subtitle || cfg.detail}
