@@ -902,168 +902,26 @@ const tomorrowHook = useMemo(() => {
     return `${sessionsCount} de 3 treinos esta semana — você está no ritmo.${trend}`;
   }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]);
 
- function renderCard(desc) {
-    try {
-      if (!desc || desc.action === 'exclude') return null;
+function renderCard(desc) {
+    if (!desc || desc.action === 'exclude') return null;
 
-      const workoutProps = {
-        checkin: enrichedCheckin,
-        actionableRecs: Array.isArray(analysis?.actionableRecs) ? analysis.actionableRecs : [],
-        strainTarget,
-        currentStrain: cappedStrain,
-        analysis,
-        userPrefs: user?.preferences || {},
-        todaySessions,
-        allSessions: sortedSessions,
-        dailyVerdict,
-      };
-
-      switch (desc.id) {
-        case 'execution':
-          return <ExecutionCard key="execution" />;
-
-        case 'workout': {
-          const workoutEl =
-            desc.action === 'mutate' ? (
-              <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
-            ) : (
-              <WorkoutSuggestionCard key="workout" {...workoutProps} />
-            );
-
-          return (
-            <section
-              key="workout-wrapper"
-              id="today-workout-prescription"
-              className="space-y-3"
-            >
-              <div className="px-1 space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                  Prescrição do dia
-                </p>
-                <h3 className="text-base font-black tracking-tight">
-                  Opções A, B e C para executar hoje
-                </h3>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Seu estado do corpo define a margem. Agora escolha a dose que melhor encaixa no contexto de hoje.
-                </p>
-              </div>
-
-              {workoutEl}
-
-              {weeklyContextMsg && (
-                <p className="text-[11px] text-muted-foreground leading-relaxed px-1">
-                  {weeklyContextMsg}
-                </p>
-              )}
-            </section>
-          );
-        }
-
-        case 'morning_recovery':
-          return <MorningRecoveryCard key="morning_recovery" checkin={enrichedCheckin} delta={recoveryDelta} />;
-
-        case 'sleep_forecast':
-          return <SleepForecastCard key="sleep_forecast" checkin={enrichedCheckin} />;
-
-        case 'training_sessions':
-          return (
-            <div key="training_sessions" className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}>
-              <TrainingSessionsList
-                checkin={enrichedCheckin}
-                sessions={todaySessions}
-                onUpdate={() => {
-                  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-                  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-                }}
-              />
-            </div>
-          );
-
-        case 'narrative':
-          return analysis?.narrative ? <NarrativeCard key="narrative" narrative={analysis.narrative} /> : null;
-
-        case 'why_score':
-          return analysis?.whyScore?.length > 0
-            ? <WhyScoreCard key="why_score" whyScore={analysis.whyScore} recoveryScore={displayedScore} />
-            : null;
-
-        case 'current_state':
-          return <CurrentStateCard key="current_state" checkin={enrichedCheckin} totalStrain={totalStrain} />;
-
-        case 'hrv_anomaly':
-          return analysis?.hrvAnomaly ? (
-            <motion.div
-              key="hrv_anomaly"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`rounded-2xl border p-4 flex gap-3 ${
-                analysis.hrvAnomaly.alert.type === 'critical'
-                  ? 'border-red-500/40 bg-red-500/8'
-                  : 'border-yellow-500/40 bg-yellow-500/8'
-              }`}
-            >
-              <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
-              <div>
-                <p className={`text-sm font-semibold ${
-                  analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
-                }`}>
-                  {analysis.hrvAnomaly.alert.title}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
-              </div>
-            </motion.div>
-          ) : null;
-
-        case 'recovery_demand':
-          return (enrichedCheckin.recovery_demand || 0) > morningRecovery ? (
-            <motion.div
-              key="recovery_demand"
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
-            >
-              <span className="text-xl">🚨</span>
-              <div>
-                <p className="text-sm font-semibold text-red-400">Carga acima da recuperação disponível</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Demanda {enrichedCheckin.recovery_demand} vs recuperação da manhã {displayedScore}. Hoje vale proteger.
-                </p>
-              </div>
-            </motion.div>
-          ) : null;
-
-        case 'post_workout_cta':
-          return todaySessions.length > 0 ? (
-            <Link
-              key="post_workout_cta"
-              to="/checkin?mode=post"
-              className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-lg">🏁</span>
-                <div>
-                  <p className="text-sm font-semibold">Registrar pós-treino</p>
-                  <p className="text-xs text-muted-foreground">~30s · melhora os insights de amanhã</p>
-                </div>
-              </div>
-              <span className="text-primary text-sm font-bold">→</span>
-            </Link>
-          ) : null;
-
-        default:
-          return null;
-      }
-    } catch (err) {
-      console.warn('Today: renderCard failed', desc?.id, err);
-      return null;
-    }
-  }
+    const workoutProps = {
+      checkin: enrichedCheckin,
+      actionableRecs: Array.isArray(analysis?.actionableRecs) ? analysis.actionableRecs : [],
+      strainTarget,
+      currentStrain: cappedStrain,
+      analysis,
+      userPrefs: user?.preferences || {},
+      todaySessions,
+      allSessions: sortedSessions,
+      dailyVerdict,
+    };
 
     switch (desc.id) {
       case 'execution':
         return <ExecutionCard key="execution" />;
 
-case 'workout': {
+      case 'workout': {
         const workoutEl =
           desc.action === 'mutate' ? (
             <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
@@ -1081,12 +939,12 @@ case 'workout': {
               <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
                 Prescrição do dia
               </p>
-<h3 className="text-base font-black tracking-tight">
-  Opções A, B e C para executar hoje
-</h3>
-<p className="text-[11px] text-muted-foreground leading-relaxed">
-  Seu estado do corpo define a margem. Agora escolha a dose que melhor encaixa no contexto de hoje.
-</p>
+              <h3 className="text-base font-black tracking-tight">
+                Opções A, B e C para executar hoje
+              </h3>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Seu estado do corpo define a margem. Agora escolha a dose que melhor encaixa no contexto de hoje.
+              </p>
             </div>
 
             {workoutEl}
@@ -1101,14 +959,23 @@ case 'workout': {
       }
 
       case 'morning_recovery':
-        return <MorningRecoveryCard key="morning_recovery" checkin={enrichedCheckin} delta={recoveryDelta} />;
+        return (
+          <MorningRecoveryCard
+            key="morning_recovery"
+            checkin={enrichedCheckin}
+            delta={recoveryDelta}
+          />
+        );
 
       case 'sleep_forecast':
         return <SleepForecastCard key="sleep_forecast" checkin={enrichedCheckin} />;
 
       case 'training_sessions':
         return (
-          <div key="training_sessions" className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}>
+          <div
+            key="training_sessions"
+            className={cn('rounded-2xl border bg-card p-4', phaseCfg.accentBorder)}
+          >
             <TrainingSessionsList
               checkin={enrichedCheckin}
               sessions={todaySessions}
@@ -1121,15 +988,27 @@ case 'workout': {
         );
 
       case 'narrative':
-        return analysis?.narrative ? <NarrativeCard key="narrative" narrative={analysis.narrative} /> : null;
+        return analysis?.narrative ? (
+          <NarrativeCard key="narrative" narrative={analysis.narrative} />
+        ) : null;
 
       case 'why_score':
-        return (analysis?.whyScore?.length > 0)
-          ? <WhyScoreCard key="why_score" whyScore={analysis.whyScore} recoveryScore={displayedScore} />
-          : null;
+        return analysis?.whyScore?.length > 0 ? (
+          <WhyScoreCard
+            key="why_score"
+            whyScore={analysis.whyScore}
+            recoveryScore={displayedScore}
+          />
+        ) : null;
 
       case 'current_state':
-        return <CurrentStateCard key="current_state" checkin={enrichedCheckin} totalStrain={totalStrain} />;
+        return (
+          <CurrentStateCard
+            key="current_state"
+            checkin={enrichedCheckin}
+            totalStrain={totalStrain}
+          />
+        );
 
       case 'hrv_anomaly':
         return analysis?.hrvAnomaly ? (
@@ -1145,12 +1024,18 @@ case 'workout': {
           >
             <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
             <div>
-              <p className={`text-sm font-semibold ${
-                analysis.hrvAnomaly.alert.type === 'critical' ? 'text-red-400' : 'text-yellow-400'
-              }`}>
+              <p
+                className={`text-sm font-semibold ${
+                  analysis.hrvAnomaly.alert.type === 'critical'
+                    ? 'text-red-400'
+                    : 'text-yellow-400'
+                }`}
+              >
                 {analysis.hrvAnomaly.alert.title}
               </p>
-              <p className="text-xs text-muted-foreground mt-0.5">{analysis.hrvAnomaly.alert.text}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {analysis.hrvAnomaly.alert.text}
+              </p>
             </div>
           </motion.div>
         ) : null;
@@ -1165,7 +1050,9 @@ case 'workout': {
           >
             <span className="text-xl">🚨</span>
             <div>
-              <p className="text-sm font-semibold text-red-400">Carga acima da recuperação disponível</p>
+              <p className="text-sm font-semibold text-red-400">
+                Carga acima da recuperação disponível
+              </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Demanda {enrichedCheckin.recovery_demand} vs recuperação da manhã {displayedScore}. Hoje vale proteger.
               </p>
@@ -1184,7 +1071,9 @@ case 'workout': {
               <span className="text-lg">🏁</span>
               <div>
                 <p className="text-sm font-semibold">Registrar pós-treino</p>
-                <p className="text-xs text-muted-foreground">~30s · melhora os insights de amanhã</p>
+                <p className="text-xs text-muted-foreground">
+                  ~30s · melhora os insights de amanhã
+                </p>
               </div>
             </div>
             <span className="text-primary text-sm font-bold">→</span>
@@ -1195,7 +1084,7 @@ case 'workout': {
         return null;
     }
   }
-
+ 
 function ExecutionCard() {
   return (
     <motion.div
@@ -1694,3 +1583,4 @@ if (isLoading) {
       )}
     </div>
   );
+}
