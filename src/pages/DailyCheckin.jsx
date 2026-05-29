@@ -551,13 +551,13 @@ const savePostMutation = useMutation({
         </div>
 
 <div className="px-1 space-y-1">
-          <p className="text-sm text-muted-foreground">
-            Faça sua leitura inicial em menos de 1 minuto.
-          </p>
-          <p className="text-[11px] text-muted-foreground">
-            Você pode salvar com os dados essenciais e refinar a precisão depois.
-          </p>
-        </div>
+  <p className="text-sm text-muted-foreground">
+    Informe os sinais da manhã para calcular sua dose do dia.
+  </p>
+  <p className="text-[11px] text-muted-foreground">
+    Você pode salvar agora com os dados essenciais e refinar depois com HRV, FC e sono avançado.
+  </p>
+</div>
 
 
         {/* Day Intent */}
