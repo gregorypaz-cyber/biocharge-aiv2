@@ -503,7 +503,7 @@ function predictTomorrow({ analysis, intent }) {
   if (ratio > 1.4) {
     return {
       trend: 'down',
-      message: 'Se você insistir em carga alta hoje, a recuperação de amanhã tende a cair.',
+      message: 'Com a carga recente elevada, uma dose alta hoje pode pesar na recuperação de amanhã.',
     };
   }
 
