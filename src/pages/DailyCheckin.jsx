@@ -869,7 +869,6 @@ const savePostMutation = useMutation({
           </p>
           <LivePreview preview={preview} />
         </div>
-``
 
         {/* Save */}
         {!savedCheckin && (
