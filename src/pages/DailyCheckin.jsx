@@ -742,12 +742,17 @@ const savePostMutation = useMutation({
 
             {!isRestDay && (
               <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
-                <SliderField
-                  label="Fadiga"
-                  value={form.fatigue}
-                  onChange={(v) => update('fatigue', v)}
-                  icon={Activity}
-                />
+                
+<SliderField
+  label="Fadiga"
+  value={form.fatigue}
+  onChange={(v) => update('fatigue', v)}
+  icon={Activity}
+  lowLabel="Baixa"
+  midLabel="Moderada"
+  highLabel="Alta"
+/>
+
               </CheckinStep>
             )}
 
