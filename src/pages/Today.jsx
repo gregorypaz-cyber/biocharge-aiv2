@@ -595,8 +595,8 @@ const hrvTrend = useMemo(() => {
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
   const readinessFaixa =
-  prescriptionScore >= 82 ? 'Alta' :
-  prescriptionScore >= 65 ? 'Moderada' :
+  displayedScore >= 82 ? 'Alta' :
+  displayedScore >= 65 ? 'Moderada' :
   'Baixa';
 
   const strainTarget =
