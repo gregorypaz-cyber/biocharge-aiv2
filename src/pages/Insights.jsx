@@ -711,30 +711,44 @@ export default function Insights() {
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um analista de performance e recuperação no estilo Whoop. Sua função é gerar uma análise profunda, útil e honesta. Em português brasileiro.
+        prompt: `Você é um analista de performance e recuperação no estilo Whoop. Gere uma leitura útil, direta e honesta em português brasileiro.
 
 Objetivo:
-- NÃO repetir a tela de hoje
-- NÃO virar feed de recomendações do dia
-- focar em padrões reais, aprendizados e comportamento
-- falar o que realmente importa para o usuário
+- transformar dados recentes em uma leitura clara
+- explicar o que está afetando recovery, sono e carga
+- evitar relatório genérico
+- não repetir a recomendação operacional do dia
+- não usar tom médico
+- não prometer causalidade absoluta
 
 Dados dos últimos ${summary.length} dias:
 ${JSON.stringify(summary, null, 2)}
 
-Estruture assim:
-1. **Insight principal** — o padrão mais importante agora
-2. **O que está melhorando**
-3. **O que está limitando a performance**
-4. **O que o usuário deveria mudar no comportamento**
-5. **O que observar nos próximos 7 dias**
+Estruture exatamente assim:
+
+## Leitura principal
+Explique em 2–3 frases o padrão mais importante agora. Seja direto.
+
+## Evidências nos dados
+Liste 2–4 evidências com números reais quando existirem.
+
+## O que está limitando
+Explique o principal limitador atual: sono, carga, fadiga, stress, HRV ou consistência.
+
+## Ajuste para os próximos 3 dias
+Dê 2–3 ações práticas e específicas. Foque em comportamento.
+
+## O que observar
+Diga quais sinais o usuário deve acompanhar nos próximos check-ins.
 
 Regras:
 - use números reais quando fizer sentido
-- trate padrões como tendência, não como certeza absoluta
-- evite linguagem vaga
-- não repita "treino moderado recomendado" nem frases de dashboard diário
-- seja específico, útil e comportamental`,
+- trate padrões como tendência, não certeza absoluta
+- seja específico e comportamental
+- evite frases vagas como "escute seu corpo"
+- não diga apenas "treino moderado recomendado"
+- não faça diagnóstico médico
+- termine com uma frase completa`,
       });
 
       setAiInsight(result);
