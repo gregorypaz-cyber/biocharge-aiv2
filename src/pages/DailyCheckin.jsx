@@ -578,9 +578,12 @@ const savePostMutation = useMutation({
           <div className="w-16" />
         </div>
 
-        <div className="px-1">
+<div className="px-1 space-y-1">
           <p className="text-sm text-muted-foreground">
-            Comece com o essencial. Você pode refinar a leitura depois.
+            Faça sua leitura inicial em menos de 1 minuto.
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Você pode salvar com os dados essenciais e refinar a precisão depois.
           </p>
         </div>
 
