@@ -42,6 +42,9 @@ export default function AppSettings() {
   const [prefs, setPrefs] = useState({
     timezone: detectedTz,
     sports: [],
+    primary_sport: '',
+    experience_level: '',
+    guidance_goal: 'consistencia',
     training_times: [],
     recovery_goal: 'health',
     max_hr: 185,
