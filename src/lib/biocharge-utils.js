@@ -848,18 +848,63 @@ export function calcSleepNeedTonight(recoveryScore, strainAccumulated, recentChe
   return Math.min(10, Math.round(base * 2) / 2);
 }
 
-export function calcNextDayForecast(recoveryScore, sleepNeedTonight) {
-  const recovery = clamp(recoveryScore ?? 0);
+export function calcNextDayForecast(checkinLike, recentCheckins = []) {
+  const recovery = clamp(checkinLike?.recovery_score ?? 0);
+  const sleepNeedTonight = Number(checkinLike?.sleep_need_tonight ?? 0);
+  const recentForecasts = getRecentTextValues(recentCheckins, 'next_day_forecast', 3);
+  const ctx = buildNarrativeContext(checkinLike);
 
-  if (recovery >= 75 && sleepNeedTonight <= 7.5) {
-    return `Se você dormir bem hoje, a tendência para amanhã é manter uma boa recuperação. Meta de sono: ${sleepNeedTonight}h.`;
+  let options = [];
+
+  if (checkinLike?.rest_day) {
+    options = [
+      `Se você realmente recuperar bem hoje, amanhã a leitura pode abrir mais margem. Meta prática de sono: ${sleepNeedTonight}h.`,
+      `Hoje é um dia em que o descanso pode influenciar bastante a leitura de amanhã. Tente chegar perto de ${sleepNeedTonight}h de sono.`,
+      `Amanhã tende a responder ao quanto você conseguir reduzir carga e proteger o sono hoje. Meta sugerida: ${sleepNeedTonight}h.`,
+    ];
+  } else if (recovery >= 78 && sleepNeedTonight > 0 && sleepNeedTonight <= 7.5) {
+    options = [
+      `Se você dormir bem hoje, a tendência para amanhã é manter uma boa recuperação. Meta de sono: ${sleepNeedTonight}h.`,
+      `O cenário de hoje sugere boa chance de sustentar uma leitura positiva amanhã, desde que o sono acompanhe. Meta: ${sleepNeedTonight}h.`,
+      `Se a execução de hoje terminar bem e o sono vier forte, amanhã você tem boa chance de seguir com margem. Meta prática: ${sleepNeedTonight}h.`,
+    ];
+
+    if (ctx.hrvHigh) {
+      options.push(
+        `Seu contexto fisiológico está favorável hoje. Se o sono desta noite fechar bem, amanhã pode continuar positivo. Meta: ${sleepNeedTonight}h.`
+      );
+    }
+  } else if (recovery < 60 || sleepNeedTonight > 8 || ctx.deepSleepLow || ctx.sleepPerfLow) {
+    options = [
+      `Hoje à noite, o sono será decisivo. Se você chegar perto de ${sleepNeedTonight}h, a chance de recuperar melhor amanhã aumenta.`,
+      `A leitura de amanhã depende bastante de como você fechar o dia de hoje. Tentar chegar em ${sleepNeedTonight}h pode fazer diferença.`,
+      `Seu corpo ainda não mostra uma margem larga. O sono desta noite pode ser o principal fator para melhorar amanhã. Meta: ${sleepNeedTonight}h.`,
+    ];
+
+    if (ctx.hrvLow) {
+      options.push(
+        `Os sinais fisiológicos ainda pedem atenção. Uma noite melhor hoje pode ser importante para mudar a direção da leitura de amanhã. Meta: ${sleepNeedTonight}h.`
+      );
+    }
+  } else if (ctx.stressHigh || ctx.fatigueHigh) {
+    options = [
+      `Amanhã tende a depender menos do treino em si e mais de como você absorver o estresse de hoje. Meta de sono: ${sleepNeedTonight}h.`,
+      `Se você reduzir a carga total do dia e proteger o sono, a leitura de amanhã pode responder melhor. Meta prática: ${sleepNeedTonight}h.`,
+      `Hoje o contexto ainda exige recuperação suficiente para sustentar amanhã. Sono e redução de estresse devem ajudar. Meta: ${sleepNeedTonight}h.`,
+    ];
+  } else {
+    options = [
+      `Amanhã vai depender bastante da qualidade do sono desta noite. Meta prática: ${sleepNeedTonight}h.`,
+      `A resposta de amanhã ainda está em aberto e depende de como você fechar o dia de hoje. Meta de sono: ${sleepNeedTonight}h.`,
+      `Seu próximo dia deve responder principalmente ao sono desta noite e à carga total de hoje. Meta sugerida: ${sleepNeedTonight}h.`,
+    ];
   }
 
-  if (recovery < 60 || sleepNeedTonight > 8) {
-    return `Hoje à noite, o sono será decisivo. Se você chegar perto de ${sleepNeedTonight}h, a chance de recuperar melhor amanhã aumenta.`;
-  }
-
-  return `Amanhã vai depender bastante da qualidade do sono desta noite. Meta prática: ${sleepNeedTonight}h.`;
+  return pickNarrativeVariant(
+    options,
+    recentForecasts,
+    makeNarrativeSeed(checkinLike, 47)
+  );
 }
 
 // ─── AI helpers ────────────────────────────────────────────────────────────
