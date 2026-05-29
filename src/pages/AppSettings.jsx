@@ -59,10 +59,18 @@ export default function AppSettings() {
   }, [user]);
 
   const toggleSport = (sport) => {
-    setPrefs(p => ({
-      ...p,
-      sports: p.sports.includes(sport) ? p.sports.filter(s => s !== sport) : [...p.sports, sport]
-    }));
+    setPrefs((p) => {
+      const exists = p.sports.includes(sport);
+      const nextSports = exists
+        ? p.sports.filter((s) => s !== sport)
+        : [...p.sports, sport];
+
+      return {
+        ...p,
+        sports: nextSports,
+        primary_sport: exists && p.primary_sport === sport ? '' : p.primary_sport,
+      };
+    });
   };
 
   const addCustomSport = () => {
