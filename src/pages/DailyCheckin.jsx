@@ -26,7 +26,6 @@ import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
-import RestDayToggle from '@/components/checkin/RestDayToggle';
 import {
   computeCheckinScores,
   generateContextualBulletsAI,
@@ -36,22 +35,6 @@ import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
 
-function parseSleepDurationToHours(str) {
-  if (!str || str.toString().trim() === '') return null;
-  const s = str.toString().trim().replace(',', '.');
-  // "7:45" or "7h45" or "7h 45"
-  const colonMatch = s.match(/^(\d{1,2})[h:][\s]?(\d{2})$/i);
-  if (colonMatch) {
-    const h = parseInt(colonMatch[1], 10);
-    const m = parseInt(colonMatch[2], 10);
-    if (h < 0 || h > 12 || m < 0 || m > 59) return null;
-    return parseFloat((h + m / 60).toFixed(4));
-  }
-  // "7.5" or "8"
-  const num = parseFloat(s);
-  if (!isNaN(num) && num >= 0 && num <= 12) return num;
-  return null;
-}
 
 function formatHoursToSleepDuration(hoursFloat) {
   if (hoursFloat == null || isNaN(hoursFloat)) return '';
@@ -185,9 +168,6 @@ export default function DailyCheckin() {
   });
   const { form, postForm } = checkinState;
 
-  const [sleepHoursText, setSleepHoursText] = useState(
-    formatHoursToSleepDuration(editData?.sleep_hours ?? DEFAULT_FORM.sleep_hours)
-  );
 
   const [savedCheckin, setSavedCheckin] = useState(null);
 
@@ -212,7 +192,7 @@ const { intent: dayIntent, setDayIntent } = useDayContext();
     });
   };
 
-  const selectedIntent = form.rest_day ? 'recovery' : dayIntent;
+  const selectedIntent = form.rest_day ? 'recovery' : (dayIntent || 'undecided');
 
 
 const isRestDay = form.rest_day;
@@ -720,9 +700,12 @@ const savePostMutation = useMutation({
 
           {!advancedOpen && (
             <p className="text-[11px] text-muted-foreground">
-              Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC de repouso.
+              {isRestDay
+                ? 'Opcional: sono profundo/REM, humor, stress, HRV e contexto para melhorar a leitura da recuperação.'
+                : 'Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC de repouso.'}
             </p>
           )}
+
         </div>
 
         {/* Advanced fields */}
