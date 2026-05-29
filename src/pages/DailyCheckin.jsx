@@ -710,11 +710,11 @@ const savePostMutation = useMutation({
             className="w-full flex items-center justify-between text-left"
           >
             <div>
-              <p className="text-sm font-semibold">Refinar precisão</p>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Adicione sinais avançados para melhorar a leitura do dia.
-              </p>
-            </div>
+  <p className="text-sm font-semibold">Refinar leitura</p>
+  <p className="text-[11px] text-muted-foreground mt-1">
+    Adicione sono avançado, biometria e sensações para deixar a dose do dia mais precisa.
+  </p>
+</div>
             {advancedOpen ? (
               <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
             ) : (
