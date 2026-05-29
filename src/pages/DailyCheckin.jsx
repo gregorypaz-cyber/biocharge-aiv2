@@ -435,96 +435,198 @@ const savePostMutation = useMutation({
   }
 
   // POST MODE UI
-  if (isPostMode) {
-    const handleSavePost = () => {
-      const { biocharge_post_workout, rpe, energy, muscle_soreness, notes } = postForm;
-      const hasData = biocharge_post_workout > 0 || rpe > 0 || energy > 0 || muscle_soreness > 0 || notes.trim().length > 0;
-      if (!hasData) {
-        toast.warning("Preencha ao menos um campo ou toque em 'Pular por agora'.");
-        return;
-      }
-      savePostMutation.mutate(postForm);
-    };
+if (isPostMode) {
+  const todaySessions = allSessions.filter((session) => session.date === todayDate);
+  const totalStrain = todaySessions.reduce((sum, session) => sum + (session.strain_score || 0), 0);
 
-    return (
-      <div className="space-y-4 max-w-xl mx-auto pb-8">
-        {/* Header */}
-        <div className="flex items-center justify-between pt-1">
-          <button
-            onClick={() => navigate('/today')}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </button>
-          <h1 className="text-base font-bold">Pós-treino</h1>
-          <div className="w-16" />
-        </div>
+  const morningRecovery =
+    todayRecord?.morning_recovery_score ??
+    todayRecord?.recovery_score ??
+    todayRecord?.readiness_score ??
+    null;
 
-        <div className="px-1">
-          <p className="text-sm text-muted-foreground">Leva ~30s e melhora seus insights</p>
-        </div>
+  const sleepNeed = todayRecord?.sleep_need_tonight ?? null;
 
-        {/* BioCharge pós-treino */}
-        <CheckinStep title="BioCharge pós-treino" emoji="⚡" delay={0.05}>
-          <SliderField
-            label="Como ficou após o treino? (0–100)"
-            hint="0 = deixe vazio se não quiser informar"
-            value={postForm.biocharge_post_workout}
-            onChange={v => updatePost('biocharge_post_workout', v)}
-          />
-        </CheckinStep>
+  const handleSavePost = () => {
+    const { biocharge_post_workout, rpe, energy, muscle_soreness, notes } = postForm;
 
-        {/* RPE */}
-        <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.1}>
-          <SliderField
-            label="RPE (1–10)"
-            hint="RPE — Escala de esforço percebido (1 = muito leve, 10 = máximo)"
-            value={postForm.rpe}
-            onChange={v => updatePost('rpe', v)}
-            min={0}
-            max={10}
-          />
-        </CheckinStep>
+    const hasData =
+      biocharge_post_workout > 0 ||
+      rpe > 0 ||
+      energy > 0 ||
+      muscle_soreness > 0 ||
+      notes.trim().length > 0;
 
-        {/* Energia e Dor */}
-        <CheckinStep title="Sensações" emoji="🧠" delay={0.15}>
-          <EmojiSelector label="Energia agora" type="energy" value={postForm.energy} onChange={v => updatePost('energy', v)} />
-          <EmojiSelector label="Dor muscular" type="soreness" value={postForm.muscle_soreness} onChange={v => updatePost('muscle_soreness', v)} />
-        </CheckinStep>
+    if (!hasData) {
+      toast.warning("Preencha ao menos um campo ou toque em 'Pular por agora'.");
+      return;
+    }
 
-        {/* Notes */}
-        <CheckinStep title="Observação rápida" emoji="📝" delay={0.2}>
-          <Textarea
-            value={postForm.notes}
-            onChange={e => updatePost('notes', e.target.value)}
-            placeholder="Ex: pernas pesadas, ritmo bom..."
-            className="bg-secondary border-border/40 min-h-[70px] resize-none"
-          />
-        </CheckinStep>
+    savePostMutation.mutate(postForm);
+  };
 
-        {/* Buttons */}
-        <Button
-          onClick={handleSavePost}
-          disabled={savePostMutation.isPending}
-          className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all"
-        >
-          {savePostMutation.isPending ? (
-            <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <><Save className="w-4 h-4 mr-2" /> Salvar pós-treino</>
-          )}
-        </Button>
-
+  return (
+    <div className="space-y-4 max-w-xl mx-auto pb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between pt-1">
         <button
           onClick={() => navigate('/today')}
-          className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-border/60 transition-all"
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
         >
-          <SkipForward className="w-4 h-4" /> Pular por agora
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
         </button>
+
+        <h1 className="text-base font-bold">
+          Pós-treino
+        </h1>
+
+        <div className="w-16" />
       </div>
-    );
-  }
+
+      {/* Intro */}
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+            <Zap className="w-5 h-5 text-primary" />
+          </div>
+
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+              Resposta do corpo
+            </p>
+
+            <h2 className="text-lg font-black leading-tight mt-1">
+              Como seu corpo respondeu ao treino?
+            </h2>
+
+            <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">
+              Leva cerca de 30 segundos. RPE, energia e dor muscular ajudam o app a ajustar melhor a leitura de amanhã.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              Recovery manhã
+            </p>
+            <p className="text-sm font-mono font-bold">
+              {morningRecovery ?? '—'}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              Strain hoje
+            </p>
+            <p className="text-sm font-mono font-bold text-primary">
+              ⚡ {totalStrain}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              Sono alvo
+            </p>
+            <p className="text-sm font-mono font-bold">
+              {sleepNeed != null ? `${sleepNeed}h` : '—'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* RPE */}
+      <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.05}>
+        <SliderField
+          label="Quão pesado foi o treino?"
+          hint="RPE 1–10 · 1 = muito leve, 10 = máximo"
+          value={postForm.rpe}
+          onChange={(value) => updatePost('rpe', value)}
+          min={0}
+          max={10}
+          lowLabel="Leve"
+          midLabel="Moderado"
+          highLabel="Máximo"
+        />
+      </CheckinStep>
+
+      {/* Sensations */}
+      <CheckinStep title="Resposta do corpo" emoji="🧠" delay={0.1}>
+        <EmojiSelector
+          label="Energia agora"
+          type="energy"
+          value={postForm.energy}
+          onChange={(value) => updatePost('energy', value)}
+        />
+
+        <EmojiSelector
+          label="Dor muscular"
+          type="soreness"
+          value={postForm.muscle_soreness}
+          onChange={(value) => updatePost('muscle_soreness', value)}
+        />
+      </CheckinStep>
+
+      {/* BioCharge pós-treino */}
+      <CheckinStep title="BioCharge pós-treino" emoji="⚡" delay={0.15}>
+        <SliderField
+          label="Como você ficou após o treino?"
+          hint="Opcional · deixe em 0 se não quiser informar"
+          value={postForm.biocharge_post_workout}
+          onChange={(value) => updatePost('biocharge_post_workout', value)}
+          min={0}
+          max={100}
+          lowLabel="Baixo"
+          midLabel="Médio"
+          highLabel="Alto"
+        />
+      </CheckinStep>
+
+      {/* Notes */}
+      <CheckinStep title="Observação rápida" emoji="📝" delay={0.2}>
+        <Textarea
+          value={postForm.notes}
+          onChange={(event) => updatePost('notes', event.target.value)}
+          placeholder="Ex: pernas pesadas, ritmo bom, treino saiu melhor que o esperado..."
+          className="bg-secondary border-border/40 min-h-[80px] resize-none"
+        />
+
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Use este campo para contexto que os números não capturam.
+        </p>
+      </CheckinStep>
+
+      {/* Save */}
+      <Button
+        onClick={handleSavePost}
+        disabled={savePostMutation.isPending}
+        className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all"
+      >
+        {savePostMutation.isPending ? (
+          <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar resposta pós-treino
+          </>
+        )}
+      </Button>
+
+      <button
+        onClick={() => navigate('/today')}
+        className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-border/60 transition-all"
+      >
+        <SkipForward className="w-4 h-4" />
+        Pular por agora
+      </button>
+
+      <p className="text-[10px] text-muted-foreground text-center leading-relaxed px-4">
+        O pós-treino atualiza o check-in de hoje e melhora os insights de recuperação, carga e resposta ao treino.
+      </p>
+    </div>
+  );
+}
 
 // MORNING MODE UI
   return (
