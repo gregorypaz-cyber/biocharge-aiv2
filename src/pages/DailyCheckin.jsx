@@ -713,13 +713,17 @@ const savePostMutation = useMutation({
             <CheckinStep title="Sono — contexto avançado" emoji="🌙" delay={0.1}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <SliderField
-                  label="Sono Profundo"
-                  hint="Percentual de sono profundo"
-                  value={form.deep_sleep_pct}
-                  onChange={(v) => update('deep_sleep_pct', v)}
-                  unit="%"
-                  max={60}
-                />
+  label="Sono Profundo"
+  hint="Percentual de sono profundo"
+  value={form.deep_sleep_pct}
+  onChange={(v) => update('deep_sleep_pct', v)}
+  unit="%"
+  max={60}
+  lowLabel="Baixo"
+  midLabel="Bom"
+  highLabel="Alto"
+/>
+``
 
                 <SliderField
                   label="Sono REM"
