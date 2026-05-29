@@ -638,12 +638,15 @@ const savePostMutation = useMutation({
 
 
           <SliderField
-            label="Pontuação do Sono (Zepp)"
-            hint="Valor de 0–100 do app Zepp → Sono"
-            value={form.sleep_score}
-            onChange={(v) => update('sleep_score', v)}
-            icon={Moon}
-          />
+  label="Pontuação do Sono (Zepp)"
+  hint="Valor de 0–100 do app Zepp → Sono"
+  value={form.sleep_score}
+  onChange={(v) => update('sleep_score', v)}
+  icon={Moon}
+  lowLabel="Ruim"
+  midLabel="Ok"
+  highLabel="Boa"
+/>
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">
