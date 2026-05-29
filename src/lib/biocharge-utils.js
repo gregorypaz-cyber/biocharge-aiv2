@@ -212,8 +212,12 @@ const physiologicalCount =
 
 function getPreviewConfidenceReason(checkin, recentCheckins = []) {
   const confidence = getPreviewConfidence(checkin, recentCheckins);
-  const hasHrv = !!(resolveHrvValue(checkin) && resolveHrvValue(checkin) > 0);
-  const hasRhr = !!(resolveCheckinField(checkin, 'resting_hr') && resolveCheckinField(checkin, 'resting_hr') > 0);
+
+  const hrvValue = resolveHrvValue(checkin);
+  const rhrValue = resolveCheckinField(checkin, 'resting_hr');
+
+  const hasHrv = !!(hrvValue && hrvValue > 0);
+  const hasRhr = !!(rhrValue && rhrValue > 0);
 
   if (confidence === 'high') {
     return 'HRV, FC de repouso e sono dão boa sustentação para esta leitura.';
