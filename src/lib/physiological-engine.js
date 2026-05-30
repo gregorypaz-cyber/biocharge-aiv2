@@ -1114,6 +1114,8 @@ function _cacheKey(checkins, sessions) {
 }
 
 const _memCache = new Map();
+// _memCacheOrder mantém a ordem real de inserção para LRU correto.
+const _memCacheOrder = [];
 
 function _readCache(key, ttlMinutes) {
   try {
@@ -1130,6 +1132,8 @@ function _readCache(key, ttlMinutes) {
     if (!entry) return null;
     if (Date.now() - entry.ts > ttlMinutes * 60 * 1000) {
       _memCache.delete(key);
+      const idx = _memCacheOrder.indexOf(key);
+      if (idx !== -1) _memCacheOrder.splice(idx, 1);
       return null;
     }
     return entry.data;
@@ -1140,7 +1144,15 @@ function _writeCache(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
   } catch {
-    if (_memCache.size >= 20) _memCache.delete(_memCache.keys().next().value);
+    // LRU real: remove o item mais antigo pelo índice 0 do array de ordem.
+    if (_memCache.size >= 20) {
+      const oldest = _memCacheOrder.shift();
+      if (oldest) _memCache.delete(oldest);
+    }
+    // Se a chave já existe, remove da posição antiga no array de ordem antes de reinserir.
+    const existingIdx = _memCacheOrder.indexOf(key);
+    if (existingIdx !== -1) _memCacheOrder.splice(existingIdx, 1);
+    _memCacheOrder.push(key);
     _memCache.set(key, { ts: Date.now(), data });
   }
 }
