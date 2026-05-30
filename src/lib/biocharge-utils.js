@@ -980,12 +980,18 @@ const hrvToday = resolveHrvValue(checkin);
       .filter((s) => s.date !== checkin.date)
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))[0] || null;
 
+  const decisaoHoje = scores?.decision_mode ?? checkin.decision_mode ?? null;
+  const recomendacaoHoje = scores?.recommendation ?? checkin.recommendation ?? null;
+
   const prompt = `Você é um coach de performance. Gere EXATAMENTE 2 bullets curtos para o dia de hoje. Em português brasileiro. Cada bullet deve:
 - começar com emoji
 - ser direto
 - usar os dados reais quando relevante
-- evitar repetições e contradições
+- OBRIGATÓRIO: ser 100% consistente com a decisão do dia abaixo
 - ajudar o atleta a executar melhor o dia
+
+DECISÃO DO DIA (não contrarie isto): ${decisaoHoje ?? 'não definida'}
+RECOMENDAÇÃO ATUAL: ${recomendacaoHoje ?? 'não definida'}
 
 Dados:
 - Recovery: ${scores?.recovery_score ?? checkin.biocharge_morning ?? '—'}
