@@ -1188,7 +1188,6 @@ const baevsky = calculateBaevskyProxy(
     delta_post: deltaPost,
     alert,
     recommendation: canonicalCheckin.recommendation || baseRecommendation,
-    training_load: canonicalCheckin.training_load || trainingLoad,
     sleep_need_tonight: canonicalCheckin.sleep_need_tonight ?? sleepNeedTonight,
     next_day_forecast: canonicalCheckin.next_day_forecast ?? nextDayForecast,
     delayed_fatigue_alert: canonicalCheckin.delayed_fatigue_alert ?? delayedFatigueAlert,
