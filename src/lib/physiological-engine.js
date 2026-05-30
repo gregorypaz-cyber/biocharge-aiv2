@@ -256,21 +256,35 @@ export function calculateTrainingLoad(checkins, sessions = []) {
 
     const acuteSum = last7.reduce((s, c) => s + getDailyLoad(c), 0);
     const chronic42Sum = last42.reduce((s, c) => s + getDailyLoad(c), 0);
-    const weeks = Math.max(1, last42.length / 7);
-    const chronicWeeklyAvg = chronic42Sum / weeks;
+
+    // Usa semanas completas reais disponíveis, não uma fração de 7 dias.
+    // Ex: 15 check-ins = 2 semanas completas (14 dias), não 2.14.
+    // Isso evita que a carga crônica fique artificialmente alta com histórico curto.
+    const completedWeeks = Math.max(1, Math.floor(last42.length / 7));
+    const chronicWeeklyAvg = chronic42Sum / completedWeeks;
 
     const round2 = (v) => Math.round(v * 100) / 100;
     const ratio = chronicWeeklyAvg > 0 ? round2(acuteSum / chronicWeeklyAvg) : 1;
 
+    // Com histórico menor que 3 semanas completas, o ACWR é calculado mas marcado
+    // como baixa confiança para não gerar alertas de risco excessivos.
+    const lowConfidence = completedWeeks < 3;
+
     let risk = 'low';
-    if (ratio > TRAINING_RATIO_HIGH) risk = 'high';
-    else if (ratio > TRAINING_RATIO_MODERATE) risk = 'moderate';
+    if (!lowConfidence) {
+      if (ratio > TRAINING_RATIO_HIGH) risk = 'high';
+      else if (ratio > TRAINING_RATIO_MODERATE) risk = 'moderate';
+    } else {
+      // Com pouco histórico, nunca sinalizar risco alto — pode ser falso positivo.
+      if (ratio > TRAINING_RATIO_HIGH) risk = 'moderate';
+    }
 
     return {
       acute: Math.round(acuteSum),
       chronic: Math.round(chronicWeeklyAvg),
       ratio,
       risk,
+      lowConfidence,
     };
   } catch (e) {
     console.warn('calculateTrainingLoad error, falling back:', e);
