@@ -278,30 +278,57 @@ const saveMorningMutation = useMutation({
         sleep_hours: c.sleep_hours,
       }));
 
-      base44.integrations.Core.InvokeLLM({
-        prompt: `INSTRUÇÃO: Você é um analista de performance e recuperação. Gere uma análise profunda, útil e estruturada em português brasileiro.
+      // Contexto do dia de hoje para guiar a análise e evitar contradições
+      const todayContext = {
+        decisao_do_dia: scores.decision_mode ?? '—',
+        recomendacao: scores.recommendation ?? '—',
+        carga_label: scores.training_load ?? '—',
+        headline: scores.headline_today ?? '—',
+        zone: scores.zone ?? '—',
+        alerta_fadiga_retardada: scores.delayed_fatigue_alert ?? null,
+        acwr: scores.acwr ?? null,
+        hrv_trend: scores.hrv_trend ?? null,
+        autonomic_state: scores.autonomic_state ?? null,
+        sleep_need_tonight: scores.sleep_need_tonight ?? null,
+        preview_confidence: scores.preview_confidence ?? null,
+      };
 
-IMPORTANTE:
-- não repita a recomendação operacional do dia
-- não diga "treine moderado" ou "descanse" como decisão principal
-- foque em padrões, tendências e ajustes de comportamento
+      base44.integrations.Core.InvokeLLM({
+        prompt: `INSTRUÇÃO: Você é um analista de performance e recuperação esportiva. Gere uma análise personalizada, profunda e útil em português brasileiro.
+
+CONTEXTO DO DIA DE HOJE (use para guiar o tom — não repita estas frases literalmente):
+- Decisão: ${todayContext.decisao_do_dia}
+- Zone: ${todayContext.zone}
+- HRV trend: ${todayContext.hrv_trend ?? 'sem dados'}
+- Estado autonômico: ${todayContext.autonomic_state ?? 'sem dados'}
+- ACWR: ${todayContext.acwr ?? 'sem dados'}
+- Sono necessário esta noite: ${todayContext.sleep_need_tonight ?? 'sem dados'}h
+- Alerta fadiga retardada: ${todayContext.alerta_fadiga_retardada ?? 'nenhum'}
+- Confiança da leitura: ${todayContext.preview_confidence ?? 'sem dados'}
+
+REGRAS OBRIGATÓRIAS:
+- cite números REAIS dos dados (ex: "seu HRV caiu de 68ms para 52ms nos últimos 5 dias")
+- cada seção deve mencionar pelo menos 1 valor específico dos dados
+- recomendações devem ser DIFERENTES entre si e não genéricas ("durma mais" não é aceitável sozinho — especifique quanto, quando, por quê)
+- não use bullets genéricos que servem para qualquer atleta
 - o texto deve terminar com frase completa
 - não use tom de conversa nem saudações
+- não repita a decisão operacional do dia como se fosse insight novo
 
 FORMATO:
 Análise de tendência
-[2–3 frases]
+[2–3 frases com números reais dos dados]
 
 Sono
-[1–2 frases]
+[1–2 frases com valores específicos de horas e qualidade]
 
 Fadiga e carga
-[1–2 frases]
+[1–2 frases com referência a RPE, strain ou ACWR reais]
 
 Recomendações para os próximos 7 dias
-• [ação concreta 1]
-• [ação concreta 2]
-• [ação concreta 3]
+- [ação concreta com número específico — ex: "aumentar sono para X h nos próximos 3 dias"]
+- [ação concreta sobre treino baseada no ACWR atual]
+- [ação concreta sobre o ponto mais fraco identificado nos dados]
 
 DADOS (${summary.length} dias, mais recente primeiro):
 ${JSON.stringify(summary, null, 2)}`,
