@@ -559,7 +559,7 @@ function getDailyMasterSignal(checkinLike) {
     readiness < 50 ||
     fatigue >= 72 ||
     soreness >= 4 ||
-    (deepSleep > 0 && deepSleep < 12)
+    (deepSleep > 0 && deepSleep < 8)
   ) {
     return 'recover';
   }
