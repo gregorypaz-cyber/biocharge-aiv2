@@ -628,7 +628,12 @@ function buildNarrativeContext(checkinLike) {
 
 function makeNarrativeSeed(checkinLike, salt = 0) {
   const dateStr = String(checkinLike?.date || '');
-  const dateSeed = dateStr.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  let _djb2Hash = 5381;
+  for (let _i = 0; _i < dateStr.length; _i++) {
+    _djb2Hash = ((_djb2Hash << 5) + _djb2Hash) ^ dateStr.charCodeAt(_i);
+    _djb2Hash = _djb2Hash >>> 0;
+  }
+  const dateSeed = _djb2Hash;
 
   const readiness = Math.round(Number(checkinLike?.readiness_score ?? 0));
   const recovery = Math.round(Number(checkinLike?.recovery_score ?? 0));
