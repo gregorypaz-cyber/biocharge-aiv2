@@ -1141,7 +1141,6 @@ const baevsky = calculateBaevskyProxy(
 
   const alert = getAlert(recoveryScore, deltaPre, canonicalCheckin.fatigue || 0);
   const baseRecommendation = getRecommendation(getZone(recoveryScore), canonicalCheckin.biocharge_pre_workout || 0);
-  const trainingLoad = getTrainingLoad(recoveryScore, deltaPost);
 
   const strainAccumulated = canonicalCheckin.daily_strain_accumulated ?? 0;
   const sleepNeedTonight = calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins);
