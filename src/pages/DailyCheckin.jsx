@@ -708,6 +708,17 @@ if (isPostMode) {
   </p>
 </div>
 
+{editingExisting && (
+  <div className="rounded-2xl border border-primary/25 bg-primary/5 p-3 mx-1">
+    <p className="text-[12px] text-foreground font-medium">
+      ✏️ Você já fez o check-in de hoje
+    </p>
+    <p className="text-[11px] text-muted-foreground mt-0.5">
+      Estes são os dados que você salvou. Ao salvar de novo, eles serão atualizados — não duplicados.
+    </p>
+  </div>
+)}
+
 
         {/* Day Intent */}
         <div className="rounded-2xl border border-border/60 bg-card p-4">
