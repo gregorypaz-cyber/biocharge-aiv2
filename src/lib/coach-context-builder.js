@@ -1,3 +1,5 @@
+import { SLEEP_HIGH_HOURS } from '@/lib/physio-constants';
+
 export function buildCoachContext({ checkins, sessions, analysis, question }) {
   const safeQuestion = question.replace(/["""]/g, '').slice(0, 300);
 
