@@ -1417,19 +1417,28 @@ function ExecutionCard() {
               </p>
               <p
                 className={`text-[10px] mt-0.5 ${
-                  analysis.trainingLoad.ratio > 1.5
+                  analysis.trainingLoad.lowConfidence
+                    ? 'text-muted-foreground'
+                    : analysis.trainingLoad.ratio > 1.5
                     ? 'text-red-400'
                     : analysis.trainingLoad.ratio > 1.3
                     ? 'text-yellow-400'
                     : 'text-emerald-400'
                 }`}
               >
-                {analysis.trainingLoad.ratio > 1.5
+                {analysis.trainingLoad.lowConfidence
+                  ? 'Base em formação'
+                  : analysis.trainingLoad.ratio > 1.5
                   ? 'Muito alto'
                   : analysis.trainingLoad.ratio > 1.3
                   ? 'Atenção'
                   : 'Seguro'}
               </p>
+              {analysis.trainingLoad.lowConfidence && (
+                <p className="text-[9px] text-muted-foreground/70 mt-0.5 leading-tight">
+                  Precisa de ~3 semanas de histórico para estabilizar.
+                </p>
+              )}
             </>
           )}
         </div>
