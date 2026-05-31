@@ -1006,8 +1006,14 @@ if (isPostMode) {
                   <Input
                     type="number"
                     step="1"
+                    min={30}
+                    max={220}
                     value={form.resting_hr || ''}
                     onChange={(e) => update('resting_hr', parseFloat(e.target.value) || null)}
+                    onBlur={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v) && (v < 30 || v > 220)) update('resting_hr', null);
+                    }}
                     placeholder="—"
                     className="bg-secondary border-border/40 font-mono"
                   />
