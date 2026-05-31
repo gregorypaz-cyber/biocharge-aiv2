@@ -762,7 +762,7 @@ if (isPostMode) {
   label="Como você acordou? (0–100)"
   hint="Sua percepção geral ao acordar"
   value={form.biocharge_morning}
-  onChange={(v) => update('biocharge_morning', v)}
+  onChange={(v) => { update('biocharge_morning', v); setTouched(t => ({ ...t, biocharge_morning: true })); }}
   lowLabel="Baixo"
   midLabel="Médio"
   highLabel="Alto"
