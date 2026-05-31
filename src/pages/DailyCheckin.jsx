@@ -162,6 +162,7 @@ export default function DailyCheckin() {
 
 
   const [savedCheckin, setSavedCheckin] = useState(null);
+  const [touched, setTouched] = useState({ biocharge_morning: !!editData, sleep_hours: !!editData });
 
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
