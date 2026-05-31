@@ -565,6 +565,12 @@ const hrvTrend = useMemo(() => {
   const capacityContradictionNote = useMemo(() => {
     if (!rawCheckin) return null;
 
+    // Não sugerir treino quando o dia é de recuperação/descanso —
+    // a nota contradiria a decisão principal da tela.
+    const isRecoveryDay =
+      !!rawCheckin.rest_day || enrichedCheckin?.decision_mode === 'recover';
+    if (isRecoveryDay) return null;
+
     const bio = rawCheckin.biocharge_morning ?? 0;
     const cap = enrichedCheckin?.remaining_capacity;
     const sleep = rawCheckin.sleep_score ?? rawCheckin.sleep_quality ?? 100;
@@ -575,8 +581,10 @@ const hrvTrend = useMemo(() => {
 
     return null;
   }, [
+    rawCheckin?.rest_day,
     rawCheckin?.biocharge_morning,
     enrichedCheckin?.remaining_capacity,
+    enrichedCheckin?.decision_mode,
     rawCheckin?.sleep_score,
     rawCheckin?.sleep_quality,
   ]); // eslint-disable-line
