@@ -912,7 +912,7 @@ const tomorrowHook = useMemo(() => {
       return `Volume semanal já está bem encaminhado.${trend}`;
     }
 
-    return `${sessionsCount} de 3 treinos esta semana — você está no ritmo.${trend}`;
+    return `${sessionsCount} ${sessionsCount === 1 ? 'treino' : 'treinos'} registrados esta semana.${trend}`;
   }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]);
 
 function renderCard(desc) {
