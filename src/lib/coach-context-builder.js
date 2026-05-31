@@ -15,8 +15,10 @@ export function buildCoachContext({ checkins, sessions, analysis, question }) {
   const avgRecovery7d = validRecovery.length
     ? Math.round(validRecovery.reduce((s, v) => s + v, 0) / validRecovery.length)
     : null;
+  // Usa a mesma meta de sono do resto do app (physio-constants) em vez de número fixo.
+  // Calcula o déficit apenas sobre os dias realmente registrados, não 7 fixos.
   const sleepDeficit = validSleep.length
-    ? parseFloat(((7 * 7.5) - validSleep.reduce((s, v) => s + v, 0)).toFixed(1))
+    ? parseFloat(((SLEEP_HIGH_HOURS * validSleep.length) - validSleep.reduce((s, v) => s + v, 0)).toFixed(1))
     : null;
 
   const latestCheckin = last14[0] || {};
