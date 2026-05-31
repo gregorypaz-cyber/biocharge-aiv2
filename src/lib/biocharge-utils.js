@@ -195,10 +195,14 @@ const physiologicalCount =
     (hasDeepSleep ? 1 : 0) +
     (hasRemSleep ? 1 : 0);
 
-  if (physiologicalCount >= 4 && (hrvBaseline || rhrBaseline || (hasHrv && hasRhr))) {
+  // "high" exige sinal cardíaco real informado HOJE (HRV ou FC de repouso).
+  // Sono sozinho — mesmo completo — não sustenta confiança alta, porque
+  // os campos de sono podem vir de valores default não revisados.
+  if (physiologicalCount >= 4 && (hasHrv || hasRhr)) {
     return 'high';
   }
 
+  // "medium" quando há boa cobertura de sono, mesmo sem HRV/FC.
   if (physiologicalCount >= 3) {
     return 'medium';
   }
