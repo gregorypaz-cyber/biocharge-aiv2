@@ -164,6 +164,25 @@ export default function DailyCheckin() {
   const [savedCheckin, setSavedCheckin] = useState(null);
   const [touched, setTouched] = useState({ biocharge_morning: !!editData, sleep_hours: !!editData });
 
+  // Carrega o check-in já salvo de hoje uma única vez, para não sobrescrever
+  // dados reais com os valores default ao reabrir a página.
+  const loadedTodayRef = useRef(false);
+  const [editingExisting, setEditingExisting] = useState(false);
+  useEffect(() => {
+    if (
+      !isPostMode &&
+      !editData &&
+      !savedCheckin &&
+      todayRecord &&
+      !loadedTodayRef.current
+    ) {
+      loadedTodayRef.current = true;
+      dispatch({ type: 'LOAD_EDIT', data: { rest_day: !!todayRecord.rest_day, ...todayRecord } });
+      setTouched({ biocharge_morning: true, sleep_hours: true });
+      setEditingExisting(true);
+    }
+  }, [isPostMode, editData, savedCheckin, todayRecord]);
+
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
