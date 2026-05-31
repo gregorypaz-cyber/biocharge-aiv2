@@ -220,13 +220,20 @@ function getPreviewConfidenceReason(checkin, recentCheckins = []) {
   const hasRhr = !!(rhrValue && rhrValue > 0);
 
   if (confidence === 'high') {
-    return 'HRV, FC de repouso e sono dão boa sustentação para esta leitura.';
+    // Cita apenas os sinais cardíacos que de fato foram informados hoje.
+    if (hasHrv && hasRhr) {
+      return 'HRV, FC de repouso e sono dão boa sustentação para esta leitura.';
+    }
+    if (hasHrv) {
+      return 'HRV e sono informados dão boa sustentação para esta leitura.';
+    }
+    return 'FC de repouso e sono informados dão boa sustentação para esta leitura.';
   }
 
   if (confidence === 'medium') {
     return hasHrv || hasRhr
       ? 'A leitura já tem alguma base fisiológica, mas ainda não está completa.'
-      : 'Boa parte da leitura ainda depende do que você informou manualmente.';
+      : 'Boa leitura pelo sono, mas sem HRV ou FC de repouso ela ainda não está completa.';
   }
 
   return 'Faltam HRV e/ou FC de repouso. Esta leitura está mais apoiada em percepção e sono informado.';
