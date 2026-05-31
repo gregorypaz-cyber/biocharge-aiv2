@@ -114,6 +114,10 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
               A demanda do dia já passou da margem que seu corpo mostrou pela manhã. Agora vale mais recuperar do que adicionar carga.
             </p>
           </div>
+        ) : strain === 0 && recoveryDemand > 0 ? (
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            A demanda de hoje vem da sua recuperação mais baixa, não de treino — você ainda não acumulou carga. Proteger o básico já ajuda.
+          </p>
         ) : (
           <p className="text-xs text-muted-foreground leading-relaxed">
             Até aqui, a demanda do dia ainda parece compatível com a base que você trouxe pela manhã.
