@@ -1031,8 +1031,14 @@ if (isPostMode) {
                   <Input
                     type="number"
                     step="0.1"
+                    min={30}
+                    max={300}
                     value={form.body_weight || ''}
                     onChange={(e) => update('body_weight', parseFloat(e.target.value) || null)}
+                    onBlur={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v) && (v < 30 || v > 300)) update('body_weight', null);
+                    }}
                     placeholder="—"
                     className="bg-secondary border-border/40 font-mono"
                   />
