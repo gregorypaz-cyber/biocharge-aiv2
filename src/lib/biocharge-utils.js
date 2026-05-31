@@ -109,32 +109,36 @@ function getRecentRhrBaseline(recentCheckins = []) {
   return values.reduce((s, v) => s + v, 0) / values.length;
 }
 
+// Curva logística suave: mapeia um desvio (em "unidades de escala") para 0..100,
+// centrada em 50. Substitui as escadas de if/else por uma transição contínua,
+// então valores próximos não caem no mesmo degrau.
+//   center = ponto neutro (retorna 50)
+//   scale  = quão rápido a curva sobe/desce (maior = mais suave)
+//   k      = inclinação
+function logisticScore(value, { center = 0, scale = 10, k = 1 } = {}) {
+  const z = (Number(value) - center) / scale;
+  const s = 1 / (1 + Math.exp(-k * z));
+  return clamp(Math.round(s * 100));
+}
+
 function normalizeHrv(hrv, recentCheckins = []) {
   if (hrv == null || hrv <= 0) return null;
 
   const baseline = getRecentHrvBaseline(recentCheckins);
 
-  // sem baseline: leitura conservadora
-  if (!baseline) {
-    const raw = Number(hrv);
-    if (raw < 25) return 32;
-    if (raw < 35) return 42;
-    if (raw < 45) return 52;
-    if (raw < 55) return 60;
-    if (raw < 65) return 68;
-    if (raw < 80) return 76;
-    return 82;
+  // COM baseline (caminho preferido, alinhado ao WHOOP e ao próprio Zepp:
+  // o que importa é o desvio do SEU normal, não o valor absoluto).
+  // deltaPct em torno de 0 => ~50; +20% => ~82; -20% => ~18. Contínuo.
+  if (baseline) {
+    const deltaPct = ((Number(hrv) - baseline) / baseline) * 100;
+    return logisticScore(deltaPct, { center: 0, scale: 11, k: 1 });
   }
 
-  const deltaPct = ((Number(hrv) - baseline) / baseline) * 100;
-
-  if (deltaPct <= -20) return 18;
-  if (deltaPct <= -10) return 30;
-  if (deltaPct <= -5) return 42;
-  if (deltaPct < 5) return 58;
-  if (deltaPct < 10) return 70;
-  if (deltaPct < 20) return 82;
-  return 90;
+  // SEM baseline (primeiros dias): não há "seu normal" ainda, então caímos
+  // para valor absoluto via log-normalização (abordagem EliteHRV/RMSSD).
+  // ln(RMSSD) ~ [1.5 .. 5.5] para adultos; centramos em ~3.7 (RMSSD ~40ms).
+  const lnRmssd = Math.log(Number(hrv));
+  return logisticScore(lnRmssd, { center: 3.7, scale: 0.55, k: 1 });
 }
 
 function normalizeRhr(rhr, recentCheckins = []) {
@@ -142,25 +146,17 @@ function normalizeRhr(rhr, recentCheckins = []) {
 
   const baseline = getRecentRhrBaseline(recentCheckins);
 
-  // sem baseline: leitura conservadora
-  if (!baseline) {
-    const raw = Number(rhr);
-    if (raw <= 50) return 76;
-    if (raw <= 56) return 68;
-    if (raw <= 62) return 60;
-    if (raw <= 68) return 50;
-    if (raw <= 74) return 40;
-    return 30;
+  // COM baseline: RHR abaixo do seu normal = melhor recuperação.
+  // Invertemos o sinal do delta para que delta negativo (RHR menor) pontue alto.
+  // -8% => ~88; 0% => ~50; +8% => ~22. Contínuo.
+  if (baseline) {
+    const deltaPct = ((Number(rhr) - baseline) / baseline) * 100;
+    return logisticScore(-deltaPct, { center: 0, scale: 4.5, k: 1 });
   }
 
-  const deltaPct = ((Number(rhr) - baseline) / baseline) * 100;
-
-  // RHR menor que o baseline = melhor
-  if (deltaPct <= -8) return 88;
-  if (deltaPct <= -4) return 76;
-  if (deltaPct < 4) return 58;
-  if (deltaPct < 8) return 40;
-  return 22;
+  // SEM baseline: valor absoluto. ~60bpm é neutro; mais baixo melhor.
+  // Sinal invertido para que RHR menor pontue mais alto.
+  return logisticScore(-(Number(rhr) - 60), { center: 0, scale: 9, k: 1 });
 }
 
 function getSleepHoursScore(hours) {
@@ -235,32 +231,26 @@ function getPreviewConfidenceReason(checkin, recentCheckins = []) {
 
 // ─── Core scores ───────────────────────────────────────────────────────────
 
+// ─── CAMADA 1: Recuperação fisiológica (portátil, sem dupla contagem) ───────
+//
+// Princípio (hierarquia estilo WHOOP): cada SINAL BRUTO entra UMA única vez.
+// - HRV é o sinal autonômico dominante (peso maior).
+// - Sono entra como UM componente agregado (calculateSleepScore), não como
+//   sleep_score + horas + deep + rem soltos. Isso elimina a contagem 5x.
+// - biocharge_morning (HybridCharge do Zepp) NÃO entra aqui. Ele é uma FUSÃO
+//   dos mesmos sinais brutos; somá-lo junto seria contar tudo de novo, e
+//   além disso prende o app ao Zepp. Fica reservado para calibração/exibição.
+//
+// Saída: recovery 0..100 derivável de QUALQUER relógio que exporte HRV/RHR/sono.
 export function calculateRecoveryScore(checkin, recentCheckins = []) {
-  const morning = clamp(checkin.biocharge_morning ?? 0);
-  const sleepScore = clamp(checkin.sleep_score ?? 0);
-  const fatigueInverse = 100 - clamp(checkin.fatigue ?? 0);
-
-const deepSleepScore = normalizeDeepSleep(checkin.deep_sleep_pct);
-  const remSleepScore = normalizeRemSleep(checkin.rem_sleep_pct);
   const hrvScore = normalizeHrv(resolveHrvValue(checkin), recentCheckins);
   const rhrScore = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
-  const sleepHoursScore = getSleepHoursScore(checkin.sleep_hours);
+  const sleepScore = calculateSleepScore(checkin); // sono já agregado aqui
 
-  const mood = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'mood'));
-  const energy = normalizeMoodOrEnergy(resolveCheckinField(checkin, 'energy'));
-
-  // WHOOP-like na intenção: biometria manda, subjetividade ajusta levemente
-const weighted = [
-    { value: hrvScore, weight: 0.26 },
-    { value: rhrScore, weight: 0.18 },
-    { value: sleepScore, weight: 0.18 },
-    { value: sleepHoursScore, weight: 0.12 },
-    { value: deepSleepScore, weight: 0.06 },
-    { value: remSleepScore, weight: 0.04 },
-    { value: morning, weight: 0.08 },
-    { value: fatigueInverse, weight: 0.06 },
-    { value: mood, weight: 0.01 },
-    { value: energy, weight: 0.01 },
+  const weighted = [
+    { value: hrvScore, weight: 0.45 },   // autonômico domina
+    { value: rhrScore, weight: 0.25 },   // cardiovascular de repouso
+    { value: sleepScore, weight: 0.30 }, // sono como bloco único
   ];
 
   let weightSum = 0;
@@ -275,7 +265,7 @@ const weighted = [
 
   if (weightSum <= 0) return 0;
 
-  // renormaliza pelo peso disponível
+  // Renormaliza pelo peso disponível (ex.: se faltar HRV num dia).
   const raw = total / weightSum;
   return clamp(Math.round(raw));
 }
@@ -414,18 +404,17 @@ export function calculateStressScore(checkin) {
 }
 
 export function calculateReadinessScore(checkin, recentCheckins = []) {
+  // Prontidão = recuperação fisiológica (Camada 1) MODULADA pela carga
+  // subjetiva (Camada 2: fadiga/soreness/stress percebidos).
+  // recovery JÁ contém HRV + RHR + sono — não re-somamos esses sinais aqui,
+  // senão voltaríamos a contar em dobro. A fadiga entra porque captura o que
+  // o sensor não vê (dano muscular, contexto do dia).
   const recovery = calculateRecoveryScore(checkin, recentCheckins);
   const fatigue = calculateFatigueScore(checkin);
-  const sleep = calculateSleepScore(checkin);
-  const hrv = normalizeHrv(resolveHrvValue(checkin), recentCheckins);
-  const rhr = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
 
   const weighted = [
-    { value: recovery, weight: 0.58 },
-    { value: 100 - fatigue, weight: 0.18 },
-    { value: sleep, weight: 0.12 },
-    { value: hrv, weight: 0.07 },
-    { value: rhr, weight: 0.05 },
+    { value: recovery, weight: 0.80 },        // base fisiológica
+    { value: 100 - fatigue, weight: 0.20 },   // carga subjetiva (Camada 2)
   ];
 
   let total = 0;
