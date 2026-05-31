@@ -787,7 +787,7 @@ if (isPostMode) {
 
             <select
               value={form.sleep_hours ?? ''}
-              onChange={(e) => update('sleep_hours', Number(e.target.value) || null)}
+              onChange={(e) => { update('sleep_hours', Number(e.target.value) || null); setTouched(t => ({ ...t, sleep_hours: true })); }}
               className="w-full h-11 rounded-xl bg-secondary border border-border/40 px-3 text-sm font-mono text-foreground"
             >
               <option value="">Selecione...</option>
