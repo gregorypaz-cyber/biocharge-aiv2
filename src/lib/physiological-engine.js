@@ -202,6 +202,11 @@ export function buildBaseline(checkins) {
       d14: movingAvg(checkins, 'deep_sleep_pct', 14),
       d30: movingAvg(checkins, 'deep_sleep_pct', 30),
     },
+    sleepHr: {
+      d7: movingAvg(checkins, 'sleep_heart_rate', 7),
+      d14: movingAvg(checkins, 'sleep_heart_rate', 14),
+      d30: movingAvg(checkins, 'sleep_heart_rate', 30),
+    },
   };
 }
 
