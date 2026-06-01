@@ -949,6 +949,71 @@ if (isPostMode) {
                   Ex: 23:00 — encontre no Zepp → Sono
                 </p>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    Despertares
+                  </label>
+                  <Input
+                    type="number"
+                    step="1"
+                    min={0}
+                    max={30}
+                    placeholder="ex: 5"
+                    value={form.sleep_awakenings ?? ''}
+                    onChange={(e) => update('sleep_awakenings', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v) && (v < 0 || v > 30)) update('sleep_awakenings', null);
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Zepp → Sono</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    Regularidade
+                  </label>
+                  <Input
+                    type="number"
+                    step="1"
+                    min={0}
+                    max={100}
+                    placeholder="ex: 75"
+                    value={form.sleep_regularity_pct ?? ''}
+                    onChange={(e) => update('sleep_regularity_pct', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v) && (v < 0 || v > 100)) update('sleep_regularity_pct', null);
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                  <p className="text-[10px] text-muted-foreground">% — Zepp</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    FC no sono
+                  </label>
+                  <Input
+                    type="number"
+                    step="1"
+                    min={30}
+                    max={120}
+                    placeholder="ex: 62"
+                    value={form.sleep_heart_rate ?? ''}
+                    onChange={(e) => update('sleep_heart_rate', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v) && (v < 30 || v > 120)) update('sleep_heart_rate', null);
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                  <p className="text-[10px] text-muted-foreground">bpm — Zepp</p>
+                </div>
+              </div>
             </CheckinStep>
 
             {!isRestDay && (
