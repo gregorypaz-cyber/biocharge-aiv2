@@ -83,6 +83,104 @@ function getTodayLocalString() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function BottleneckInsight({ bottleneck }) {
+  if (!bottleneck) return null;
+
+  if (!bottleneck.ready) {
+    const faltam = Math.max(0, bottleneck.daysNeeded - bottleneck.daysHave);
+    return (
+      <div className="rounded-2xl border border-border/50 bg-card p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-secondary border border-border/40 flex items-center justify-center shrink-0">
+            <Target className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Descobrindo seu gargalo pessoal</p>
+            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+              Faltam cerca de {faltam} dias de registro para identificar com confiança
+              qual fator mais move sua recuperação.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!bottleneck.hasSignal) {
+    return (
+      <div className="rounded-2xl border border-border/50 bg-card p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-secondary border border-border/40 flex items-center justify-center shrink-0">
+            <Target className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Sem um gargalo dominante</p>
+            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+              Por enquanto nenhum fator isolado domina sua recuperação — seus dados
+              estão equilibrados. Isso costuma ser um bom sinal.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const b = bottleneck.bottleneck;
+  const isPositive = b.direction === 'positive';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-primary/30 bg-primary/5 p-5"
+    >
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+          <Target className="w-4 h-4 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+            Seu gargalo pessoal
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-lg leading-none">{b.icon}</span>
+            <h3 className="text-base font-black tracking-tight">{b.label}</h3>
+          </div>
+
+          <p className="text-[13px] text-muted-foreground leading-relaxed mt-2">
+            De tudo que você registra,{' '}
+            <span className="text-foreground font-semibold">{b.label.toLowerCase()}</span> é
+            o fator com a{' '}
+            <span className="text-foreground font-semibold">{bottleneck.strengthLabel} associação</span>{' '}
+            com a sua recuperação.{' '}
+            {isPositive
+              ? 'Dias em que ele está mais alto tendem a aparecer com recovery melhor.'
+              : 'Dias em que ele está mais alto tendem a aparecer com recovery pior.'}
+          </p>
+
+          <div className="flex items-center gap-2 mt-3">
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md',
+                isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+              )}
+            >
+              {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              correlação {b.correlation > 0 ? '+' : ''}{b.correlation}
+            </span>
+            <span className="text-[10px] text-muted-foreground">baseado em {b.samples} dias</span>
+          </div>
+
+          <p className="text-[10px] text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-2">
+            Associação observada nos seus dados, não relação de causa garantida. Use como
+            pista de onde focar, não como regra fixa.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function SectionHeader({ title, subtitle }) {
   return (
     <div className="space-y-0.5">
