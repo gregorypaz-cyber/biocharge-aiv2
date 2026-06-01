@@ -912,6 +912,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
   const performanceWindow = calculatePerformanceWindow(sessions, checkins);
   const cardiacDrift = detectCardiacDrift(sessions);
   const hrvAnomaly = detectHRVAnomaly(checkins, baseline);
+  const personalBottleneck = detectPersonalBottleneck(checkins);
 
   const analysisBase = {
     today,
