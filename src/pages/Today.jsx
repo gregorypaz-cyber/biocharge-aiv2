@@ -1266,6 +1266,25 @@ function ExecutionCard() {
             </div>
           )}
 
+        {/* Lembrete do gargalo pessoal nos dias de recuperação mais baixa */}
+        {displayedScore < 65 &&
+          analysis?.personalBottleneck?.hasSignal &&
+          analysis.personalBottleneck.bottleneck && (() => {
+            const b = analysis.personalBottleneck.bottleneck;
+            const isPositive = b.direction === 'positive';
+            return (
+              <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-xs leading-snug">
+                <span className="font-semibold text-primary">
+                  {b.icon} Seu gargalo nº1:
+                </span>{' '}
+                {b.label.toLowerCase()} é o que mais move sua recuperação.{' '}
+                {isPositive
+                  ? `Hoje, priorizar isso é onde você ganha mais.`
+                  : `Hoje, reduzir isso é onde você ganha mais.`}
+              </div>
+            );
+          })()}
+
 {enrichedCheckin.current_body_state &&
           BODY_STATE_PT[enrichedCheckin.current_body_state] && (() => {
             const stateKey = enrichedCheckin.current_body_state;
