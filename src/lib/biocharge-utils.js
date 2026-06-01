@@ -292,11 +292,13 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
   const hrvScore = normalizeHrv(resolveHrvValue(checkin), recentCheckins);
   const rhrScore = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
   const sleepScore = calculateSleepScore(checkin); // sono já agregado aqui
+  const subjectiveScore = calculateSubjectiveScore(checkin); // como a pessoa se sente
 
   const weighted = [
-    { value: hrvScore, weight: 0.45 },   // autonômico domina
-    { value: rhrScore, weight: 0.25 },   // cardiovascular de repouso
-    { value: sleepScore, weight: 0.30 }, // sono como bloco único
+    { value: hrvScore, weight: 0.35 },        // autonômico — ainda o maior peso isolado
+    { value: rhrScore, weight: 0.15 },        // cardiovascular de repouso
+    { value: sleepScore, weight: 0.25 },      // sono como bloco único
+    { value: subjectiveScore, weight: 0.25 }, // estado subjetivo (melhor preditor na literatura)
   ];
 
   let weightSum = 0;
@@ -311,7 +313,7 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
 
   if (weightSum <= 0) return 0;
 
-  // Renormaliza pelo peso disponível (ex.: se faltar HRV num dia).
+  // Renormaliza pelo peso disponível (ex.: se faltar HRV ou subjetivo num dia).
   const raw = total / weightSum;
   return clamp(Math.round(raw));
 }
