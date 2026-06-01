@@ -114,6 +114,9 @@ export default function AddTrainingModal({
     perceived_effort: 6,
     heart_rate_avg: '',
     heart_rate_max: '',
+    distance_km: '',
+    pace_min: '',
+    pace_sec: '',
     notes: '',
   });
 
