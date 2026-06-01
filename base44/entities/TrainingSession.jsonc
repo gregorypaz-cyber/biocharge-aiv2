@@ -44,6 +44,18 @@
       "type": "number",
       "description": "Average heart rate during session (optional)"
     },
+    "heart_rate_max": {
+      "type": "number",
+      "description": "Peak heart rate during session in bpm (optional). Used for cardiac drift and strain peak."
+    },
+    "distance_km": {
+      "type": "number",
+      "description": "Distance in kilometers (running only, optional)"
+    },
+    "avg_pace_seconds_per_km": {
+      "type": "number",
+      "description": "Average pace in seconds per km (running only, optional). Used for running economy."
+    },
     "perceived_effort": {
       "type": "number",
       "description": "Rate of Perceived Exertion (1-10)"
