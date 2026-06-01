@@ -1073,6 +1073,11 @@ Regras:
 {/* Primary insight */}
 <PrimaryInsightCard item={primaryInsight} />
 
+      {/* Gargalo pessoal — o fator que mais move sua recuperação */}
+      {analysis?.personalBottleneck && (
+        <BottleneckInsight bottleneck={analysis.personalBottleneck} />
+      )}
+
       {/* 1. High-value discoveries */}
       <div className="space-y-3">
         <SectionHeader
