@@ -10,7 +10,9 @@ function getTitle(score) {
 }
 
 export default function WhyScoreCard({ whyScore, recoveryScore }) {
-  const [open, setOpen] = useState(false);
+  // Em dias de recuperação baixa (< 65), a causa importa mais — abre por padrão
+  // para que a explicação fique visível sem exigir um clique.
+  const [open, setOpen] = useState((recoveryScore ?? 100) < 65);
 
   if (!whyScore || whyScore.length === 0) return null;
 
