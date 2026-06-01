@@ -928,6 +928,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
     performanceWindow,
     cardiacDrift,
     hrvAnomaly,
+    personalBottleneck,
   };
 
   const workoutPrescription = prescribeWorkout(analysisBase, { preferred_sports: ['Corrida'] });
