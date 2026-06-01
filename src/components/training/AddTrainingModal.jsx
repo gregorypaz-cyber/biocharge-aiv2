@@ -141,6 +141,13 @@ export default function AddTrainingModal({
         heart_rate_max: data.heart_rate_max
           ? Number(data.heart_rate_max)
           : undefined,
+        distance_km: data.distance_km
+          ? Number(data.distance_km)
+          : undefined,
+        avg_pace_seconds_per_km:
+          Number(data.pace_min) > 0 || Number(data.pace_sec) > 0
+            ? Number(data.pace_min || 0) * 60 + Number(data.pace_sec || 0)
+            : undefined,
         duration_minutes: Number(data.duration_minutes),
         perceived_effort: Number(data.perceived_effort),
       };
