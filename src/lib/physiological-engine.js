@@ -627,6 +627,117 @@ export function detectCorrelations(checkins) {
   return insights.slice(0, 4);
 }
 
+// ─── Análise de Gargalo Pessoal ───────────────────────────────────────────────
+// Descobre qual variável controlável tem a MAIOR associação com o recovery
+// do próprio usuário. Baseado no achado de Rothschild et al. (2024): as
+// variáveis-chave são individuais. Usa correlação de Pearson, exige variação
+// mínima (variável "travada" não tem sinal) e tamanho de amostra mínimo.
+// IMPORTANTE: comunica associação, não causalidade.
+
+const BOTTLENECK_MIN_CHECKINS = 14;       // ~2 semanas
+const BOTTLENECK_MIN_CORRELATION = 0.30;  // abaixo disso é ruído
+const BOTTLENECK_MIN_VARIATION = 0.12;    // coef. de variação mínimo
+
+function _pearson(xs, ys) {
+  const n = xs.length;
+  if (n < 3) return null;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0, dx = 0, dy = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - mx) * (ys[i] - my);
+    dx += (xs[i] - mx) ** 2;
+    dy += (ys[i] - my) ** 2;
+  }
+  if (dx === 0 || dy === 0) return null; // sem variação = sem sinal
+  return num / (Math.sqrt(dx) * Math.sqrt(dy));
+}
+
+function _coefVariation(xs) {
+  const n = xs.length;
+  if (n < 2) return 0;
+  const mean = xs.reduce((a, b) => a + b, 0) / n;
+  if (mean === 0) return 0;
+  const variance = xs.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
+  return Math.sqrt(variance) / Math.abs(mean);
+}
+
+export function detectPersonalBottleneck(checkins) {
+  checkins = _ensure(checkins);
+  if (checkins.length < BOTTLENECK_MIN_CHECKINS) {
+    return { ready: false, daysNeeded: BOTTLENECK_MIN_CHECKINS, daysHave: checkins.length };
+  }
+
+  // Variáveis candidatas: o que o usuário controla/registra.
+  // direction: 'positive' = mais é melhor; 'negative' = mais é pior.
+  const candidates = [
+    { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', direction: 'positive', icon: '🌙' },
+    { key: 'sleep_hours', label: 'Horas de sono', unit: 'h', direction: 'positive', icon: '💤' },
+    { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', direction: 'positive', icon: '😴' },
+    { key: 'rem_sleep_pct', label: 'Sono REM', unit: '%', direction: 'positive', icon: '🧠' },
+    { key: 'stress', label: 'Stress', unit: '/5', direction: 'negative', icon: '😰' },
+    { key: 'muscle_soreness', label: 'Dor muscular', unit: '/5', direction: 'negative', icon: '💪' },
+    { key: 'hydration', label: 'Hidratação', unit: '/5', direction: 'positive', icon: '💧' },
+  ];
+
+  const ranked = [];
+
+  for (const c of candidates) {
+    // Pares (variável do dia, recovery do MESMO dia), ignorando faltantes.
+    const xs = [];
+    const ys = [];
+    for (const chk of checkins) {
+      const x = chk[c.key];
+      const y = chk.recovery_score;
+      if (x != null && y != null && !Number.isNaN(Number(x)) && !Number.isNaN(Number(y))) {
+        xs.push(Number(x));
+        ys.push(Number(y));
+      }
+    }
+
+    if (xs.length < BOTTLENECK_MIN_CHECKINS) continue;
+
+    const variation = _coefVariation(xs);
+    if (variation < BOTTLENECK_MIN_VARIATION) continue; // variável travada, sem sinal
+
+    const r = _pearson(xs, ys);
+    if (r == null) continue;
+
+    if (Math.abs(r) < BOTTLENECK_MIN_CORRELATION) continue; // efeito fraco demais
+
+    ranked.push({
+      key: c.key,
+      label: c.label,
+      unit: c.unit,
+      icon: c.icon,
+      direction: c.direction,
+      correlation: Math.round(r * 100) / 100,
+      strength: Math.abs(r),
+      samples: xs.length,
+    });
+  }
+
+  if (ranked.length === 0) {
+    return { ready: true, hasSignal: false };
+  }
+
+  ranked.sort((a, b) => b.strength - a.strength);
+
+  const top = ranked[0];
+  const strengthLabel =
+    top.strength >= 0.6 ? 'forte' :
+    top.strength >= 0.45 ? 'moderada' :
+    'leve';
+
+  return {
+    ready: true,
+    hasSignal: true,
+    bottleneck: top,
+    ranking: ranked,
+    strengthLabel,
+  };
+}
+
 // ─── Lagged Effect Analysis ───────────────────────────────────────────────────
 
 export function detectLaggedEffects(checkins) {
