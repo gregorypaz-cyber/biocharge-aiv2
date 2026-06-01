@@ -239,6 +239,41 @@ function getPreviewConfidenceReason(checkin, recentCheckins = []) {
   return 'Faltam HRV e/ou FC de repouso. Esta leitura está mais apoiada em percepção e sono informado.';
 }
 
+// Score subjetivo (como a pessoa se sente) — energia, humor, stress, dor.
+// A literatura (Rothschild 2024; Aschwanden) aponta o estado subjetivo como
+// o melhor preditor isolado do recovery percebido. Energia e humor entram
+// direto (5=bom); stress e dor são INVERTIDOS (1=bom, 5=ruim).
+function calculateSubjectiveScore(checkin) {
+  const energyRaw = resolveCheckinField(checkin, 'energy');
+  const moodRaw = resolveCheckinField(checkin, 'mood');
+  const stressRaw = resolveCheckinField(checkin, 'stress');
+  const sorenessRaw = resolveCheckinField(checkin, 'muscle_soreness');
+
+  const energy = energyRaw != null ? clamp((Number(energyRaw) / 5) * 100) : null;
+  const mood = moodRaw != null ? clamp((Number(moodRaw) / 5) * 100) : null;
+  // Invertidos: stress/dor altos REDUZEM o score.
+  const stress = stressRaw != null ? clamp(((5 - Number(stressRaw)) / 4) * 100) : null;
+  const soreness = sorenessRaw != null ? clamp(((5 - Number(sorenessRaw)) / 4) * 100) : null;
+
+  const weighted = [
+    { value: energy, weight: 0.30 },
+    { value: mood, weight: 0.20 },
+    { value: stress, weight: 0.25 },
+    { value: soreness, weight: 0.25 },
+  ];
+
+  let total = 0;
+  let weightSum = 0;
+  for (const item of weighted) {
+    if (item.value != null) {
+      total += item.value * item.weight;
+      weightSum += item.weight;
+    }
+  }
+
+  if (weightSum <= 0) return null;
+  return clamp(Math.round(total / weightSum));
+}
 
 // ─── Core scores ───────────────────────────────────────────────────────────
 
