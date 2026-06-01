@@ -432,6 +432,31 @@ export function explainRecoveryScore(today, baseline) {
     }
   }
 
+  // Sono fragmentado — despertares noturnos
+  if (today.sleep_awakenings != null && today.sleep_awakenings >= 4) {
+    reasons.push({
+      impact: 'negative',
+      text: `Sono fragmentado: você acordou ${today.sleep_awakenings}x essa noite`,
+    });
+  } else if (today.sleep_awakenings != null && today.sleep_awakenings <= 1) {
+    reasons.push({
+      impact: 'positive',
+      text: `Sono contínuo: poucos despertares (${today.sleep_awakenings}x)`,
+    });
+  }
+
+  // FC durante o sono elevada vs baseline — sinal precoce de stress/sobrecarga
+  if (today.sleep_heart_rate != null && today.sleep_heart_rate > 0 && baseSleepHr) {
+    const hr = Math.round(today.sleep_heart_rate);
+    const avg = Math.round(baseSleepHr);
+    if (hr > avg + 3) {
+      reasons.push({
+        impact: 'negative',
+        text: `FC durante o sono elevada (${hr} vs sua média de ${avg} bpm)`,
+      });
+    }
+  }
+
   if ((today.stress || 0) >= WHY_STRESS_HIGH) {
     reasons.push({ impact: 'negative', text: `Stress elevado hoje (${today.stress}/5) pesando na recuperação` });
   }
