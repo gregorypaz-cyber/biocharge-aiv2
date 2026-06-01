@@ -118,6 +118,34 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
         { id: 'narrative', action: 'exclude', priority: 11 },
       ];
 
+    case 'OPTIMAL_LOAD':
+      return [
+        { id: 'execution', action: 'show', priority: 1 },
+        { id: 'workout', action: 'show', priority: 2 },
+
+        // Causa sobe para o bloco principal, logo após a prescrição (mesma lógica do PLANNING).
+        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 3 },
+
+        {
+          id: 'post_workout_cta',
+          action: hasWorkoutSessions ? 'show' : 'exclude',
+          priority: 4,
+        },
+
+        {
+          id: 'sleep_forecast',
+          action: 'show',
+          priority: hasWorkoutSessions ? 5 : 4,
+        },
+
+        { id: 'training_sessions', action: 'show', priority: 6 },
+        { id: 'morning_recovery', action: 'show', priority: 7 },
+        { id: 'current_state', action: 'show', priority: 8 },
+        { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
+        { id: 'recovery_demand', action: 'exclude', priority: 10 },
+        { id: 'narrative', action: 'exclude', priority: 11 },
+      ];
+
     case 'OVERLOAD':
       return [
         { id: 'execution', action: 'show', priority: 1 },
