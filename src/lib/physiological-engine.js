@@ -680,18 +680,32 @@ export function detectPersonalBottleneck(checkins) {
     { key: 'hydration', label: 'Hidratação', unit: '/5', direction: 'positive', icon: '💧' },
   ];
 
+  // Ordena do mais ANTIGO para o mais RECENTE, para parear "variável de hoje" com
+  // "HRV de amanhã" (o dia seguinte na sequência temporal).
+  const chrono = [...checkins].sort((a, b) =>
+    String(a.date).localeCompare(String(b.date))
+  );
+
   const ranked = [];
 
   for (const c of candidates) {
-    // Pares (variável do dia, recovery do MESMO dia), ignorando faltantes.
+    // Pares: variável do dia X  vs  HRV do dia X+1 (dia seguinte).
+    // O HRV é um alvo fisiológico INDEPENDENTE — não contém stress/sono/etc,
+    // evitando a circularidade que existiria ao correlacionar contra recovery_score
+    // (que já é calculado a partir dessas mesmas variáveis subjetivas).
     const xs = [];
     const ys = [];
-    for (const chk of checkins) {
-      const x = chk[c.key];
-      const y = chk.recovery_score;
-      if (x != null && y != null && !Number.isNaN(Number(x)) && !Number.isNaN(Number(y))) {
+    for (let i = 0; i < chrono.length - 1; i++) {
+      const x = chrono[i][c.key];
+      const yRaw = chrono[i + 1].hrv; // HRV do dia seguinte
+      if (
+        x != null &&
+        yRaw != null &&
+        !Number.isNaN(Number(x)) &&
+        !Number.isNaN(Number(yRaw))
+      ) {
         xs.push(Number(x));
-        ys.push(Number(y));
+        ys.push(Number(yRaw));
       }
     }
 
