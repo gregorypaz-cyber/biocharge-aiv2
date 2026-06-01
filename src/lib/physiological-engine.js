@@ -197,6 +197,11 @@ export function buildBaseline(checkins) {
       d14: movingAvg(checkins, 'sleep_quality', 14),
       d30: movingAvg(checkins, 'sleep_quality', 30),
     },
+    deepSleep: {
+      d7: movingAvg(checkins, 'deep_sleep_pct', 7),
+      d14: movingAvg(checkins, 'deep_sleep_pct', 14),
+      d30: movingAvg(checkins, 'deep_sleep_pct', 30),
+    },
   };
 }
 
