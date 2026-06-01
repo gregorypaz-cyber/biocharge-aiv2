@@ -151,7 +151,7 @@ function normalizeRhr(rhr, recentCheckins = []) {
   // -8% => ~88; 0% => ~50; +8% => ~22. Contínuo.
   if (baseline) {
     const deltaPct = ((Number(rhr) - baseline) / baseline) * 100;
-    return logisticScore(-deltaPct, { center: 0, scale: 4.5, k: 1 });
+    return logisticScore(-deltaPct, { center: 0, scale: 7.0, k: 1 });
   }
 
   // SEM baseline: valor absoluto. ~60bpm é neutro; mais baixo melhor.
