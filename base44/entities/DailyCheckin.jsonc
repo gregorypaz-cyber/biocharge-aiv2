@@ -36,6 +36,18 @@
       "type": "number",
       "description": "Deep sleep percentage (0-100)"
     },
+    "sleep_awakenings": {
+      "type": "number",
+      "description": "Number of times woken during the night (from Zepp). Higher = more fragmented sleep."
+    },
+    "sleep_regularity_pct": {
+      "type": "number",
+      "description": "Sleep regularity percentage 0-100 (from Zepp). Higher = more consistent sleep/wake timing."
+    },
+    "sleep_heart_rate": {
+      "type": "number",
+      "description": "Average heart rate during sleep in bpm (from Zepp). Rising trend can signal stress/overload."
+    },
     "rpe": {
       "type": "number",
       "description": "Rate of Perceived Exertion (1-10)"
