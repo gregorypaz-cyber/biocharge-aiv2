@@ -82,61 +82,39 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
         { id: 'workout', action: 'show', priority: 2 },
 
         /**
-         * Se já existe treino registrado hoje, o próximo passo mais importante
-         * é registrar pós-treino. Isso sobe para o bloco principal.
+         * A causa (why_score) sobe para o bloco principal, logo após a prescrição:
+         * a tela conta "o que fazer" → "por que você está assim". Só entra como
+         * principal se já existe treino registrado? Não — a causa importa todo dia.
+         */
+        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 3 },
+
+        /**
+         * Se já existe treino registrado hoje, registrar pós-treino é o próximo passo.
          */
         {
           id: 'post_workout_cta',
           action: hasWorkoutSessions ? 'show' : 'exclude',
-          priority: 3,
+          priority: 4,
         },
 
         /**
-         * Se ainda não existe treino registrado, sono continua como terceiro bloco principal.
-         * Se já existe treino registrado, sono desce para detalhes.
+         * Sono desce um nível por causa da entrada da causa no principal.
          */
         {
           id: 'sleep_forecast',
           action: 'show',
-          priority: hasWorkoutSessions ? 4 : 3,
+          priority: hasWorkoutSessions ? 5 : 4,
         },
 
-        { id: 'training_sessions', action: 'show', priority: 5 },
-        { id: 'morning_recovery', action: 'show', priority: 6 },
-        { id: 'current_state', action: 'show', priority: 7 },
-        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 8 },
+        { id: 'training_sessions', action: 'show', priority: 6 },
+        { id: 'morning_recovery', action: 'show', priority: 7 },
+        { id: 'current_state', action: 'show', priority: 8 },
         { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
         {
           id: 'recovery_demand',
           action: hasRecoveryDemandAlert ? 'show' : 'exclude',
           priority: 10,
         },
-        { id: 'narrative', action: 'exclude', priority: 11 },
-      ];
-
-    case 'OPTIMAL_LOAD':
-      return [
-        { id: 'execution', action: 'show', priority: 1 },
-        { id: 'workout', action: 'show', priority: 2 },
-
-        {
-          id: 'post_workout_cta',
-          action: hasWorkoutSessions ? 'show' : 'exclude',
-          priority: 3,
-        },
-
-        {
-          id: 'sleep_forecast',
-          action: 'show',
-          priority: hasWorkoutSessions ? 4 : 3,
-        },
-
-        { id: 'training_sessions', action: 'show', priority: 5 },
-        { id: 'morning_recovery', action: 'show', priority: 6 },
-        { id: 'current_state', action: 'show', priority: 7 },
-        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 8 },
-        { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
-        { id: 'recovery_demand', action: 'exclude', priority: 10 },
         { id: 'narrative', action: 'exclude', priority: 11 },
       ];
 
