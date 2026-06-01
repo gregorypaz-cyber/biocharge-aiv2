@@ -675,6 +675,8 @@ export function detectPersonalBottleneck(checkins) {
     { key: 'sleep_hours', label: 'Horas de sono', unit: 'h', direction: 'positive', icon: '💤' },
     { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', direction: 'positive', icon: '😴' },
     { key: 'rem_sleep_pct', label: 'Sono REM', unit: '%', direction: 'positive', icon: '🧠' },
+    { key: 'sleep_awakenings', label: 'Despertares noturnos', unit: 'x', direction: 'negative', icon: '🌃' },
+    { key: 'sleep_regularity_pct', label: 'Regularidade do sono', unit: '%', direction: 'positive', icon: '🕰️' },
     { key: 'stress', label: 'Stress', unit: '/5', direction: 'negative', icon: '😰' },
     { key: 'muscle_soreness', label: 'Dor muscular', unit: '/5', direction: 'negative', icon: '💪' },
     { key: 'hydration', label: 'Hidratação', unit: '/5', direction: 'positive', icon: '💧' },
