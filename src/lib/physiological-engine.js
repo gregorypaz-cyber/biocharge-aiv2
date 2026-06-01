@@ -388,6 +388,7 @@ export function explainRecoveryScore(today, baseline) {
   const baseHrv = baseline?.hrv?.d14 || baseline?.hrv?.d7;
   const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
   const baseSleep = baseline?.sleepScore?.d14 || baseline?.sleepScore?.d7;
+  const baseDeepSleep = baseline?.deepSleep?.d14 || baseline?.deepSleep?.d7;
 
   if (today.hrv && baseHrv) {
     const d = pctDelta(today.hrv, baseHrv);
