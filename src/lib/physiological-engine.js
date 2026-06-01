@@ -415,20 +415,31 @@ export function explainRecoveryScore(today, baseline) {
     }
   }
 
+  // Sono profundo vs sua média — o sinal de sono que mais costuma pesar
+  if (today.deep_sleep_pct != null && today.deep_sleep_pct > 0 && baseDeepSleep) {
+    const pct = Math.round(today.deep_sleep_pct);
+    const avg = Math.round(baseDeepSleep);
+    if (pct < avg - 4) {
+      reasons.push({ impact: 'negative', text: `Sono profundo baixo: ${pct}% vs sua média de ${avg}%` });
+    } else if (pct > avg + 4) {
+      reasons.push({ impact: 'positive', text: `Sono profundo acima da sua média (${pct}% vs ${avg}%)` });
+    }
+  }
+
   if ((today.stress || 0) >= WHY_STRESS_HIGH) {
-    reasons.push({ impact: 'negative', text: 'Nível de stress elevado impactando recuperação' });
+    reasons.push({ impact: 'negative', text: `Stress elevado hoje (${today.stress}/5) pesando na recuperação` });
   }
   if ((today.fatigue_score || 0) > WHY_FATIGUE_HIGH) {
-    reasons.push({ impact: 'negative', text: 'Fadiga muscular acumulada acima do limiar' });
+    reasons.push({ impact: 'negative', text: `Fadiga acumulada alta (${Math.round(today.fatigue_score)}/100)` });
   }
   if ((today.muscle_soreness || 0) >= WHY_SORENESS_HIGH) {
-    reasons.push({ impact: 'negative', text: 'Soreness muscular significativo' });
+    reasons.push({ impact: 'negative', text: `Dor muscular significativa (${today.muscle_soreness}/5)` });
   }
   if ((today.energy || 0) >= WHY_ENERGY_HIGH) {
-    reasons.push({ impact: 'positive', text: 'Energia subjetiva elevada' });
+    reasons.push({ impact: 'positive', text: `Energia subjetiva elevada (${today.energy}/5)` });
   }
   if ((today.mood || 0) >= WHY_MOOD_HIGH) {
-    reasons.push({ impact: 'positive', text: 'Mood e disposição positivos' });
+    reasons.push({ impact: 'positive', text: `Mood e disposição positivos (${today.mood}/5)` });
   }
 
   return reasons;
