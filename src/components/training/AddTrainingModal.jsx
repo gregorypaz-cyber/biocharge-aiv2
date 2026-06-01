@@ -473,6 +473,59 @@ export default function AddTrainingModal({
                 </div>
               </div>
 
+              {/* Corrida: distância e pace — alimentam o motor de economia de corrida */}
+              {form.sport && form.sport.toLowerCase().includes('corr') && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
+                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                    Dados da corrida (melhoram seus insights)
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                        Distância (km)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="ex: 8.5"
+                        value={form.distance_km}
+                        onChange={(e) => set('distance_km', e.target.value)}
+                        className="bg-secondary border-border"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                        Pace médio (/km)
+                      </label>
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          placeholder="min"
+                          value={form.pace_min}
+                          onChange={(e) => set('pace_min', e.target.value)}
+                          className="bg-secondary border-border text-center"
+                        />
+                        <span className="text-muted-foreground font-mono">:</span>
+                        <Input
+                          type="number"
+                          placeholder="seg"
+                          max={59}
+                          value={form.pace_sec}
+                          onChange={(e) => set('pace_sec', e.target.value)}
+                          className="bg-secondary border-border text-center"
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Ex: 5 : 30 = 5min30/km
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
               {/* Notes */}
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
