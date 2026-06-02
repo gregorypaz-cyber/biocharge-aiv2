@@ -774,6 +774,14 @@ export function detectPersonalBottleneck(checkins) {
     const distinctValues = new Set(xs).size;
     if (distinctValues < BOTTLENECK_MIN_DISTINCT) continue;
 
+    // Anti "quase-binário disfarçado": ter 3 valores não basta se 2 deles
+    // dominam quase tudo (ex.: stress = 2 em 19 dias, 1 em 3, 3 em 2).
+    // Exige que os 2 valores mais comuns NÃO cubram mais de 85% dos dias.
+    const _counts = {};
+    for (const v of xs) _counts[v] = (_counts[v] || 0) + 1;
+    const _top2 = Object.values(_counts).sort((a, b) => b - a).slice(0, 2).reduce((s, c) => s + c, 0);
+    if (_top2 / xs.length > 0.85) continue;
+
     const r = _pearson(xs, ys);
     if (r == null) continue;
 
