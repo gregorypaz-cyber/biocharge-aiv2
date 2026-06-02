@@ -16,6 +16,7 @@ import {
   Moon,
   Clock3,
   Target,
+  Minus,
 } from 'lucide-react';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import {
