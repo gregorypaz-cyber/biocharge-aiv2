@@ -1276,16 +1276,21 @@ export function getSmartMessage(checkin, recentCheckins) {
 export function calculateStreak(checkins) {
   if (!checkins || checkins.length === 0) return 0;
 
-  const sorted = [...checkins].sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Dias ÚNICOS (vários check-ins no mesmo dia não inflam o streak).
+  const uniqueDays = [...new Set(checkins.map((c) => String(c.date).slice(0, 10)))]
+    .map((d) => {
+      const dt = new Date(d + 'T12:00:00');
+      dt.setHours(0, 0, 0, 0);
+      return dt;
+    })
+    .sort((a, b) => b - a);
+
   let streak = 0;
   let current = new Date();
   current.setHours(0, 0, 0, 0);
 
-  for (const c of sorted) {
-    const d = new Date(c.date);
-    d.setHours(0, 0, 0, 0);
+  for (const d of uniqueDays) {
     const diff = Math.round((current - d) / (1000 * 60 * 60 * 24));
-
     if (diff <= 1) {
       streak++;
       current = d;
