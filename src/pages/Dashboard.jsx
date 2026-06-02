@@ -25,7 +25,18 @@ export default function Dashboard() {
   const [showFatigue, setShowFatigue] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
 
-  const computed = useMemo(() => checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), [])), [checkins]);
+  // Usa os scores SALVOS (o que você viu no dia), não recalcula. Recalcular
+  // aqui (a) divergia do Today e da Timeline, (b) era feito sem os treinos
+  // (sessions vazio). O gráfico e os cards passam a refletir a história real.
+  const computed = useMemo(
+    () =>
+      checkins.map((c) => ({
+        ...c,
+        readiness_score: c.readiness_score ?? c.recovery_score ?? c.morning_recovery_score ?? null,
+        recovery_score: c.recovery_score ?? c.morning_recovery_score ?? null,
+      })),
+    [checkins]
+  );
   const streak = calculateStreak(checkins);
   const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
   const [hrvAlertDismissed, setHrvAlertDismissed] = useState(false);
