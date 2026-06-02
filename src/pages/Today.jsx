@@ -960,6 +960,59 @@ function renderCard(desc) {
               </p>
             </div>
 
+            {(() => {
+              // Conecta o insight à AÇÃO: traduz gargalo/tendência numa orientação
+              // concreta para hoje. Prioridade: tendência piorando > gargalo > nada.
+              // Se não há sinal acionável, não renderiza (não polui a decisão).
+              const bottleneck = analysis?.personalBottleneck;
+              const trends = analysis?.longTermTrends;
+
+              const ACTIONS = {
+                deep_sleep_pct: 'priorize dormir cedo, em quarto fresco e escuro — é onde você ganha mais',
+                sleep_hours: 'garanta sua janela de sono completa hoje — é seu maior retorno',
+                sleep_awakenings: 'evite cafeína à tarde e telas antes de dormir para reduzir despertares',
+                sleep_regularity_pct: 'tente dormir e acordar no mesmo horário — sua regularidade é o que mais pesa',
+                rem_sleep_pct: 'evite álcool à noite, que corta o sono REM',
+                sleep_score: 'cuide do sono hoje — é o fator que mais move sua recuperação',
+              };
+
+              let line = null;
+              let tone = 'neutral';
+
+              // 1. Tendência piorando (mais urgente)
+              const worsening = trends?.hasAnyTrend
+                ? trends.metrics.find((m) => m.hasTrend && m.sentiment === 'negative')
+                : null;
+
+              if (worsening) {
+                line = `Seu ${worsening.label} vem caindo nas últimas semanas. Hoje, jogar a favor da recuperação ajuda a virar essa tendência.`;
+                tone = 'warning';
+              } else if (bottleneck?.hasSignal && bottleneck.bottleneck) {
+                const b = bottleneck.bottleneck;
+                const action = ACTIONS[b.key] || `cuide de ${b.label.toLowerCase()} hoje`;
+                line = `Seu maior fator é ${b.label.toLowerCase()}: ${action}.`;
+                tone = 'focus';
+              }
+
+              if (!line) return null;
+
+              return (
+                <div
+                  className={cn(
+                    'px-3 py-2.5 rounded-xl border text-[12px] leading-snug',
+                    tone === 'warning'
+                      ? 'bg-amber-500/5 border-amber-500/20'
+                      : 'bg-primary/5 border-primary/20'
+                  )}
+                >
+                  <span className="font-semibold">
+                    {tone === 'warning' ? '⚠️ Atenção: ' : '🎯 Onde focar hoje: '}
+                  </span>
+                  {line}
+                </div>
+              );
+            })()}
+
             {workoutEl}
 
             {weeklyContextMsg && (
