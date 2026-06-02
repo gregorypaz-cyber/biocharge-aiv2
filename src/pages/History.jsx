@@ -163,12 +163,14 @@ export default function History() {
 
   // Calculate week-level trend
   const weekTrend = (items) => {
-    if (items.length < 2) return null;
-    const sorted = [...items].sort((a, b) => new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00'));
+    // Considera só dias com score válido, para não diluir a média com zeros.
+    const valid = items.filter((c) => c.recovery_score != null);
+    if (valid.length < 2) return null;
+    const sorted = [...valid].sort((a, b) => new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00'));
     const recent = sorted.slice(0, Math.ceil(sorted.length / 2));
     const older = sorted.slice(Math.ceil(sorted.length / 2));
-    const recentAvg = recent.reduce((s, c) => s + (c.recovery_score || 0), 0) / recent.length;
-    const olderAvg = older.reduce((s, c) => s + (c.recovery_score || 0), 0) / older.length;
+    const recentAvg = recent.reduce((s, c) => s + c.recovery_score, 0) / recent.length;
+    const olderAvg = older.reduce((s, c) => s + c.recovery_score, 0) / older.length;
     return recentAvg - olderAvg;
   };
 
