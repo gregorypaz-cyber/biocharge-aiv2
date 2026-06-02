@@ -532,6 +532,57 @@ export default function AddTrainingModal({
                       </p>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                        Efeito aeróbico
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min={0}
+                        max={5}
+                        placeholder="ex: 3.5"
+                        value={form.training_effect_aerobic}
+                        onChange={(e) => set('training_effect_aerobic', e.target.value)}
+                        className="bg-secondary border-border text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                        Efeito anaeróbico
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min={0}
+                        max={5}
+                        placeholder="ex: 3.3"
+                        value={form.training_effect_anaerobic}
+                        onChange={(e) => set('training_effect_anaerobic', e.target.value)}
+                        className="bg-secondary border-border text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                        Cadência
+                      </label>
+                      <Input
+                        type="number"
+                        step="1"
+                        min={100}
+                        max={250}
+                        placeholder="spm"
+                        value={form.cadence_spm}
+                        onChange={(e) => set('cadence_spm', e.target.value)}
+                        className="bg-secondary border-border text-center"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    Efeito do Treino: Zepp → resumo da corrida. É o que define o strain da corrida.
+                  </p>
                 </div>
               )}
 
