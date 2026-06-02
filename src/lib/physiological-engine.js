@@ -748,6 +748,11 @@ export function detectPersonalBottleneck(checkins) {
     const variation = _coefVariation(xs);
     if (variation < BOTTLENECK_MIN_VARIATION) continue; // variável travada, sem sinal
 
+    // Variável que só assume 2 valores (ex.: stress sempre 1 ou 2) gera
+    // correlação instável e enganosa — exige diversidade real de valores.
+    const distinctValues = new Set(xs).size;
+    if (distinctValues < BOTTLENECK_MIN_DISTINCT) continue;
+
     const r = _pearson(xs, ys);
     if (r == null) continue;
 
