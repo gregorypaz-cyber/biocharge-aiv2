@@ -1194,6 +1194,11 @@ Regras:
         <BottleneckInsight bottleneck={analysis.personalBottleneck} />
       )}
 
+      {/* Fronteira 3 — tendências de longo prazo ("estou melhorando?") */}
+      {analysis?.longTermTrends && (
+        <LongTermTrendsCard trends={analysis.longTermTrends} />
+      )}
+
       {/* 1. High-value discoveries */}
       <div className="space-y-3">
         <SectionHeader
