@@ -1205,40 +1205,97 @@ function ExecutionCard() {
           </span>
         </div>
 
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Score do dia
-            </p>
+        {/* HERÓI VISUAL — anel de score centralizado */}
+        <div className="flex flex-col items-center pt-2 pb-1">
+          {(() => {
+            const scoreColor = isRestMode
+              ? 'hsl(215,30%,55%)'
+              : displayedScore >= 82
+              ? 'hsl(142,70%,50%)'
+              : displayedScore >= 65
+              ? 'hsl(45,93%,58%)'
+              : 'hsl(0,72%,55%)';
+            const R = 78;
+            const C = 2 * Math.PI * R;
+            const pct = Math.max(0, Math.min(100, displayedScore));
+            const offset = C - (pct / 100) * C;
+            return (
+              <div className="relative" style={{ width: 188, height: 188 }}>
+                <svg width="188" height="188" viewBox="0 0 188 188" className="-rotate-90">
+                  {/* trilho */}
+                  <circle
+                    cx="94" cy="94" r={R}
+                    fill="none"
+                    stroke="hsl(215,25%,18%)"
+                    strokeWidth="10"
+                  />
+                  {/* progresso */}
+                  <motion.circle
+                    cx="94" cy="94" r={R}
+                    fill="none"
+                    stroke={scoreColor}
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={C}
+                    initial={{ strokeDashoffset: C }}
+                    animate={{ strokeDashoffset: offset }}
+                    transition={{ duration: 1.1, ease: 'easeOut' }}
+                    style={{ filter: `drop-shadow(0 0 6px ${scoreColor}55)` }}
+                  />
+                </svg>
+                {/* número central */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-6xl font-black font-mono leading-none tracking-tight"
+                    style={{ color: scoreColor }}
+                  >
+                    {displayedScore}
+                  </motion.span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mt-1.5">
+                    Score do dia
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
-            <p className="text-3xl font-mono font-black flex items-center gap-2">
-              <span>{displayedScore}</span>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button aria-label="Sobre Prontidão" className="text-muted-foreground">
-                    <Info className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  Prontidão é a leitura que orienta a decisão de treino de hoje.
-                  <div style={{ marginTop: 6 }}>
-                    <small className="text-[10px] text-muted-foreground">
-                      Ela combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
-                    </small>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </p>
-          </div>
-
-          <div className="text-right">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-              Recovery base
-            </p>
-            <p className="text-lg font-mono font-bold text-foreground">
-              {checkin?.morning_recovery_score ?? checkin?.recovery_score ?? '—'}
-            </p>
+          {/* satélites: faixa + recovery base */}
+          <div className="flex items-center gap-2 mt-3">
+            <span
+              className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                displayedScore >= 82
+                  ? 'bg-emerald-500/15 text-emerald-400'
+                  : displayedScore >= 65
+                  ? 'bg-yellow-500/15 text-yellow-400'
+                  : 'bg-red-500/15 text-red-400'
+              }`}
+            >
+              {readinessFaixa}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Recovery base{' '}
+              <span className="font-mono font-bold text-foreground">
+                {checkin?.morning_recovery_score ?? checkin?.recovery_score ?? '—'}
+              </span>
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button aria-label="Sobre Prontidão" className="text-muted-foreground">
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                Prontidão é a leitura que orienta a decisão de treino de hoje.
+                <div style={{ marginTop: 6 }}>
+                  <small className="text-[10px] text-muted-foreground">
+                    Combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
+                  </small>
+                </div>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
