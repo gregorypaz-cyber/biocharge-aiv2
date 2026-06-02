@@ -346,52 +346,22 @@ export function calculateSleepScore(checkin) {
   return clamp(Math.round(total / weightSum));
 }
 
+// "Performance do sono" exibida ao usuário usa EXATAMENTE a mesma fonte de
+// verdade que alimenta o recovery (calculateSleepScore). Antes havia duas
+// fórmulas divergentes: esta ignorava o sleep_score do Zepp e misturava HRV
+// (que é recuperação, não sono), gerando até 12 pontos de diferença para a
+// mesma noite. Um número de sono só, coerente em todas as telas.
 export function calculateSleepPerformance(checkin) {
-  const sleepHours = checkin?.sleep_hours != null ? Number(checkin.sleep_hours) : null;
-  const deepSleepPct = checkin?.deep_sleep_pct != null ? Number(checkin.deep_sleep_pct) : null;
-  const remSleepPct = checkin?.rem_sleep_pct != null ? Number(checkin.rem_sleep_pct) : null;
-  const hrvValue = resolveHrvValue(checkin);
+  const score = calculateSleepScore(checkin);
+  // calculateSleepScore retorna 0 quando não há dados; preservamos null nesse caso
+  // para a UI poder esconder a métrica em vez de mostrar "0%".
+  const hasAnySleepData =
+    checkin?.sleep_score != null ||
+    checkin?.sleep_hours != null ||
+    checkin?.deep_sleep_pct != null ||
+    checkin?.rem_sleep_pct != null;
 
-  const durationScore =
-    sleepHours == null
-      ? null
-      : Math.min(100, Math.max(0, ((sleepHours - 5) / 3) * 100));
-
-  const deepScore =
-    deepSleepPct == null
-      ? null
-      : Math.min(100, Math.max(0, ((deepSleepPct - 5) / 20) * 100));
-
-  const remScore =
-    remSleepPct == null
-      ? null
-      : Math.min(100, Math.max(0, ((remSleepPct - 5) / 20) * 100));
-
-  const hrvScore =
-    hrvValue == null
-      ? null
-      : Math.min(100, Math.max(0, ((hrvValue - 20) / 60) * 100));
-
-  const weighted = [
-    { value: durationScore, weight: 0.40 },
-    { value: deepScore, weight: 0.30 },
-    { value: remScore, weight: 0.20 },
-    { value: hrvScore, weight: 0.10 },
-  ];
-
-  let total = 0;
-  let weightSum = 0;
-
-  for (const item of weighted) {
-    if (item.value != null) {
-      total += item.value * item.weight;
-      weightSum += item.weight;
-    }
-  }
-
-  if (weightSum <= 0) return null;
-
-  return clamp(Math.round(total / weightSum));
+  return hasAnySleepData ? score : null;
 }
 
 export function calculateBaevskyProxy(rmssd, restingHR) {
