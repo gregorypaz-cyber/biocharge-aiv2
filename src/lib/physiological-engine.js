@@ -1544,13 +1544,16 @@ export function detectLongTermTrends(checkins) {
   );
 
   // higherIsBetter define o sentimento da direção
+  // IMPORTANTE: usamos apenas DADOS CRUS do Zepp, cuja definição nunca mudou.
+  // O recovery_score foi recalibrado (mudança de fórmula) ao longo do histórico,
+  // então sua "tendência" misturaria duas réguas diferentes — seria um artefato,
+  // não uma mudança fisiológica real. Por isso ele fica de fora.
   const metrics = [
     { key: 'hrv', label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
     { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
-    { key: 'recovery_score', label: 'Recovery', unit: 'pts', higherIsBetter: true, icon: '🔋' },
     { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', higherIsBetter: true, icon: '😴' },
+    { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', higherIsBetter: true, icon: '🌙' },
   ];
-
   const results = [];
 
   for (const m of metrics) {
