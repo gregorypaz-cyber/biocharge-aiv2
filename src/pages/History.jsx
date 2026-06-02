@@ -147,7 +147,16 @@ export default function History() {
   const { data: checkins = [], isLoading } = useUserCheckins(120);
   const { data: allSessions = [] } = useUserTrainingSessions(200);
 
-  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
+  // A Timeline mostra o que REALMENTE aconteceu em cada dia — os scores que
+  // foram salvos no momento do check-in — em vez de recalcular com a fórmula
+  // atual. Recalcular (a) reescreveria a história, (b) divergiria do que o
+  // Today mostrou no dia, e (c) o recálculo aqui era feito sem os treinos
+  // (sessions vazio), gerando números inconsistentes. Usamos o valor salvo,
+  // com fallback para morning_recovery_score quando recovery_score faltar.
+  const computed = checkins.map((c) => ({
+    ...c,
+    recovery_score: c.recovery_score ?? c.morning_recovery_score ?? c.readiness_score ?? null,
+  }));
   const weeks = groupByWeek(computed);
 
   const toggleWeek = (key) => setExpandedWeeks(prev => ({ ...prev, [key]: !prev[key] }));
