@@ -1275,12 +1275,13 @@ function ExecutionCard() {
             return (
               <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-xs leading-snug">
                 <span className="font-semibold text-primary">
-                  {b.icon} Seu gargalo nº1:
+                  {b.icon} Seu maior fator hoje:
                 </span>{' '}
-                {b.label.toLowerCase()} é o que mais move sua recuperação.{' '}
+                nos seus dados, <span className="font-medium">{b.label.toLowerCase()}</span> é
+                o que mais acompanha a variação da sua recuperação.{' '}
                 {isPositive
-                  ? `Hoje, priorizar isso é onde você ganha mais.`
-                  : `Hoje, reduzir isso é onde você ganha mais.`}
+                  ? `Quando está mais alto, seu corpo tende a responder melhor no dia seguinte.`
+                  : `Quando está mais alto, sua recuperação no dia seguinte tende a cair.`}
               </div>
             );
           })()}
