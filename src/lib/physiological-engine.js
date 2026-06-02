@@ -987,6 +987,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
   const cardiacDrift = detectCardiacDrift(sessions);
   const hrvAnomaly = detectHRVAnomaly(checkins, baseline);
   const personalBottleneck = detectPersonalBottleneck(checkins);
+  const longTermTrends = detectLongTermTrends(checkins);
 
   const analysisBase = {
     today,
