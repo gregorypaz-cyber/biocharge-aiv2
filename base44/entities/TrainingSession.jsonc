@@ -56,6 +56,18 @@
       "type": "number",
       "description": "Average pace in seconds per km (running only, optional). Used for running economy."
     },
+    "training_effect_aerobic": {
+      "type": "number",
+      "description": "Zepp aerobic Training Effect 0-5 (running). Firstbeat-based, used as strain base for runs."
+    },
+    "training_effect_anaerobic": {
+      "type": "number",
+      "description": "Zepp anaerobic Training Effect 0-5 (running). Used together with aerobic for run strain."
+    },
+    "cadence_spm": {
+      "type": "number",
+      "description": "Average running cadence in steps per minute (running only). Efficiency/technique marker."
+    },
     "perceived_effort": {
       "type": "number",
       "description": "Rate of Perceived Exertion (1-10)"
