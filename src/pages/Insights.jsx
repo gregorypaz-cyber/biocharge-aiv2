@@ -410,6 +410,17 @@ function calcDiscoveries(checkins, trainingSessions = []) {
     if (pairs.length < minPairs) return;
     const arrA = pairs.map((p) => p[0]);
     const arrB = pairs.map((p) => p[1]);
+
+    // Anti falso-positivo de variável quase-binária: se a variável de entrada (A)
+    // tem pouca diversidade real — poucos valores distintos OU 2 valores dominando
+    // mais de 85% dos dias — qualquer correlação é instável e enganosa (ex.: stress
+    // que é quase sempre 1 ou 2). Nesses casos não geramos descoberta.
+    const distinctA = new Set(arrA).size;
+    const countsA = {};
+    for (const v of arrA) countsA[v] = (countsA[v] || 0) + 1;
+    const top2A = Object.values(countsA).sort((a, b) => b - a).slice(0, 2).reduce((s, c) => s + c, 0);
+    if (distinctA < 3 || top2A / arrA.length > 0.85) return;
+
     const r = pearsonR(arrA, arrB);
     if (r == null || Math.abs(r) < threshold) return;
 
