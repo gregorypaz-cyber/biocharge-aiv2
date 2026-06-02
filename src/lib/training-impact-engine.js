@@ -102,7 +102,31 @@ function getBodyStateDescription(state) {
  * - FC máxima observada só ajusta levemente
  * - mistura com duração + RPE
  */
+// Converte o Efeito do Treino do Zepp (Firstbeat) para a escala de strain 0-21.
+// Usa o EFEITO DOMINANTE (maior entre aeróbico e anaeróbico), não a soma —
+// são escalas independentes 0-5; somar distorce. Ancorado na semântica do
+// Firstbeat: TE 1≈menor, 2≈mantém, 3≈melhora, 4≈muito, 5≈exagero.
+function trainingEffectToStrain(aerobic, anaerobic) {
+  const te = Math.max(safeNumber(aerobic, 0), safeNumber(anaerobic, 0));
+  if (te <= 0) return null;
+  return round1(clamp(te * 3.7 + 0.5, 0, 21));
+}
+
 export function calculateStrainScore(session, maxHr) {
+  const isRunning = String(session?.sport || '').toLowerCase().includes('corr');
+
+  // CORRIDA: se o Efeito do Treino do Zepp foi informado, usa ele como base.
+  // É carga cardiovascular medida por zonas de FC contínuas (Firstbeat) — mais
+  // preciso que estimar por FC média + RPE.
+  if (isRunning) {
+    const teStrain = trainingEffectToStrain(
+      session?.training_effect_aerobic,
+      session?.training_effect_anaerobic
+    );
+    if (teStrain != null) return teStrain;
+    // sem Efeito do Treino informado → cai no cálculo por FC/RPE abaixo
+  }
+
   const personalMaxHr = safeNumber(maxHr, DEFAULT_MAX_HR);
   const duration = clamp(safeNumber(session?.duration_minutes, 30), 5, 300);
   const effort = clamp(safeNumber(session?.perceived_effort, 6), 1, 10);
@@ -129,8 +153,12 @@ export function calculateStrainScore(session, maxHr) {
   // Duração cresce, mas com retorno decrescente
   const durationFactor = Math.pow(duration / 45, 0.85);
 
-  // Esforço percebido como ajuste fino
-  const effortFactor = 0.82 + effort / 22; // ~0.86 até ~1.27
+  // MUSCULAÇÃO / não-corrida: RPE pesa MAIS, como proxy da carga muscular que
+  // a FC não captura (o WHOOP descreve strain como inspirado no RPE de Borg).
+  // Range ampliado: antes 0.86–1.27, agora ~0.73–1.42.
+  const effortFactor = isRunning
+    ? 0.82 + effort / 22
+    : 0.65 + effort / 13;
 
   const raw = intensityBase * durationFactor * sportFactor * effortFactor * 13.5;
   return round1(clamp(raw, 0, 21));
