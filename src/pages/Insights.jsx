@@ -182,6 +182,110 @@ function BottleneckInsight({ bottleneck }) {
   );
 }
 
+function LongTermTrendsCard({ trends }) {
+  if (!trends) return null;
+
+  // Ainda sem dados suficientes em nenhuma métrica
+  if (!trends.ready) {
+    return (
+      <div className="rounded-2xl border border-border/50 bg-card p-5">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-secondary border border-border/40 flex items-center justify-center shrink-0">
+            <BarChart3 className="w-4 h-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Acompanhando sua evolução</p>
+            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+              Em cerca de {trends.daysNeeded} dias de registro o app começa a
+              mostrar se suas métricas estão melhorando, estáveis ou em queda ao
+              longo das semanas.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const statusOf = (m) => {
+    if (!m.hasTrend) {
+      return { label: 'estável', Icon: Minus, color: 'text-muted-foreground', bg: 'bg-secondary/60' };
+    }
+    if (m.sentiment === 'positive') {
+      return {
+        label: m.direction === 'up' ? 'melhorando' : 'melhorando',
+        Icon: m.direction === 'up' ? TrendingUp : TrendingDown,
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-500/10',
+      };
+    }
+    return {
+      label: 'piorando',
+      Icon: m.direction === 'up' ? TrendingUp : TrendingDown,
+      color: 'text-amber-400',
+      bg: 'bg-amber-500/10',
+    };
+  };
+
+  const formatChange = (m) => {
+    if (!m.hasTrend) return null;
+    const sign = m.totalChange > 0 ? '+' : '';
+    return `${sign}${m.totalChange}${m.unit}`;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-border/60 bg-card p-5"
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <BarChart3 className="w-4 h-4 text-primary" />
+        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          Sua evolução
+        </p>
+      </div>
+      <p className="text-[12px] text-muted-foreground leading-relaxed mb-4">
+        Tendência das suas métricas ao longo de {trends.metrics[0]?.days || 0} dias.
+        O app só chama de tendência o que é estatisticamente claro — o resto é
+        normal oscilar.
+      </p>
+
+      <div className="space-y-2">
+        {trends.metrics.map((m) => {
+          const s = statusOf(m);
+          const change = formatChange(m);
+          return (
+            <div
+              key={m.key}
+              className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-secondary/40 border border-border/30"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-base leading-none shrink-0">{m.icon}</span>
+                <span className="text-[13px] font-medium truncate">{m.label}</span>
+              </div>
+              <div className={`flex items-center gap-1.5 shrink-0 ${s.color}`}>
+                {change && <span className="text-[11px] font-mono">{change}</span>}
+                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${s.bg}`}>
+                  <s.Icon className="w-3 h-3" />
+                  {s.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {!trends.hasAnyTrend && (
+        <p className="text-[11px] text-muted-foreground/80 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
+          Tudo estável no período — suas métricas estão oscilando em torno da sua
+          base, sem uma direção clara. Para evolução de longo prazo, isso é um
+          sinal saudável de consistência.
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
 function SectionHeader({ title, subtitle }) {
   return (
     <div className="space-y-0.5">
