@@ -1485,5 +1485,104 @@ export function calculateSleepConsistency(checkins) {
             days: withTimes.length,
           }
         : null,
+  }; 
+}
+// ─── Tendências de Longo Prazo (Fronteira 3) ──────────────────────────────────
+// Responde "estou melhorando ao longo das semanas?". Usa regressão linear sobre
+// a série cronológica e SÓ declara tendência quando ela é estatisticamente
+// limpa (|r| >= limiar). Caso contrário, diz "estável" — sem inventar direção
+// a partir de ruído. Mesma filosofia da auditoria: só afirma o que os dados sustentam.
+
+const TREND_MIN_DAYS = 14;
+const TREND_MIN_R = 0.35; // abaixo disso, é oscilação, não tendência
+
+function _linearTrend(values) {
+  const ys = values.filter((v) => v != null && !Number.isNaN(Number(v))).map(Number);
+  const n = ys.length;
+  if (n < TREND_MIN_DAYS) return { ready: false, days: n };
+
+  const xs = ys.map((_, i) => i);
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - mx) * (ys[i] - my);
+    den += (xs[i] - mx) ** 2;
+  }
+  const slope = den ? num / den : 0;
+
+  // R² e r (sinal do slope) para medir quão limpa é a tendência
+  const yhat = xs.map((x) => my + slope * (x - mx));
+  let ssRes = 0, ssTot = 0;
+  for (let i = 0; i < n; i++) {
+    ssRes += (ys[i] - yhat[i]) ** 2;
+    ssTot += (ys[i] - my) ** 2;
+  }
+  const r2 = ssTot ? 1 - ssRes / ssTot : 0;
+  const r = Math.sqrt(Math.max(0, r2)) * (slope >= 0 ? 1 : -1);
+
+  return {
+    ready: true,
+    days: n,
+    slope,
+    r: Math.round(r * 100) / 100,
+    totalChange: Math.round(slope * (n - 1) * 10) / 10,
+    hasTrend: Math.abs(r) >= TREND_MIN_R,
+    direction: slope >= 0 ? 'up' : 'down',
+  };
+}
+
+export function detectLongTermTrends(checkins) {
+  checkins = _ensure(checkins);
+
+  // cronológico crescente (antigo → novo)
+  const chrono = [...checkins].sort((a, b) =>
+    String(a.date).localeCompare(String(b.date))
+  );
+
+  // higherIsBetter define o sentimento da direção
+  const metrics = [
+    { key: 'hrv', label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
+    { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
+    { key: 'recovery_score', label: 'Recovery', unit: 'pts', higherIsBetter: true, icon: '🔋' },
+    { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', higherIsBetter: true, icon: '😴' },
+  ];
+
+  const results = [];
+
+  for (const m of metrics) {
+    const series = chrono.map((c) => c[m.key]);
+    const t = _linearTrend(series);
+    if (!t.ready) continue;
+
+    let sentiment = 'neutral';
+    if (t.hasTrend) {
+      const improving = m.higherIsBetter ? t.direction === 'up' : t.direction === 'down';
+      sentiment = improving ? 'positive' : 'negative';
+    }
+
+    results.push({
+      key: m.key,
+      label: m.label,
+      unit: m.unit,
+      icon: m.icon,
+      days: t.days,
+      hasTrend: t.hasTrend,
+      direction: t.direction,
+      totalChange: t.totalChange,
+      r: t.r,
+      sentiment,
+    });
+  }
+
+  const anyReady = results.length > 0;
+  const trending = results.filter((x) => x.hasTrend);
+
+  return {
+    ready: anyReady,
+    daysNeeded: TREND_MIN_DAYS,
+    metrics: results,
+    hasAnyTrend: trending.length > 0,
   };
 }
