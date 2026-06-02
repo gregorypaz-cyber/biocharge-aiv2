@@ -117,6 +117,9 @@ export default function AddTrainingModal({
     distance_km: '',
     pace_min: '',
     pace_sec: '',
+    training_effect_aerobic: '',
+    training_effect_anaerobic: '',
+    cadence_spm: '',
     notes: '',
   });
 
