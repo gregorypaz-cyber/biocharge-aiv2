@@ -668,6 +668,7 @@ export function detectCorrelations(checkins) {
 const BOTTLENECK_MIN_CHECKINS = 14;       // ~2 semanas
 const BOTTLENECK_MIN_CORRELATION = 0.45;  // limiar contra falso positivo (validado por simulação)
 const BOTTLENECK_MIN_VARIATION = 0.12;    // coef. de variação mínimo
+const BOTTLENECK_MIN_DISTINCT = 3;        // mínimo de valores distintos (evita falso sinal de variável quase-binária)
 
 function _pearson(xs, ys) {
   const n = xs.length;
