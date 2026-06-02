@@ -583,20 +583,41 @@ export function detectCorrelations(checkins) {
   const insights = [];
   if (checkins.length < CORRELATION_MIN_CHECKINS) return insights;
 
-  const sleepHigh = checkins.filter((c) => (c.sleep_hours || 0) >= SLEEP_HIGH_HOURS);
-  const sleepLow = checkins.filter((c) => c.sleep_hours > 0 && c.sleep_hours < SLEEP_LOW_HOURS);
+  // Sono RELATIVO ao seu padrão pessoal, não a um limiar genérico (7h30).
+  // Compara seus dias de "mais sono" (terço superior) vs "menos sono" (terço
+  // inferior) DOS SEUS PRÓPRIOS DADOS. Assim o insight dispara mesmo para quem
+  // dorme numa faixa estreita — desde que haja variação real (filtros de segurança
+  // herdados da lição do gargalo: mínimo de valores distintos + grupos suficientes).
+  {
+    const sleepValues = checkins
+      .map((c) => c.sleep_hours)
+      .filter((v) => v != null && v > 0);
+    const distinctSleep = new Set(sleepValues.map((v) => Math.round(v * 2) / 2)).size;
 
-  if (sleepHigh.length >= 3 && sleepLow.length >= 2) {
-    const avgHigh = sleepHigh.reduce((s, c) => s + (c.recovery_score || 0), 0) / sleepHigh.length;
-    const avgLow = sleepLow.reduce((s, c) => s + (c.recovery_score || 0), 0) / sleepLow.length;
-    const diff = avgHigh - avgLow;
+    if (sleepValues.length >= CORRELATION_MIN_CHECKINS && distinctSleep >= 4) {
+      const sorted = [...sleepValues].sort((a, b) => a - b);
+      const p33 = sorted[Math.floor(sorted.length / 3)];
+      const p66 = sorted[Math.floor((2 * sorted.length) / 3)];
 
-    if (diff > SLEEP_RECOVERY_DIFF_MIN) {
-      insights.push({
-        icon: '🌙',
-        type: 'positive',
-        text: `Noites com +7h30 de sono elevam seu Recovery em média ${Math.round(diff)} pontos`,
-      });
+      // Só faz sentido se os terços forem realmente distintos
+      if (p66 - p33 >= 0.5) {
+        const highDays = checkins.filter((c) => c.sleep_hours >= p66);
+        const lowDays = checkins.filter((c) => c.sleep_hours > 0 && c.sleep_hours <= p33);
+
+        if (highDays.length >= 3 && lowDays.length >= 3) {
+          const avgHigh = highDays.reduce((s, c) => s + (c.recovery_score || 0), 0) / highDays.length;
+          const avgLow = lowDays.reduce((s, c) => s + (c.recovery_score || 0), 0) / lowDays.length;
+          const diff = avgHigh - avgLow;
+
+          if (diff > SLEEP_RECOVERY_DIFF_MIN) {
+            insights.push({
+              icon: '🌙',
+              type: 'positive',
+              text: `Suas noites de mais sono (${p66.toFixed(1)}h+) trazem Recovery ~${Math.round(diff)} pontos maior que as de menos sono (até ${p33.toFixed(1)}h)`,
+            });
+          }
+        }
+      }
     }
   }
 
