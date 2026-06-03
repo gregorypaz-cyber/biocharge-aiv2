@@ -77,6 +77,27 @@ function normalizeRemSleep(remSleepPct) {
   return 90;
 }
 
+// Protege contra "baseline móvel": quando uma queda sustentada faz a média curta
+// despencar, o app poderia passar a tratar o valor baixo como "normal" e parar de
+// alertar. Comparamos a janela curta (recente) com uma longa (~30d). Se a curta
+// está mais de 5% ABAIXO da longa, misturamos (70% curta + 30% longa) para o
+// baseline não normalizar completamente o declínio. Em estabilidade, usa a curta.
+function _driftProtectedBaseline(shortValues, longValues, lowerIsBetter = false) {
+  if (!shortValues.length) return null;
+  const shortAvg = shortValues.reduce((s, v) => s + v, 0) / shortValues.length;
+  if (longValues.length < 10) return shortAvg; // sem histórico longo, usa a curta
+
+  const longAvg = longValues.reduce((s, v) => s + v, 0) / longValues.length;
+  const driftPct = ((shortAvg - longAvg) / longAvg) * 100;
+
+  // "Piora" depende da métrica: para HRV, cair (drift negativo) é piora;
+  // para RHR, subir (drift positivo) é piora.
+  const worsening = lowerIsBetter ? driftPct > 5 : driftPct < -5;
+  if (worsening) {
+    return shortAvg * 0.7 + longAvg * 0.3; // segura o baseline contra a deriva
+  }
+  return shortAvg;
+}
 
 function getRecentHrvBaseline(recentCheckins = []) {
   const values = (recentCheckins || [])
