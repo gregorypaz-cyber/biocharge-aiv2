@@ -1300,23 +1300,23 @@ function ExecutionCard() {
         </div>
 
         {(biochargeTrend || hrvTrend || enrichedCheckin?.sleep_performance_pct != null) && (
-          <div className="space-y-1 mt-1">
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
             {biochargeTrend && (
-              <p className={`text-[11px] font-medium ${biochargeTrend.color}`}>
+              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary/60 ${biochargeTrend.color}`}>
                 {biochargeTrend.text}
-              </p>
+              </span>
             )}
 
             {hrvTrend && (
-              <p className={`text-[11px] font-medium ${hrvTrend.color}`}>
+              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary/60 ${hrvTrend.color}`}>
                 {hrvTrend.text}
-              </p>
+              </span>
             )}
 
             {enrichedCheckin?.sleep_performance_pct != null && (
-              <p
+              <span
                 className={cn(
-                  'text-[11px] font-medium',
+                  'text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary/60',
                   enrichedCheckin.sleep_performance_pct >= 85
                     ? 'text-emerald-400'
                     : enrichedCheckin.sleep_performance_pct >= 70
@@ -1324,27 +1324,11 @@ function ExecutionCard() {
                     : 'text-red-400'
                 )}
               >
-                Performance do sono: {enrichedCheckin.sleep_performance_pct}%
-              </p>
+                Sono {enrichedCheckin.sleep_performance_pct}%
+              </span>
             )}
           </div>
         )}
-
-        <div className="w-full rounded-full h-1.5 bg-secondary mt-1.5 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${displayedScore}%`,
-              backgroundColor: isRestMode
-  ? 'hsl(215,30%,45%)'
-  : displayedScore >= 82
-  ? 'hsl(142,70%,50%)'
-  : displayedScore >= 65
-  ? 'hsl(45,93%,58%)'
-  : 'hsl(0,72%,55%)',
-            }}
-          />
-        </div>
 
         {heroDynamicContext ? (
           <div
