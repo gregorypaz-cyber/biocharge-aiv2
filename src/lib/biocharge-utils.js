@@ -348,7 +348,30 @@ export function calculateSleepScore(checkin) {
 
   if (weightSum <= 0) return 0;
 
-  return clamp(Math.round(total / weightSum));
+  let score = total / weightSum;
+
+  // Moduladores leves estilo Oura: continuidade (despertares) e regularidade
+  // ajustam o score só quando você os preenche, e crescem com o desvio do normal.
+  // Quando ausentes, ajuste = 0 (não penaliza).
+  const aw = checkin.sleep_awakenings;
+  if (aw != null && !Number.isNaN(Number(aw))) {
+    const n = Number(aw);
+    if (n <= 1) score += 4;        // sono contínuo
+    else if (n === 2) score += 1;
+    else if (n === 3) score -= 1;
+    else score -= 5;               // fragmentado (>=4)
+  }
+
+  const reg = checkin.sleep_regularity_pct;
+  if (reg != null && !Number.isNaN(Number(reg))) {
+    const r = Number(reg);
+    if (r >= 85) score += 4;       // muito regular
+    else if (r >= 75) score += 1;
+    else if (r >= 60) score -= 1;
+    else score -= 4;               // irregular
+  }
+
+  return clamp(Math.round(score));
 }
 
 // "Performance do sono" exibida ao usuário usa EXATAMENTE a mesma fonte de
