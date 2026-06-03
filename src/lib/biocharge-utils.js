@@ -300,10 +300,10 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
   const subjectiveScore = calculateSubjectiveScore(checkin); // como a pessoa se sente
 
   const weighted = [
-    { value: hrvScore, weight: 0.35 },        // autonômico — ainda o maior peso isolado
-    { value: rhrScore, weight: 0.15 },        // cardiovascular de repouso
-    { value: sleepScore, weight: 0.25 },      // sono como bloco único
-    { value: subjectiveScore, weight: 0.25 }, // estado subjetivo (melhor preditor na literatura)
+    { value: hrvScore, weight: 0.30 },        // autonômico — principal sinal fisiológico
+    { value: rhrScore, weight: 0.10 },        // cardiovascular de repouso (sobrepõe parte do HRV)
+    { value: sleepScore, weight: 0.35 },      // sono — bloco forte, prediz disposição prática do dia
+    { value: subjectiveScore, weight: 0.25 }, // estado subjetivo (mantido)
   ];
 
   let weightSum = 0;
