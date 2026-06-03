@@ -308,65 +308,88 @@ function DailyInsightBlock({ presc, analysis, recommendedKey }) {
       return 'Antes de treinar: defina a intenção do treino e não transforme controle em exagero.';
     })();
 
-    return (
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-            Decisão do treino
-          </span>
-
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>
-            {conf}
-          </span>
-        </div>
-
-        <p className="text-sm font-bold leading-snug">
-          {headline}
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {positives.length > 0 && (
-            <div className="rounded-lg bg-emerald-500/8 border border-emerald-500/15 px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">
-                A favor
-              </p>
-
-              <ul className="space-y-0.5">
-                {positives.slice(0, 3).map((item, i) => (
-                  <li key={i} className="text-[11px] text-muted-foreground">
-                    ↑ {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {cautions.length > 0 && (
-            <div className="rounded-lg bg-yellow-500/8 border border-yellow-500/15 px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-yellow-400 mb-1">
-                Pede controle
-              </p>
-
-              <ul className="space-y-0.5">
-                {cautions.slice(0, 3).map((item, i) => (
-                  <li key={i} className="text-[11px] text-muted-foreground">
-                    ↓ {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <p className="text-[11px] text-foreground/75 border-t border-border/20 pt-2">
-          ⚡ {microAction}
-        </p>
-      </div>
-    );
+    return <DailyInsightBlockInner
+      conf={conf} confStyle={confStyle} headline={headline}
+      positives={positives} cautions={cautions} microAction={microAction}
+    />;
   } catch (e) {
     console.warn('DailyInsightBlock render error', e);
     return null;
   }
+}
+
+function DailyInsightBlockInner({ conf, confStyle, headline, positives, cautions, microAction }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+      {/* Cabeçalho sempre visível: decisão + headline + toque pra detalhar */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full text-left"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+            Decisão do treino
+          </span>
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${confStyle.bg} ${confStyle.text}`}>
+              {conf}
+            </span>
+            <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </motion.span>
+          </div>
+        </div>
+        <p className="text-sm font-bold leading-snug mt-2">
+          {headline}
+        </p>
+      </button>
+
+      {/* Justificativa (A favor / Pede controle / micro-ação) escondida atrás do toque */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+              {positives.length > 0 && (
+                <div className="rounded-lg bg-emerald-500/8 border border-emerald-500/15 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">
+                    A favor
+                  </p>
+                  <ul className="space-y-0.5">
+                    {positives.slice(0, 3).map((item, i) => (
+                      <li key={i} className="text-[11px] text-muted-foreground">↑ {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {cautions.length > 0 && (
+                <div className="rounded-lg bg-yellow-500/8 border border-yellow-500/15 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-yellow-400 mb-1">
+                    Pede controle
+                  </p>
+                  <ul className="space-y-0.5">
+                    {cautions.slice(0, 3).map((item, i) => (
+                      <li key={i} className="text-[11px] text-muted-foreground">↓ {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <p className="text-[11px] text-foreground/75 border-t border-border/20 pt-2 mt-3">
+              ⚡ {microAction}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function resolveRecommendedKey(checkin) {
