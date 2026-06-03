@@ -131,7 +131,10 @@ function normalizeHrv(hrv, recentCheckins = []) {
   // deltaPct em torno de 0 => ~50; +20% => ~82; -20% => ~18. Contínuo.
   if (baseline) {
     const deltaPct = ((Number(hrv) - baseline) / baseline) * 100;
-    return logisticScore(deltaPct, { center: 0, scale: 11, k: 1 });
+    // Centro deslocado para -8%: estar NO seu normal já conta como recuperado
+    // (~65, não ~50), e bons dias alcançam o verde. Antes, ficar na média
+    // travava o score no meio e o verde virava quase inatingível.
+    return logisticScore(deltaPct, { center: -8, scale: 13, k: 1 });
   }
 
   // SEM baseline (primeiros dias): não há "seu normal" ainda, então caímos
