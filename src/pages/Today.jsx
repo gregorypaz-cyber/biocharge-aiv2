@@ -1450,9 +1450,7 @@ function ExecutionCard() {
                     )}
                 </div>
 
-                <p className="text-[11px] leading-relaxed opacity-80">
-                  {BODY_STATE_HINT[stateKey]}
-                </p>
+                <CollapsibleHint>{BODY_STATE_HINT[stateKey]}</CollapsibleHint>
               </div>
             );
           })()}
