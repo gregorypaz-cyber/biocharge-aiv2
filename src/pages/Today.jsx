@@ -1170,6 +1170,40 @@ if (hasPostWorkout) {
     }
   }
  
+// Explicação recolhível — mostra um botão "entender" que expande o texto ao toque.
+// Mesmo padrão visual das outras seções recolhíveis do app (SecondaryMetrics).
+function CollapsibleHint({ children, label = 'Entender' }) {
+  const [open, setOpen] = useState(false);
+  if (!children) return null;
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
+      >
+        {label}
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown className="w-3 h-3" />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">{children}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function ExecutionCard() {
   return (
     <motion.div
