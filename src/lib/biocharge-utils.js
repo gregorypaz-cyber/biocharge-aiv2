@@ -100,13 +100,16 @@ function _driftProtectedBaseline(shortValues, longValues, lowerIsBetter = false)
 }
 
 function getRecentHrvBaseline(recentCheckins = []) {
-  const values = (recentCheckins || [])
-    .slice(0, 7)
+  const all = (recentCheckins || [])
     .map((c) => resolveHrvValue(c))
     .filter((v) => v != null && v > 0);
 
-  if (values.length < 3) return null;
-  return values.reduce((s, v) => s + v, 0) / values.length;
+  const shortValues = all.slice(0, 7);   // janela curta (responsiva)
+  const longValues = all.slice(0, 30);   // janela longa (estável)
+
+  if (shortValues.length < 3) return null;
+  // HRV: maior é melhor → lowerIsBetter = false
+  return _driftProtectedBaseline(shortValues, longValues, false);
 }
 
 function getHrvTrend(hrvValue, hrv7dAvg) {
