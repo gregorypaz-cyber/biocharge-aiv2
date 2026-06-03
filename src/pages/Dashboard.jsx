@@ -113,26 +113,9 @@ export default function Dashboard() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-black tracking-tight">Resumo</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Tendências e padrões dos seus últimos dias</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Seu estado atual e a semana</p>
       </motion.div>
 
-      {/* Seletor de período */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-        className="flex gap-2">
-        {RANGE_OPTIONS.map(d => (
-          <button
-            key={d}
-            onClick={() => setRangeDays(d)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-              rangeDays === d
-                ? 'bg-primary/15 border-primary/25 text-primary'
-                : 'bg-secondary/60 border-border/40 text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {d} dias
-          </button>
-        ))}
-      </motion.div>
 
       {/* HRV Anomaly Banner */}
       {analysis?.hrvAnomaly && !hrvAlertDismissed && (
@@ -159,37 +142,6 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Gráfico de tendência */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="rounded-2xl border border-border/60 bg-card p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Prontidão — {rangeDays} dias
-          </h2>
-          <div className="flex gap-2">
-            {/* Prontidão — sempre ativa */}
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-primary/10 border-primary/20 text-primary">
-              <span className="w-2 h-2 rounded-full bg-primary inline-block" /> Prontidão
-            </span>
-            {SERIES_TOGGLES.map(s => (
-              <button
-                key={s.key}
-                onClick={s.toggle}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
-                  s.active
-                    ? 'border-white/20 text-foreground'
-                    : 'border-border/30 text-muted-foreground opacity-50'
-                }`}
-                style={s.active ? { backgroundColor: toHSLA(s.color, 0.12), borderColor: toHSLA(s.color, 0.28), color: s.color } : {}}
-              >
-                <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: s.color }} />
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <MiniChart data={computed} days={rangeDays} showSleep={showSleep} showFatigue={showFatigue} />
-      </motion.div>
 
       {/* Padrão detectado por IA */}
       <DetectedPatternBlock checkins={computed} allCheckins={computed} />
