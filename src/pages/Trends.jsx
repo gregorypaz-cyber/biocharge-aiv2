@@ -997,9 +997,6 @@ export default function Trends() {
         {/* Strain vs Recovery Balance */}
         <StrainRecoveryBalanceCard checkins={computed} />
 
-        {/* Recovery Influencers */}
-        <RecoveryInfluencersCard checkins={computed} />
-
         {/* Recovery D+1 Predictor */}
         <RecoveryTomorrowPredictorCard checkins={computed} />
       </div>
