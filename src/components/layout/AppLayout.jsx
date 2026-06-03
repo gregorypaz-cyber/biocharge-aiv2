@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, Brain, Clock, Activity, Settings } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Brain, Clock, Activity, Settings, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
