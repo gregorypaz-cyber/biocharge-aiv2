@@ -154,7 +154,9 @@ function normalizeRhr(rhr, recentCheckins = []) {
   // -8% => ~88; 0% => ~50; +8% => ~22. Contínuo.
   if (baseline) {
     const deltaPct = ((Number(rhr) - baseline) / baseline) * 100;
-    return logisticScore(-deltaPct, { center: 0, scale: 7.0, k: 1 });
+    // Centro deslocado para -8% (mesmo princípio do HRV): estar no seu RHR
+    // normal já pontua como recuperado, tornando o verde alcançável em bons dias.
+    return logisticScore(-deltaPct, { center: -8, scale: 9.0, k: 1 });
   }
 
   // SEM baseline: valor absoluto. ~60bpm é neutro; mais baixo melhor.
