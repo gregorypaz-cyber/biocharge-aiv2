@@ -124,13 +124,16 @@ function getHrvTrend(hrvValue, hrv7dAvg) {
 
 
 function getRecentRhrBaseline(recentCheckins = []) {
-  const values = (recentCheckins || [])
-    .slice(0, 14)
+  const all = (recentCheckins || [])
     .map((c) => resolveCheckinField(c, 'resting_hr'))
     .filter((v) => v != null && v > 0);
 
-  if (values.length < 5) return null;
-  return values.reduce((s, v) => s + v, 0) / values.length;
+  const shortValues = all.slice(0, 14);  // janela curta
+  const longValues = all.slice(0, 30);   // janela longa
+
+  if (shortValues.length < 5) return null;
+  // RHR: menor é melhor → lowerIsBetter = true (subir é piora)
+  return _driftProtectedBaseline(shortValues, longValues, true);
 }
 
 // Curva logística suave: mapeia um desvio (em "unidades de escala") para 0..100,
