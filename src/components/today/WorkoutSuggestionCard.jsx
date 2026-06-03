@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useDayContext } from '@/lib/dayContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, Check, Calendar, TrendingUp } from 'lucide-react';
+import { Dumbbell, Check, Calendar, TrendingUp, ChevronDown } from 'lucide-react';
 import { useMotionSafe } from '@/hooks/use-motion-safe';
 import WorkoutLoggedState from './WorkoutLoggedState';
 import RecoveryProtocolCard from './RecoveryProtocolCard';
