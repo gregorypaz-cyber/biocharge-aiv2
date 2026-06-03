@@ -1490,9 +1490,7 @@ function ExecutionCard() {
                   </div>
                 </div>
 
-                <p className="text-[11px] leading-relaxed opacity-80">
-                  {autoMeta.detail}
-                </p>
+                <CollapsibleHint>{autoMeta.detail}</CollapsibleHint>
               </div>
             );
           })()}
