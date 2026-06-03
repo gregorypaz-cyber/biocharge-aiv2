@@ -990,7 +990,7 @@ export default function Trends() {
             Leitura avançada
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Equilíbrio semanal, influenciadores e simulação de recovery.
+            Equilíbrio semanal e simulação de recovery.
           </p>
         </div>
 
