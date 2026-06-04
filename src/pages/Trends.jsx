@@ -114,7 +114,7 @@ function confidenceTone(confidence) {
 
 function RecoveryTomorrowPredictorCard({ checkins = [] }) {
   const [plannedSleep, setPlannedSleep] = useState(7.5);
-  const [plannedStrain, setPlannedStrain] = useState(50);
+  const [plannedStrain, setPlannedStrain] = useState(8);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
