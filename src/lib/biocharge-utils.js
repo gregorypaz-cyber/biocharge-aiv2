@@ -1054,6 +1054,7 @@ const hrvToday = resolveHrvValue(checkin);
 - usar os dados reais quando relevante
 - OBRIGATÓRIO: ser 100% consistente com a decisão do dia abaixo
 - ajudar o atleta a executar melhor o dia
+- se houver "Anotação do usuário" abaixo e ela explicar algum dado (ex: "dormi tarde" → sono baixo), transforme isso numa ação concreta (ex: "deite 30min mais cedo hoje"), sem nunca contrariar a decisão do dia
 
 DECISÃO DO DIA (não contrarie isto): ${decisaoHoje ?? 'não definida'}
 RECOMENDAÇÃO ATUAL: ${recomendacaoHoje ?? 'não definida'}
