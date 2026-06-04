@@ -228,7 +228,16 @@ export default function AddTrainingModal({
           checkin.recovery_score ??
           normalized.recovery_score;
 
+        // Anexa a observação do treino ao notes do dia, para alimentar a
+        // inteligência (deep analysis / bullets) — igual ao pós-treino faz.
+        const trainingNote = (data.notes && String(data.notes).trim()) ? String(data.notes).trim() : '';
+        const trainingTag = data.sport ? `[TREINO — ${data.sport}]` : '[TREINO]';
+        const mergedDayNotes = trainingNote
+          ? (checkin.notes ? `${checkin.notes}\n\n${trainingTag} ${trainingNote}` : `${trainingTag} ${trainingNote}`)
+          : (checkin.notes || '');
+
         await base44.entities.DailyCheckin.update(checkin.id, {
+          ...(trainingNote ? { notes: mergedDayNotes } : {}),
           daily_strain_accumulated: normalized.daily_strain_accumulated,
           current_body_state: updatedBase.current_body_state,
           remaining_capacity: updatedBase.remaining_capacity,
