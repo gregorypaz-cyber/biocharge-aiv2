@@ -302,6 +302,7 @@ const saveMorningMutation = useMutation({
         mood: c.mood,
         energy: c.energy,
         sleep_hours: c.sleep_hours,
+        notes: c.notes ? String(c.notes).slice(0, 160) : null,
       }));
 
       // Contexto do dia de hoje para guiar a análise e evitar contradições
