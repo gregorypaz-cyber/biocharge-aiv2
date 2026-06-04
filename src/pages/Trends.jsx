@@ -20,6 +20,7 @@ import {
   Loader2,
   Moon,
   Scale,
+  Footprints,
 } from 'lucide-react';
 
 const timeFilters = [
