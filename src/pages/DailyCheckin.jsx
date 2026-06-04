@@ -318,6 +318,7 @@ const saveMorningMutation = useMutation({
         autonomic_state: scores.autonomic_state ?? null,
         sleep_need_tonight: scores.sleep_need_tonight ?? null,
         preview_confidence: scores.preview_confidence ?? null,
+        nota_de_hoje: (payload.notes && String(payload.notes).trim()) ? String(payload.notes).trim().slice(0, 200) : null,
       };
 
       base44.integrations.Core.InvokeLLM({
