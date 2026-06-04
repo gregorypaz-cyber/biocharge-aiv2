@@ -645,7 +645,7 @@ if (isPostMode) {
       <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.05}>
         <SliderField
           label="Quão pesado foi o treino?"
-          hint="RPE 1–10 · 1 = muito leve, 10 = máximo"
+          hint="RPE 1–10 · se você já registrou o treino, vem preenchido — confirme ou ajuste"
           value={postForm.rpe}
           onChange={(value) => updatePost('rpe', value)}
           min={0}
