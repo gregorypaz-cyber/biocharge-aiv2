@@ -291,7 +291,7 @@ Responda APENAS em JSON:
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   Strain planejado
                 </p>
-                <p className="text-sm font-mono font-bold">{plannedStrain}/100</p>
+                <p className="text-sm font-mono font-bold">{plannedStrain}/21</p>
               </div>
 
               <input
