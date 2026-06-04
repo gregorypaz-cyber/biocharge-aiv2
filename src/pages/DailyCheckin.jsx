@@ -187,7 +187,7 @@ export default function DailyCheckin() {
   }, [isPostMode, editData, savedCheckin, todayRecord]);
 
 
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(true);
 
 const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
