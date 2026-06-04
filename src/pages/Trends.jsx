@@ -1105,6 +1105,9 @@ export default function Trends() {
         <RecoveryTomorrowPredictorCard checkins={computed} />
       </div>
 
+      {/* Peso — tendência lenta (sinal de médio prazo, fora do recovery) */}
+      <WeightTrendCard checkins={computed} />
+
       {/* Empty state */}
       {filtered.length < 5 && (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6">
