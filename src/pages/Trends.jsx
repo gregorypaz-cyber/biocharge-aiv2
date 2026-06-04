@@ -967,6 +967,7 @@ export default function Trends() {
   const [selectedMetric, setSelectedMetric] = useState('recovery_score');
 
   const { data: checkins = [] } = useUserCheckins(365);
+  const { data: trainingSessions = [] } = useUserTrainingSessions(365);
 
   const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
   const cutoff = new Date();
