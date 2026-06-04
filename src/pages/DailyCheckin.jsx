@@ -813,7 +813,7 @@ if (isPostMode) {
   label="Pontuação do Sono (Zepp)"
   hint="Valor de 0–100 do app Zepp → Sono"
   value={form.sleep_score}
-  onChange={(v) => update('sleep_score', v)}
+  onChange={(v) => { update('sleep_score', v); setTouched(t => ({ ...t, sleep_score: true })); }}
   icon={Moon}
   lowLabel="Ruim"
   midLabel="Ok"
