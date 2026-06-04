@@ -856,18 +856,15 @@ if (isPostMode) {
               Horas de Sono
             </label>
 
-            <select
-              value={form.sleep_hours ?? ''}
-              onChange={(e) => { update('sleep_hours', Number(e.target.value) || null); setTouched(t => ({ ...t, sleep_hours: true })); }}
-              className="w-full h-11 rounded-xl bg-secondary border border-border/40 px-3 text-sm font-mono text-foreground"
-            >
-              <option value="">Selecione...</option>
-              {SLEEP_DURATION_OPTIONS.map((opt) => (
-                <option key={opt.label} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            <Input
+              type="time"
+              value={hoursToHHMM(form.sleep_hours)}
+              onChange={(e) => {
+                update('sleep_hours', hhmmToHours(e.target.value));
+                setTouched((t) => ({ ...t, sleep_hours: true }));
+              }}
+              className="bg-secondary border-border/40 font-mono w-36 h-11"
+            />
 
             <p className="text-[10px] text-muted-foreground">
               Escolha a duração aproximada do seu sono desta noite.
