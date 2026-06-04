@@ -553,7 +553,7 @@ export default function AddTrainingModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 mt-3">
+                  <div className="grid grid-cols-2 gap-3 mt-3">
                     <div>
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
                         Efeito aeróbico
