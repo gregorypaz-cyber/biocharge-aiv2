@@ -491,6 +491,16 @@ const savePostMutation = useMutation({
     );
   }
 
+  // Manhã: espera os check-ins carregarem antes de montar o form, para o
+  // registro de hoje carregar sem corrida (evita sobrescrever suas edições).
+  if (!isPostMode && loadingCheckins && !editData) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   // POST MODE UI
 if (isPostMode) {
   const todaySessions = allSessions.filter((session) => session.date === todayDate);
