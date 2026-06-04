@@ -333,6 +333,7 @@ CONTEXTO DO DIA DE HOJE (use para guiar o tom — não repita estas frases liter
 - Sono necessário esta noite: ${todayContext.sleep_need_tonight ?? 'sem dados'}h
 - Alerta fadiga retardada: ${todayContext.alerta_fadiga_retardada ?? 'nenhum'}
 - Confiança da leitura: ${todayContext.preview_confidence ?? 'sem dados'}
+- Anotação do usuário hoje: ${todayContext.nota_de_hoje ?? 'nenhuma'}
 
 REGRAS OBRIGATÓRIAS:
 - cite números REAIS dos dados (ex: "seu HRV caiu de 68ms para 52ms nos últimos 5 dias")
