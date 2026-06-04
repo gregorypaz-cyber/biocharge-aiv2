@@ -181,7 +181,7 @@ export default function DailyCheckin() {
     ) {
       loadedTodayRef.current = true;
       dispatch({ type: 'LOAD_EDIT', data: { rest_day: !!todayRecord.rest_day, ...todayRecord } });
-      setTouched({ biocharge_morning: true, sleep_hours: true });
+      setTouched({ biocharge_morning: true, sleep_hours: true, sleep_score: true });
       setEditingExisting(true);
     }
   }, [isPostMode, editData, savedCheckin, todayRecord]);
