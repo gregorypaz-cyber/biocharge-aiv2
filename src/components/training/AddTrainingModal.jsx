@@ -602,8 +602,8 @@ export default function AddTrainingModal({
                       />
                     </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-2">
-                    Efeito do Treino: Zepp → resumo da corrida. É o que define o strain da corrida.
+                  <p className="text-[11px] text-primary/90 mt-2 leading-relaxed">
+                    💡 Preencha o <strong>Efeito do Treino</strong> (Zepp → resumo da corrida): quando informado, o strain da corrida vem direto dele — mais preciso que estimar por FC/RPE.
                   </p>
                 </div>
               )}
