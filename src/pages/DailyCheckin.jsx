@@ -247,16 +247,20 @@ const saveMorningMutation = useMutation({
     );
 
     const scores = computeCheckinScores(payload, recentCheckins, sortedSessions);
+// Registro que corresponde à DATA do formulário (não necessariamente hoje),
+    // para nunca sobrescrever o registro de hoje ao trocar a data.
+    const recordForPayloadDate = checkins.find((c) => c.date === payload.date) || null;
 
     // Morning score vira âncora do dia quando é novo registro
-    if (!editData?.id && !todayRecord?.id) {
+    if (!editData?.id && !recordForPayloadDate?.id) {
       scores.morning_recovery_score = scores.recovery_score;
     } else {
       scores.morning_recovery_score =
         editData?.morning_recovery_score ??
-        todayRecord?.morning_recovery_score ??
+        recordForPayloadDate?.morning_recovery_score ??
         scores.recovery_score;
     }
+    
 
     // ✅ IA só entra como suporte secundário, não como voz principal do dia
     try {
