@@ -1109,13 +1109,9 @@ if (isPostMode) {
         {/* Salvar — botão principal único, no fim da página */}
         {!savedCheckin && (
           <div className="space-y-2 pt-1">
-            {(!touched.biocharge_morning || !touched.sleep_hours) && (
+            {(!touched.biocharge_morning || !touched.sleep_hours || !touched.sleep_score) && (
               <p className="text-[11px] text-amber-400/80 px-1 text-center">
-                {!touched.biocharge_morning && !touched.sleep_hours
-                  ? '⬆️ Ajuste como você acordou e as horas de sono para salvar'
-                  : !touched.biocharge_morning
-                  ? '⬆️ Ajuste o slider "Como você acordou?" para salvar'
-                  : '⬆️ Selecione as horas de sono para salvar'}
+                ⬆️ Ajuste como você acordou, a pontuação do sono (Zepp) e as horas de sono para salvar
               </p>
             )}
             <Button
