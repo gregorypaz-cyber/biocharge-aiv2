@@ -584,21 +584,6 @@ export default function AddTrainingModal({
                         className="bg-secondary border-border text-center"
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
-                        Cadência
-                      </label>
-                      <Input
-                        type="number"
-                        step="1"
-                        min={100}
-                        max={250}
-                        placeholder="spm"
-                        value={form.cadence_spm}
-                        onChange={(e) => set('cadence_spm', e.target.value)}
-                        className="bg-secondary border-border text-center"
-                      />
-                    </div>
                   </div>
                   <p className="text-[11px] text-primary/90 mt-2 leading-relaxed">
                     💡 Preencha o <strong>Efeito do Treino</strong> (Zepp → resumo da corrida): quando informado, o strain da corrida vem direto dele — mais preciso que estimar por FC/RPE.
