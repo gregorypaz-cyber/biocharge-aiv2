@@ -858,6 +858,109 @@ function StrainRecoveryBalanceCard({ checkins = [] }) {
   );
 }
 
+function WeightTrendCard({ checkins = [] }) {
+  // Peso é sinal LENTO: suavizamos o ruído diário (água, glicogênio, dias copiados).
+  const points = [...(checkins || [])]
+    .filter((c) => c?.date && c.body_weight != null && Number(c.body_weight) > 0)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+    .map((c) => ({ rawDate: c.date, weight: Number(c.body_weight) }));
+
+  if (points.length < 8) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-xl border border-border/60 bg-card p-4"
+      >
+        <div className="flex items-start gap-3">
+          <Scale className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold">Peso — tendência lenta</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Registre o peso em mais alguns dias (idealmente pela manhã) para ver a direção da sua tendência. O dia-a-dia oscila demais para ter valor isolado.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const smoothed = points.map((p, i) => {
+    const window = points.slice(Math.max(0, i - 6), i + 1).map((w) => w.weight);
+    const avg = window.reduce((s, v) => s + v, 0) / window.length;
+    return { date: formatDateChart(p.rawDate), ma7: Number(avg.toFixed(2)) };
+  });
+
+  const firstMa = smoothed[0].ma7;
+  const lastMa = smoothed[smoothed.length - 1].ma7;
+  const deltaKg = Number((lastMa - firstMa).toFixed(1));
+
+  const spanDays = Math.max(
+    1,
+    Math.round(
+      (parseLocalDate(points[points.length - 1].rawDate) - parseLocalDate(points[0].rawDate)) / 86400000
+    )
+  );
+
+  const dirUp = deltaKg >= 0.3;
+  const dirDown = deltaKg <= -0.3;
+  const DirIcon = dirUp ? TrendingUp : dirDown ? TrendingDown : Minus;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <Scale className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight">Peso — tendência lenta</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+              Média de 7 pesagens. O dia-a-dia oscila por água e comida; o que importa é a direção.
+            </p>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-lg font-black font-mono leading-none">
+            {lastMa.toFixed(1)}
+            <span className="text-xs font-semibold text-muted-foreground"> kg</span>
+          </p>
+          <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
+            <DirIcon className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-mono">
+              {deltaKg > 0 ? '+' : ''}{deltaKg} kg / ~{spanDays}d
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div role="img" aria-label="Gráfico da média móvel do peso ao longo do tempo" className="h-40">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={smoothed}>
+            <defs>
+              <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(190,65%,55%)" stopOpacity={0.22} />
+                <stop offset="95%" stopColor="hsl(190,65%,55%)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
+            <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => v.toFixed(1)} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} kg`, 'Média 7d']} />
+            <Area type="monotone" dataKey="ma7" stroke="hsl(190,65%,55%)" fill="url(#weightGrad)" strokeWidth={2} dot={false} name="Média 7d" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <p className="text-[10px] text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
+        Baseado em {points.length} pesagens. O peso <span className="text-foreground/80">não entra</span> no seu recovery nem em correlações diárias — variação de 1 dia é quase só água. Aqui ele é só direção de médio prazo.
+      </p>
+    </motion.div>
+  );
+}
+
 export default function Trends() {
   const [period, setPeriod] = useState(30);
   const [selectedMetric, setSelectedMetric] = useState('recovery_score');
