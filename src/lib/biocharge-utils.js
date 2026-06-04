@@ -1044,6 +1044,9 @@ const hrvToday = resolveHrvValue(checkin);
 
   const decisaoHoje = scores?.decision_mode ?? checkin.decision_mode ?? null;
   const recomendacaoHoje = scores?.recommendation ?? checkin.recommendation ?? null;
+  const notaUsuario = (checkin?.notes && String(checkin.notes).trim())
+    ? String(checkin.notes).trim().slice(0, 200)
+    : null;
 
   const prompt = `Você é um coach de performance. Gere EXATAMENTE 2 bullets curtos para o dia de hoje. Em português brasileiro. Cada bullet deve:
 - começar com emoji
