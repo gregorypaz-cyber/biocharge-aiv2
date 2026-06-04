@@ -297,8 +297,8 @@ Responda APENAS em JSON:
               <input
                 type="range"
                 min={0}
-                max={100}
-                step={5}
+                max={21}
+                step={0.5}
                 value={plannedStrain}
                 onChange={(e) => setPlannedStrain(Number(e.target.value))}
                 className="w-full accent-primary"
