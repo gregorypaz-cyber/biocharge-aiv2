@@ -19,6 +19,7 @@ import {
   Sparkles,
   Loader2,
   Moon,
+  Scale,
 } from 'lucide-react';
 
 const timeFilters = [
