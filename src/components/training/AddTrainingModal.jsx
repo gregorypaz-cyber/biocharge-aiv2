@@ -84,6 +84,16 @@ function StrainPreview({ form, maxHr }) {
   const strain = calculateStrainScore(form, maxHr);
   const zone = getStrainZone(strain);
 
+  const isRunning = String(form?.sport || '').toLowerCase().includes('corr');
+  const hasTE =
+    Number(form?.training_effect_aerobic) > 0 ||
+    Number(form?.training_effect_anaerobic) > 0;
+  const strainSource = isRunning
+    ? (hasTE
+        ? 'via Efeito do Treino (Zepp) — preciso'
+        : 'estimado por FC/RPE — preencha o Efeito do Treino p/ mais precisão')
+    : 'por FC/RPE e duração';
+
   return (
     <div className={`rounded-xl border p-3 ${zone.bg}`}>
       <p className={`text-xs font-bold mb-0.5 ${zone.color}`}>
@@ -91,6 +101,9 @@ function StrainPreview({ form, maxHr }) {
       </p>
       <p className="text-[11px] text-muted-foreground">
         {zone.emoji} {zone.label}
+      </p>
+      <p className="text-[10px] text-muted-foreground mt-1 opacity-80">
+        Cálculo {strainSource}.
       </p>
     </div>
   );
