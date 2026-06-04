@@ -1116,7 +1116,7 @@ if (isPostMode) {
             )}
             <Button
               onClick={() => saveMorningMutation.mutate(form)}
-              disabled={saveMorningMutation.isPending || !touched.biocharge_morning || !touched.sleep_hours}
+              disabled={saveMorningMutation.isPending || !touched.biocharge_morning || !touched.sleep_hours || !touched.sleep_score}
               className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saveMorningMutation.isPending ? (
