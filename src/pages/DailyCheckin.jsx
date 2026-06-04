@@ -100,7 +100,7 @@ const DEFAULT_FORM = {
   sleep_awakenings: null,
   sleep_regularity_pct: null,
   sleep_heart_rate: null,
-  rpe: 5,
+  rpe: 0,
   mood: 3,
   stress: 2,
   energy: 3,
