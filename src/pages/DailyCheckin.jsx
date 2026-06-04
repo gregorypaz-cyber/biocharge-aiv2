@@ -689,16 +689,16 @@ if (isPostMode) {
       </CheckinStep>
 
       {/* Notes */}
-      <CheckinStep title="Observação rápida" emoji="📝" delay={0.2}>
+      <CheckinStep title="Observação pós-treino" emoji="📝" delay={0.2}>
         <Textarea
           value={postForm.notes}
           onChange={(event) => updatePost('notes', event.target.value)}
-          placeholder="Ex: pernas pesadas, ritmo bom, treino saiu melhor que o esperado..."
+          placeholder="Algo que mudou DEPOIS do treino? Ex: recuperei rápido, pernas pesadas no fim..."
           className="bg-secondary border-border/40 min-h-[80px] resize-none"
         />
 
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Use este campo para contexto que os números não capturam.
+          Só o que você quer acrescentar depois do treino. O que escreveu ao registrar o treino já está salvo e já conta na análise.
         </p>
       </CheckinStep>
 
