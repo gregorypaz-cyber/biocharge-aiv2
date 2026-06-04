@@ -213,29 +213,30 @@ const hasHrv = !!(hrvValue && hrvValue > 0);
 const hasRhr = !!(rhrValue && rhrValue > 0);
 const hasSleepHours = !!(checkin?.sleep_hours && checkin.sleep_hours > 0);
   const hasSleepScore = !!(checkin?.sleep_score != null);
-  const hasDeepSleep = !!(checkin?.deep_sleep_pct != null);
-  const hasRemSleep = !!(checkin?.rem_sleep_pct != null);
+  // Sinais "duros": só existem se informados HOJE (default null → presença = informado).
+  const hasAwakenings = checkin?.sleep_awakenings != null;
+  const hasRegularity = checkin?.sleep_regularity_pct != null;
+  const hasSleepHr = checkin?.sleep_heart_rate != null;
 
   const hrvBaseline = getRecentHrvBaseline(recentCheckins);
   const rhrBaseline = getRecentRhrBaseline(recentCheckins);
 
-const physiologicalCount =
+  // Conta só sinais duros. sleep_score/horas/profundo/REM têm default não-nulo,
+  // então "estar preenchido" não prova que foram informados — ficam fora da contagem.
+  const hardSignals =
     (hasHrv ? 1 : 0) +
     (hasRhr ? 1 : 0) +
-    (hasSleepHours ? 1 : 0) +
-    (hasSleepScore ? 1 : 0) +
-    (hasDeepSleep ? 1 : 0) +
-    (hasRemSleep ? 1 : 0);
+    (hasAwakenings ? 1 : 0) +
+    (hasRegularity ? 1 : 0) +
+    (hasSleepHr ? 1 : 0);
 
-  // "high" exige sinal cardíaco real informado HOJE (HRV ou FC de repouso).
-  // Sono sozinho — mesmo completo — não sustenta confiança alta, porque
-  // os campos de sono podem vir de valores default não revisados.
-  if (physiologicalCount >= 4 && (hasHrv || hasRhr)) {
+  // "high": sinal cardíaco real (HRV ou FC) + ao menos 2 sinais duros no total.
+  if ((hasHrv || hasRhr) && hardSignals >= 2) {
     return 'high';
   }
 
-  // "medium" quando há boa cobertura de sono, mesmo sem HRV/FC.
-  if (physiologicalCount >= 3) {
+  // "medium": qualquer sinal cardíaco real, ou cobertura de sono base informada.
+  if (hasHrv || hasRhr || (hasSleepHours && hasSleepScore)) {
     return 'medium';
   }
 
