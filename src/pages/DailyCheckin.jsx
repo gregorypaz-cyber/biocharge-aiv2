@@ -867,7 +867,7 @@ if (isPostMode) {
             />
 
             <p className="text-[10px] text-muted-foreground">
-              Escolha a duração aproximada do seu sono desta noite.
+              Selecione a duração do sono (horas:minutos) — ex: 07:45.
             </p>
           </div>
 
