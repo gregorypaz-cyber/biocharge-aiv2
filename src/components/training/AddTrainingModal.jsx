@@ -132,7 +132,6 @@ export default function AddTrainingModal({
     pace_sec: '',
     training_effect_aerobic: '',
     training_effect_anaerobic: '',
-    cadence_spm: '',
     notes: '',
   });
 
@@ -170,7 +169,6 @@ export default function AddTrainingModal({
         training_effect_anaerobic: data.training_effect_anaerobic
           ? Number(data.training_effect_anaerobic)
           : undefined,
-        cadence_spm: data.cadence_spm ? Number(data.cadence_spm) : undefined,
         duration_minutes: Number(data.duration_minutes),
         perceived_effort: Number(data.perceived_effort),
       };
