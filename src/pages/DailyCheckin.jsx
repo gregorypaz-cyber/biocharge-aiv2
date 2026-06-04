@@ -280,8 +280,8 @@ const saveMorningMutation = useMutation({
     let savedRecord;
     if (editData?.id) {
       savedRecord = await base44.entities.DailyCheckin.update(editData.id, scores);
-    } else if (todayRecord?.id) {
-      savedRecord = await base44.entities.DailyCheckin.update(todayRecord.id, scores);
+    } else if (recordForPayloadDate?.id) {
+      savedRecord = await base44.entities.DailyCheckin.update(recordForPayloadDate.id, scores);
     } else {
       savedRecord = await base44.entities.DailyCheckin.create(scores);
     }
