@@ -1069,6 +1069,7 @@ Dados:
 - Stress: ${resolveCheckinField(checkin, 'stress') ?? '—'}/5
 - Estado fisiológico: ${checkin.current_body_state ?? scores?.current_body_state ?? '—'}
 - Último treino: ${lastSession ? `${lastSession.sport} (${lastSession.intensity}) em ${lastSession.date}` : 'sem dados'}
+- Anotação do usuário (contexto que os números não capturam): ${notaUsuario ?? 'nenhuma'}
 
 Responda apenas com os 2 bullets, um por linha.`;
 
