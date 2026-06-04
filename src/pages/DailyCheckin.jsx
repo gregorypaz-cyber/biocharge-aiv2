@@ -165,7 +165,7 @@ export default function DailyCheckin() {
 
 
   const [savedCheckin, setSavedCheckin] = useState(null);
-  const [touched, setTouched] = useState({ biocharge_morning: !!editData, sleep_hours: !!editData });
+  const [touched, setTouched] = useState({ biocharge_morning: !!editData, sleep_hours: !!editData, sleep_score: !!editData });
 
   // Carrega o check-in já salvo de hoje uma única vez, para não sobrescrever
   // dados reais com os valores default ao reabrir a página.
