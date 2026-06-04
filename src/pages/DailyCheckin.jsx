@@ -1099,6 +1099,34 @@ if (isPostMode) {
           </>
         )}
 
+        {/* Salvar — botão principal único, no fim da página */}
+        {!savedCheckin && (
+          <div className="space-y-2 pt-1">
+            {(!touched.biocharge_morning || !touched.sleep_hours) && (
+              <p className="text-[11px] text-amber-400/80 px-1 text-center">
+                {!touched.biocharge_morning && !touched.sleep_hours
+                  ? '⬆️ Ajuste como você acordou e as horas de sono para salvar'
+                  : !touched.biocharge_morning
+                  ? '⬆️ Ajuste o slider "Como você acordou?" para salvar'
+                  : '⬆️ Selecione as horas de sono para salvar'}
+              </p>
+            )}
+            <Button
+              onClick={() => saveMorningMutation.mutate(form)}
+              disabled={saveMorningMutation.isPending || !touched.biocharge_morning || !touched.sleep_hours}
+              className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {saveMorningMutation.isPending ? (
+                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar plano do dia
+                </>
+              )}
+            </Button>
+          </div>
+        )}
 
       </div>
     </>
