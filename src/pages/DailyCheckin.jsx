@@ -707,7 +707,7 @@ if (isPostMode) {
     Informe os sinais da manhã para calcular sua dose do dia.
   </p>
   <p className="text-[11px] text-muted-foreground">
-    Você pode salvar agora com os dados essenciais e refinar depois com HRV, FC e sono avançado.
+    Preencha o que tiver — tudo numa tela só — e salve no fim. Quanto mais sinais (HRV, FC, sono avançado), mais precisa fica a leitura do dia.
   </p>
 </div>
 
