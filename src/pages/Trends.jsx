@@ -859,6 +859,111 @@ function StrainRecoveryBalanceCard({ checkins = [] }) {
   );
 }
 
+function WeeklyRunningVolumeCard({ sessions = [] }) {
+  function weekStartMonday(d) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    date.setDate(date.getDate() + diff);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+  const fmt = (t) => {
+    const d = new Date(t);
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const runs = (sessions || [])
+    .filter(
+      (s) =>
+        s?.date &&
+        String(s.sport || '').toLowerCase().includes('corr') &&
+        Number(s.distance_km) > 0
+    )
+    .map((s) => ({ date: parseLocalDate(s.date), km: Number(s.distance_km) }));
+
+  const byWeek = new Map();
+  for (const r of runs) {
+    const key = weekStartMonday(r.date).getTime();
+    byWeek.set(key, (byWeek.get(key) || 0) + r.km);
+  }
+
+  if (byWeek.size < 2) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4">
+        <div className="flex items-start gap-3">
+          <Footprints className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold">Volume de corrida (semanal)</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Registre a <strong>distância</strong> das suas corridas ao adicionar o treino. Depois de ~2–3 semanas, o volume semanal e a variação aparecem aqui.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const WEEK = 7 * 86400000;
+  const keys = [...byWeek.keys()].sort((a, b) => a - b);
+  const curWeek = weekStartMonday(new Date()).getTime();
+  const start = Math.max(keys[0], curWeek - 9 * WEEK);
+  const weeks = [];
+  for (let t = start; t <= curWeek; t += WEEK) {
+    weeks.push({ label: fmt(t), km: Number((byWeek.get(t) || 0).toFixed(1)) });
+  }
+
+  const curKm = weeks[weeks.length - 1]?.km ?? 0;
+  const prevKm = weeks.length >= 2 ? weeks[weeks.length - 2].km : 0;
+  const deltaKm = Number((curKm - prevKm).toFixed(1));
+  const pct = prevKm > 0 ? Math.round((deltaKm / prevKm) * 100) : null;
+  const DirIcon = deltaKm > 0.1 ? TrendingUp : deltaKm < -0.1 ? TrendingDown : Minus;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <Footprints className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight">Volume de corrida (semanal)</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+              Soma de km por semana (segunda a domingo). Só corridas com distância informada.
+            </p>
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-lg font-black font-mono leading-none">
+            {curKm.toFixed(1)}<span className="text-xs font-semibold text-muted-foreground"> km</span>
+          </p>
+          <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
+            <DirIcon className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-mono">
+              {deltaKm > 0 ? '+' : ''}{deltaKm} km{pct != null ? ` (${pct > 0 ? '+' : ''}${pct}%)` : ''}
+            </span>
+          </div>
+          <p className="text-[9px] text-muted-foreground/70 mt-0.5">semana atual vs anterior</p>
+        </div>
+      </div>
+
+      <div role="img" aria-label="Gráfico de volume de corrida por semana" className="h-40">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={weeks}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
+            <XAxis dataKey="label" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
+            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} km`, 'Semana']} />
+            <Bar dataKey="km" fill="hsl(142,70%,50%)" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <p className="text-[10px] text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
+        Subidas bruscas de volume semana a semana aumentam o risco de lesão — use para progredir aos poucos. Não entra no recovery; é leitura de carga de corrida.
+      </p>
+    </motion.div>
+  );
+}
+
 function WeightTrendCard({ checkins = [] }) {
   // Peso é sinal LENTO: suavizamos o ruído diário (água, glicogênio, dias copiados).
   const points = [...(checkins || [])]
