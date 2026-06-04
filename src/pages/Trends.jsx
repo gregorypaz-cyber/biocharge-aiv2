@@ -174,7 +174,7 @@ Tendência dos últimos 3 dias:
 ${JSON.stringify(trendData, null, 2)}
 
 Sono planejado: ${plannedSleep}h
-Strain planejado amanhã: ${plannedStrain}/100
+Strain planejado amanhã: ${plannedStrain}/21 (escala 0–21, a mesma do strain de hoje e da tendência acima)
 
 Regras:
 - trate como tendência, não como certeza
