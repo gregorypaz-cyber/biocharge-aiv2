@@ -203,6 +203,23 @@ export default function DailyCheckin() {
     }
   }, [isPostMode, editData, savedCheckin, todayRecord]);
 
+  // Pós-treino: pré-preenche o RPE com o esforço já informado no registro do
+  // treino, para não pedir o mesmo RPE duas vezes (T3). Só se ainda estiver em 0.
+  const prefilledPostRpeRef = useRef(false);
+  useEffect(() => {
+    if (!isPostMode || prefilledPostRpeRef.current) return;
+    const todays = allSessions.filter((s) => s.date === todayDate);
+    if (todays.length === 0) return;
+    const latest = [...todays].sort((a, b) =>
+      String(b.created_date || b.date).localeCompare(String(a.created_date || a.date))
+    )[0];
+    const sessionRpe = Number(latest?.perceived_effort);
+    if (sessionRpe > 0 && (postForm.rpe ?? 0) === 0) {
+      dispatch({ type: 'SET_POST_FIELD', field: 'rpe', value: sessionRpe });
+    }
+    prefilledPostRpeRef.current = true;
+  }, [isPostMode, allSessions, todayDate, postForm.rpe]);
+
 
   const [advancedOpen, setAdvancedOpen] = useState(true);
 
