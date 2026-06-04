@@ -44,6 +44,23 @@ const SLEEP_DURATION_OPTIONS = Array.from({ length: 33 }, (_, i) => {
   return { value, label };
 });
 
+// Converte horas decimais (ex: 7.75) para "HH:MM" (ex: "07:45") e vice-versa,
+// para usar <input type="time"> (roleta no iPhone) mantendo o armazenamento em horas.
+function hoursToHHMM(h) {
+  if (h == null || isNaN(h) || h <= 0) return '';
+  const totalMin = Math.round(Number(h) * 60);
+  const hh = Math.floor(totalMin / 60);
+  const mm = totalMin % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+function hhmmToHours(value) {
+  if (!value) return null;
+  const [hh, mm] = String(value).split(':').map((n) => parseInt(n, 10));
+  if (isNaN(hh)) return null;
+  const h = hh + (isNaN(mm) ? 0 : mm) / 60;
+  return Number(h.toFixed(2));
+}
+
 function HRVField({ value, onChange }) {
   const [showTip, setShowTip] = useState(false);
   return (
