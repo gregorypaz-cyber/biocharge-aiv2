@@ -47,7 +47,7 @@ export default function AppLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/90 backdrop-blur-xl">
-        <div className="max-w-2xl mx-auto flex items-center justify-around h-16 px-2">
+        <div className="max-w-2xl mx-auto grid grid-cols-6 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
             return (
@@ -55,21 +55,34 @@ export default function AppLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all relative',
+                  'flex flex-col items-center justify-center gap-0.5 py-1 h-full transition-all relative',
                   item.primary
-                    ? 'bg-primary/15 border border-primary/25 px-4'
+                    ? ''
                     : isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 {isActive && !item.primary && (
                   <motion.div
                     layoutId="mobileActiveTab"
-                    className="absolute inset-0 bg-primary/8 rounded-xl"
+                    className="absolute inset-1 bg-primary/8 rounded-xl"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                   />
                 )}
-                <item.icon className={cn('w-5 h-5 relative', item.primary ? 'text-primary' : '')} />
-                <span className={cn('text-[10px] font-semibold relative', item.primary ? 'text-primary' : '')}>{item.label}</span>
+                {item.primary ? (
+                  <div className="w-9 h-9 -mt-1 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 relative">
+                    <item.icon className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                ) : (
+                  <item.icon className="w-5 h-5 relative" />
+                )}
+                <span
+                  className={cn(
+                    'text-[10px] font-semibold relative whitespace-nowrap',
+                    item.primary ? 'text-muted-foreground' : ''
+                  )}
+                >
+                  {item.label}
+                </span>
               </Link>
             );
           })}
