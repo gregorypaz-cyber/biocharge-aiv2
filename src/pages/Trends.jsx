@@ -1201,7 +1201,7 @@ export default function Trends() {
         </div>
 
         {/* Strain vs Recovery Balance */}
-        <StrainRecoveryBalanceCard checkins={computed} />
+        <StrainRecoveryBalanceCard checkins={computed} sessions={trainingSessions} />
 
         {/* Recovery D+1 Predictor */}
         <RecoveryTomorrowPredictorCard checkins={computed} />
