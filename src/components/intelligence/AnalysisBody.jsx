@@ -1,8 +1,6 @@
-import ReactMarkdown from 'react-markdown';
+const PREVIEW_SECTIONS = 2;
 
-const PREVIEW_CHARS = 360;
-
-function stripMarkdown(text) {
+function clean(text) {
   return String(text || '')
     .replace(/#+\s*/g, '')
     .replace(/\*\*/g, '')
@@ -11,38 +9,76 @@ function stripMarkdown(text) {
     .trim();
 }
 
+// Quebra o texto da IA em seções { title, items[] } usando as linhas de
+// cabeçalho (curtas, sem pontuação final, poucas palavras) como divisores.
+function parseSections(text) {
+  const lines = clean(text).split('\n').map((l) => l.trim()).filter(Boolean);
+  const sections = [];
+  let current = null;
+  const isHeader = (l) =>
+    l.length <= 46 &&
+    !/[.!?:,]$/.test(l) &&
+    !/^[-–•]/.test(l) &&
+    /[a-zA-ZÀ-ÿ]/.test(l) &&
+    (l.match(/\s/g) || []).length <= 6;
+  for (const l of lines) {
+    if (isHeader(l)) {
+      current = { title: l, items: [] };
+      sections.push(current);
+    } else {
+      if (!current) {
+        current = { title: null, items: [] };
+        sections.push(current);
+      }
+      current.items.push(l.replace(/^[-–•]\s*/, ''));
+    }
+  }
+  return sections;
+}
+
+function Section({ title, items }) {
+  return (
+    <div className="space-y-1.5">
+      {title && (
+        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
+          {title}
+        </p>
+      )}
+      <div className="space-y-1.5">
+        {items.map((t, i) => (
+          <p key={i} className="text-[13px] text-foreground/80 leading-relaxed">
+            {t}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AnalysisBody({ text, expanded, onExpand }) {
   if (!text) return null;
 
-  const clean = stripMarkdown(text);
-  const isLong = clean.length > PREVIEW_CHARS;
-  const previewText = isLong ? clean.slice(0, PREVIEW_CHARS).trim() + '…' : clean;
+  const sections = parseSections(text);
+  if (!sections.length) return null;
+
+  const visible = expanded ? sections : sections.slice(0, PREVIEW_SECTIONS);
+  const hasMore = sections.length > PREVIEW_SECTIONS;
 
   return (
     <div className="space-y-3">
-      {!expanded ? (
-        <div className="space-y-3">
-          <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-4">
-            <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">
-              {previewText}
-            </p>
-          </div>
+      <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-4 space-y-4">
+        {visible.map((s, i) => (
+          <Section key={i} title={s.title} items={s.items} />
+        ))}
+      </div>
 
-          {isLong && (
-            <button
-              onClick={onExpand}
-              className="w-full text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10"
-            >
-              Abrir leitura completa
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-4">
-          <div className="prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85 [&_li]:text-foreground/80">
-            <ReactMarkdown>{text}</ReactMarkdown>
-          </div>
-        </div>
+      {!expanded && hasMore && (
+        <button
+          onClick={onExpand}
+          className="w-full text-xs font-semibold text-primary hover:text-primary/80 transition-colors py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10"
+        >
+          Abrir leitura completa
+        </button>
       )}
     </div>
   );
