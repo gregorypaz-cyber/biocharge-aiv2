@@ -746,12 +746,10 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
     );
   }
 
-  const avgRecovery = avgList(last7.map((c) => c.recovery_score));
-  const avgStrain = avgList(last7.map((c) => Number(c.daily_strain_accumulated ?? 0)));
-
-  const balanceIndex = Number(((avgRecovery ?? 0) - (avgStrain ?? 0)).toFixed(1));
-  const classification = getBalanceClassification(balanceIndex);
-  const pointerPercent = getBalancePointerPercent(balanceIndex);
+  const load = calculateTrainingLoad(sorted, sessions);
+  const acwr = load?.ratio ?? null;
+  const classification = getLoadClassification(load);
+  const pointerPercent = getLoadPointerPercent(acwr);
   const Icon = classification.icon;
 
   return (
