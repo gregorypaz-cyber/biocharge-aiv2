@@ -18,7 +18,10 @@ function splitSentences(text) {
   return normalizeText(text)
     .split(/\n|(?<=\.)\s+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 18 && s.length < 260);
+    .filter((s) => s.length > 18 && s.length < 260)
+    // descarta linhas que são cabeçalhos (curtas, sem pontuação final),
+    // para não virarem "leitura principal" / item de destaque
+    .filter((s) => /[.!?]$/.test(s) || (s.match(/\s/g) || []).length > 6);
 }
 
 function scoreMainReading(sentence) {
