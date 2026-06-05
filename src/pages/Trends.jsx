@@ -779,28 +779,28 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Recovery médio
+            Carga aguda (7d)
           </p>
           <p className="text-xl font-mono font-black text-foreground">
-            {avgRecovery != null ? avgRecovery.toFixed(1) : '—'}
+            {load?.acute != null ? load.acute : '—'}
           </p>
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Strain médio
+            Carga crônica
           </p>
           <p className="text-xl font-mono font-black text-foreground">
-            {avgStrain != null ? avgStrain.toFixed(1) : '—'}
+            {load?.chronic != null ? load.chronic : '—'}
           </p>
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Índice
+            ACWR
           </p>
           <p className={`text-xl font-mono font-black ${classification.color}`}>
-            {balanceIndex > 0 ? `+${balanceIndex}` : balanceIndex}
+            {acwr != null ? acwr.toFixed(2) : '—'}
           </p>
         </div>
       </div>
@@ -809,10 +809,10 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
       <div className="space-y-2">
         <div className="relative">
           <div className="h-3 w-full rounded-full overflow-hidden border border-border/40 flex">
-            <div className="w-[12.5%] bg-red-500/75" />
-            <div className="w-[25%] bg-yellow-500/75" />
-            <div className="w-[37.5%] bg-emerald-500/75" />
             <div className="w-[25%] bg-sky-500/75" />
+            <div className="w-[35%] bg-emerald-500/75" />
+            <div className="w-[20%] bg-yellow-500/75" />
+            <div className="w-[20%] bg-red-500/75" />
           </div>
 
           <div
