@@ -824,10 +824,10 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
         </div>
 
         <div className="flex justify-between text-[10px] text-muted-foreground">
-          <span>Over</span>
-          <span>Carga</span>
-          <span>Equilíbrio</span>
-          <span>Subutil.</span>
+          <span>Subcarga</span>
+          <span>Ideal</span>
+          <span>Elevada</span>
+          <span>Risco</span>
         </div>
       </div>
 
