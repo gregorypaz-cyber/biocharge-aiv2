@@ -91,10 +91,7 @@ function HighlightBlock({ icon: Icon, label, color, bg, border, items, maxItems 
 
       <ul className="space-y-2">
         {items.slice(0, maxItems).map((text, i) => (
-          <li key={i} className="space-y-0.5">
-            <p className="text-[10px] font-bold text-foreground/55 uppercase tracking-wide leading-none">
-              {shortTitle(text)}
-            </p>
+          <li key={i}>
             <p className="text-xs text-foreground/85 leading-snug">
               {text}
             </p>
