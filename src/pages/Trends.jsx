@@ -718,7 +718,7 @@ function getLoadPointerPercent(ratio) {
   return Math.min(100, 80 + ((r - 1.5) / 0.5) * 20);
 }
 
-function StrainRecoveryBalanceCard({ checkins = [] }) {
+function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
   const sorted = [...checkins]
     .filter((c) => c?.date)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
