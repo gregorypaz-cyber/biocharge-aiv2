@@ -670,58 +670,52 @@ function clampRange(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function getBalanceClassification(balanceIndex) {
-  if (balanceIndex > 20) {
+function getLoadClassification(load) {
+  const ratio = load?.ratio;
+  if (ratio == null) {
     return {
-      label: 'Subutilizado',
-      color: 'text-sky-400',
-      bg: 'bg-sky-500/10',
-      border: 'border-sky-500/20',
-      icon: TrendingUp,
-      summary: 'Seu corpo parece estar suportando mais do que você vem exigindo.',
-      recommendation: 'Há margem para aumentar a carga de forma progressiva e controlada.',
+      label: 'Sem dados', color: 'text-muted-foreground', bg: 'bg-secondary/30', border: 'border-border/40', icon: Gauge,
+      summary: 'Ainda não dá para calcular a relação carga aguda/crônica.',
+      recommendation: 'Continue registrando treinos e check-ins por algumas semanas.',
     };
   }
-
-  if (balanceIndex >= -10 && balanceIndex <= 20) {
+  if (ratio < 0.8) {
     return {
-      label: 'Em equilíbrio',
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-500/10',
-      border: 'border-emerald-500/20',
-      icon: ShieldCheck,
-      summary: 'Sua relação entre carga e recuperação está em uma faixa saudável.',
-      recommendation: 'A tendência é boa para sustentar consistência sem forçar demais.',
+      label: 'Subcarga', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: TrendingUp,
+      summary: `Sua carga recente está abaixo da sua média (ACWR ${ratio.toFixed(2)}).`,
+      recommendation: 'Há espaço para aumentar volume/intensidade de forma progressiva, se a recuperação acompanhar.',
     };
   }
-
-  if (balanceIndex >= -30 && balanceIndex < -10) {
+  if (ratio <= 1.3) {
     return {
-      label: 'Carga elevada',
-      color: 'text-yellow-400',
-      bg: 'bg-yellow-500/10',
-      border: 'border-yellow-500/20',
-      icon: ShieldAlert,
-      summary: 'A carga recente já está começando a pressionar sua capacidade de recuperação.',
-      recommendation: 'Vale moderar a intensidade ou reduzir volume antes de empilhar mais fadiga.',
+      label: 'Faixa ideal', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: ShieldCheck,
+      summary: `Sua carga aguda está alinhada com a crônica (ACWR ${ratio.toFixed(2)}).`,
+      recommendation: 'Boa zona para sustentar consistência sem sobrecarregar.',
     };
   }
-
+  if (ratio <= 1.5) {
+    return {
+      label: 'Carga elevada', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: ShieldAlert,
+      summary: `Sua carga aguda subiu acima da sua média recente (ACWR ${ratio.toFixed(2)}).`,
+      recommendation: 'Vale evitar novos saltos de volume por alguns dias antes de seguir subindo.',
+    };
+  }
   return {
-    label: 'Overreaching',
-    color: 'text-red-400',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/20',
-    icon: TrendingDown,
-    summary: 'Sua carga recente está acima do que sua recuperação vem sustentando.',
-    recommendation: 'Priorize recuperação e evite continuar acumulando carga até estabilizar.',
+    label: 'Carga muito alta', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: TrendingDown,
+    summary: `Sua carga aguda está bem acima da crônica (ACWR ${ratio.toFixed(2)}).`,
+    recommendation: 'Priorize recuperação e segure novos aumentos de carga até a relação cair.',
   };
 }
 
-function getBalancePointerPercent(balanceIndex) {
-  // escala visual fixa entre -40 e +40
-  const clamped = clampRange(balanceIndex, -40, 40);
-  return ((clamped + 40) / 80) * 100;
+function getLoadPointerPercent(ratio) {
+  // Mapeia o ACWR (0–~2) para a posição na barra, alinhado às zonas:
+  // subcarga <0,8 | ideal 0,8–1,3 | elevada 1,3–1,5 | risco >1,5
+  if (ratio == null) return 50;
+  const r = Math.max(0, ratio);
+  if (r <= 0.8) return (r / 0.8) * 25;
+  if (r <= 1.3) return 25 + ((r - 0.8) / 0.5) * 35;
+  if (r <= 1.5) return 60 + ((r - 1.3) / 0.2) * 20;
+  return Math.min(100, 80 + ((r - 1.5) / 0.5) * 20);
 }
 
 function StrainRecoveryBalanceCard({ checkins = [] }) {
