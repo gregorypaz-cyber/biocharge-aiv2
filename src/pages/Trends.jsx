@@ -8,6 +8,7 @@ import {
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
+import { calculateTrainingLoad } from '@/lib/physiological-engine';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
