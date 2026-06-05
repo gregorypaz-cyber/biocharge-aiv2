@@ -764,7 +764,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Balance de carga e recuperação</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-              Recovery médio vs strain médio nos últimos 7 dias.
+              Carga aguda (7 dias) vs crônica — razão ACWR.
             </p>
           </div>
         </div>
