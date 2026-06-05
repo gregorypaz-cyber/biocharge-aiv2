@@ -846,7 +846,9 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
       </div>
 
       <p className="text-[10px] text-muted-foreground">
-        Baseado nos seus últimos {last7.length} check-ins com recovery e strain diário.
+        {load?.lowConfidence
+          ? `ACWR com histórico curto (${last7.length} check-ins) — baixa confiança; fica mais preciso com mais semanas.`
+          : 'Razão entre a carga dos últimos 7 dias e a sua média recente — a mesma leitura de carga usada no Hoje e no Insights.'}
       </p>
     </motion.div>
   );
