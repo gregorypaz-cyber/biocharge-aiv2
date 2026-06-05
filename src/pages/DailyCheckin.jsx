@@ -375,6 +375,7 @@ CONTEXTO DO DIA DE HOJE (use para guiar o tom — não repita estas frases liter
 
 RREGRAS OBRIGATÓRIAS:
 - cite números REAIS dos dados (ex: "seu HRV caiu de 68ms para 52ms nos últimos 5 dias")
+- UNIDADES (respeite à risca, NUNCA converta): deep_sleep_pct e rem_sleep_pct são PERCENTUAIS do sono (%), jamais minutos; sleep_hours_h é em horas; hrv em ms; recovery, readiness, fatigue e stress são escalas 0–100; rpe é 0–10. Se o sono profundo parecer baixo, escreva "X% de sono profundo", nunca "X minutos".
 - quando houver "notes" nos dados (anotações do próprio usuário, ex: "dormi tarde, NBA" ou "janta pesada"), USE-AS para explicar variações de sono/recuperação — conecte a causa que o usuário relatou ao efeito nos números. Nunca invente causas que não estejam nas notas.
 - cada seção deve mencionar pelo menos 1 valor específico dos dados
 - recomendações devem ser DIFERENTES entre si e não genéricas ("durma mais" não é aceitável sozinho — especifique quanto, quando, por quê)
