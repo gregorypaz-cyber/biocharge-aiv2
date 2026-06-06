@@ -44,6 +44,15 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
         </div>
       ) : null}
 
+      {sleepDebt >= 2 ? (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/8 border border-amber-500/15">
+          <span className="text-xs">😴</span>
+          <p className="text-xs text-amber-300/90">
+            Débito de sono: <span className="font-semibold">~{Math.round(sleepDebt)}h</span> nos últimos 7 dias{sleepDebt >= 4 ? ' — vale priorizar sono nos próximos dias.' : '.'}
+          </p>
+        </div>
+      ) : null}
+
       {forecast ? (
         <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-3 space-y-2">
           <div className="flex items-center gap-2">
