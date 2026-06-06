@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
-import { computeCheckinScores } from '@/lib/biocharge-utils';
+import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import {
   calculateBodyState,
   calculateRemainingCapacity,
