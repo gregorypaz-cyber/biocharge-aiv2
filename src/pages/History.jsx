@@ -155,7 +155,7 @@ export default function History() {
   // com fallback para morning_recovery_score quando recovery_score faltar.
   const computed = checkins.map((c) => ({
     ...c,
-    recovery_score: c.recovery_score ?? c.morning_recovery_score ?? c.readiness_score ?? null,
+    recovery_score: getDayScore(c),
   }));
   const weeks = groupByWeek(computed);
 
