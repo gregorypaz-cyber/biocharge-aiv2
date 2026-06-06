@@ -389,6 +389,7 @@ export default function Today() {
   'delayed_fatigue_alert',
   'headline_today',
   'decision_mode',
+  'recovery_high_threshold',
   'hrv_7d_avg',
   'hrv_trend',
   'baevsky_si',
