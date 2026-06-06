@@ -878,6 +878,7 @@ export function normalizeDailySignals(checkinLike, recentCheckins = []) {
   return {
     ...checkinLike,
     decision_mode: masterSignal,
+    recovery_high_threshold: recoveryHighThreshold,
     zone,
     headline_today: buildHeadline(masterSignal, checkinLike, recentCheckins),
     recommendation: buildRecommendation(masterSignal, checkinLike, recentCheckins),
