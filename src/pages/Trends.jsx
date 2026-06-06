@@ -32,7 +32,6 @@ const timeFilters = [
 
 const metrics = [
   { key: 'recovery_score', label: 'Recovery base', color: 'hsl(142,70%,50%)' },
-  { key: 'readiness_score', label: 'Prontidão', color: 'hsl(142,60%,65%)' },
   { key: 'sleep_quality', label: 'Sono', color: 'hsl(200,80%,55%)' },
   { key: 'fatigue_score', label: 'Fadiga', color: 'hsl(0,72%,55%)' },
   { key: 'stress_score', label: 'Estresse', color: 'hsl(280,65%,60%)' },
