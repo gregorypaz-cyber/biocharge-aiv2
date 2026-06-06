@@ -1523,21 +1523,19 @@ function ExecutionCard() {
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-2xl bg-secondary p-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Strain acumulado
+            Strain · alvo
           </p>
-          <p
-            className={`text-xl font-mono font-bold ${
-              cappedStrain >= 18
-                ? 'text-red-400'
-                : cappedStrain >= 14
-                ? 'text-orange-400'
-                : cappedStrain >= 10
-                ? 'text-yellow-400'
-                : 'text-emerald-400'
-            }`}
-          >
+          <p className={`text-xl font-mono font-bold ${strainVsTarget.color}`}>
             ⚡ {cappedStrain}
+            <span className="text-sm text-muted-foreground font-semibold"> / {strainTarget}</span>
           </p>
+          <div className="mt-1.5 h-1 rounded-full bg-background/60 overflow-hidden">
+            <div
+              className={`h-full rounded-full ${strainVsTarget.barColor}`}
+              style={{ width: `${strainVsTarget.pct}%` }}
+            />
+          </div>
+          <p className={`text-[10px] mt-1 ${strainVsTarget.color}`}>{strainVsTarget.label}</p>
         </div>
 
         <div className="rounded-2xl bg-secondary p-3">
