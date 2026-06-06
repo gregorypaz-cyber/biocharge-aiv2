@@ -609,7 +609,23 @@ export function getTrainingLoad(recoveryScore, deltaPost) {
 
 // ─── Daily signal normalization ─────────────────────────────────────────────
 
-function getDailyMasterSignal(checkinLike) {
+/**
+ * Limiar pessoal de "recovery alto" = ~p80 do seu próprio recovery recente.
+ * Autorregulação (Altini/Ibrahim): "forte" libera nos seus ~20% melhores dias,
+ * não num corte absoluto não validado pro indivíduo. Exige baseline mínimo
+ * (14 dias); senão cai num absoluto moderado. Clampa para faixa segura.
+ */
+export function getPersonalHighRecovery(recentCheckins = []) {
+  const vals = (recentCheckins || [])
+    .map((c) => Number(c?.recovery_score))
+    .filter((v) => Number.isFinite(v) && v > 0)
+    .sort((a, b) => a - b);
+  if (vals.length < 14) return 75;
+  const idx = Math.min(vals.length - 1, Math.max(0, Math.ceil(vals.length * 0.8) - 1));
+  return Math.round(Math.max(72, Math.min(85, vals[idx])));
+}
+
+function getDailyMasterSignal(checkinLike, recoveryHighThreshold = 80) {
   const recovery = clamp(checkinLike?.recovery_score ?? 0);
   const readiness = clamp(checkinLike?.readiness_score ?? recovery);
   const fatigue = clamp(checkinLike?.fatigue_score ?? checkinLike?.fatigue ?? 0);
