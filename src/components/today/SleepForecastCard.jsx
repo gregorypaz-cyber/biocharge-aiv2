@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Moon, Sparkles, ArrowRight } from 'lucide-react';
 
-export default function SleepForecastCard({ checkin }) {
+export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
   const sleepNeed = checkin?.sleep_need_tonight;
   const forecast = checkin?.next_day_forecast;
 
