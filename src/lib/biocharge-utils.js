@@ -321,6 +321,17 @@ function calculateSubjectiveScore(checkin) {
 //   além disso prende o app ao Zepp. Fica reservado para calibração/exibição.
 //
 // Saída: recovery 0..100 derivável de QUALQUER relógio que exporte HRV/RHR/sono.
+/**
+ * Score do dia canônico (estilo WHOOP: número fisiológico).
+ * Usa o recovery salvo; cai para a âncora da manhã só se recovery faltar.
+ * Sempre via ?? (nunca ||) para não engolir um score 0 legítimo.
+ * Esta é a ÚNICA fonte de "Score do dia" — todas as telas devem usá-la.
+ */
+export function getDayScore(checkin) {
+  if (!checkin) return null;
+  return checkin.recovery_score ?? checkin.morning_recovery_score ?? null;
+}
+
 export function calculateRecoveryScore(checkin, recentCheckins = []) {
   const hrvScore = normalizeHrv(resolveHrvValue(checkin), recentCheckins);
   const rhrScore = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
