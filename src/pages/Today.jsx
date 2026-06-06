@@ -604,7 +604,7 @@ const hrvTrend = useMemo(() => {
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
   const personalHigh = enrichedCheckin?.recovery_high_threshold ?? 80;
   const readinessFaixa =
-  displayedScore >= 82 ? 'Alta' :
+  displayedScore >= personalHigh ? 'Alta' :
   displayedScore >= 65 ? 'Moderada' :
   'Baixa';
 
