@@ -254,8 +254,10 @@ export default function History() {
                         .sort((a, b) => new Date(b.date + 'T12:00:00') - new Date(a.date + 'T12:00:00'))
                         .map((c, i) => {
                           const sessions = allSessions.filter(s => s.date === c.date);
-                          const score = c.recovery_score || c.morning_recovery_score || 0;
-                          const isAlert = c.current_body_state === 'Overreached' || score < 50;
+                          const rawScore = getDayScore(c);
+                          const hasScore = rawScore != null;
+                          const score = hasScore ? rawScore : 0;
+                          const isAlert = c.current_body_state === 'Overreached' || (hasScore && rawScore < 50);
 
                           return (
                             <motion.button
