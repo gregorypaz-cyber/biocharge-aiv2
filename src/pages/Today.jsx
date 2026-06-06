@@ -614,6 +614,24 @@ const hrvTrend = useMemo(() => {
 
   const cappedStrain = Math.min(21, totalStrain);
 
+  // Strain acumulado RELATIVO ao alvo do dia (estilo WHOOP strain target).
+  // Abaixo do alvo = construindo (neutro, não é alerta); no alvo = ideal;
+  // acima = passou do que a recovery sugeria.
+  const strainVsTarget = (() => {
+    const t = strainTarget || 1;
+    const pct = Math.max(0, Math.min(100, Math.round((cappedStrain / t) * 100)));
+    if (cappedStrain <= 0) {
+      return { pct: 0, label: 'Sem treino ainda', color: 'text-muted-foreground', barColor: 'bg-muted-foreground/40' };
+    }
+    if (cappedStrain > t * 1.15) {
+      return { pct: 100, label: 'Acima do alvo', color: 'text-orange-400', barColor: 'bg-orange-400' };
+    }
+    if (cappedStrain >= t * 0.85) {
+      return { pct, label: 'No alvo', color: 'text-emerald-400', barColor: 'bg-emerald-400' };
+    }
+    return { pct, label: 'Construindo', color: 'text-sky-400', barColor: 'bg-sky-400' };
+  })();
+
   const dayMetrics = enrichedCheckin
     ? {
         currentStrain: cappedStrain,
