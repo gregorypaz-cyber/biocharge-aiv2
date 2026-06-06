@@ -6,7 +6,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
   const sleepNeed = checkin?.sleep_need_tonight;
   const forecast = checkin?.next_day_forecast;
 
-  if (!sleepNeed && !forecast) return null;
+  if (!sleepNeed && !forecast && !(sleepDebt >= 2)) return null;
 
   return (
     <motion.div
