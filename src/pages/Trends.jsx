@@ -1077,7 +1077,7 @@ export default function Trends() {
     ...c,
     // Null out performance metrics on rest days so they show as gaps
     ...(c.rest_day ? {
-      recovery_score: null, readiness_score: null,
+      recovery_score: null,
       fatigue_score: null, stress_score: null, rpe: null,
     } : {}),
   }));
