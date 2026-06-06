@@ -195,7 +195,7 @@ export default function History() {
           const weekAvg = validItems.length
             ? Math.round(validItems.reduce((s, c) => s + c.recovery_score, 0) / validItems.length)
             : 0;
-          const hasAlert = items.some(c => c.current_body_state === 'Overreached' || c.recovery_score < 50);
+          const hasAlert = items.some(c => c.current_body_state === 'Overreached' || (c.recovery_score != null && c.recovery_score < 50));
           const weekDates = new Set(items.map(c => c.date));
           const weekStrain = allSessions.filter(s => weekDates.has(s.date)).reduce((acc, t) => acc + (t.strain_score || 0), 0);
 
