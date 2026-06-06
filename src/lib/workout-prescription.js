@@ -89,7 +89,7 @@ export function buildWorkoutDecision(analysis, userPrefs = {}, context = {}) {
     };
   }
 
-  if (recovery >= 80 && !sleepIsLimiting && trainingRisk !== 'high' && trainingRisk !== 'moderate') {
+  if (recovery >= (today.recovery_high_threshold ?? 80) && !sleepIsLimiting && trainingRisk !== 'high' && trainingRisk !== 'moderate') {
     return {
       mode: 'train_high',
       headline: 'Hoje é uma boa janela para intensidade',
