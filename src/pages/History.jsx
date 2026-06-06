@@ -280,11 +280,11 @@ export default function History() {
                               <div
                                 className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
                                 style={{
-                                  background: isAlert ? 'rgba(220,38,38,0.15)' : score >= 80 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
-                                  color: isAlert ? '#ef4444' : score >= 80 ? '#22c55e' : '#eab308'
+                                  background: !hasScore ? 'rgba(148,163,184,0.12)' : isAlert ? 'rgba(220,38,38,0.15)' : score >= 80 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
+                                  color: !hasScore ? '#94a3b8' : isAlert ? '#ef4444' : score >= 80 ? '#22c55e' : '#eab308'
                                 }}
                               >
-                                {score}
+                                {hasScore ? score : '—'}
                               </div>
 
                               {/* Info */}
