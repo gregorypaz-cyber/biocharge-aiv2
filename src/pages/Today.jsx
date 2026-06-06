@@ -1348,6 +1348,19 @@ function ExecutionCard() {
               </TooltipContent>
             </Tooltip>
           </div>
+
+          {/* alvo do dia (herói da decisão) */}
+          <div className="mt-3 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+            {isRestMode ? (
+              <span className="text-muted-foreground">🎯 Hoje priorize <span className="font-bold text-primary">recuperação</span></span>
+            ) : (
+              <>
+                <span className="text-muted-foreground">🎯 Hoje mire</span>
+                <span className="font-mono font-bold text-primary">strain ~{strainTarget}</span>
+                <span className="text-muted-foreground">/21</span>
+              </>
+            )}
+          </div>
         </div>
 
         {(biochargeTrend || hrvTrend || enrichedCheckin?.sleep_performance_pct != null) && (
