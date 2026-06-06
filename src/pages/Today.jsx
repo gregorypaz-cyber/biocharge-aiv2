@@ -609,7 +609,7 @@ const hrvTrend = useMemo(() => {
   'Baixa';
 
   const strainTarget =
-    prescriptionScore >= 80 ? 16 :
+    prescriptionScore >= personalHigh ? 16 :
     prescriptionScore >= 65 ? 13 :
     prescriptionScore >= 50 ? 10 :
     7;
