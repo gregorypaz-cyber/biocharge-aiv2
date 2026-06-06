@@ -866,7 +866,8 @@ function buildTrainingLoadLabel(masterSignal) {
 }
 
 export function normalizeDailySignals(checkinLike, recentCheckins = []) {
-  const masterSignal = getDailyMasterSignal(checkinLike);
+  const recoveryHighThreshold = getPersonalHighRecovery(recentCheckins);
+  const masterSignal = getDailyMasterSignal(checkinLike, recoveryHighThreshold);
 
   const zone =
     masterSignal === 'train_high' ? 'green' :
