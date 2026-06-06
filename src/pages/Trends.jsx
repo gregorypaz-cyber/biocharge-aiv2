@@ -1085,7 +1085,7 @@ export default function Trends() {
   const metricConfig = metrics.find(m => m.key === selectedMetric);
 
   // Performance metrics exclude rest days
-  const performanceMetrics = ['recovery_score', 'readiness_score', 'fatigue_score', 'stress_score', 'rpe', 'biocharge_morning'];
+  const performanceMetrics = ['recovery_score', 'fatigue_score', 'stress_score', 'rpe', 'biocharge_morning'];
   const avg = (arr, key) => {
     const filtered = performanceMetrics.includes(key) ? arr.filter(c => !c.rest_day) : arr;
     const vals = filtered.filter(c => c[key] != null).map(c => c[key]);
