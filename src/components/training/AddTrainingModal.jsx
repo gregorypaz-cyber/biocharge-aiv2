@@ -464,6 +464,9 @@ export default function AddTrainingModal({
                   onChange={(e) => set('perceived_effort', e.target.value)}
                   className="bg-secondary border-border"
                 />
+                <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
+                  Teste da fala — <strong>1-2</strong>: quase parado · <strong>3-4</strong>: converso em frases inteiras · <strong>5-6</strong>: só frases curtas · <strong>7-8</strong>: só palavras soltas · <strong>9-10</strong>: não consigo falar. Em corrida, o Efeito do Treino do Zepp é mais preciso.
+                </p>
               </div>
 
               {/* HR */}
