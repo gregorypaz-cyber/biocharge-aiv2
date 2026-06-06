@@ -853,6 +853,44 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
   );
 }
 
+function RunningEconomyCard({ sessions = [] }) {
+  const eco = useMemo(() => calculateRunningEconomy(sessions), [sessions]);
+  if (!eco) return null;
+  const positive = eco.isImproving;
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5">
+          <Gauge className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight">Economia de corrida</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+              Eficiência: frequência cardíaca para a mesma velocidade
+            </p>
+          </div>
+        </div>
+        <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0', positive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-orange-500/15 text-orange-400')}>
+          {positive ? 'Melhorando' : 'Atenção'}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {positive ? <TrendingUp className="w-5 h-5 text-emerald-400" /> : <TrendingDown className="w-5 h-5 text-orange-400" />}
+        <span className={cn('text-2xl font-mono font-bold', positive ? 'text-emerald-400' : 'text-orange-400')}>
+          {Math.abs(eco.improvement)}%
+        </span>
+        <span className="text-xs text-muted-foreground">{positive ? 'mais eficiente' : 'menos eficiente'}</span>
+      </div>
+
+      <p className="text-[13px] text-foreground/80 leading-relaxed">{eco.discovery.text}</p>
+
+      <p className="text-[10px] text-muted-foreground">
+        Baseado em {eco.sessionsAnalyzed} corridas com pace · confiança {eco.discovery.confidence}
+      </p>
+    </motion.div>
+  );
+}
+
 function WeeklyRunningVolumeCard({ sessions = [] }) {
   function weekStartMonday(d) {
     const date = new Date(d);
