@@ -38,7 +38,7 @@ function WeekLabel({ weekStart }) {
 }
 
 function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
-  const score = checkin.recovery_score || checkin.morning_recovery_score || 0;
+  const score = getDayScore(checkin) ?? 0;
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
