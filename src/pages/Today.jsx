@@ -598,8 +598,7 @@ const hrvTrend = useMemo(() => {
     }
   };
 
-  const displayedScore =
-    checkin?.readiness_score ?? checkin?.recovery_score ?? checkin?.morning_recovery_score ?? 0;
+  const displayedScore = getDayScore(checkin) ?? 0;
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
   const readinessFaixa =
