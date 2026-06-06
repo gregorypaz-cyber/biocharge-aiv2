@@ -1263,7 +1263,7 @@ function ExecutionCard() {
           {(() => {
             const scoreColor = isRestMode
               ? 'hsl(215,30%,55%)'
-              : displayedScore >= 82
+              : displayedScore >= personalHigh
               ? 'hsl(142,70%,50%)'
               : displayedScore >= 65
               ? 'hsl(45,93%,58%)'
