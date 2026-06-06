@@ -674,20 +674,7 @@ if (isPostMode) {
         />
       </CheckinStep>
 
-      {/* BioCharge pós-treino */}
-      <CheckinStep title="BioCharge pós-treino" emoji="⚡" delay={0.15}>
-        <SliderField
-          label="Como você ficou após o treino?"
-          hint="Opcional · deixe em 0 se não quiser informar"
-          value={postForm.biocharge_post_workout}
-          onChange={(value) => updatePost('biocharge_post_workout', value)}
-          min={0}
-          max={100}
-          lowLabel="Baixo"
-          midLabel="Médio"
-          highLabel="Alto"
-        />
-      </CheckinStep>
+    
 
       {/* Notes */}
       <CheckinStep title="Observação pós-treino" emoji="📝" delay={0.2}>
