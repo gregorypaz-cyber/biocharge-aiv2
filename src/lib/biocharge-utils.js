@@ -654,13 +654,12 @@ function getDailyMasterSignal(checkinLike, recoveryHighThreshold = 80) {
     return 'recover';
   }
 
-  // Para parecer mais WHOOP-like, "treino forte" exige apoio fisiológico real
+  // "Treino forte" libera quando o recovery está na SUA faixa-alta pessoal (p80),
+  // com fisiologia real e leitura confiável. Dias genuinamente ruins já foram
+  // barrados pelo bloco de red-flags acima — não exigimos "dia perfeito".
   if (
-    recovery >= 82 &&
-    readiness >= 80 &&
-    fatigue <= 22 &&
-    sleep >= 72 &&
-    soreness <= 1 &&
+    recovery >= recoveryHighThreshold &&
+    readiness >= recoveryHighThreshold &&
     strongPhysiology &&
     confidence !== 'low'
   ) {
