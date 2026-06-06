@@ -1051,7 +1051,7 @@ function renderCard(desc) {
         );
 
       case 'sleep_forecast':
-        return <SleepForecastCard key="sleep_forecast" checkin={enrichedCheckin} />;
+        return <SleepForecastCard key="sleep_forecast" checkin={enrichedCheckin} sleepDebt={analysis?.sleepDebt?.debt ?? 0} />;
 
       case 'training_sessions':
         return (
