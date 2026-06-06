@@ -419,7 +419,7 @@ export default function Today() {
         current_body_state: checkin.current_body_state || liveBodyState,
         remaining_capacity: checkin.remaining_capacity || liveCapacity,
         recovery_demand: checkin.recovery_demand ?? liveRecoveryDemand,
-        sleep_need_tonight: checkin.sleep_need_tonight ?? liveSleepNeed,
+        sleep_need_tonight: liveSleepNeed ?? checkin.sleep_need_tonight,
       }
     : null;
 
