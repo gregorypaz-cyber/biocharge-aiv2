@@ -829,6 +829,7 @@ export function detectPersonalBottleneck(checkins) {
     if (r == null) continue;
 
     if (Math.abs(r) < BOTTLENECK_MIN_CORRELATION) continue; // efeito fraco demais
+    if (_corrPValue(r, xs.length) > CORRELATION_MAX_P) continue; // não significativo p/ esse n
 
     ranked.push({
       key: c.key,
