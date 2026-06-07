@@ -1582,7 +1582,7 @@ function _linearTrend(values) {
     slope,
     r: Math.round(r * 100) / 100,
     totalChange: Math.round(slope * (n - 1) * 10) / 10,
-    hasTrend: Math.abs(r) >= TREND_MIN_R,
+    hasTrend: Math.abs(r) >= TREND_MIN_R && _corrPValue(r, n) <= CORRELATION_MAX_P,
     direction: slope >= 0 ? 'up' : 'down',
   };
 }
