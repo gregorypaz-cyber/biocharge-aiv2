@@ -363,54 +363,49 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
 }
 
 export function calculateSleepScore(checkin) {
-  const base = clamp(checkin.sleep_score ?? 0);
+  // SONO v2 — reconstruído a partir de sinais CRUS e portáveis. Removido o score
+  // proprietário do Zepp (que duplicava duração/fases — multicolinearidade — e
+  // quebrava a portabilidade; o próprio Zepp diz que é "apenas referência").
+  // Pesos pela ciência: duração + regularidade + continuidade são os sinais mais
+  // confiáveis; profundo/REM entram com peso baixo (wearables erram nas fases).
+  // Renormaliza pelo peso presente — componente ausente não penaliza.
+  const hours = getSleepHoursScore(checkin.sleep_hours);
   const deep = normalizeDeepSleep(checkin.deep_sleep_pct);
   const rem = normalizeRemSleep(checkin.rem_sleep_pct);
-  const hours = getSleepHoursScore(checkin.sleep_hours);
+
+  // Continuidade a partir dos despertares (Zepp: "saltos")
+  let continuity = null;
+  const aw = checkin.sleep_awakenings;
+  if (aw != null && !Number.isNaN(Number(aw))) {
+    const n = Number(aw);
+    continuity = n <= 1 ? 92 : n === 2 ? 80 : n === 3 ? 65 : n === 4 ? 50 : 38;
+  }
+
+  // Regularidade (Sleep Regularity Index do Zepp, 0–100) — sinal forte e portável.
+  let regularity = null;
+  const reg = checkin.sleep_regularity_pct;
+  if (reg != null && !Number.isNaN(Number(reg))) {
+    regularity = clamp(Number(reg));
+  }
 
   const weighted = [
-    { value: base, weight: 0.55 },
-    { value: hours, weight: 0.20 },
-    { value: deep, weight: 0.15 },
-    { value: rem, weight: 0.10 },
+    { value: hours, weight: 0.46 },       // duração — sinal mais forte
+    { value: regularity, weight: 0.28 },  // regularidade — forte preditor
+    { value: continuity, weight: 0.18 },  // continuidade (despertares)
+    { value: deep, weight: 0.06 },        // profundo — peso baixo (pouco confiável)
+    { value: rem, weight: 0.02 },         // REM — peso baixo (pouco confiável)
   ];
 
   let total = 0;
   let weightSum = 0;
-
   for (const item of weighted) {
     if (item.value != null) {
       total += item.value * item.weight;
       weightSum += item.weight;
     }
   }
-
   if (weightSum <= 0) return 0;
-
-  let score = total / weightSum;
-
-  // Moduladores leves estilo Oura: continuidade (despertares) e regularidade
-  // ajustam o score só quando você os preenche, e crescem com o desvio do normal.
-  // Quando ausentes, ajuste = 0 (não penaliza).
-  const aw = checkin.sleep_awakenings;
-  if (aw != null && !Number.isNaN(Number(aw))) {
-    const n = Number(aw);
-    if (n <= 1) score += 4;        // sono contínuo
-    else if (n === 2) score += 1;
-    else if (n === 3) score -= 1;
-    else score -= 5;               // fragmentado (>=4)
-  }
-
-  const reg = checkin.sleep_regularity_pct;
-  if (reg != null && !Number.isNaN(Number(reg))) {
-    const r = Number(reg);
-    if (r >= 85) score += 4;       // muito regular
-    else if (r >= 75) score += 1;
-    else if (r >= 60) score -= 1;
-    else score -= 4;               // irregular
-  }
-
-  return clamp(Math.round(score));
+  return clamp(Math.round(total / weightSum));
 }
 
 // "Performance do sono" exibida ao usuário usa EXATAMENTE a mesma fonte de
