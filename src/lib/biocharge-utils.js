@@ -192,19 +192,23 @@ function normalizeRhr(rhr, recentCheckins = []) {
 }
 
 function getSleepHoursScore(hours) {
+  // Curva centrada na META REALISTA do usuário (~7.5h): acorda 6h em dia útil
+  // e deita 22:30-23h, então ~7-7.5h é o ótimo ALCANÇÁVEL. Não faz sentido só
+  // dar nota cheia a partir de 8.5h (inalcançável na rotina dele). Se a rotina
+  // mudar (ex.: férias), ajuste os limiares.
   const h = Number(hours ?? 0);
   if (!h || h <= 0) return null;
 
-  if (h < 5.5) return 20;
-  if (h < 6.0) return 35;
-  if (h < 6.5) return 48;
-  if (h < 7.0) return 60;
-  if (h < 7.5) return 72;
-  if (h < 8.0) return 82;
-  if (h < 8.5) return 88;
-  return 92;
+  if (h >= 7.75) return 92;
+  if (h >= 7.5) return 90;
+  if (h >= 7.25) return 86;
+  if (h >= 7.0) return 80;
+  if (h >= 6.75) return 72;
+  if (h >= 6.5) return 65;
+  if (h >= 6.0) return 52;
+  if (h >= 5.5) return 40;
+  return 28;
 }
-
 function getPreviewConfidence(checkin, recentCheckins = []) {
   const hrvValue = resolveHrvValue(checkin);
 const rhrValue = resolveCheckinField(checkin, 'resting_hr');
