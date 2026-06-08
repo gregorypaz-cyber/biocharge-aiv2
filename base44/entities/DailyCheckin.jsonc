@@ -36,6 +36,10 @@
       "type": "number",
       "description": "Deep sleep percentage (0-100)"
     },
+    "rem_sleep_pct": {
+      "type": "number",
+      "description": "REM sleep percentage (0-100) from Zepp"
+    },
     "sleep_awakenings": {
       "type": "number",
       "description": "Number of times woken during the night (from Zepp). Higher = more fragmented sleep."
