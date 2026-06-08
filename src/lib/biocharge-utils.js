@@ -939,7 +939,9 @@ export function calcSleepNeedTonight(recoveryScore, strainAccumulated, recentChe
     if (sleepDeficit > 3) base += 0.5;
   }
 
-  return Math.min(10, Math.round(base * 2) / 2);
+  // Teto realista: a rotina (acordar 6h) limita ~7.5-8h. Nunca sugerir meta
+  // inalcançável (9-10h) — vira frustração, não ação.
+  return Math.min(8, Math.round(base * 2) / 2);
 }
 
 export function calcNextDayForecast(checkinLike, recentCheckins = []) {
