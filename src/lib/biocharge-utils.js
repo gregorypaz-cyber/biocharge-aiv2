@@ -367,12 +367,11 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
 }
 
 export function calculateSleepScore(checkin) {
-  // SONO v2 — reconstruído a partir de sinais CRUS e portáveis. Removido o score
-  // proprietário do Zepp (que duplicava duração/fases — multicolinearidade — e
-  // quebrava a portabilidade; o próprio Zepp diz que é "apenas referência").
-  // Pesos pela ciência: duração + regularidade + continuidade são os sinais mais
-  // confiáveis; profundo/REM entram com peso baixo (wearables erram nas fases).
-  // Renormaliza pelo peso presente — componente ausente não penaliza.
+  // SONO v2 — sinais CRUS e portáveis, SEM o score proprietário do Zepp (que
+  // duplicava duração/fases — multicolinearidade — e quebrava a portabilidade;
+  // o próprio Zepp diz que é "apenas referência"). Pesos pela ciência: duração
+  // + regularidade + continuidade são os mais confiáveis; profundo/REM entram
+  // com peso baixo (wearables erram nas fases). Renormaliza pelo peso presente.
   const hours = getSleepHoursScore(checkin.sleep_hours);
   const deep = normalizeDeepSleep(checkin.deep_sleep_pct);
   const rem = normalizeRemSleep(checkin.rem_sleep_pct);
@@ -393,11 +392,11 @@ export function calculateSleepScore(checkin) {
   }
 
   const weighted = [
-    { value: hours, weight: 0.46 },       // duração — sinal mais forte
-    { value: regularity, weight: 0.28 },  // regularidade — forte preditor
-    { value: continuity, weight: 0.18 },  // continuidade (despertares)
-    { value: deep, weight: 0.06 },        // profundo — peso baixo (pouco confiável)
-    { value: rem, weight: 0.02 },         // REM — peso baixo (pouco confiável)
+    { value: hours, weight: 0.42 },       // duração (vs sua meta realista)
+    { value: regularity, weight: 0.25 },  // regularidade — forte preditor
+    { value: continuity, weight: 0.15 },  // continuidade (despertares)
+    { value: deep, weight: 0.10 },        // profundo — peso baixo (pouco confiável)
+    { value: rem, weight: 0.08 },         // REM — peso baixo; só conta quando salvo
   ];
 
   let total = 0;
