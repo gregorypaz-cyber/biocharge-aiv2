@@ -126,6 +126,7 @@ const DEFAULT_FORM = {
   sleep_hours: 7,
   sleep_start_time: null,
   dinner_time: null,
+  generate_ai: false,
   resting_hr: null,
   hrv: null,
   hrv_manual: null,
