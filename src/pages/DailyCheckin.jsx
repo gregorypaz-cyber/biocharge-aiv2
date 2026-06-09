@@ -962,6 +962,21 @@ if (isPostMode) {
                 </p>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground">
+                  Hora do jantar (opcional)
+                </label>
+                <Input
+                  type="time"
+                  value={form.dinner_time || ''}
+                  onChange={(e) => update('dinner_time', e.target.value || null)}
+                  className="bg-secondary border-border/40 font-mono w-36"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Última refeição — contexto p/ analisar despertares (não entra no score)
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">
