@@ -1181,6 +1181,24 @@ Regras:
   </p>
 </div>
 
+      {/* Sinais de hoje — leitura rápida do que os dados recentes dizem */}
+      {smartMessages.length > 0 && (
+        <div className="rounded-2xl border border-border/50 bg-card p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <p className="text-sm font-semibold">Sinais de hoje</p>
+          </div>
+          <ul className="space-y-2">
+            {smartMessages.map((m, i) => (
+              <li key={i} className="flex items-start gap-2 text-[13px] text-muted-foreground leading-relaxed">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+                <span>{m}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Loading */}
       {analysisLoading && (
         <div className="rounded-2xl border border-border/50 bg-card p-5 flex items-center gap-3">
