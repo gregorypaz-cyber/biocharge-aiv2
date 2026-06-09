@@ -327,7 +327,7 @@ const saveMorningMutation = useMutation({
     // Evita queimar crédito de IA: só gera em registro novo do dia, OU num re-save
     // de hoje que ainda não tem análise (recupera de uma 1ª tentativa que falhou).
     const jaTemDeepAnalysis = !!(editData?.deep_analysis_text || todayRecord?.deep_analysis_text);
-    if (!editData?.id && !jaTemDeepAnalysis) {
+    if (!editData?.id && !jaTemDeepAnalysis && data.generate_ai) {
       const summary = [scores, ...recentCheckins.slice(0, 13)].map((c) => ({
         date: c.date,
         recovery: c.recovery_score,
