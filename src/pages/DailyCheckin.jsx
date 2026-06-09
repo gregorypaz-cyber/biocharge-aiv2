@@ -125,6 +125,7 @@ const DEFAULT_FORM = {
   muscle_soreness: 1,
   sleep_hours: 7,
   sleep_start_time: null,
+  dinner_time: null,
   resting_hr: null,
   hrv: null,
   hrv_manual: null,
