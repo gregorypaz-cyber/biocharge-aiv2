@@ -882,6 +882,11 @@ export default function Insights() {
     return checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), trainingSessions));
   }, [checkins, trainingSessions]);
 
+  const smartMessages = useMemo(() => {
+    if (!computed || computed.length === 0) return [];
+    return getSmartMessage(computed[0], computed.slice(1));
+  }, [computed]);
+
   const sleepConsistency = useMemo(() => {
     return calculateSleepConsistency(checkins);
   }, [checkins]);
