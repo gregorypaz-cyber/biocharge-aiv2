@@ -48,6 +48,14 @@
       "type": "number",
       "description": "Sleep regularity percentage 0-100 (from Zepp). Higher = more consistent sleep/wake timing."
     },
+    "sleep_start_time": {
+      "type": "string",
+      "description": "Bedtime / sleep onset as HH:MM (from Zepp). Context only \u2014 not used in the sleep score."
+    },
+    "dinner_time": {
+      "type": "string",
+      "description": "Dinner time as HH:MM. Context only \u2014 used to compute dinner-to-bed interval for later correlation analysis."
+    },
     "sleep_heart_rate": {
       "type": "number",
       "description": "Average heart rate during sleep in bpm (from Zepp). Rising trend can signal stress/overload."
