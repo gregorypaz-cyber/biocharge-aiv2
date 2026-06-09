@@ -56,6 +56,22 @@
     "evidence_snapshot": {
       "type": "string",
       "description": "JSON snapshot of physiological evidence at selection time"
+    },
+    "commitment_slot": {
+      "type": "string",
+      "description": "Time slot the user committed to train (validated against allowed slots)"
+    },
+    "commitment_status": {
+      "type": "string",
+      "description": "Commitment state: committed | completed | cancelled"
+    },
+    "committed_at": {
+      "type": "string",
+      "description": "ISO timestamp when the user committed to the workout"
+    },
+    "completed_at": {
+      "type": "string",
+      "description": "ISO timestamp when the workout was marked completed"
     }
   },
   "required": [
