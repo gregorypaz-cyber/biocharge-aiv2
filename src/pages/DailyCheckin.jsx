@@ -301,8 +301,9 @@ const saveMorningMutation = useMutation({
     // ✅ IA só entra como suporte secundário, não como voz principal do dia
     try {
       const acwr = payload.acwr ?? null;
+      const jaTemBullets = !!(editData?.contextual_bullets || todayRecord?.contextual_bullets);
       const aiBullets =
-        !payload.rest_day
+        (!payload.rest_day && data.generate_ai && !editData?.id && !jaTemBullets)
           ? await generateContextualBulletsAI(payload, scores, recentCheckins, sortedSessions, acwr)
           : null;
 
