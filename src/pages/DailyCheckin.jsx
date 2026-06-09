@@ -1159,6 +1159,25 @@ if (isPostMode) {
           </>
         )}
 
+        {/* Análise de IA — opcional, só dispara quando você liga (protege crédito) */}
+        {!savedCheckin && !isRestDay && (
+          <button
+            type="button"
+            onClick={() => update('generate_ai', !form.generate_ai)}
+            className={`w-full flex items-center justify-between rounded-2xl border p-3.5 text-left transition-all ${form.generate_ai ? 'border-primary/40 bg-primary/5' : 'border-border/40 bg-secondary'}`}
+          >
+            <div>
+              <p className="text-sm font-semibold">Gerar análise de IA hoje</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Texto profundo + bullets da Today. Usa crédito de integração — ligue só quando quiser.
+              </p>
+            </div>
+            <span className={`ml-3 shrink-0 w-11 h-6 rounded-full transition-all relative ${form.generate_ai ? 'bg-primary' : 'bg-border'}`}>
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${form.generate_ai ? 'left-[22px]' : 'left-0.5'}`} />
+            </span>
+          </button>
+        )}
+
         {/* Salvar — botão principal único, no fim da página */}
         {!savedCheckin && (
           <div className="space-y-2 pt-1">
