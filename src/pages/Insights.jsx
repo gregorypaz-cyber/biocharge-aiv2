@@ -18,7 +18,7 @@ import {
   Target,
   Minus,
 } from 'lucide-react';
-import { computeCheckinScores } from '@/lib/biocharge-utils';
+import { computeCheckinScores, getSmartMessage } from '@/lib/biocharge-utils';
 import {
   runPhysiologicalAnalysisAsync,
   calculateSleepConsistency,
