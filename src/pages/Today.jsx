@@ -200,6 +200,49 @@ function TomorrowHookCard({ hook }) {
 }
 
 
+function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104 }) {
+  const stroke = 8;
+  const R = (size - stroke) / 2 - 2;
+  const c = size / 2;
+  const C = 2 * Math.PI * R;
+  const hasValue = value != null && !Number.isNaN(value);
+  const pct = max > 0 && hasValue ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+  const offset = C - (pct / 100) * C;
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+          <circle cx={c} cy={c} r={R} fill="none" stroke="hsl(215,25%,18%)" strokeWidth={stroke} />
+          {hasValue && (
+            <motion.circle
+              cx={c} cy={c} r={R} fill="none" stroke={color} strokeWidth={stroke}
+              strokeLinecap="round" strokeDasharray={C}
+              initial={{ strokeDashoffset: C }}
+              animate={{ strokeDashoffset: offset }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              style={{ filter: `drop-shadow(0 0 5px ${color}55)` }}
+            />
+          )}
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span
+            className="text-2xl font-black font-mono leading-none"
+            style={{ color: hasValue ? color : 'hsl(215,15%,55%)' }}
+          >
+            {hasValue ? (displayValue != null ? displayValue : value) : '—'}
+          </span>
+        </div>
+      </div>
+      <p className="text-[11px] font-bold uppercase tracking-wider text-foreground mt-2">{label}</p>
+      {caption && (
+        <p className={cn('text-[10px] mt-0.5 text-center leading-tight', captionColor || 'text-muted-foreground')}>
+          {caption}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function getDailyVerdict({
   checkin,
   analysis,
@@ -706,29 +749,29 @@ const BODY_STATE_META = {
 };
 
 const AUTONOMIC_PT = {
-    parasympathetic: 'Parassimpático',
+    parasympathetic: 'Modo recuperação',
     balanced: 'Equilibrado',
-    sympathetic: 'Simpático',
+    sympathetic: 'Modo alerta',
   };
 
   const AUTONOMIC_META = {
     parasympathetic: {
       emoji: '🟢',
       tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-      short: 'Sistema em recuperação',
-      detail: 'Parassimpático dominante — boa recuperação',
+      short: 'Seu corpo está descansando e se recuperando bem.',
+      detail: 'Sistema nervoso em predomínio de recuperação (parassimpático). Quanto menor o índice Baevsky, mais relaxado o corpo está.',
     },
     balanced: {
       emoji: '🟡',
       tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
-      short: 'Sistema estável',
-      detail: 'Equilíbrio autonômico',
+      short: 'Sistema estável — nem muito alerta, nem totalmente relaxado.',
+      detail: 'Equilíbrio entre ativação e recuperação do sistema nervoso.',
     },
     sympathetic: {
       emoji: '🔴',
       tone: 'bg-red-500/10 border-red-500/20 text-red-300',
-      short: 'Stress fisiológico elevado',
-      detail: 'Simpático dominante — carga / stress alto',
+      short: 'Seu corpo está sob tensão/estresse e não relaxou totalmente.',
+      detail: 'Sistema nervoso em predomínio de alerta (simpático) — carga ou estresse elevados. Índice Baevsky mais alto = mais ativação.',
     },
   };
 
@@ -1225,6 +1268,48 @@ function CollapsibleHint({ children, label = 'Entender' }) {
 
 function ExecutionCard() {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
+
+  const recoveryColor = isRestMode
+    ? 'hsl(215,30%,55%)'
+    : displayedScore >= personalHigh
+    ? 'hsl(142,70%,50%)'
+    : displayedScore >= 65
+    ? 'hsl(45,93%,58%)'
+    : 'hsl(0,72%,55%)';
+  const recoveryCaptionColor =
+    displayedScore >= personalHigh ? 'text-emerald-400'
+    : displayedScore >= 65 ? 'text-yellow-400'
+    : 'text-red-400';
+
+  const sleepVal = enrichedCheckin?.sleep_score ?? enrichedCheckin?.sleep_quality ?? null;
+  const sleepColor =
+    sleepVal == null ? 'hsl(215,30%,55%)'
+    : sleepVal >= 80 ? 'hsl(142,65%,50%)'
+    : sleepVal >= 65 ? 'hsl(199,89%,60%)'
+    : 'hsl(45,93%,58%)';
+  const sleepWord =
+    sleepVal == null ? 'Sem dado'
+    : sleepVal >= 80 ? 'Ótimo'
+    : sleepVal >= 65 ? 'Bom'
+    : sleepVal >= 50 ? 'Regular'
+    : 'Baixo';
+  const sleepCaptionColor =
+    sleepVal == null ? 'text-muted-foreground'
+    : sleepVal >= 80 ? 'text-emerald-400'
+    : sleepVal >= 65 ? 'text-sky-400'
+    : 'text-yellow-400';
+
+  const strainColor =
+    cappedStrain <= 0 ? 'hsl(215,20%,45%)'
+    : strainVsTarget.label === 'Acima do alvo' ? 'hsl(25,95%,58%)'
+    : strainVsTarget.label === 'No alvo' ? 'hsl(142,70%,50%)'
+    : 'hsl(199,89%,60%)';
+  const strainCaption = isRestMode
+    ? 'foco recuperar'
+    : cappedStrain <= 0
+    ? `alvo ${strainTarget}`
+    : `${strainVsTarget.label} · alvo ${strainTarget}`;
+
   return (
     <motion.div
       key={phase + '-card'}
@@ -1232,7 +1317,8 @@ function ExecutionCard() {
       animate={{ opacity: 1, y: 0 }}
       className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
     >
-      <div className="space-y-3">
+      <div className="space-y-4">
+        {/* Decisão de hoje */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -1249,166 +1335,86 @@ function ExecutionCard() {
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
               displayedScore >= 82
-  ? 'bg-emerald-500/15 text-emerald-400'
-  : displayedScore >= 65
-  ? 'bg-yellow-500/15 text-yellow-400'
-  : 'bg-red-500/15 text-red-400'
+                ? 'bg-emerald-500/15 text-emerald-400'
+                : displayedScore >= 65
+                ? 'bg-yellow-500/15 text-yellow-400'
+                : 'bg-red-500/15 text-red-400'
             }`}
           >
             {readinessFaixa}
           </span>
         </div>
 
-        {/* HERÓI VISUAL — anel de score centralizado */}
-        <div className="flex flex-col items-center pt-2 pb-1">
-          {(() => {
-            const scoreColor = isRestMode
-              ? 'hsl(215,30%,55%)'
-              : displayedScore >= personalHigh
-              ? 'hsl(142,70%,50%)'
-              : displayedScore >= 65
-              ? 'hsl(45,93%,58%)'
-              : 'hsl(0,72%,55%)';
-            const R = 78;
-            const C = 2 * Math.PI * R;
-            const pct = Math.max(0, Math.min(100, displayedScore));
-            const offset = C - (pct / 100) * C;
-            return (
-              <div className="relative" style={{ width: 188, height: 188 }}>
-                <svg width="188" height="188" viewBox="0 0 188 188" className="-rotate-90">
-                  {/* trilho */}
-                  <circle
-                    cx="94" cy="94" r={R}
-                    fill="none"
-                    stroke="hsl(215,25%,18%)"
-                    strokeWidth="10"
-                  />
-                  {/* progresso */}
-                  <motion.circle
-                    cx="94" cy="94" r={R}
-                    fill="none"
-                    stroke={scoreColor}
-                    strokeWidth="10"
-                    strokeLinecap="round"
-                    strokeDasharray={C}
-                    initial={{ strokeDashoffset: C }}
-                    animate={{ strokeDashoffset: offset }}
-                    transition={{ duration: 1.1, ease: 'easeOut' }}
-                    style={{ filter: `drop-shadow(0 0 6px ${scoreColor}55)` }}
-                  />
-                </svg>
-                {/* número central */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="text-6xl font-black font-mono leading-none tracking-tight"
-                    style={{ color: scoreColor }}
-                  >
-                    {displayedScore}
-                  </motion.span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] mt-1.5">
-                    Score do dia
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* satélites: faixa + recovery base */}
-          <div className="flex items-center gap-2 mt-3">
-            <span
-              className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                displayedScore >= 82
-                  ? 'bg-emerald-500/15 text-emerald-400'
-                  : displayedScore >= 65
-                  ? 'bg-yellow-500/15 text-yellow-400'
-                  : 'bg-red-500/15 text-red-400'
-              }`}
-            >
-              {readinessFaixa}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Recovery base{' '}
-              <span className="font-mono font-bold text-foreground">
-                {checkin?.morning_recovery_score ?? checkin?.recovery_score ?? '—'}
-              </span>
-            </span>
-            <button
-              type="button"
-              aria-label="Sobre Prontidão"
-              aria-expanded={showProntidaoHint}
-              onClick={() => setShowProntidaoHint((v) => !v)}
-              className="text-muted-foreground"
-            >
-              <Info className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <AnimatePresence initial={false}>
-            {showProntidaoHint && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
-              >
-                <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">
-                  Prontidão é a leitura que orienta a decisão de treino de hoje.
-                </p>
-                <p className="text-[10px] leading-relaxed text-muted-foreground pt-1">
-                  Combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* alvo do dia (herói da decisão) */}
-          <div className="mt-3 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-            {isRestMode ? (
-              <span className="text-muted-foreground">🎯 Hoje priorize <span className="font-bold text-primary">recuperação</span></span>
-            ) : (
-              <>
-                <span className="text-muted-foreground">🎯 Hoje mire</span>
-                <span className="font-mono font-bold text-primary">strain ~{strainTarget}</span>
-                <span className="text-muted-foreground">/21</span>
-              </>
-            )}
-          </div>
+        {/* TRIO DE ANÉIS — Recovery / Sono / Strain */}
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <MiniRing
+            value={displayedScore}
+            max={100}
+            color={recoveryColor}
+            label="Recovery"
+            caption={readinessFaixa}
+            captionColor={recoveryCaptionColor}
+          />
+          <MiniRing
+            value={sleepVal}
+            max={100}
+            color={sleepColor}
+            label="Sono"
+            caption={sleepWord}
+            captionColor={sleepCaptionColor}
+          />
+          <MiniRing
+            value={cappedStrain}
+            displayValue={cappedStrain}
+            max={21}
+            color={strainColor}
+            label="Strain"
+            caption={strainCaption}
+            captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
+          />
         </div>
 
-        {(biochargeTrend || hrvTrend || enrichedCheckin?.sleep_performance_pct != null) && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-            {biochargeTrend && (
-              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary/60 ${biochargeTrend.color}`}>
-                {biochargeTrend.text}
-              </span>
-            )}
-
-            {hrvTrend && (
-              <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary/60 ${hrvTrend.color}`}>
-                {hrvTrend.text}
-              </span>
-            )}
-
-            {enrichedCheckin?.sleep_performance_pct != null && (
-              <span
-                className={cn(
-                  'text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary/60',
-                  enrichedCheckin.sleep_performance_pct >= 85
-                    ? 'text-emerald-400'
-                    : enrichedCheckin.sleep_performance_pct >= 70
-                    ? 'text-yellow-400'
-                    : 'text-red-400'
-                )}
-              >
-                Sono {enrichedCheckin.sleep_performance_pct}%
-              </span>
-            )}
-          </div>
-        )}
+        {/* Entender os anéis (toque — funciona no iPhone) */}
+        <div className="flex justify-center -mt-1">
+          <button
+            type="button"
+            aria-expanded={showProntidaoHint}
+            onClick={() => setShowProntidaoHint((v) => !v)}
+            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Info className="w-3 h-3" />
+            Entender os anéis
+            <motion.span animate={{ rotate: showProntidaoHint ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown className="w-3 h-3" />
+            </motion.span>
+          </button>
+        </div>
+        <AnimatePresence initial={false}>
+          {showProntidaoHint && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
+                <p className="text-[11px] leading-relaxed">
+                  <span className="font-semibold text-foreground">Recovery</span>{' '}
+                  <span className="text-muted-foreground">— sua prontidão do dia (recovery, sono, fadiga e sinais fisiológicos). É o que orienta a decisão de treino.</span>
+                </p>
+                <p className="text-[11px] leading-relaxed">
+                  <span className="font-semibold text-foreground">Sono</span>{' '}
+                  <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, profundo e REM).</span>
+                </p>
+                <p className="text-[11px] leading-relaxed">
+                  <span className="font-semibold text-foreground">Strain</span>{' '}
+                  <span className="text-muted-foreground">— esforço acumulado hoje (0–21), comparado ao alvo que sua recuperação sugere.</span>
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {heroDynamicContext ? (
           <div
@@ -1460,7 +1466,7 @@ function ExecutionCard() {
             );
           })()}
 
-{enrichedCheckin.current_body_state &&
+        {enrichedCheckin.current_body_state &&
           BODY_STATE_PT[enrichedCheckin.current_body_state] && (() => {
             const stateKey = enrichedCheckin.current_body_state;
             const meta = BODY_STATE_META[stateKey] || BODY_STATE_META.Balanced;
@@ -1501,7 +1507,7 @@ function ExecutionCard() {
             );
           })()}
 
-{enrichedCheckin.autonomic_state &&
+        {enrichedCheckin.autonomic_state &&
           enrichedCheckin.baevsky_si != null &&
           AUTONOMIC_PT[enrichedCheckin.autonomic_state] &&
           (() => {
@@ -1510,126 +1516,33 @@ function ExecutionCard() {
 
             return (
               <div className={cn('rounded-xl border px-3 py-3 space-y-2', autoMeta.tone)}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-                      Estado autonômico
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm leading-none">{autoMeta.emoji}</span>
-                      <p className="text-sm font-semibold">
-                        {AUTONOMIC_PT[autoKey]}
-                      </p>
-                    </div>
-                    <p className="text-[11px] mt-1 opacity-90">
-                      {autoMeta.short}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                    Modo do corpo
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm leading-none">{autoMeta.emoji}</span>
+                    <p className="text-sm font-semibold">
+                      {AUTONOMIC_PT[autoKey]}
                     </p>
                   </div>
-
-                  <div className="text-right shrink-0">
-                    <p className="text-[10px] uppercase tracking-wider opacity-70">
-                      Baevsky
-                    </p>
-                    <p className="text-sm font-bold">
-                      {enrichedCheckin.baevsky_si}
-                    </p>
-                  </div>
+                  <p className="text-[11px] mt-1 opacity-90">
+                    {autoMeta.short}
+                  </p>
                 </div>
 
-                <CollapsibleHint>{autoMeta.detail}</CollapsibleHint>
+                <CollapsibleHint>
+                  {autoMeta.detail} (índice Baevsky: {enrichedCheckin.baevsky_si})
+                </CollapsibleHint>
               </div>
             );
           })()}
-
 
         {capacityContradictionNote && (
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             {capacityContradictionNote}
           </p>
         )}
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-secondary p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Strain · alvo
-          </p>
-          <p className={`text-xl font-mono font-bold ${strainVsTarget.color}`}>
-            ⚡ {cappedStrain}
-            <span className="text-sm text-muted-foreground font-semibold"> / {strainTarget}</span>
-          </p>
-          <div className="mt-1.5 h-1 rounded-full bg-background/60 overflow-hidden">
-            <div
-              className={`h-full rounded-full ${strainVsTarget.barColor}`}
-              style={{ width: `${strainVsTarget.pct}%` }}
-            />
-          </div>
-          <p className={`text-[10px] mt-1 ${strainVsTarget.color}`}>{strainVsTarget.label}</p>
-        </div>
-
-        <div className="rounded-2xl bg-secondary p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            Capacidade restante
-          </p>
-          <p className="text-xl font-bold">
-            {enrichedCheckin.remaining_capacity
-              ? ({
-                  High: 'Alta',
-                  Moderate: 'Moderada',
-                  Low: 'Baixa',
-                  Minimal: 'Mínima',
-                }[enrichedCheckin.remaining_capacity] ?? enrichedCheckin.remaining_capacity)
-              : '—'}
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-secondary p-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-            ACWR
-          </p>
-          {analysis?.trainingLoad?.risk === 'insufficient_data' ||
-          analysis?.trainingLoad?.ratio == null ? (
-            <p className="text-xl font-mono font-bold text-muted-foreground">—</p>
-          ) : (
-            <>
-              <p
-                className={`text-xl font-mono font-bold ${
-                  analysis.trainingLoad.ratio > 1.5
-                    ? 'text-red-400'
-                    : analysis.trainingLoad.ratio > 1.3
-                    ? 'text-yellow-400'
-                    : 'text-emerald-400'
-                }`}
-              >
-                {analysis.trainingLoad.ratio.toFixed(2)}
-              </p>
-              <p
-                className={`text-[10px] mt-0.5 ${
-                  analysis.trainingLoad.lowConfidence
-                    ? 'text-muted-foreground'
-                    : analysis.trainingLoad.ratio > 1.5
-                    ? 'text-red-400'
-                    : analysis.trainingLoad.ratio > 1.3
-                    ? 'text-yellow-400'
-                    : 'text-emerald-400'
-                }`}
-              >
-                {analysis.trainingLoad.lowConfidence
-                  ? 'Base em formação'
-                  : analysis.trainingLoad.ratio > 1.5
-                  ? 'Muito alto'
-                  : analysis.trainingLoad.ratio > 1.3
-                  ? 'Atenção'
-                  : 'Seguro'}
-              </p>
-              {analysis.trainingLoad.lowConfidence && (
-                <p className="text-[9px] text-muted-foreground/70 mt-0.5 leading-tight">
-                  Precisa de ~3 semanas de histórico para estabilizar.
-                </p>
-              )}
-            </>
-          )}
-        </div>
       </div>
 
       {phaseCfg.showCta ? (
