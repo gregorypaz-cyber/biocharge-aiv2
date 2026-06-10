@@ -1224,6 +1224,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
 }
 
 function ExecutionCard() {
+  const [showProntidaoHint, setShowProntidaoHint] = useState(false);
   return (
     <motion.div
       key={phase + '-card'}
@@ -1334,22 +1335,35 @@ function ExecutionCard() {
                 {checkin?.morning_recovery_score ?? checkin?.recovery_score ?? '—'}
               </span>
             </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button aria-label="Sobre Prontidão" className="text-muted-foreground">
-                  <Info className="w-3.5 h-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                Prontidão é a leitura que orienta a decisão de treino de hoje.
-                <div style={{ marginTop: 6 }}>
-                  <small className="text-[10px] text-muted-foreground">
-                    Combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
-                  </small>
-                </div>
-              </TooltipContent>
-            </Tooltip>
+            <button
+              type="button"
+              aria-label="Sobre Prontidão"
+              aria-expanded={showProntidaoHint}
+              onClick={() => setShowProntidaoHint((v) => !v)}
+              className="text-muted-foreground"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
           </div>
+
+          <AnimatePresence initial={false}>
+            {showProntidaoHint && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">
+                  Prontidão é a leitura que orienta a decisão de treino de hoje.
+                </p>
+                <p className="text-[10px] leading-relaxed text-muted-foreground pt-1">
+                  Combina recovery, sono, fadiga e sinais fisiológicos para definir sua margem do dia.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* alvo do dia (herói da decisão) */}
           <div className="mt-3 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
