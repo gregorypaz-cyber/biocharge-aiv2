@@ -200,7 +200,7 @@ function TomorrowHookCard({ hook }) {
 }
 
 
-function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104 }) {
+function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [] }) {
   const stroke = 8;
   const R = (size - stroke) / 2 - 2;
   const c = size / 2;
@@ -226,7 +226,7 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-2xl font-black font-mono leading-none"
+            className="text-3xl font-black font-mono leading-none tracking-tight"
             style={{ color: hasValue ? color : 'hsl(215,15%,55%)' }}
           >
             {hasValue ? (displayValue != null ? displayValue : value) : '—'}
@@ -239,6 +239,19 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
           {caption}
         </p>
       )}
+      {Array.isArray(trend) && trend.filter((v) => v != null).length >= 2 && (() => {
+        const vals = trend.filter((v) => v != null);
+        const mn = Math.min(...vals);
+        const range = Math.max(...vals) - mn || 1;
+        const pts = vals
+          .map((v, i) => `${((i / (vals.length - 1)) * 100).toFixed(1)},${(22 - ((v - mn) / range) * 20).toFixed(1)}`)
+          .join(' ');
+        return (
+          <svg width="62" height="24" viewBox="0 0 100 24" preserveAspectRatio="none" className="mt-1.5" aria-hidden="true">
+            <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+          </svg>
+        );
+      })()}
     </div>
   );
 }
