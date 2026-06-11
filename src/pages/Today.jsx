@@ -537,6 +537,14 @@ export default function Today() {
 
   const last7Checkins = sortedCheckins.filter((c) => c.date !== today).slice(0, 7);
 
+  const ringTrends = useMemo(() => {
+    const chrono = [...last7Checkins].reverse(); // mais antigo → mais recente
+    return {
+      recovery: chrono.map((c) => c.recovery_score ?? c.biocharge_morning ?? c.readiness_score).filter((v) => v != null),
+      sono: chrono.map((c) => c.sleep_score ?? c.sleep_quality).filter((v) => v != null),
+    };
+  }, [last7Checkins]); // eslint-disable-line
+
   const biochargeTrend = useMemo(() => {
     const values = last7Checkins.map((c) => c.biocharge_morning).filter((v) => v != null);
     if (values.length < 2 || rawCheckin?.biocharge_morning == null) return null;
