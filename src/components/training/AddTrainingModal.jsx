@@ -294,7 +294,7 @@ export default function AddTrainingModal({
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -616,7 +616,7 @@ export default function AddTrainingModal({
             </div>
 
             {/* Footer */}
-            <div className="p-5 pt-3 border-t border-border shrink-0">
+            <div className="p-5 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] border-t border-border shrink-0">
               <Button
                 type="submit"
                 className="w-full h-12 font-semibold"
