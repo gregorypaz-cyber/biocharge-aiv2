@@ -1396,6 +1396,7 @@ function ExecutionCard() {
             label="Recovery"
             caption={readinessFaixa}
             captionColor={recoveryCaptionColor}
+            trend={ringTrends.recovery}
           />
           <MiniRing
             value={sleepVal}
@@ -1404,6 +1405,7 @@ function ExecutionCard() {
             label="Sono"
             caption={sleepWord}
             captionColor={sleepCaptionColor}
+            trend={ringTrends.sono}
           />
           <MiniRing
             value={cappedStrain}
