@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
@@ -24,7 +24,7 @@ import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
 import CurrentStateCard from '@/components/today/CurrentStateCard';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
-import WorkoutSuggestionCard from '@/components/today/WorkoutSuggestionCard';
+import WorkoutLoggedState from '@/components/today/WorkoutLoggedState';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
@@ -997,91 +997,112 @@ function renderCard(desc) {
         return <ExecutionCard key="execution" />;
 
       case 'workout': {
-        const workoutEl =
-          desc.action === 'mutate' ? (
-            <ProtectionInsightCard key="workout-mutated" mutation={desc.mutation} />
-          ) : (
-            <WorkoutSuggestionCard key="workout" {...workoutProps} />
-          );
-
-        return (
-          <section
-            key="workout-wrapper"
-            id="today-workout-prescription"
-            className="space-y-3"
-          >
-            <div className="px-1 space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                Prescrição do dia
+        // ZONA "Treino -> resposta do corpo" (decisao A da Etapa 3)
+        // 1) Treino lancado hoje  -> pos-treino (WorkoutLoggedState)
+        // 2) Senao, treino ontem  -> Impacto de ontem (resuminho + deltas no corpo)
+        // 3) Senao                -> nada
+        if (todaySessions.length > 0) {
+          return (
+            <section key="workout-wrapper" className="space-y-2">
+              <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                Treino → resposta do corpo
               </p>
-              <h3 className="text-base font-black tracking-tight">
-                Opções A, B e C para executar hoje
-              </h3>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Seu estado do corpo define a margem. Agora escolha a dose que melhor encaixa no contexto de hoje.
+              <WorkoutLoggedState
+                sessions={todaySessions}
+                checkin={enrichedCheckin}
+                analysis={analysis}
+              />
+            </section>
+          );
+        }
+
+        const impactoOntem = (() => {
+          const yDate = (() => {
+            const d = new Date(today + 'T00:00:00');
+            d.setDate(d.getDate() - 1);
+            return d.toISOString().slice(0, 10);
+          })();
+          const yWorkout = sortedSessions
+            .filter((x) => x.date === yDate)
+            .sort((a, b) => (b.strain_score ?? 0) - (a.strain_score ?? 0))[0];
+          if (!yWorkout) return null;
+
+          const todayC = sortedCheckins[0];
+          const yC = sortedCheckins[1];
+          if (!todayC || !yC) return null;
+
+          const parts = [];
+          if (todayC.recovery_score != null && yC.recovery_score != null) {
+            const d = Math.round(todayC.recovery_score - yC.recovery_score);
+            parts.push({ k: 'Recovery', v: `${d >= 0 ? '+' : ''}${d}`, good: d >= 0 });
+          }
+          const tHrv = todayC.hrv ?? todayC.hrv_manual ?? null;
+          const yHrv = yC.hrv ?? yC.hrv_manual ?? null;
+          if (tHrv != null && yHrv != null && yHrv > 0) {
+            const d = Math.round(((tHrv - yHrv) / yHrv) * 100);
+            parts.push({ k: 'HRV', v: `${d >= 0 ? '+' : ''}${d}%`, good: d >= 0 });
+          }
+          if (todayC.sleep_hours != null && yC.sleep_hours != null) {
+            const d = Math.round((todayC.sleep_hours - yC.sleep_hours) * 10) / 10;
+            parts.push({ k: 'Sono', v: `${d >= 0 ? '+' : ''}${d}h`, good: d >= 0 });
+          }
+          if (!parts.length) return null;
+
+          const resume = [
+            yWorkout.sport,
+            yWorkout.strain_score != null ? `⚡${yWorkout.strain_score}` : null,
+            yWorkout.heart_rate_avg ? `FC ${Math.round(yWorkout.heart_rate_avg)}` : null,
+            yWorkout.training_effect_aerobic ? `Efeito ${yWorkout.training_effect_aerobic}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · ');
+
+          return (
+            <div className="rounded-2xl border border-border/50 bg-card p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-sm font-bold leading-tight">Impacto de ontem</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    {resume}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {parts.map((p) => (
+                  <div
+                    key={p.k}
+                    className="rounded-xl bg-secondary/50 border border-border/40 px-2 py-2 text-center"
+                  >
+                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      {p.k}
+                    </p>
+                    <p
+                      className={cn(
+                        'text-base font-black font-mono leading-none mt-1',
+                        p.good ? 'text-emerald-400' : 'text-yellow-400'
+                      )}
+                    >
+                      {p.v}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+                Como seu corpo respondeu hoje ao treino de ontem (vs. o dia anterior).
               </p>
             </div>
+          );
+        })();
 
-            {(() => {
-              // Conecta o insight à AÇÃO: traduz gargalo/tendência numa orientação
-              // concreta para hoje. Prioridade: tendência piorando > gargalo > nada.
-              // Se não há sinal acionável, não renderiza (não polui a decisão).
-              const bottleneck = analysis?.personalBottleneck;
-              const trends = analysis?.longTermTrends;
+        if (!impactoOntem) return null;
 
-              const ACTIONS = {
-                deep_sleep_pct: 'priorize dormir cedo, em quarto fresco e escuro — é onde você ganha mais',
-                sleep_hours: 'garanta sua janela de sono completa hoje — é seu maior retorno',
-                sleep_awakenings: 'evite cafeína à tarde e telas antes de dormir para reduzir despertares',
-                sleep_regularity_pct: 'tente dormir e acordar no mesmo horário — sua regularidade é o que mais pesa',
-                rem_sleep_pct: 'evite álcool à noite, que corta o sono REM',
-                sleep_score: 'cuide do sono hoje — é o fator que mais move sua recuperação',
-              };
-
-              let line = null;
-              let tone = 'neutral';
-
-              // 1. Tendência piorando (mais urgente)
-              const worsening = trends?.hasAnyTrend
-                ? trends.metrics.find((m) => m.hasTrend && m.sentiment === 'negative')
-                : null;
-
-              if (worsening) {
-                line = `Seu ${worsening.label} vem caindo nas últimas semanas. Hoje, jogar a favor da recuperação ajuda a virar essa tendência.`;
-                tone = 'warning';
-              } else if (bottleneck?.hasSignal && bottleneck.bottleneck) {
-                const b = bottleneck.bottleneck;
-                const action = ACTIONS[b.key] || `cuide de ${b.label.toLowerCase()} hoje`;
-                line = `Seu maior fator é ${b.label.toLowerCase()}: ${action}.`;
-                tone = 'focus';
-              }
-
-              if (!line) return null;
-
-              return (
-                <div
-                  className={cn(
-                    'px-3 py-2.5 rounded-xl border text-[12px] leading-snug',
-                    tone === 'warning'
-                      ? 'bg-amber-500/5 border-amber-500/20'
-                      : 'bg-primary/5 border-primary/20'
-                  )}
-                >
-                  <span className="font-semibold">
-                    {tone === 'warning' ? '⚠️ Atenção: ' : '🎯 Onde focar hoje: '}
-                  </span>
-                  {line}
-                </div>
-              );
-            })()}
-
-            {workoutEl}
-
-            {weeklyContextMsg && (
-              <p className="text-[11px] text-muted-foreground leading-relaxed px-1">
-                {weeklyContextMsg}
-              </p>
-            )}
+        return (
+          <section key="workout-wrapper" className="space-y-2">
+            <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+              Treino → resposta do corpo
+            </p>
+            {impactoOntem}
           </section>
         );
       }
@@ -1547,20 +1568,14 @@ function ExecutionCard() {
 
       {phaseCfg.showCta ? (
         <button
-          onClick={() => {
-            if (!todaySessions.length && !isRestMode) {
-              scrollToWorkoutPrescription();
-              return;
-            }
-            setShowAddModal(true);
-          }}
+          onClick={() => setShowAddModal(true)}
           className={cn(
             'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
             phaseCfg.ctaClass
           )}
         >
           <CtaIcon className="w-4 h-4" />
-          {!todaySessions.length && !isRestMode ? 'Ver prescrição do dia' : phaseCfg.ctaLabel}
+          {phaseCfg.ctaLabel}
         </button>
       ) : (
         <button
