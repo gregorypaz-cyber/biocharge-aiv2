@@ -8,7 +8,7 @@ const navItems = [
   { path: '/insights', icon: Brain, label: 'Insights' },
   { path: '/checkin', icon: PlusCircle, label: 'Check-in', primary: true },
   { path: '/trends', icon: TrendingUp, label: 'Tendências' },
-  { path: '/summary', icon: LayoutDashboard, label: 'Resumo X' },
+  { path: '/summary', icon: LayoutDashboard, label: 'Resumo' },
   { path: '/history', icon: Clock, label: 'Timeline' },
 ];
 
