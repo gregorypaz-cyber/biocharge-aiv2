@@ -112,8 +112,8 @@ const DEFAULT_FORM = {
   biocharge_post_workout: null,
   sleep_score: 70,
   fatigue: 30,
-  deep_sleep_pct: 25,
-  rem_sleep_pct: 20,
+  deep_sleep_pct: null,
+  rem_sleep_pct: null,
   sleep_awakenings: null,
   sleep_regularity_pct: null,
   sleep_heart_rate: null,
@@ -939,7 +939,7 @@ if (isPostMode) {
                 <SliderField
   label="Sono REM"
   hint="Percentual de sono REM"
-  value={form.rem_sleep_pct ?? 20}
+  value={form.rem_sleep_pct}
   onChange={(v) => update('rem_sleep_pct', v)}
   unit="%"
   max={60}
