@@ -539,11 +539,16 @@ export default function Today() {
 
   const ringTrends = useMemo(() => {
     const chrono = [...last7Checkins].reverse(); // mais antigo → mais recente
+    const strainByDate = {};
+    for (const s of sortedSessions) {
+      if (s?.date) strainByDate[s.date] = (strainByDate[s.date] || 0) + (s.strain_score ?? 0);
+    }
     return {
       recovery: chrono.map((c) => c.recovery_score ?? c.biocharge_morning ?? c.readiness_score).filter((v) => v != null),
       sono: chrono.map((c) => c.sleep_score ?? c.sleep_quality).filter((v) => v != null),
+      strain: chrono.map((c) => Math.min(21, strainByDate[c.date] || 0)),
     };
-  }, [last7Checkins]); // eslint-disable-line
+  }, [last7Checkins, sortedSessions]); // eslint-disable-line
 
   const biochargeTrend = useMemo(() => {
     const values = last7Checkins.map((c) => c.biocharge_morning).filter((v) => v != null);
@@ -1415,6 +1420,7 @@ function ExecutionCard() {
             label="Strain"
             caption={strainCaption}
             captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
+            trend={ringTrends.strain}
           />
         </div>
 
