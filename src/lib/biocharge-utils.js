@@ -1,3 +1,5 @@
+import { calculateSleepDebt } from './physiological-engine.js';
+
 // ─── Recovery & Score Engine ───────────────────────────────────────────────
 
 function clamp(value, min = 0, max = 100) {
@@ -1020,9 +1022,7 @@ const hrvToday = resolveHrvValue(checkin);
       ? Math.round(((hrvToday - hrvAvg) / hrvAvg) * 100)
       : null;
 
-  const sleepDebt = (recentCheckins || []).slice(0, 7).reduce((sum, c) => {
-    return sum + Math.max(0, 7.5 - (c.sleep_hours || 0));
-  }, 0);
+  const sleepDebt = calculateSleepDebt(recentCheckins)?.debt ?? 0;
 
   const prompt = `Você é um coach de performance. Gere UMA frase curta (máx 2 linhas) explicando por que a recomendação de treino de hoje faz sentido. Em português brasileiro. Tom direto e pessoal. Não use título, bullet ou aspas. Evite contradições entre recuperação e treino.
 
@@ -1062,9 +1062,7 @@ const hrvToday = resolveHrvValue(checkin);
       ? Math.round(((hrvToday - hrvAvg) / hrvAvg) * 100)
       : null;
 
-  const sleepDebt = (recentCheckins || []).slice(0, 7).reduce((sum, c) => {
-    return sum + Math.max(0, 7.5 - (c.sleep_hours || 0));
-  }, 0);
+  const sleepDebt = calculateSleepDebt(recentCheckins)?.debt ?? 0;
 
   const lastSession =
     (recentSessions || [])
@@ -1389,28 +1387,4 @@ export function calculateStreak(checkins) {
   }
 
   return streak;
-}
-
-export function getBadges(checkins, streak) {
-  const badges = [];
-
-  if (streak >= 3) badges.push({ id: 'streak3', label: '3 dias seguidos', icon: '🔥', color: 'orange' });
-  if (streak >= 7) badges.push({ id: 'streak7', label: 'Semana completa', icon: '⚡', color: 'yellow' });
-  if (streak >= 30) badges.push({ id: 'streak30', label: 'Mês consistente', icon: '🏆', color: 'gold' });
-
-  const greenDays = checkins.filter((c) => c.zone === 'green').length;
-  if (greenDays >= 5) badges.push({ id: 'green5', label: '5 dias no verde', icon: '💚', color: 'green' });
-
-  if (checkins.length >= 10) badges.push({ id: 'veteran', label: '10 check-ins', icon: '🎯', color: 'blue' });
-  if (checkins.length >= 30) badges.push({ id: 'veteran30', label: '30 check-ins', icon: '🌟', color: 'purple' });
-
-  return badges;
-}
-
-export function getPerformanceLevel(avgRecovery) {
-  if (avgRecovery >= 85) return { label: 'Elite', color: 'hsl(142,70%,50%)', level: 5 };
-  if (avgRecovery >= 75) return { label: 'Avançado', color: 'hsl(200,80%,55%)', level: 4 };
-  if (avgRecovery >= 65) return { label: 'Intermediário', color: 'hsl(45,93%,58%)', level: 3 };
-  if (avgRecovery >= 50) return { label: 'Iniciante', color: 'hsl(280,65%,60%)', level: 2 };
-  return { label: 'Recuperando', color: 'hsl(0,72%,55%)', level: 1 };
 }

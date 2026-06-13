@@ -217,7 +217,7 @@ export function pctDelta(current, baseline) {
 
 // ─── Sleep Debt ───────────────────────────────────────────────────────────────
 
-export function calculateSleepDebt(checkins, targetHours = 8) {
+export function calculateSleepDebt(checkins, targetHours = 7.5) {
   checkins = _ensure(checkins);
   const last7 = checkins.slice(0, 7);
   if (!last7.length) return null;
