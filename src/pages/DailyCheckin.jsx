@@ -93,7 +93,7 @@ function HRVField({ value, onChange }) {
         onChange={e => onChange(parseFloat(e.target.value) || null)}
         onBlur={(e) => {
           const v = parseFloat(e.target.value);
-          if (!isNaN(v) && (v < 0 || v > 250)) onChange(null);
+          if (!isNaN(v)) onChange(Math.min(250, Math.max(0, v)));
         }}
         placeholder="Ex: 48"
         className="bg-secondary border-border/40 font-mono"
@@ -151,7 +151,7 @@ const checkinReducer = (state, action) => {
     case 'RESET':
       return { form: DEFAULT_FORM, postForm: DEFAULT_POST_FORM };
     case 'LOAD_EDIT':
-      return { ...state, form: { rest_day: false, ...action.data } };
+      return { ...state, form: { ...DEFAULT_FORM, ...action.data } };
     case 'SET_REST_DAY':
       return { ...state, form: { ...state.form, rest_day: action.value } };
     default:
@@ -177,7 +177,7 @@ export default function DailyCheckin() {
   const todayRecord = checkins.find(c => c.date === todayDate);
 
   const [checkinState, dispatch] = useReducer(checkinReducer, {
-    form: editData ? { rest_day: false, ...editData } : DEFAULT_FORM,
+    form: editData ? { ...DEFAULT_FORM, ...editData } : DEFAULT_FORM,
     postForm: DEFAULT_POST_FORM,
   });
   const { form, postForm } = checkinState;
@@ -326,7 +326,7 @@ const saveMorningMutation = useMutation({
     // ✅ Deep analysis fica só para Insights / aprofundamento
     // Evita queimar crédito de IA: só gera em registro novo do dia, OU num re-save
     // de hoje que ainda não tem análise (recupera de uma 1ª tentativa que falhou).
-    const jaTemDeepAnalysis = !!(editData?.deep_analysis_text || todayRecord?.deep_analysis_text);
+    const jaTemDeepAnalysis = !!(editData?.deep_analysis_text || recordForPayloadDate?.deep_analysis_text);
     if (!editData?.id && !jaTemDeepAnalysis && data.generate_ai) {
       const summary = [scores, ...recentCheckins.slice(0, 13)].map((c) => ({
         date: c.date,
@@ -831,6 +831,7 @@ if (isPostMode) {
     <Input
       type="date"
       value={form.date}
+      max={getTodayLocal()}
       onChange={(e) => update('date', e.target.value)}
       className="bg-card border-border/60 max-w-[180px] h-9 text-sm"
     />
@@ -866,18 +867,45 @@ if (isPostMode) {
               Horas de Sono
             </label>
 
-            <Input
-              type="time"
-              value={hoursToHHMM(form.sleep_hours)}
-              onChange={(e) => {
-                update('sleep_hours', hhmmToHours(e.target.value));
-                setTouched((t) => ({ ...t, sleep_hours: true }));
-              }}
-              className="bg-secondary border-border/40 font-mono w-36 h-11"
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={14}
+                step={1}
+                placeholder="7"
+                value={form.sleep_hours == null ? '' : Math.floor(form.sleep_hours)}
+                onChange={(e) => {
+                  const h = Math.min(14, Math.max(0, parseInt(e.target.value || '0', 10) || 0));
+                  const m = Math.round(((form.sleep_hours || 0) % 1) * 60);
+                  update('sleep_hours', Number((h + m / 60).toFixed(2)));
+                  setTouched((t) => ({ ...t, sleep_hours: true }));
+                }}
+                className="bg-secondary border-border/40 font-mono w-20 h-11 text-center"
+              />
+              <span className="text-sm text-muted-foreground">h</span>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={59}
+                step={5}
+                placeholder="45"
+                value={form.sleep_hours == null ? '' : Math.round((form.sleep_hours % 1) * 60)}
+                onChange={(e) => {
+                  const m = Math.min(59, Math.max(0, parseInt(e.target.value || '0', 10) || 0));
+                  const h = Math.floor(form.sleep_hours || 0);
+                  update('sleep_hours', Number((h + m / 60).toFixed(2)));
+                  setTouched((t) => ({ ...t, sleep_hours: true }));
+                }}
+                className="bg-secondary border-border/40 font-mono w-20 h-11 text-center"
+              />
+              <span className="text-sm text-muted-foreground">min</span>
+            </div>
 
             <p className="text-[10px] text-muted-foreground">
-              Selecione a duração do sono (horas:minutos) — ex: 07:45.
+              Duração total do sono — ex: 7 h 45 min.
             </p>
           </div>
 
@@ -994,7 +1022,7 @@ if (isPostMode) {
                     onChange={(e) => update('sleep_awakenings', e.target.value === '' ? null : parseInt(e.target.value, 10))}
                     onBlur={(e) => {
                       const v = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(v) && (v < 0 || v > 30)) update('sleep_awakenings', null);
+                      if (!Number.isNaN(v)) update('sleep_awakenings', Math.min(30, Math.max(0, v)));
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
@@ -1015,7 +1043,7 @@ if (isPostMode) {
                     onChange={(e) => update('sleep_regularity_pct', e.target.value === '' ? null : parseInt(e.target.value, 10))}
                     onBlur={(e) => {
                       const v = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(v) && (v < 0 || v > 100)) update('sleep_regularity_pct', null);
+                      if (!Number.isNaN(v)) update('sleep_regularity_pct', Math.min(100, Math.max(0, v)));
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
@@ -1036,7 +1064,7 @@ if (isPostMode) {
                     onChange={(e) => update('sleep_heart_rate', e.target.value === '' ? null : parseInt(e.target.value, 10))}
                     onBlur={(e) => {
                       const v = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(v) && (v < 30 || v > 120)) update('sleep_heart_rate', null);
+                      if (!Number.isNaN(v)) update('sleep_heart_rate', Math.min(120, Math.max(30, v)));
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
@@ -1109,7 +1137,7 @@ if (isPostMode) {
                     onChange={(e) => update('resting_hr', parseFloat(e.target.value) || null)}
                     onBlur={(e) => {
                       const v = parseFloat(e.target.value);
-                      if (!isNaN(v) && (v < 30 || v > 220)) update('resting_hr', null);
+                      if (!isNaN(v)) update('resting_hr', Math.min(220, Math.max(30, v)));
                     }}
                     placeholder="—"
                     className="bg-secondary border-border/40 font-mono"
@@ -1134,7 +1162,7 @@ if (isPostMode) {
                     onChange={(e) => update('body_weight', parseFloat(e.target.value) || null)}
                     onBlur={(e) => {
                       const v = parseFloat(e.target.value);
-                      if (!isNaN(v) && (v < 30 || v > 300)) update('body_weight', null);
+                      if (!isNaN(v)) update('body_weight', Math.min(300, Math.max(30, v)));
                     }}
                     placeholder="—"
                     className="bg-secondary border-border/40 font-mono"
@@ -1148,7 +1176,7 @@ if (isPostMode) {
                 Contexto útil para interpretar a noite anterior
               </p>
               <Textarea
-                value={form.notes}
+                value={form.notes ?? ''}
                 onChange={(e) => update('notes', e.target.value)}
                 placeholder="Como foi sua noite? Algo a registrar?"
                 className="bg-secondary border-border/40 min-h-[80px] resize-none"
