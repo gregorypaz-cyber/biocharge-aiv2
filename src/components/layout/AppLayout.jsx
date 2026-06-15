@@ -1,12 +1,12 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PlusCircle, Brain, Clock, Activity, Settings, TrendingUp } from 'lucide-react';
+import { Plus, Brain, Clock, Activity, Settings, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 const navItems = [
   { path: '/today', icon: Activity, label: 'Hoje' },
   { path: '/insights', icon: Brain, label: 'Insights' },
-  { path: '/checkin', icon: PlusCircle, label: 'Check-in', primary: true },
+  { path: '/checkin', icon: Plus, label: 'Check-in', primary: true },
   { path: '/trends', icon: TrendingUp, label: 'Tendências' },
   { path: '/history', icon: Clock, label: 'Timeline' },
 ];
@@ -45,7 +45,7 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/90 backdrop-blur-xl">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background">
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
