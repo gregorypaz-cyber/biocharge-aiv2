@@ -70,7 +70,8 @@ function HRVField({ value, onChange }) {
         <button
           type="button"
           onClick={() => setShowTip(p => !p)}
-          className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Como medir HRV"
+          className="-m-2 p-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <Info className="w-3 h-3" />
         </button>
