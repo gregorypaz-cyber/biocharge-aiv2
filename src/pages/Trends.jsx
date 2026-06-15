@@ -1227,30 +1227,7 @@ export default function Trends() {
         ))}
       </div>
 
-<div className="space-y-3">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Leitura avançada
-          </p>
-          <p className="text-[11px] text-muted-foreground mt-1">
-            Equilíbrio semanal de carga — razão ACWR (aguda vs crônica).
-          </p>
-        </div>
-
-        {/* Strain vs Recovery Balance */}
-        <StrainRecoveryBalanceCard checkins={computed} sessions={trainingSessions} />
-      </div>
-
-      {/* Peso — tendência lenta (sinal de médio prazo, fora do recovery) */}
-      <WeightTrendCard checkins={computed} />
-
-      {/* Volume de corrida semanal (carga de corrida, fora do recovery) */}
-      <WeeklyRunningVolumeCard sessions={trainingSessions} />
-
-      {/* Economia de corrida — acende com ~4 corridas que tenham pace */}
-      <RunningEconomyCard sessions={trainingSessions} />
-
-      {/* Empty state */}
+{/* Empty state */}
       {filtered.length < 5 && (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6">
           <span className="text-4xl mb-4">📊</span>
@@ -1502,6 +1479,30 @@ export default function Trends() {
           </motion.div>
         );
       })()}
+
+      {/* ── Leitura avançada / fora do recovery (movido pro fim) ── */}
+      <div className="space-y-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Leitura avançada
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Equilíbrio semanal de carga — razão ACWR (aguda vs crônica).
+          </p>
+        </div>
+
+        {/* Strain vs Recovery Balance */}
+        <StrainRecoveryBalanceCard checkins={computed} sessions={trainingSessions} />
+      </div>
+
+      {/* Peso — tendência lenta (sinal de médio prazo, fora do recovery) */}
+      <WeightTrendCard checkins={computed} />
+
+      {/* Volume de corrida semanal (carga de corrida, fora do recovery) */}
+      <WeeklyRunningVolumeCard sessions={trainingSessions} />
+
+      {/* Economia de corrida — acende com ~4 corridas que tenham pace */}
+      <RunningEconomyCard sessions={trainingSessions} />
     </div>
   );
 }
