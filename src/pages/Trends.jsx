@@ -1233,15 +1233,12 @@ export default function Trends() {
             Leitura avançada
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Equilíbrio semanal e simulação de recovery.
+            Equilíbrio semanal de carga — razão ACWR (aguda vs crônica).
           </p>
         </div>
 
         {/* Strain vs Recovery Balance */}
         <StrainRecoveryBalanceCard checkins={computed} sessions={trainingSessions} />
-
-        {/* Recovery D+1 Predictor */}
-        <RecoveryTomorrowPredictorCard checkins={computed} />
       </div>
 
       {/* Peso — tendência lenta (sinal de médio prazo, fora do recovery) */}
