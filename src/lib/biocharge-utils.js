@@ -345,10 +345,10 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
   const subjectiveScore = calculateSubjectiveScore(checkin); // como a pessoa se sente
 
   const weighted = [
-    { value: hrvScore, weight: 0.30 },        // autonômico — principal sinal fisiológico
-    { value: rhrScore, weight: 0.10 },        // cardiovascular de repouso (sobrepõe parte do HRV)
-    { value: sleepScore, weight: 0.35 },      // sono — bloco forte, prediz disposição prática do dia
-    { value: subjectiveScore, weight: 0.25 }, // estado subjetivo (mantido)
+    { value: hrvScore, weight: 0.40 },        // autonômico — sinal dominante (confirmado vs Zepp r≈0,48)
+    { value: rhrScore, weight: 0.12 },        // cardiovascular de repouso
+    { value: sleepScore, weight: 0.33 },      // sono — bloco forte e validado (vs Zepp r=0,85)
+    { value: subjectiveScore, weight: 0.15 }, // subjetivo — ortogonal; reduzido (vs Zepp r≈−0,38), mantido p/ doença/stress
   ];
 
   let weightSum = 0;
