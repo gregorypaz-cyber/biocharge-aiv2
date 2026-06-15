@@ -46,7 +46,7 @@ export default function AppLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/90 backdrop-blur-xl">
-        <div className="max-w-2xl mx-auto grid grid-cols-6 items-center h-16 px-1">
+        <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
             return (
@@ -68,8 +68,8 @@ export default function AppLayout() {
                   />
                 )}
                 {item.primary ? (
-                  <div className="w-9 h-9 -mt-1 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 relative">
-                    <item.icon className="w-5 h-5 text-primary-foreground" />
+                  <div className="w-12 h-12 -mt-5 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40 ring-4 ring-background relative">
+                    <item.icon className="w-6 h-6 text-primary-foreground" />
                   </div>
                 ) : (
                   <item.icon className="w-5 h-5 relative" />
