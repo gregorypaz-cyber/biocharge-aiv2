@@ -1741,7 +1741,7 @@ if (isLoading) {
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
         >
           Quer entender o que está guiando seu recovery?
-          <span className="text-primary font-medium">→ Ver padrões em Insights</span>
+          <span className="text-primary font-medium">→ Ver padrões</span>
         </Link>
       )}
 

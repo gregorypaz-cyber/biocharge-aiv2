@@ -181,7 +181,7 @@ export default function History() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-black">Timeline Fisiológica</h1>
+        <<h1 className="text-2xl font-black">Histórico</h1>
         <p className="text-sm text-muted-foreground mt-1">{computed.length} registros · agrupados por semana</p>
       </div>
 

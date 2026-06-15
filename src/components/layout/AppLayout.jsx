@@ -5,10 +5,10 @@ import { motion } from 'framer-motion';
 
 const navItems = [
   { path: '/today', icon: Activity, label: 'Hoje' },
-  { path: '/insights', icon: Brain, label: 'Insights' },
+  { path: '/insights', icon: Brain, label: 'Padrões' },
   { path: '/checkin', icon: Plus, label: 'Check-in', primary: true },
   { path: '/trends', icon: TrendingUp, label: 'Tendências' },
-  { path: '/history', icon: Clock, label: 'Timeline' },
+  { path: '/history', icon: Clock, label: 'Histórico' },
 ];
 
 export default function AppLayout() {

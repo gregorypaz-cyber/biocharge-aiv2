@@ -1175,9 +1175,9 @@ Regras:
     <div className="space-y-4 max-w-2xl mx-auto">
       {/* Header */}
 <div>
-  <h1 className="text-2xl font-black tracking-tight">Insights</h1>
+  <h1 className="text-2xl font-black tracking-tight">Padrões</h1>
   <p className="text-sm text-muted-foreground mt-1">
-    Padrões de recovery, sono e carga para entender o que está mudando no seu corpo.
+    O que está mudando no seu corpo — recovery, sono e carga.
   </p>
 </div>
 
