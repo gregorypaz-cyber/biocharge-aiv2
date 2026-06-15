@@ -1423,106 +1423,21 @@ Regras:
         </div>
       </motion.div>
 
-      {/* 5. Modo técnico */}
+      {/* 6. Correlações — único conteúdo técnico que não vive na Hoje/Trends */}
       <ExpandableSection
-  title="Detalhes de hoje"
-  subtitle="Baseline, fatores do score e pontos de atenção do check-in atual."
->
-        {todayDetailInsights.baselineInsights?.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Hoje vs seu baseline
-            </p>
-            <div className="space-y-2">
-              {todayDetailInsights.baselineInsights.map((insight, i) => (
-                <div
-                  key={`${insight.label}-${i}`}
-                  className="rounded-xl border border-border/40 bg-secondary/30 px-3 py-2.5 flex items-center justify-between gap-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium">{insight.label}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
-                      {insight.text}
-                    </p>
-                  </div>
-                  <span
-                    className={cn(
-                      'text-xs font-bold',
-                      insight.isPositive ? 'text-emerald-400' : 'text-red-400'
-                    )}
-                  >
-                    {insight.delta > 0 ? '+' : ''}
-                    {insight.delta}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {todayDetailInsights.nonTrainingActionable?.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Pontos de atenção hoje
-            </p>
-            <div className="space-y-2">
-              {todayDetailInsights.nonTrainingActionable.map((rec, i) => (
-                <div
-                  key={`${rec.id}-${i}`}
-                  className="rounded-xl border border-border/40 bg-secondary/30 px-3 py-2.5"
-                >
-                  <p className="text-sm text-foreground/85 leading-relaxed">{rec.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {todayDetailInsights.whyScore?.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Fatores que mais influenciaram hoje
-            </p>
-
-            <div className="space-y-2">
-              {todayDetailInsights.whyScore.map((item, i) => (
-                <div
-                  key={`${item.text}-${i}`}
-                  className="rounded-xl border border-border/40 bg-secondary/30 px-3 py-2.5 flex items-start gap-2.5"
-                >
-                  <span
-                    className={cn(
-                      'text-xs font-bold mt-0.5 shrink-0',
-                      item.impact === 'positive' ? 'text-emerald-400' : 'text-red-400'
-                    )}
-                  >
-                    {item.impact === 'positive' ? '↑' : '↓'}
-                  </span>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </ExpandableSection>
-
-      {/* 6. Technical context */}
-      <ExpandableSection
-        title="Contexto técnico"
-        subtitle="Detalhes fisiológicos e métricas avançadas. Útil para quem quer ir além da leitura principal."
+        title="Correlações nos seus dados"
+        subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
       >
-        {analysis?.physioState ? <PhysioStateCard physioState={analysis.physioState} /> : null}
-
-        {analysis ? (
-          <TrainingLoadCard trainingLoad={analysis.trainingLoad} sleepDebt={analysis.sleepDebt} />
-        ) : null}
-
         {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
           <CorrelationsCard
             correlations={analysis.correlations}
             laggedEffects={analysis.laggedEffects}
           />
-        ) : null}
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Ainda não há correlação forte o suficiente para destacar. Continue registrando.
+          </p>
+        )}
       </ExpandableSection>
     </div>
   );
