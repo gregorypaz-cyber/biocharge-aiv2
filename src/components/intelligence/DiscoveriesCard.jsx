@@ -35,7 +35,7 @@ export default function DiscoveriesCard({ discoveries = [] }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
       <div className="px-5 py-4 border-b border-border/40">
-        <h2 className="text-sm font-semibold">🔭 O BioCharge descobriu</h2>
+        <h2 className="text-sm font-semibold">🔭 O Reck descobriu</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
           Padrões dos seus próprios dados que merecem atenção.
         </p>

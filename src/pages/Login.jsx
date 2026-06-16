@@ -41,10 +41,15 @@ export default function Login() {
       >
         {/* Logo */}
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold">BioCharge<span className="text-primary">AI</span></h1>
+          <svg viewBox="0 0 120 120" className="w-16 h-16 mx-auto mb-4" role="img" aria-label="Reck">
+            <circle cx="60" cy="60" r="42" fill="none" stroke="hsl(142 70% 50%)" strokeWidth="13" />
+            <g fill="none" stroke="hsl(210 40% 96%)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M51 41 V79" />
+              <path d="M51 41 H62 a10.5 10.5 0 0 1 0 21 H51" />
+              <path d="M56 62 L70 79" />
+            </g>
+          </svg>
+          <h1 className="text-2xl font-bold">Reck</h1>
           <p className="text-sm text-muted-foreground mt-1">Faça login para continuar</p>
         </div>
 

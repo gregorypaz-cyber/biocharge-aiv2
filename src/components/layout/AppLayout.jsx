@@ -20,12 +20,15 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/today" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary/15 border border-primary/25 flex items-center justify-center">
-              <span className="text-primary font-black text-xs">B</span>
-            </div>
-            <span className="font-black text-foreground tracking-tight text-sm">
-              BioCharge<span className="text-primary">AI</span>
-            </span>
+            <svg viewBox="0 0 120 120" className="w-7 h-7" role="img" aria-label="Reck">
+              <circle cx="60" cy="60" r="42" fill="none" stroke="hsl(142 70% 50%)" strokeWidth="13" />
+              <g fill="none" stroke="hsl(210 40% 96%)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M51 41 V79" />
+                <path d="M51 41 H62 a10.5 10.5 0 0 1 0 21 H51" />
+                <path d="M56 62 L70 79" />
+              </g>
+            </svg>
+            <span className="font-black text-foreground tracking-tight text-sm">Reck</span>
           </Link>
           <Link
             to="/settings"
