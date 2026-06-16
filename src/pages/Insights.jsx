@@ -34,6 +34,7 @@ import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 import AnalysisBody from '@/components/intelligence/AnalysisBody';
 import FitnessAgeCard from '@/components/intelligence/FitnessAgeCard';
+import BodyAgeCard from '@/components/intelligence/BodyAgeCard';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Helpers */
@@ -1207,6 +1208,8 @@ Regras:
       {/* Idade de condicionamento (Fitness Age) */}
       <FitnessAgeCard />
 
+       {/* Idade corporal (BodyAgeCard) */}
+      <BodyAgeCard />
 
       {/* 1. High-value discoveries */}
       <div className="space-y-3">
