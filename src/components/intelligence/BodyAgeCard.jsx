@@ -1,109 +1,184 @@
-// bodyAge.js — Reck (Fase 2)
-// Vitality (0–100) + Idade Corporal (Body Age) — leitura de longevidade.
-// É uma ESTIMATIVA DE BEM-ESTAR baseada em associações publicadas com mortalidade
-// por todas as causas — NÃO é diagnóstico nem idade clínica.
-//
-// Método (transparente e citável):
-//  - Cada fator vira um "risco relativo" (HR) frente ao seu ponto de referência.
-//  - HR -> anos equivalentes pela lei de Gompertz: a mortalidade dobra ~8 anos,
-//    então Δanos = ln(HR)/ln(2) × 8  (mesma lógica de "idade efetiva" do WHOOP).
-//  - Soma dos Δanos, com amortecimento de sobreposição, define a Idade Corporal.
-//  - Vitality sai do MESMO número (fonte única -> nunca contradiz a Idade Corporal).
-//
-// Fatores e fontes:
-//  - VO₂max / condicionamento: HUNT3 (reaproveita a Fase 1)
-//  - FC de repouso: meta-análise Zhang 2016 (~1,09 por +10 bpm)
-//  - Regularidade do sono: Windred 2023/2024 (UK Biobank, SRI) — mais forte que duração
-//  - Duração do sono: curva em U, ótimo ~7–7,5h
-//  - Atividade física: diretriz de 150 min/semana
-//  - HRV é deliberadamente excluído (muito individual) — fica no score diário.
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import { computeBodyAge } from '@/utils/bodyAge';
 
-import { computeFitnessAge, ageFromBirthYear } from './fitnessAge';
+// Card "Vitalidade + Idade Corporal" (Fase 2) — SOMENTE LEITURA.
+// Reaproveita o perfil físico (Configurações) e os dados de sono/FC/treino.
+export default function BodyAgeCard() {
+  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
 
-const MRDT = 8; // anos — tempo de duplicação da mortalidade (Gompertz)
-const hrToYears = (hr) => (Math.log(hr) / Math.LN2) * MRDT;
-const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const me = await base44.auth.me();
+        const p = me?.preferences || {};
+        const profile = {
+          birth_year: p.birth_year || null,
+          sex: p.sex || null,
+          height_cm: p.height_cm || null,
+          waist_cm: p.waist_cm || null,
+        };
+        const maxHrPref = p.max_hr || null;
+        const vo2maxManual = p.vo2max_manual || null;
+        const email = me?.email;
 
-export function computeBodyAge({
-  profile,
-  restingHRs = [],
-  observedHRmax = null,
-  maxHrPref = null,
-  vo2maxManual = null,
-  activity = null,
-  sleep = null, // { hours: number|null, regularity: number|null }
-}) {
-  if (!profile || !profile.birth_year || !profile.sex) {
-    return { ok: false, reason: 'profile', missing: ['birth_year', 'sex'].filter((k) => !profile || !profile[k]) };
+        let restingHRs = [];
+        let observedHRmax = null;
+        const activity = { sessions: 0, minutes: 0 };
+        const sleepHours = [];
+        const sleepReg = [];
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 28);
+        const within = (d) => d && new Date(d) >= cutoff;
+
+        if (email) {
+          try {
+            const checkins = await base44.entities.DailyCheckin.filter({ created_by: email }, '-date', 30);
+            (checkins || []).forEach((c) => {
+              const rhr = c.resting_hr ?? c.resting_heart_rate;
+              if (typeof rhr === 'number') restingHRs.push(rhr);
+              if (typeof c.sleep_hours === 'number' && c.sleep_hours > 0) sleepHours.push(c.sleep_hours);
+              if (typeof c.sleep_regularity_pct === 'number' && c.sleep_regularity_pct > 0) sleepReg.push(c.sleep_regularity_pct);
+            });
+          } catch (e) { /* segue */ }
+          try {
+            const hrv = await base44.entities.HRVRecord.filter({ created_by: email }, '-date', 30);
+            restingHRs = restingHRs.concat((hrv || []).map((h) => h.resting_heart_rate).filter((v) => typeof v === 'number'));
+          } catch (e) { /* segue */ }
+          try {
+            const ts = await base44.entities.TrainingSession.filter({ created_by: email }, '-date', 100);
+            (ts || []).forEach((s) => {
+              if (typeof s.heart_rate_max === 'number') observedHRmax = Math.max(observedHRmax || 0, s.heart_rate_max);
+              if (within(s.date)) { activity.sessions += 1; activity.minutes += s.duration_minutes || 0; }
+            });
+          } catch (e) { /* segue */ }
+          try {
+            const ws = await base44.entities.WorkoutSession.filter({ created_by: email }, '-date', 100);
+            (ws || []).forEach((s) => {
+              if (typeof s.max_heart_rate === 'number') observedHRmax = Math.max(observedHRmax || 0, s.max_heart_rate);
+              if (within(s.date)) { activity.sessions += 1; activity.minutes += s.duration_minutes || 0; }
+            });
+          } catch (e) { /* segue */ }
+        }
+        if (observedHRmax && observedHRmax > 215) observedHRmax = null;
+
+        const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+        const sleep = { hours: avg(sleepHours.slice(0, 14)), regularity: avg(sleepReg.slice(0, 14)) };
+
+        const r = computeBodyAge({ profile, restingHRs, observedHRmax, maxHrPref, vo2maxManual, activity, sleep });
+        if (alive) setResult(r);
+      } catch (e) {
+        if (alive) setResult({ ok: false, reason: 'error' });
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const Card = ({ children }) => (
+    <div className="rounded-2xl bg-card border border-border p-5 text-foreground">{children}</div>
+  );
+
+  if (loading) return <Card><div className="h-28 animate-pulse rounded-xl bg-secondary" /></Card>;
+
+  if (!result?.ok && result?.reason === 'profile') {
+    return (
+      <Card>
+        <div className="text-sm font-medium text-muted-foreground">Vitalidade</div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Para calcular, preencha seu perfil físico em{' '}
+          <Link to="/settings" className="text-primary hover:underline">Configurações</Link>.
+        </p>
+      </Card>
+    );
   }
-  const age = ageFromBirthYear(profile.birth_year);
-  const contributors = [];
-
-  // 1) Condicionamento (reaproveita a Fase 1 — já vem em anos)
-  const fit = computeFitnessAge({ profile, restingHRs, observedHRmax, maxHrPref, vo2maxManual, activity });
-  const usedManualVo2 = fit.ok && (fit.vo2Source || '').startsWith('informado');
-  if (fit.ok) {
-    contributors.push({ key: 'fitness', label: 'Condicionamento (VO₂max)', years: fit.deltaYears, detail: `VO₂max ${fit.vo2max}` });
+  if (!result?.ok) {
+    return (
+      <Card>
+        <div className="text-sm font-medium text-muted-foreground">Vitalidade</div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Ainda não há dados suficientes (sono e FC de repouso) nos seus registros para estimar.
+        </p>
+      </Card>
+    );
   }
 
-  // 2) FC de repouso
-  const valid = restingHRs.filter((v) => typeof v === 'number' && v >= 30 && v <= 110).slice(0, 14);
-  if (valid.length) {
-    const rhr = Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
-    let yrs = hrToYears(Math.pow(1.10, (rhr - 60) / 10));
-    // Se o VO₂max veio da razão de FC, a FC de repouso já está embutida -> evita dupla contagem.
-    if (!usedManualVo2) yrs *= 0.5;
-    contributors.push({ key: 'rhr', label: 'FC de repouso', years: yrs, detail: `${rhr} bpm` });
-  }
+  const r = result;
+  const vitBand = r.vitality >= 70 ? 'text-emerald-400' : r.vitality >= 40 ? 'text-amber-400' : 'text-red-400';
+  const younger = r.deltaYears < 0;
+  const deltaAbs = Math.abs(r.deltaYears);
+  const fmtYears = (y) => `${y > 0 ? '+' : ''}${y.toFixed(1)} ${Math.abs(y) === 1 ? 'ano' : 'anos'}`;
 
-  // 3) Duração do sono (curva em U, ótimo ~7,25h)
-  if (sleep && typeof sleep.hours === 'number' && sleep.hours > 0) {
-    const dev = sleep.hours - 7.25;
-    const hr = clamp(1 + 0.06 * dev * dev, 0.9, 1.6);
-    contributors.push({ key: 'sleep_dur', label: 'Duração do sono', years: hrToYears(hr), detail: `${sleep.hours.toFixed(1)} h` });
-  }
+  return (
+    <Card>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Vitalidade</div>
+          <div className="mt-1 flex items-end gap-2">
+            <span className={`text-5xl font-semibold ${vitBand}`}>{r.vitality}</span>
+            <span className="mb-1 text-sm text-muted-foreground">/ 100</span>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-muted-foreground">Idade corporal</div>
+          <div className="text-2xl font-semibold text-foreground">{r.bodyAge}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {deltaAbs === 0 ? 'igual à real' : younger ? `${deltaAbs} mais jovem` : `${deltaAbs} acima`} ({r.age})
+          </div>
+        </div>
+      </div>
 
-  // 4) Regularidade do sono (proxy do SRI; ref. ~72 = neutro)
-  if (sleep && typeof sleep.regularity === 'number' && sleep.regularity > 0) {
-    const hr = clamp(Math.exp(-0.013 * (sleep.regularity - 72)), 0.7, 1.6);
-    contributors.push({ key: 'sleep_reg', label: 'Regularidade do sono', years: hrToYears(hr), detail: `${Math.round(sleep.regularity)}%` });
-  }
+      <div className="mt-4 space-y-1.5 text-xs">
+        {r.best && r.best.years < 0 && (
+          <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
+            <span className="text-muted-foreground">Mais ajuda: <span className="text-foreground">{r.best.label}</span></span>
+            <span className="text-emerald-400">{fmtYears(r.best.years)}</span>
+          </div>
+        )}
+        {r.worst && r.worst.years > 0 && (
+          <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
+            <span className="text-muted-foreground">Mais atrapalha: <span className="text-foreground">{r.worst.label}</span></span>
+            <span className="text-amber-400">{fmtYears(r.worst.years)}</span>
+          </div>
+        )}
+      </div>
 
-  // 5) Atividade física (min/semana vs 150)
-  if (activity && typeof activity.minutes === 'number') {
-    const weekly = activity.minutes / 4; // janela de 28 dias -> semana
-    let hr;
-    if (weekly <= 0) hr = 1.20;
-    else if (weekly >= 300) hr = 0.85;
-    else if (weekly >= 150) hr = 1.00 - ((weekly - 150) / 150) * 0.15;
-    else hr = 1.20 - (weekly / 150) * 0.20;
-    contributors.push({ key: 'activity', label: 'Atividade física', years: hrToYears(hr), detail: `${Math.round(weekly)} min/sem` });
-  }
+      <div className="mt-3 flex items-center gap-3 text-xs">
+        <button onClick={() => setShowInfo((s) => !s)} className="text-primary underline-offset-2 hover:underline">
+          Ver detalhamento
+        </button>
+        <Link to="/settings" className="text-muted-foreground hover:text-foreground">Editar meus dados</Link>
+      </div>
 
-  if (contributors.length === 0) return { ok: false, reason: 'data' };
-
-  let sum = contributors.reduce((a, c) => a + c.years, 0);
-  sum *= 0.85; // amortecimento de sobreposição entre fatores correlacionados
-
-  let bodyAge = clamp(Math.round(age + sum), 18, 95);
-  const deltaYears = bodyAge - age;
-  const vitality = clamp(Math.round(55 - sum * 3), 0, 100);
-
-  // Arredonda os anos por fator (para exibição) e ordena.
-  const rounded = contributors.map((c) => ({ ...c, years: Math.round(c.years * 10) / 10 }));
-  const sorted = [...rounded].sort((a, b) => a.years - b.years);
-  const best = sorted[0];                         // mais negativo = mais ajuda
-  const worst = sorted[sorted.length - 1];        // mais positivo = mais atrapalha
-
-  return {
-    ok: true,
-    age,
-    bodyAge,
-    deltaYears,
-    vitality,
-    contributors: rounded,
-    best,
-    worst,
-    usedManualVo2,
-  };
+      {showInfo && (
+        <div className="mt-3 space-y-2 rounded-xl bg-secondary p-3 text-xs text-muted-foreground">
+          <p className="text-foreground">Quanto cada fator pesa (em anos)</p>
+          <ul className="space-y-1">
+            {r.contributors
+              .slice()
+              .sort((a, b) => a.years - b.years)
+              .map((c) => (
+                <li key={c.key} className="flex items-center justify-between">
+                  <span>{c.label} <span className="text-muted-foreground/70">({c.detail})</span></span>
+                  <span className={c.years < 0 ? 'text-emerald-400' : c.years > 0 ? 'text-amber-400' : ''}>
+                    {fmtYears(c.years)}
+                  </span>
+                </li>
+              ))}
+          </ul>
+          <p className="pt-1">
+            Leitura de longevidade baseada em associações publicadas com mortalidade por todas as causas
+            (FC de repouso, sono, regularidade, VO₂max, atividade), convertidas em anos pela lei de Gompertz.
+            É uma estimativa de bem-estar, não um diagnóstico. Para o número mais fiel, mantenha seu VO₂max
+            do Zepp atualizado em Configurações.
+          </p>
+        </div>
+      )}
+    </Card>
+  );
 }
