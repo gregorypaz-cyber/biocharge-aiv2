@@ -33,6 +33,7 @@ import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 import AnalysisBody from '@/components/intelligence/AnalysisBody';
+import FitnessAgeCard from '@/components/intelligence/FitnessAgeCard';
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Helpers */
@@ -1202,6 +1203,10 @@ Regras:
       {analysis?.longTermTrends && (
         <LongTermTrendsCard trends={analysis.longTermTrends} />
       )}
+
+      {/* Idade de condicionamento (Fitness Age) */}
+      <FitnessAgeCard />
+
 
       {/* 1. High-value discoveries */}
       <div className="space-y-3">
