@@ -48,6 +48,12 @@ export default function AppSettings() {
     training_times: [],
     recovery_goal: 'health',
     max_hr: 185,
+    // Perfil físico (usado na Idade de Condicionamento / VO2max)
+    birth_year: '',
+    sex: '',
+    height_cm: '',
+    waist_cm: '',
+    vo2max_manual: '',
   });
   const [customSport, setCustomSport] = useState('');
   const [saving, setSaving] = useState(false);
@@ -125,6 +131,101 @@ export default function AppSettings() {
             <h3 className="font-semibold">{user?.full_name || 'Usuário'}</h3>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Perfil físico */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.04 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-4"
+      >
+        <div className="flex items-center gap-2">
+          <User className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Perfil físico</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Dados que mudam pouco. Usados para calcular sua Idade de Condicionamento e o VO₂max.
+        </p>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Ano de nascimento
+            </p>
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="1992"
+              value={prefs.birth_year || ''}
+              onChange={e => setPrefs(p => ({ ...p, birth_year: e.target.value ? Number(e.target.value) : '' }))}
+              className="bg-secondary border-border"
+            />
+          </div>
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Sexo
+            </p>
+            <div className="flex gap-2">
+              {[{ v: 'male', l: 'Masculino' }, { v: 'female', l: 'Feminino' }].map(s => (
+                <button
+                  key={s.v}
+                  onClick={() => setPrefs(p => ({ ...p, sex: s.v }))}
+                  className={`flex-1 px-2 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                    prefs.sex === s.v
+                      ? 'border-primary/50 bg-primary/15 text-foreground'
+                      : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {s.l}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Altura (cm)
+            </p>
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="178"
+              value={prefs.height_cm || ''}
+              onChange={e => setPrefs(p => ({ ...p, height_cm: e.target.value ? Number(e.target.value) : '' }))}
+              className="bg-secondary border-border"
+            />
+          </div>
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Cintura (cm) — opcional
+            </p>
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="84"
+              value={prefs.waist_cm || ''}
+              onChange={e => setPrefs(p => ({ ...p, waist_cm: e.target.value ? Number(e.target.value) : '' }))}
+              className="bg-secondary border-border"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            VO₂max do relógio (opcional)
+          </p>
+          <Input
+            type="number"
+            inputMode="decimal"
+            placeholder="ex.: 50"
+            value={prefs.vo2max_manual || ''}
+            onChange={e => setPrefs(p => ({ ...p, vo2max_manual: e.target.value ? Number(e.target.value) : '' }))}
+            className="bg-secondary border-border"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Pegue no app Zepp. Se preenchido, é usado direto no cálculo (mais preciso que a estimativa por FC).
+          </p>
         </div>
       </motion.div>
 
