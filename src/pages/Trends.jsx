@@ -23,6 +23,7 @@ import {
   Scale,
   Footprints,
 } from 'lucide-react';
+import LongevityTrendCard from '@/components/intelligence/LongevityTrendCard';
 
 const timeFilters = [
   { label: '7D', days: 7 },
@@ -1504,5 +1505,6 @@ export default function Trends() {
       {/* Economia de corrida — acende com ~4 corridas que tenham pace */}
       <RunningEconomyCard sessions={trainingSessions} />
     </div>
+    <LongevityTrendCard />
   );
 }
