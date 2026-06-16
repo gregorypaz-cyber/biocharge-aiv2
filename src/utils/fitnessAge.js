@@ -3,22 +3,21 @@
 // É uma ESTIMATIVA DE BEM-ESTAR, nunca uma idade clínica.
 //
 // Fundamentos abertos e citáveis:
-//  - VO2max: Uth, Sørensen, Overgaard & Pedersen (2004) -> VO2max ≈ 15.3 * (FCmax / FCrep)
-//  - FCmax fallback: Tanaka et al. (2001) -> 208 - 0.7 * idade
+//  - VO2max (fallback): Uth, Sørensen, Overgaard & Pedersen (2004) -> 15.3 * (FCmax / FCrep)
+//  - FCmax (fallback): Tanaka et al. (2001) -> 208 - 0.7 * idade
 //  - Normas de VO2max por idade/sexo: HUNT3 Fitness Study (Nes/Aspenes, NTNU) — dados públicos
 //
-// Por que NÃO usamos os coeficientes do worldfitnesslevel: o algoritmo exato do Nes 2011
-// é licenciado comercialmente pela NTNU/TTO. Aqui o NÚMERO vem do método aberto (Uth),
-// e a cintura entra como CONTEXTO de composição corporal (não altera o número).
+// Prioridade da fonte de VO2max (da mais confiável p/ a menos):
+//  1) VO2max informado pelo usuário (ex.: do app Zepp / relógio)
+//  2) Uth com a FC máxima pessoal salva em Configurações (prefs.max_hr)
+//  3) Uth com a maior FC observada nos treinos
+//  4) Uth com FCmax estimada (Tanaka)
 
-// --- Normas de VO2max (mL/kg/min) por idade/sexo — HUNT3 (NTNU) ---
-// Pontos = ponto médio de cada faixa etária reportada.
 const HUNT_NORMS = {
   male:   [[25, 54], [35, 49], [45, 47], [55, 42], [65, 39], [75, 34]],
   female: [[25, 43], [35, 40], [45, 38], [55, 34], [65, 31], [75, 27]],
 };
 
-// Interpolação linear com "clamp" plano nas pontas.
 function interp(points, x) {
   if (x <= points[0][0]) return points[0][1];
   const last = points[points.length - 1];
@@ -39,11 +38,9 @@ export function normVO2(age, sex) {
   return interp(pts, age);
 }
 
-// Inverte a curva de normas: devolve a idade cujo VO2max médio == vo2.
-// A norma é monotonicamente decrescente com a idade, então uma busca binária resolve.
 export function fitnessAgeFromVO2(vo2, sex) {
   const lo = 20, hi = 90;
-  if (vo2 >= normVO2(lo, sex)) return lo; // mais apto que a média de quem tem 20
+  if (vo2 >= normVO2(lo, sex)) return lo;
   if (vo2 <= normVO2(hi, sex)) return hi;
   let a = lo, b = hi;
   for (let i = 0; i < 40; i++) {
@@ -54,86 +51,98 @@ export function fitnessAgeFromVO2(vo2, sex) {
   return Math.round((a + b) / 2);
 }
 
-// FCmax estimada — Tanaka 2001 (mais precisa que 220−idade).
 export function estimateHRmax(age) {
   return Math.round(208 - 0.7 * age);
 }
 
-// VO2max — Uth et al. 2004.
 export function estimateVO2max(hrMax, hrRest) {
   return 15.3 * (hrMax / hrRest);
 }
 
 export function ageFromBirthYear(birthYear, now = new Date()) {
-  return now.getFullYear() - birthYear;
+  return now.getFullYear() - Number(birthYear);
 }
 
 /**
- * Orquestrador principal.
  * @param {Object} args
- * @param {Object} args.profile       { birth_year, sex, height_cm, waist_cm }
- * @param {number[]} args.restingHRs  FC de repouso (bpm) — pode vir em qualquer ordem
- * @param {number|null} args.observedHRmax  maior FC observada em treinos (bpm) ou null
- * @param {Object|null} args.activity { sessions, minutes } nos últimos 28 dias
- * @returns objeto com vo2max, fitnessAge, deltaYears, inputs, confidence, etc.
+ * @param {Object}   args.profile        { birth_year, sex, height_cm, waist_cm }
+ * @param {number[]} args.restingHRs     FC de repouso (bpm)
+ * @param {number|null} args.observedHRmax  maior FC observada em treinos
+ * @param {number|null} args.maxHrPref   FC máxima pessoal salva em Configurações (prefs.max_hr)
+ * @param {number|null} args.vo2maxManual VO2max informado pelo usuário (Zepp/relógio)
+ * @param {Object|null} args.activity    { sessions, minutes } nos últimos 28 dias
  */
 export function computeFitnessAge({
   profile,
   restingHRs = [],
   observedHRmax = null,
+  maxHrPref = null,
+  vo2maxManual = null,
   activity = null,
 }) {
   if (!profile || !profile.birth_year || !profile.sex) {
     return {
       ok: false,
-      missing: ["birth_year", "sex"].filter((k) => !profile || !profile[k]),
+      reason: 'profile',
+      missing: ['birth_year', 'sex'].filter((k) => !profile || !profile[k]),
     };
   }
 
   const age = ageFromBirthYear(profile.birth_year);
+  const sex = profile.sex;
 
-  // FC de repouso: média robusta das amostras válidas mais recentes (até 14).
-  const valid = restingHRs.filter((v) => typeof v === "number" && v >= 30 && v <= 110);
-  if (valid.length === 0) return { ok: false, missing: ["resting_hr"] };
+  const valid = restingHRs.filter((v) => typeof v === 'number' && v >= 30 && v <= 110);
   const sample = valid.slice(0, 14);
-  const hrRest = Math.round(sample.reduce((a, b) => a + b, 0) / sample.length);
+  const hrRest = sample.length ? Math.round(sample.reduce((a, b) => a + b, 0) / sample.length) : null;
 
-  // FCmax: usa a observada se for plausível, senão Tanaka.
-  let hrMax, hrMaxSource;
-  if (observedHRmax && observedHRmax >= 150 && observedHRmax <= 215) {
-    hrMax = observedHRmax;
-    hrMaxSource = "observada nos seus treinos";
+  let vo2, vo2Source, hrMax = null, hrMaxSource = null;
+  const manual = Number(vo2maxManual);
+
+  if (Number.isFinite(manual) && manual >= 15 && manual <= 80) {
+    // 1) VO2max informado
+    vo2 = manual;
+    vo2Source = 'informado por você (Zepp/relógio)';
   } else {
-    hrMax = estimateHRmax(age);
-    hrMaxSource = "estimada (Tanaka 208−0,7×idade)";
+    // Precisa de FC de repouso para os métodos por FC.
+    if (!hrRest) return { ok: false, reason: 'data', missing: ['resting_hr'] };
+
+    const pref = Number(maxHrPref);
+    if (Number.isFinite(pref) && pref >= 120 && pref <= 220) {
+      hrMax = pref; hrMaxSource = 'sua FC máxima (Configurações)';
+    } else if (observedHRmax && observedHRmax >= 150 && observedHRmax <= 215) {
+      hrMax = observedHRmax; hrMaxSource = 'observada nos seus treinos';
+    } else {
+      hrMax = estimateHRmax(age); hrMaxSource = 'estimada (Tanaka 208−0,7×idade)';
+    }
+    vo2 = Math.max(15, Math.min(75, estimateVO2max(hrMax, hrRest)));
+    vo2Source = 'razão FCmax/FCrepouso (Uth 2004)';
   }
 
-  let vo2 = estimateVO2max(hrMax, hrRest);
-  vo2 = Math.max(15, Math.min(75, vo2)); // limites de sanidade
+  vo2 = Math.round(vo2 * 10) / 10;
+  const fitnessAge = fitnessAgeFromVO2(vo2, sex);
+  const norm = normVO2(age, sex);
+  const deltaYears = fitnessAge - age;
 
-  const fitnessAge = fitnessAgeFromVO2(vo2, profile.sex);
-  const norm = normVO2(age, profile.sex);
-  const deltaYears = fitnessAge - age; // negativo = condicionamento "mais jovem" que a idade real
-
-  // Contexto de cintura — NÃO altera o VO2max, só informa composição corporal.
   let waistContext = null;
   if (profile.waist_cm && profile.height_cm) {
-    const whtr = profile.waist_cm / profile.height_cm;
+    const whtr = Number(profile.waist_cm) / Number(profile.height_cm);
     waistContext = {
       whtr: Math.round(whtr * 100) / 100,
-      flag: whtr >= 0.6 ? "alto" : whtr >= 0.5 ? "moderado" : "saudável",
+      flag: whtr >= 0.6 ? 'alto' : whtr >= 0.5 ? 'moderado' : 'saudável',
     };
   }
 
-  // Confiança da estimativa.
-  let confidence = "média";
-  if (hrMaxSource.startsWith("observada") && valid.length >= 7) confidence = "boa";
-  if (valid.length < 3) confidence = "baixa";
+  // Confiança
+  let confidence = 'média';
+  if (vo2Source.startsWith('informado')) confidence = 'boa';
+  else if ((hrMaxSource || '').match(/FC máxima|observada/) && sample.length >= 7) confidence = 'boa';
+  if (!vo2Source.startsWith('informado') && sample.length < 3) confidence = 'baixa';
 
   return {
     ok: true,
     age,
-    vo2max: Math.round(vo2 * 10) / 10,
+    vo2max: vo2,
+    vo2Source,
     normVO2: Math.round(norm * 10) / 10,
     fitnessAge,
     deltaYears,
@@ -143,8 +152,8 @@ export function computeFitnessAge({
       hrMaxSource,
       restingSamples: sample.length,
       activity,
-      waist: profile.waist_cm || null,
-      height: profile.height_cm || null,
+      waist: profile.waist_cm ? Number(profile.waist_cm) : null,
+      height: profile.height_cm ? Number(profile.height_cm) : null,
     },
     waistContext,
     confidence,
