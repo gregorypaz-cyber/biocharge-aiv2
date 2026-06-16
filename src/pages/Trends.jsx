@@ -1504,7 +1504,7 @@ export default function Trends() {
 
       {/* Economia de corrida — acende com ~4 corridas que tenham pace */}
       <RunningEconomyCard sessions={trainingSessions} />
+      <LongevityTrendCard />
     </div>
-    <LongevityTrendCard />
   );
 }
