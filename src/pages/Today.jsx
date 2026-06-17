@@ -1148,6 +1148,7 @@ function renderCard(desc) {
             key="morning_recovery"
             checkin={enrichedCheckin}
             delta={recoveryDelta}
+            recentCheckins={sortedCheckins.filter((c) => c.date !== today)}
           />
         );
 
