@@ -5,7 +5,11 @@
 // Fundamentos abertos e citáveis:
 //  - VO2max (fallback): Uth, Sørensen, Overgaard & Pedersen (2004) -> 15.3 * (FCmax / FCrep)
 //  - FCmax (fallback): Tanaka et al. (2001) -> 208 - 0.7 * idade
-//  - Normas de VO2max por idade/sexo: HUNT3 Fitness Study (Nes/Aspenes, NTNU) — dados públicos
+//  - Normas de VO2max por idade/sexo: POPULAÇÃO GERAL (Cooper Institute / ACSM Tab. 4.7
+//    e registro FRIEND). Medianas: homem ~48 e mulher ~38 ml/kg/min aos 25 anos,
+//    com declínio de ~10% por década. São as MESMAS referências usadas por relógios
+//    de consumo (ex.: Zepp/Amazfit) — por isso o veredito do Reck bate com o do relógio.
+//    Curva exponencial suave (sem "saltos" da idade de condicionamento).
 //
 // Prioridade da fonte de VO2max (da mais confiável p/ a menos):
 //  1) VO2max informado pelo usuário (ex.: do app Zepp / relógio)
@@ -13,42 +17,19 @@
 //  3) Uth com a maior FC observada nos treinos
 //  4) Uth com FCmax estimada (Tanaka)
 
-const HUNT_NORMS = {
-  male:   [[25, 54], [35, 49], [45, 47], [55, 42], [65, 39], [75, 34]],
-  female: [[25, 43], [35, 40], [45, 38], [55, 34], [65, 31], [75, 27]],
-};
-
-function interp(points, x) {
-  if (x <= points[0][0]) return points[0][1];
-  const last = points[points.length - 1];
-  if (x >= last[0]) return last[1];
-  for (let i = 0; i < points.length - 1; i++) {
-    const [x0, y0] = points[i];
-    const [x1, y1] = points[i + 1];
-    if (x >= x0 && x <= x1) {
-      const t = (x - x0) / (x1 - x0);
-      return y0 + t * (y1 - y0);
-    }
-  }
-  return last[1];
-}
+const PEAK = { male: 48, female: 38 }; // VO2max mediano aos 25 (Cooper/ACSM/FRIEND, população geral)
+const DECLINE = 0.90;                  // ~10% por década
+const REF_AGE = 25;
 
 export function normVO2(age, sex) {
-  const pts = HUNT_NORMS[sex] || HUNT_NORMS.male;
-  return interp(pts, age);
+  const peak = PEAK[sex] || PEAK.male;
+  return peak * Math.pow(DECLINE, (age - REF_AGE) / 10);
 }
 
 export function fitnessAgeFromVO2(vo2, sex) {
-  const lo = 20, hi = 90;
-  if (vo2 >= normVO2(lo, sex)) return lo;
-  if (vo2 <= normVO2(hi, sex)) return hi;
-  let a = lo, b = hi;
-  for (let i = 0; i < 40; i++) {
-    const m = (a + b) / 2;
-    if (normVO2(m, sex) > vo2) a = m;
-    else b = m;
-  }
-  return Math.round((a + b) / 2);
+  const peak = PEAK[sex] || PEAK.male;
+  const age = REF_AGE + (10 * Math.log(vo2 / peak)) / Math.log(DECLINE);
+  return Math.round(Math.max(20, Math.min(90, age)));
 }
 
 export function estimateHRmax(age) {
@@ -63,15 +44,6 @@ export function ageFromBirthYear(birthYear, now = new Date()) {
   return now.getFullYear() - Number(birthYear);
 }
 
-/**
- * @param {Object} args
- * @param {Object}   args.profile        { birth_year, sex, height_cm, waist_cm }
- * @param {number[]} args.restingHRs     FC de repouso (bpm)
- * @param {number|null} args.observedHRmax  maior FC observada em treinos
- * @param {number|null} args.maxHrPref   FC máxima pessoal salva em Configurações (prefs.max_hr)
- * @param {number|null} args.vo2maxManual VO2max informado pelo usuário (Zepp/relógio)
- * @param {Object|null} args.activity    { sessions, minutes } nos últimos 28 dias
- */
 export function computeFitnessAge({
   profile,
   restingHRs = [],
@@ -99,11 +71,9 @@ export function computeFitnessAge({
   const manual = Number(vo2maxManual);
 
   if (Number.isFinite(manual) && manual >= 15 && manual <= 80) {
-    // 1) VO2max informado
     vo2 = manual;
     vo2Source = 'informado por você (Zepp/relógio)';
   } else {
-    // Precisa de FC de repouso para os métodos por FC.
     if (!hrRest) return { ok: false, reason: 'data', missing: ['resting_hr'] };
 
     const pref = Number(maxHrPref);
@@ -132,7 +102,6 @@ export function computeFitnessAge({
     };
   }
 
-  // Confiança
   let confidence = 'média';
   if (vo2Source.startsWith('informado')) confidence = 'boa';
   else if ((hrMaxSource || '').match(/FC máxima|observada/) && sample.length >= 7) confidence = 'boa';
@@ -147,9 +116,7 @@ export function computeFitnessAge({
     fitnessAge,
     deltaYears,
     inputs: {
-      hrRest,
-      hrMax,
-      hrMaxSource,
+      hrRest, hrMax, hrMaxSource,
       restingSamples: sample.length,
       activity,
       waist: profile.waist_cm ? Number(profile.waist_cm) : null,
