@@ -209,7 +209,7 @@ export default function AddTrainingModal({
         const morningRecovery =
           checkin.morning_recovery_score || checkin.recovery_score || 70;
 
-        const sleepNeed = calculateSleepNeed(totalStrain, morningRecovery);
+        const sleepNeed = calculateSleepNeed(totalStrain, morningRecovery, recentCheckins);
 
         const nonTodayRecentCheckins = [...recentCheckins]
           .filter((c) => c.id !== checkin.id)
