@@ -174,9 +174,10 @@ export function calculateBodyState(morningRecovery, accumulatedStrain) {
   const strain100 = strainTo100(strain);
 
   if (strain <= 0) {
+    // Sem carga acumulada, o estado reflete só a recuperação.
+    // "Loaded" pressupõe carga — não faz sentido com strain 0.
     if (recovery >= 80) return 'Recovered';
-    if (recovery >= 65) return 'Balanced';
-    if (recovery >= 50) return 'Loaded';
+    if (recovery >= 50) return 'Balanced';
     return 'Fatigued';
   }
 
@@ -195,14 +196,17 @@ export function calculateBodyState(morningRecovery, accumulatedStrain) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function calculateRemainingCapacity(morningRecovery, accumulatedStrain) {
-  const recovery = clamp(safeNumber(morningRecovery, 0), 1, 100);
+  const recovery = clamp(safeNumber(morningRecovery, 0), 0, 100);
   const strain100 = strainTo100(accumulatedStrain || 0);
 
-  const usedPct = (strain100 / recovery) * 100;
+  // Capacidade = margem ABSOLUTA restante (recuperação da manhã − carga já usada),
+  // não só a % usada. Assim uma manhã de recuperação baixa não aparece como "Alta"
+  // com strain 0 — fica coerente com o estado do corpo e com o veredito do dia.
+  const remaining = recovery - strain100;
 
-  if (usedPct < 30) return 'High';
-  if (usedPct < 60) return 'Moderate';
-  if (usedPct < 85) return 'Low';
+  if (remaining >= 70) return 'High';
+  if (remaining >= 50) return 'Moderate';
+  if (remaining >= 30) return 'Low';
   return 'Minimal';
 }
 
