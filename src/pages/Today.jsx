@@ -764,7 +764,7 @@ const BODY_STATE_META = {
   Loaded: {
     emoji: '🟠',
     tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
-    short: 'Carga presente, margem menor',
+    short: 'Margem menor — recuperação parcial',
   },
   Sympathetic_Load: {
     emoji: '🌩️',
