@@ -469,7 +469,7 @@ export default function Today() {
   const liveBodyState = checkin ? calculateBodyState(morningRecovery, totalStrain) : null;
   const liveCapacity = checkin ? calculateRemainingCapacity(morningRecovery, totalStrain) : null;
   const liveRecoveryDemand = checkin ? calculateRecoveryDemand(totalStrain, morningRecovery) : null;
-  const liveSleepNeed = checkin ? calculateSleepNeed(totalStrain, morningRecovery) : null;
+  const liveSleepNeed = checkin ? calculateSleepNeed(totalStrain, morningRecovery, sortedCheckins.filter((c) => c.date !== today)) : null;
 
   const enrichedCheckin = checkin
     ? {
