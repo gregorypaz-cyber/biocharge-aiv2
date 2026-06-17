@@ -793,21 +793,31 @@ const AUTONOMIC_PT = {
     parasympathetic: {
       emoji: '🟢',
       tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-      short: 'Seu corpo está descansando e se recuperando bem.',
-      detail: 'Sistema nervoso em predomínio de recuperação (parassimpático). Quanto menor o índice Baevsky, mais relaxado o corpo está.',
+      short: 'Sistema nervoso relaxado e em recuperação.',
+      action: 'Boa janela para treinar com qualidade, se a recuperação acompanhar.',
+      detail: 'Predomínio parassimpático (recuperação). Índice Baevsky mais baixo = corpo mais relaxado.',
     },
     balanced: {
       emoji: '🟡',
       tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
-      short: 'Sistema estável — nem muito alerta, nem totalmente relaxado.',
-      detail: 'Equilíbrio entre ativação e recuperação do sistema nervoso.',
+      short: 'Ativação e recuperação em equilíbrio.',
+      action: 'Sem sinal de estresse autonômico — siga a leitura de recuperação do dia.',
+      detail: 'Equilíbrio entre ativação (simpático) e recuperação (parassimpático) do sistema nervoso.',
     },
     sympathetic: {
       emoji: '🔴',
       tone: 'bg-red-500/10 border-red-500/20 text-red-300',
-      short: 'Seu corpo está sob tensão/estresse e não relaxou totalmente.',
-      detail: 'Sistema nervoso em predomínio de alerta (simpático) — carga ou estresse elevados. Índice Baevsky mais alto = mais ativação.',
+      short: 'Sistema nervoso mais ativado (alerta) que o ideal.',
+      action: 'Pesa a favor de manter leve hoje e priorizar sono, respiração e relaxamento — evitar intensidade alta.',
+      detail: 'Predomínio simpático (alerta) — carga acumulada, estresse ou sono insuficiente. Índice Baevsky mais alto = mais ativação.',
     },
+  };
+
+  const baevskyContext = (si, key) => {
+    if (si == null) return '';
+    if (key === 'sympathetic') return si < 70 ? 'logo acima do limiar de alerta (60)' : si < 85 ? 'alerta moderado' : 'alerta alto';
+    if (key === 'parasympathetic') return si < 15 ? 'bem relaxado' : 'relaxado';
+    return 'na faixa de equilíbrio';
   };
 
   const CAPACITY_PT = {
@@ -1573,6 +1583,14 @@ function ExecutionCard() {
           (() => {
             const autoKey = enrichedCheckin.autonomic_state;
             const autoMeta = AUTONOMIC_META[autoKey] || AUTONOMIC_META.balanced;
+            const si = enrichedCheckin.baevsky_si;
+            const positiveState = ['Recovered', 'Balanced', 'Activated'].includes(
+              enrichedCheckin.current_body_state
+            );
+            const bridge =
+              autoKey === 'sympathetic' && positiveState
+                ? 'Você tem margem de carga (estado equilibrado), mas o sistema nervoso ainda está em alerta — por isso o dia pede controle, não intensidade.'
+                : null;
 
             return (
               <div className={cn('rounded-xl border px-3 py-3 space-y-2', autoMeta.tone)}>
@@ -1580,20 +1598,28 @@ function ExecutionCard() {
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
                     Modo do corpo
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm leading-none">{autoMeta.emoji}</span>
-                    <p className="text-sm font-semibold">
-                      {AUTONOMIC_PT[autoKey]}
-                    </p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm leading-none">{autoMeta.emoji}</span>
+                      <p className="text-sm font-semibold">{AUTONOMIC_PT[autoKey]}</p>
+                    </div>
+                    <span className="text-[10px] font-mono font-semibold opacity-90">
+                      Baevsky {si}/100
+                    </span>
                   </div>
-                  <p className="text-[11px] mt-1 opacity-90">
-                    {autoMeta.short}
-                  </p>
+                  <p className="text-[11px] mt-1 opacity-90">{autoMeta.short}</p>
+                  <p className="text-[10px] mt-0.5 opacity-70">{baevskyContext(si, autoKey)}</p>
                 </div>
 
-                <CollapsibleHint>
-                  {autoMeta.detail} (índice Baevsky: {enrichedCheckin.baevsky_si})
-                </CollapsibleHint>
+                <p className="text-[11px] leading-relaxed font-medium">
+                  → {autoMeta.action}
+                </p>
+
+                {bridge && (
+                  <p className="text-[11px] leading-relaxed opacity-80">{bridge}</p>
+                )}
+
+                <CollapsibleHint>{autoMeta.detail}</CollapsibleHint>
               </div>
             );
           })()}
