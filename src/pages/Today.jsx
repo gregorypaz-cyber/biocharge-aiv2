@@ -678,11 +678,19 @@ const hrvTrend = useMemo(() => {
   displayedScore >= 65 ? 'Moderada' :
   'Baixa';
 
+  // Alvo de strain ALINHADO à decisão do dia (decision_mode), pra o anel não
+  // contradizer o título (ex.: "manter leve" não mostrar alvo de treino moderado).
+  // Sem decisão salva, cai para os tiers por prontidão.
+  const verdictMode = enrichedCheckin?.decision_mode || null;
   const strainTarget =
-    prescriptionScore >= personalHigh ? 16 :
-    prescriptionScore >= 65 ? 13 :
-    prescriptionScore >= 50 ? 10 :
-    7;
+    verdictMode === 'train_high' ? 15 :
+    verdictMode === 'train_moderate' ? 12 :
+    verdictMode === 'train_light' ? 9 :
+    verdictMode === 'recover' ? 6 :
+    (prescriptionScore >= personalHigh ? 16 :
+     prescriptionScore >= 65 ? 13 :
+     prescriptionScore >= 50 ? 10 :
+     7);
 
   const cappedStrain = Math.min(21, totalStrain);
 
