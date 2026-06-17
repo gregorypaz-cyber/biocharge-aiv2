@@ -61,10 +61,15 @@ export function computeLongevityTrend({
 
     let observedHRmax = null;
     const activity = { sessions: 0, minutes: 0 };
+    // FCmax observada pode vir de qualquer fonte (treino ou workout do device)...
     sessions.forEach((s) => {
       const t = toTime(s.date);
       const hm = s.heart_rate_max ?? s.max_heart_rate;
       if (typeof hm === 'number' && !isNaN(t) && t <= anchor) observedHRmax = Math.max(observedHRmax || 0, hm);
+    });
+    // ...mas ATIVIDADE conta só do TrainingSession (fonte única -> sem duplicar minutos).
+    trainings.forEach((s) => {
+      const t = toTime(s.date);
       if (!isNaN(t) && t <= anchor && t >= act28) { activity.sessions += 1; activity.minutes += s.duration_minutes || 0; }
     });
     if (observedHRmax && observedHRmax > 215) observedHRmax = null;
