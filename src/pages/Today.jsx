@@ -26,6 +26,7 @@ import CurrentStateCard from '@/components/today/CurrentStateCard';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutLoggedState from '@/components/today/WorkoutLoggedState';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
+import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardingCard';
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
@@ -1731,6 +1732,8 @@ if (isLoading) {
         </motion.div>
       )}
 
+      <LongevityOnboardingCard />
+      
       {orderedPrimaryCards.map((desc) => renderCard(desc))}
 
       {!shouldHideTomorrowHook && <TomorrowHookCard hook={tomorrowHook} />}
