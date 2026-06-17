@@ -57,10 +57,11 @@ export default function BodyAgeCard() {
             });
           } catch (e) { /* segue */ }
           try {
+            // WorkoutSession é só leitura (espelho do device) -> usamos apenas p/ FCmax,
+            // NUNCA para somar atividade (evita duplicar minutos já contados no TrainingSession).
             const ws = await base44.entities.WorkoutSession.filter({ created_by: email }, '-date', 100);
             (ws || []).forEach((s) => {
               if (typeof s.max_heart_rate === 'number') observedHRmax = Math.max(observedHRmax || 0, s.max_heart_rate);
-              if (within(s.date)) { activity.sessions += 1; activity.minutes += s.duration_minutes || 0; }
             });
           } catch (e) { /* segue */ }
         }
