@@ -226,19 +226,44 @@ export function calculateRecoveryDemand(accumulatedStrain, morningRecovery) {
 // Sleep need
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function calculateSleepNeed(accumulatedStrain, morningRecovery) {
+export function calculateSleepNeed(accumulatedStrain, morningRecovery, recentCheckins = []) {
   const strain = clamp(safeNumber(accumulatedStrain, 0), 0, 21);
   const recovery = clamp(safeNumber(morningRecovery, 0), 0, 100);
 
-  let base = 7.5;
+  // 1) Baseline PESSOAL: sono médio nos dias de boa recuperação (top tercil do histórico).
+  //    Ancora na realidade do usuário; default científico (7.5h) se faltam dados.
+  let personal = 7.5;
+  let achievable = null;
+  const pairs = (recentCheckins || [])
+    .map((c) => ({
+      s: safeNumber(c.sleep_hours, 0),
+      r: safeNumber(c.recovery_score ?? c.morning_recovery_score, 0),
+    }))
+    .filter((p) => p.s >= 4 && p.s <= 12 && p.r > 0);
 
-  if (recovery < 60) base += 1.0;
-  if (recovery < 50) base += 0.5;
+  if (pairs.length >= 8) {
+    const recos = pairs.map((p) => p.r).sort((a, b) => a - b);
+    const thr = recos[Math.floor(recos.length * 0.66)];
+    const good = pairs.filter((p) => p.r >= thr).map((p) => p.s);
+    if (good.length >= 3) personal = good.reduce((a, b) => a + b, 0) / good.length;
+    const sl = pairs.map((p) => p.s).sort((a, b) => a - b);
+    achievable = sl[Math.floor(sl.length * 0.85)]; // teto realista = o que ele consegue dormir
+  }
 
-  if (strain > 12) base += 0.5;
-  if (strain > 16) base += 0.5;
+  // 2) Ajustes do dia: recuperação baixa / carga alta / débito (vs SUA baseline) pedem +sono.
+  let need = personal;
+  if (recovery < 55) need += 0.5;
+  if (strain > 14) need += 0.5;
+  const deficit = (recentCheckins || [])
+    .slice(0, 7)
+    .reduce((sum, c) => sum + Math.max(0, personal - safeNumber(c.sleep_hours, personal)), 0);
+  if (deficit > 4) need += 0.5;
 
-  return Math.min(10, Math.round(base * 2) / 2);
+  // 3) Piso de saúde (7h, mínimo adulto) e teto realista (o que ele consegue + 0,5h; nunca > 9h).
+  const ceiling = Math.min(9, Math.max(7.5, (achievable ?? 8) + 0.5));
+  need = Math.max(7, Math.min(ceiling, need));
+
+  return Math.round(need * 2) / 2; // passos de 0,5h
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
