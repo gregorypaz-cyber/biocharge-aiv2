@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sparkles, ArrowRight } from 'lucide-react';
+import { Moon } from 'lucide-react';
 
+// "Missão da noite": meta de sono PERSONALIZADA + débito.
+// A previsão de amanhã (next_day_forecast) NÃO é mostrada aqui de propósito —
+// ela já aparece no hero "Prévia de amanhã" (evita o texto duplicado).
 export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
   const sleepNeed = checkin?.sleep_need_tonight;
-  const forecast = checkin?.next_day_forecast;
 
-  if (!sleepNeed && !forecast && !(sleepDebt >= 2)) return null;
+  if (!sleepNeed && !(sleepDebt >= 2)) return null;
 
   return (
     <motion.div
@@ -38,7 +40,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
               Meta de sono para hoje
             </p>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Esta é a dose de recuperação sugerida com base na carga acumulada e na leitura da manhã.
+              Ajustada ao seu histórico: a faixa em que você costuma recuperar melhor, com um piso de saúde e um teto realista pra sua rotina.
             </p>
           </div>
         </div>
@@ -50,28 +52,6 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
           <p className="text-xs text-amber-300/90">
             Débito de sono: <span className="font-semibold">~{Math.round(sleepDebt)}h</span> nos últimos 7 dias{sleepDebt >= 4 ? ' — vale priorizar sono nos próximos dias.' : '.'}
           </p>
-        </div>
-      ) : null}
-
-      {forecast ? (
-        <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-3 space-y-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-            <p className="text-xs font-semibold text-amber-400">
-              Amanhã cedo
-            </p>
-          </div>
-
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {forecast}
-          </p>
-
-          <div className="flex items-start gap-2 pt-1">
-            <ArrowRight className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              A leitura de amanhã ainda depende do sono desta noite, stress e carga restante do dia.
-            </p>
-          </div>
         </div>
       ) : null}
     </motion.div>
