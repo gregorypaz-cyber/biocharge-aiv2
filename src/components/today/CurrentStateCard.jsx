@@ -78,32 +78,28 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
         </div>
       </div>
 
-      {/* Recovery demand vs morning recovery */}
+      {/* Margem do dia: base da manhã vs demanda acumulada (mesma escala 0–100) */}
       <div className="space-y-2">
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>
-            Base da manhã: <b className="text-foreground">{morningRecovery}</b>
-          </span>
-          <span>
-            Demanda atual: <b className="text-foreground">{recoveryDemand}</b>
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs text-muted-foreground">Margem de hoje</span>
+          <span className="text-sm">
+            <b className="text-foreground">{Math.max(0, morningRecovery - recoveryDemand)}</b>
+            <span className="text-muted-foreground"> · base {morningRecovery} − demanda {recoveryDemand}</span>
           </span>
         </div>
 
-        <div className="h-2.5 rounded-full bg-secondary overflow-hidden relative">
+        {/* Uma barra 0–100: verde = base da manhã; marcador branco = demanda do dia. */}
+        <div className="relative h-2.5 rounded-full bg-secondary overflow-hidden">
           <div
-            className="h-full rounded-full transition-all duration-700"
+            className="absolute inset-y-0 left-0 transition-all duration-700"
             style={{
               width: `${Math.min(100, morningRecovery)}%`,
-              background: 'hsl(142,70%,50%)',
+              background: exceedsCapacity ? 'hsl(0,75%,58%)' : 'hsl(142,70%,50%)',
             }}
           />
           <div
-            className="h-full rounded-full absolute top-0 left-0 transition-all duration-700"
-            style={{
-              width: `${demandPct}%`,
-              background: recoveryDemand > morningRecovery ? '#ef4444' : '#eab308',
-              opacity: 0.65,
-            }}
+            className="absolute inset-y-0 w-[2px] bg-white/85 transition-all duration-700"
+            style={{ left: `${demandPct}%` }}
           />
         </div>
 
