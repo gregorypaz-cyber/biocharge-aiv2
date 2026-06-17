@@ -1,4 +1,5 @@
 import { calculateSleepDebt } from './physiological-engine.js';
+import { calculateSleepNeed } from './training-impact-engine.js';
 
 // ─── Recovery & Score Engine ───────────────────────────────────────────────
 
@@ -927,23 +928,8 @@ export function calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions)
 // ─── Sleep Need & Forecast ────────────────────────────────────────────────
 
 export function calcSleepNeedTonight(recoveryScore, strainAccumulated, recentCheckins) {
-  let base = 7.5;
-
-  if ((recoveryScore ?? 0) < 60) base += 1.0;
-  if ((strainAccumulated || 0) > 12) base += 0.5;
-
-  if (recentCheckins && recentCheckins.length >= 3) {
-    const sleepDeficit = recentCheckins.slice(0, 7).reduce((sum, c) => {
-      const h = c.sleep_hours || 0;
-      return sum + Math.max(0, 7.5 - h);
-    }, 0);
-
-    if (sleepDeficit > 3) base += 0.5;
-  }
-
-  // Teto realista: a rotina (acordar 6h) limita ~7.5-8h. Nunca sugerir meta
-  // inalcançável (9-10h) — vira frustração, não ação.
-  return Math.min(8, Math.round(base * 2) / 2);
+  // Fonte única: delega para calculateSleepNeed (personalizada + científica).
+  return calculateSleepNeed(strainAccumulated, recoveryScore, recentCheckins);
 }
 
 export function calcNextDayForecast(checkinLike, recentCheckins = []) {
