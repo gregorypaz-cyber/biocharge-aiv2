@@ -1539,7 +1539,6 @@ function ExecutionCard() {
         {enrichedCheckin.current_body_state &&
           BODY_STATE_PT[enrichedCheckin.current_body_state] && (() => {
             const stateKey = enrichedCheckin.current_body_state;
-            const stateKey = enrichedCheckin.current_body_state;
             const meta = BODY_STATE_META[stateKey] || BODY_STATE_META.Balanced;
             const rec = enrichedCheckin.morning_recovery_score ?? enrichedCheckin.recovery_score ?? null;
             const strain = enrichedCheckin.daily_strain_accumulated ?? 0;
