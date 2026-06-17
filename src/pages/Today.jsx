@@ -758,7 +758,7 @@ const BODY_STATE_META = {
   },
   Balanced: {
     emoji: '⚖️',
-    tone: 'bg-primary/10 border-primary/10 text-foreground',
+    tone: 'bg-secondary/50 border-border text-foreground',
     short: 'Estado estável e sustentável',
   },
   Loaded: {
@@ -1539,7 +1539,10 @@ function ExecutionCard() {
         {enrichedCheckin.current_body_state &&
           BODY_STATE_PT[enrichedCheckin.current_body_state] && (() => {
             const stateKey = enrichedCheckin.current_body_state;
+            const stateKey = enrichedCheckin.current_body_state;
             const meta = BODY_STATE_META[stateKey] || BODY_STATE_META.Balanced;
+            const rec = enrichedCheckin.morning_recovery_score ?? enrichedCheckin.recovery_score ?? null;
+            const strain = enrichedCheckin.daily_strain_accumulated ?? 0;
 
             return (
               <div className={cn('rounded-xl border px-3 py-3 space-y-2', meta.tone)}>
@@ -1572,7 +1575,17 @@ function ExecutionCard() {
                     )}
                 </div>
 
-                <CollapsibleHint>{BODY_STATE_HINT[stateKey]}</CollapsibleHint>
+                {/* Contexto numérico que faltava */}
+                <p className="text-[11px] opacity-75">
+                  {rec != null ? <>Recuperação <b className="opacity-100">{rec}</b> · </> : null}
+                  strain <b className="opacity-100">{strain}/21</b>
+                  {strain <= 0 ? ' (sem carga de treino)' : ''}
+                </p>
+
+                {/* Antes escondido no "Entender" — é a orientação do dia, sempre visível agora */}
+                {BODY_STATE_HINT[stateKey] && (
+                  <p className="text-[11px] opacity-75">→ {BODY_STATE_HINT[stateKey]}</p>
+                )}
               </div>
             );
           })()}
@@ -1582,8 +1595,13 @@ function ExecutionCard() {
           AUTONOMIC_PT[enrichedCheckin.autonomic_state] &&
           (() => {
             const autoKey = enrichedCheckin.autonomic_state;
-            const autoMeta = AUTONOMIC_META[autoKey] || AUTONOMIC_META.balanced;
+            const baseMeta = AUTONOMIC_META[autoKey] || AUTONOMIC_META.balanced;
             const si = enrichedCheckin.baevsky_si;
+            // Cor graduada: alerta logo acima do limiar (60–69) é laranja, não vermelho cheio.
+            const autoMeta =
+              autoKey === 'sympathetic' && si != null && si < 70
+                ? { ...baseMeta, tone: 'bg-orange-500/10 border-orange-500/20 text-orange-300', emoji: '🟠' }
+                : baseMeta;
             const positiveState = ['Recovered', 'Balanced', 'Activated'].includes(
               enrichedCheckin.current_body_state
             );
