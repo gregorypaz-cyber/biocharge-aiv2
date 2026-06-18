@@ -1,5 +1,6 @@
 import { calculateSleepDebt } from './physiological-engine.js';
 import { calculateSleepNeed } from './training-impact-engine.js';
+import * as RC from './physio-constants.js';
 
 // ─── Recovery & Score Engine ───────────────────────────────────────────────
 
@@ -339,34 +340,101 @@ export function getDayScore(checkin) {
   return checkin.recovery_score ?? checkin.morning_recovery_score ?? null;
 }
 
+// ─── Recovery v3 — baseline EWMA winsorizado + z relativo ao próprio ─────────
+// Migra de curvas absolutas → z contra o baseline pessoal. Validado em dados
+// reais (jun/2026, B-final): seu normal (z=0) → 64. Zonas recalibradas (70/42).
+
+function _blLambda(hl) { return 1 - Math.pow(0.5, 1 / hl); }
+
+// Avança o estado EWMA com uma noite. Fora-de-faixa/null = segura (skip-and-hold);
+// outlier duro (>5σ, já semeado) é visto mas NÃO dobra o centro; Winsor clamp
+// (±3σ) impede uma noite de puxar o baseline; spread = EWMA do desvio absoluto.
+function _blUpdate(state, value, cfg) {
+  const lb = _blLambda(cfg.halfLifeB);
+  const ls = _blLambda(cfg.halfLifeS);
+  if (state == null) {
+    if (value != null && value >= cfg.min && value <= cfg.max) return { b: value, s: cfg.floorSpread, n: 1 };
+    return { b: (cfg.min + cfg.max) / 2, s: cfg.floorSpread, n: 0 };
+  }
+  if (value == null || value < cfg.min || value > cfg.max) return state;
+  if (state.n >= RC.BL_SEED_NIGHTS && Math.abs(value - state.b) > RC.BL_HARD_OUTLIER_K * state.s) return state;
+  if (state.n === 0) return { b: value, s: cfg.floorSpread, n: 1 };
+  const lo = state.b - RC.BL_WINSOR_K * state.s;
+  const hi = state.b + RC.BL_WINSOR_K * state.s;
+  const clamped = Math.max(lo, Math.min(hi, value));
+  const nb = lb * clamped + (1 - lb) * state.b;
+  const ns = Math.max(cfg.floorSpread, ls * Math.abs(value - nb) + (1 - ls) * state.s);
+  return { b: nb, s: ns, n: state.n + 1 };
+}
+
+// recentCheckins vem DESCENDENTE (mais novo 1º, sem o dia atual). Inverte p/
+// oldest→newest e dobra. Retorna {b, s, n} ou null.
+function _blFoldDesc(valuesDesc, cfg) {
+  let state = null;
+  for (let i = valuesDesc.length - 1; i >= 0; i--) state = _blUpdate(state, valuesDesc[i], cfg);
+  return state;
+}
+const _blUsable = (st) => st != null && st.n >= RC.BL_SEED_NIGHTS;
+const _robustZ = (v, st) => (v - st.b) / Math.max(RC.BL_SIGMA_FROM_SPREAD * st.s, 1e-9);
+
+// z de sono: score portável (calculateSleepScore) de HOJE contra a média/SD
+// pessoal dos dias ANTERIORES (causal, sem look-ahead). Floor de SD = 5.
+function _sleepZ(todayScore, recentCheckins) {
+  if (todayScore == null) return null;
+  const prior = (recentCheckins || []).map((c) => calculateSleepScore(c)).filter((v) => v != null);
+  if (prior.length < 4) return null;
+  const w = prior.slice(0, 14);
+  const m = w.reduce((a, b) => a + b, 0) / w.length;
+  const sd = Math.max(Math.sqrt(w.reduce((a, b) => a + (b - m) * (b - m), 0) / (w.length - 1)), 5);
+  return (todayScore - m) / sd;
+}
+
 export function calculateRecoveryScore(checkin, recentCheckins = []) {
-  const hrvScore = normalizeHrv(resolveHrvValue(checkin), recentCheckins);
-  const rhrScore = normalizeRhr(resolveCheckinField(checkin, 'resting_hr'), recentCheckins);
-  const sleepScore = calculateSleepScore(checkin); // sono já agregado aqui
-  const subjectiveScore = calculateSubjectiveScore(checkin); // como a pessoa se sente
+  // Baselines pessoais (excluem o dia atual; recentCheckins é descendente).
+  const hrvDesc = (recentCheckins || []).map((c) => resolveHrvValue(c)).filter((v) => v != null && v > 0);
+  const rhrDesc = (recentCheckins || []).map((c) => resolveCheckinField(c, 'resting_hr')).filter((v) => v != null && v > 0);
+  const hrvBl = _blFoldDesc(hrvDesc, RC.BL_HRV);
+  const rhrBl = _blFoldDesc(rhrDesc, RC.BL_RHR);
 
-  const weighted = [
-    { value: hrvScore, weight: 0.40 },        // autonômico — sinal dominante (confirmado vs Zepp r≈0,48)
-    { value: rhrScore, weight: 0.12 },        // cardiovascular de repouso
-    { value: sleepScore, weight: 0.33 },      // sono — bloco forte e validado (vs Zepp r=0,85)
-    { value: subjectiveScore, weight: 0.15 }, // subjetivo — ortogonal; reduzido (vs Zepp r≈−0,38), mantido p/ doença/stress
-  ];
+  const hrv = resolveHrvValue(checkin);
+  const rhr = resolveCheckinField(checkin, 'resting_hr');
 
-  let weightSum = 0;
-  let total = 0;
+  // Cold-start: HRV é o sinal dominante. Sem baseline de HRV utilizável → null
+  // (não inventa número). Só ocorre com < 4 noites de HRV no histórico.
+  if (!(_blUsable(hrvBl) && hrv != null && hrv > 0)) return null;
 
-  for (const item of weighted) {
-    if (item.value != null) {
-      total += item.value * item.weight;
-      weightSum += item.weight;
-    }
+  const zHrv = _robustZ(hrv, hrvBl);                                   // maior = melhor
+  const zRhr = (_blUsable(rhrBl) && rhr != null && rhr > 0)
+    ? (rhrBl.b - rhr) / Math.max(RC.BL_SIGMA_FROM_SPREAD * rhrBl.s, 1e-9) // menor = melhor
+    : null;
+  const zSono = _sleepZ(calculateSleepScore(checkin), recentCheckins);
+
+  // Composto ponderado (renormaliza se faltar termo).
+  const terms = [[zHrv, RC.REC_W_HRV]];
+  if (zRhr != null) terms.push([zRhr, RC.REC_W_RHR]);
+  if (zSono != null) terms.push([zSono, RC.REC_W_SONO]);
+  const wSum = terms.reduce((a, t) => a + t[1], 0);
+  const zComposite = terms.reduce((a, t) => a + t[0] * t[1], 0) / wSum;
+
+  // Logística ancorada: z=0 (seu normal) → 64.
+  let score = clamp(Math.round(100 / (1 + Math.exp(-RC.REC_LOGISTIC_K * (zComposite - RC.REC_LOGISTIC_Z0)))));
+
+  // Teto autonômico: sono bom NÃO resgata dia autonomicamente ruim.
+  const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
+  const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
+  if (autonZ <= RC.REC_CAP_HARD_AUTON) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
+  else if (autonZ <= RC.REC_CAP_NOGREEN_AUTON) score = Math.min(score, RC.REC_CAP_NOGREEN_CEIL);
+
+  // Override só-pra-baixo ("estou muito mal"): combinação subjetiva extrema só
+  // PUXA pra baixo, nunca levanta. Inerte no seu histórico (raramente dispara).
+  const energy = resolveCheckinField(checkin, 'energy');
+  const stress = resolveCheckinField(checkin, 'stress');
+  const soreness = resolveCheckinField(checkin, 'muscle_soreness');
+  if (energy != null && energy <= 1 && ((stress != null && stress >= 4) || (soreness != null && soreness >= 4))) {
+    score = Math.min(score, RC.REC_CAP_HARD_CEIL);
   }
 
-  if (weightSum <= 0) return 0;
-
-  // Renormaliza pelo peso disponível (ex.: se faltar HRV ou subjetivo num dia).
-  const raw = total / weightSum;
-  return clamp(Math.round(raw));
+  return score;
 }
 
 export function calculateSleepScore(checkin) {
@@ -523,9 +591,9 @@ export function calculateReadinessScore(checkin, recentCheckins = []) {
 export function getZone(recoveryScore) {
   const score = clamp(recoveryScore ?? 0);
 
-  // Mais conservador que WHOOP oficial porque aqui os dados são majoritariamente manuais.
-  if (score >= 75) return 'green';
-  if (score >= 55) return 'yellow';
+  // Zonas recalibradas p/ a escala v3 (z relativo ao próprio; seu normal = 64).
+  if (score >= RC.ZONE_GREEN_MIN) return 'green';   // ≥70 : acima do seu normal
+  if (score >= RC.ZONE_YELLOW_MIN) return 'yellow'; // ≥42 : em torno/abaixo do normal
   return 'red';
 }
 
