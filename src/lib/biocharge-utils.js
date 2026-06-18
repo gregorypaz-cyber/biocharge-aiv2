@@ -44,10 +44,7 @@ function resolveHrvValue(checkin) {
 }
 
 
-function normalizeMoodOrEnergy(v) {
-  if (v == null) return null;
-  return clamp((Number(v) / 5) * 100);
-}
+
 
 function normalizeDeepSleep(deepSleepPct) {
   if (deepSleepPct == null) return null;
@@ -140,60 +137,7 @@ function getRecentRhrBaseline(recentCheckins = []) {
   return _driftProtectedBaseline(shortValues, longValues, true);
 }
 
-// Curva logística suave: mapeia um desvio (em "unidades de escala") para 0..100,
-// centrada em 50. Substitui as escadas de if/else por uma transição contínua,
-// então valores próximos não caem no mesmo degrau.
-//   center = ponto neutro (retorna 50)
-//   scale  = quão rápido a curva sobe/desce (maior = mais suave)
-//   k      = inclinação
-function logisticScore(value, { center = 0, scale = 10, k = 1 } = {}) {
-  const z = (Number(value) - center) / scale;
-  const s = 1 / (1 + Math.exp(-k * z));
-  return clamp(Math.round(s * 100));
-}
 
-function normalizeHrv(hrv, recentCheckins = []) {
-  if (hrv == null || hrv <= 0) return null;
-
-  const baseline = getRecentHrvBaseline(recentCheckins);
-
-  // COM baseline (caminho preferido, alinhado ao WHOOP e ao próprio Zepp:
-  // o que importa é o desvio do SEU normal, não o valor absoluto).
-  // deltaPct em torno de 0 => ~50; +20% => ~82; -20% => ~18. Contínuo.
-  if (baseline) {
-    const deltaPct = ((Number(hrv) - baseline) / baseline) * 100;
-    // Centro deslocado para -8%: estar NO seu normal já conta como recuperado
-    // (~65, não ~50), e bons dias alcançam o verde. Antes, ficar na média
-    // travava o score no meio e o verde virava quase inatingível.
-    return logisticScore(deltaPct, { center: -8, scale: 13, k: 1 });
-  }
-
-  // SEM baseline (primeiros dias): não há "seu normal" ainda, então caímos
-  // para valor absoluto via log-normalização (abordagem EliteHRV/RMSSD).
-  // ln(RMSSD) ~ [1.5 .. 5.5] para adultos; centramos em ~3.7 (RMSSD ~40ms).
-  const lnRmssd = Math.log(Number(hrv));
-  return logisticScore(lnRmssd, { center: 3.7, scale: 0.55, k: 1 });
-}
-
-function normalizeRhr(rhr, recentCheckins = []) {
-  if (rhr == null || rhr <= 0) return null;
-
-  const baseline = getRecentRhrBaseline(recentCheckins);
-
-  // COM baseline: RHR abaixo do seu normal = melhor recuperação.
-  // Invertemos o sinal do delta para que delta negativo (RHR menor) pontue alto.
-  // -8% => ~88; 0% => ~50; +8% => ~22. Contínuo.
-  if (baseline) {
-    const deltaPct = ((Number(rhr) - baseline) / baseline) * 100;
-    // Centro deslocado para -8% (mesmo princípio do HRV): estar no seu RHR
-    // normal já pontua como recuperado, tornando o verde alcançável em bons dias.
-    return logisticScore(-deltaPct, { center: -8, scale: 9.0, k: 1 });
-  }
-
-  // SEM baseline: valor absoluto. ~60bpm é neutro; mais baixo melhor.
-  // Sinal invertido para que RHR menor pontue mais alto.
-  return logisticScore(-(Number(rhr) - 60), { center: 0, scale: 9, k: 1 });
-}
 
 function getSleepHoursScore(hours) {
   // Curva centrada na META REALISTA do usuário (~7.5h): acorda 6h em dia útil
@@ -280,41 +224,7 @@ function getPreviewConfidenceReason(checkin, recentCheckins = []) {
   return 'Faltam HRV e/ou FC de repouso. Esta leitura está mais apoiada em percepção e sono informado.';
 }
 
-// Score subjetivo (como a pessoa se sente) — energia, humor, stress, dor.
-// A literatura (Rothschild 2024; Aschwanden) aponta o estado subjetivo como
-// o melhor preditor isolado do recovery percebido. Energia e humor entram
-// direto (5=bom); stress e dor são INVERTIDOS (1=bom, 5=ruim).
-function calculateSubjectiveScore(checkin) {
-  const energyRaw = resolveCheckinField(checkin, 'energy');
-  const moodRaw = resolveCheckinField(checkin, 'mood');
-  const stressRaw = resolveCheckinField(checkin, 'stress');
-  const sorenessRaw = resolveCheckinField(checkin, 'muscle_soreness');
 
-  const energy = energyRaw != null ? clamp((Number(energyRaw) / 5) * 100) : null;
-  const mood = moodRaw != null ? clamp((Number(moodRaw) / 5) * 100) : null;
-  // Invertidos: stress/dor altos REDUZEM o score.
-  const stress = stressRaw != null ? clamp(((5 - Number(stressRaw)) / 4) * 100) : null;
-  const soreness = sorenessRaw != null ? clamp(((5 - Number(sorenessRaw)) / 4) * 100) : null;
-
-  const weighted = [
-    { value: energy, weight: 0.30 },
-    { value: mood, weight: 0.20 },
-    { value: stress, weight: 0.25 },
-    { value: soreness, weight: 0.25 },
-  ];
-
-  let total = 0;
-  let weightSum = 0;
-  for (const item of weighted) {
-    if (item.value != null) {
-      total += item.value * item.weight;
-      weightSum += item.weight;
-    }
-  }
-
-  if (weightSum <= 0) return null;
-  return clamp(Math.round(total / weightSum));
-}
 
 // ─── Core scores ───────────────────────────────────────────────────────────
 
