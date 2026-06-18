@@ -253,7 +253,7 @@ const isRestDay = form.rest_day;
     const recentCheckins = [...checkins]
       .filter((c) => c.date !== form.date && c.id !== editData?.id)
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-      .slice(0, 14);
+      .slice(0, 90);
 
     const sortedSessions = [...allSessions].sort((a, b) =>
       String(b.date).localeCompare(String(a.date))
@@ -277,7 +277,7 @@ const saveMorningMutation = useMutation({
     const recentCheckins = [...checkins]
       .filter((c) => c.date !== payload.date)
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-      .slice(0, 14);
+      .slice(0, 90);
 
     const sortedSessions = [...allSessions].sort((a, b) =>
       String(b.date).localeCompare(String(a.date))
@@ -473,7 +473,7 @@ const savePostMutation = useMutation({
     const recentCheckins = [...checkins]
       .filter((c) => c.id !== existing.id)
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-      .slice(0, 14);
+      .slice(0, 90);
 
     const sortedSessions = [...allSessions].sort((a, b) =>
       String(b.date).localeCompare(String(a.date))

@@ -219,3 +219,7 @@ export const REC_CAP_HARD_CEIL     = 45;
 // Zonas — RECALIBRADAS para a nova escala (seu normal = 64)
 export const ZONE_GREEN_MIN  = 70; // ≥ : acima do seu normal
 export const ZONE_YELLOW_MIN = 42; // ≥ : em torno/abaixo do normal; < isto = vermelho
+
+// Janela de baseline (dias). Usada por TODOS os caminhos p/ o score ser idêntico
+// independentemente de onde é calculado (Today recomputa ao vivo; DailyCheckin salva).
+export const BL_WINDOW_NIGHTS = 90;

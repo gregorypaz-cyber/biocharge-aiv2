@@ -391,8 +391,11 @@ function _sleepZ(todayScore, recentCheckins) {
 
 export function calculateRecoveryScore(checkin, recentCheckins = []) {
   // Baselines pessoais (excluem o dia atual; recentCheckins é descendente).
-  const hrvDesc = (recentCheckins || []).map((c) => resolveHrvValue(c)).filter((v) => v != null && v > 0);
-  const rhrDesc = (recentCheckins || []).map((c) => resolveCheckinField(c, 'resting_hr')).filter((v) => v != null && v > 0);
+  // Janela de baseline FIXA: usa no máx. BL_WINDOW_NIGHTS dias mais recentes,
+  // independentemente de quantos o chamador passar (evita score path-dependent).
+  const blWindow = (recentCheckins || []).slice(0, RC.BL_WINDOW_NIGHTS);
+  const hrvDesc = blWindow.map((c) => resolveHrvValue(c)).filter((v) => v != null && v > 0);
+  const rhrDesc = blWindow.map((c) => resolveCheckinField(c, 'resting_hr')).filter((v) => v != null && v > 0);
   const hrvBl = _blFoldDesc(hrvDesc, RC.BL_HRV);
   const rhrBl = _blFoldDesc(rhrDesc, RC.BL_RHR);
 
