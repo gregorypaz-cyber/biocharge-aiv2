@@ -1336,9 +1336,8 @@ function CollapsibleHint({ children, label = 'Entender' }) {
 function ExecutionCard() {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
 
-  const recoveryColor = isRestMode
-    ? 'hsl(215,30%,55%)'
-    : displayedScore >= personalHigh
+  const recoveryColor =
+    displayedScore >= personalHigh
     ? 'hsl(142,70%,50%)'
     : displayedScore >= 55
     ? 'hsl(45,93%,58%)'
