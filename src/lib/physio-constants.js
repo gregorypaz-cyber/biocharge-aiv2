@@ -189,3 +189,33 @@ export const PERF_WINDOW_MIN_PER_PERIOD = 2;
 export const PERF_WINDOW_MIN_PERIODS = 2;
 /** Sessions ≥ this → confidence: Alta */
 export const PERF_WINDOW_HIGH_CONFIDENCE_COUNT = 5;
+
+// ── Recovery v3 — baseline EWMA winsorizado + z-score (relativo ao próprio) ──
+// Migra o recovery de curvas absolutas para z contra o baseline pessoal.
+// Validado em dados reais (jun/2026): "seu normal" (z=0) → 64.
+
+// Baseline EWMA winsorizado (por métrica)
+export const BL_HRV = { min: 5,  max: 250, floorSpread: 5.0, halfLifeB: 14, halfLifeS: 21 };
+export const BL_RHR = { min: 30, max: 120, floorSpread: 2.0, halfLifeB: 14, halfLifeS: 21 };
+export const BL_SEED_NIGHTS  = 4;     // < isto: calibrando (sem score)
+export const BL_TRUST_NIGHTS = 14;    // ≥ isto: baseline confiável
+export const BL_WINSOR_K        = 3.0; // dobra só dentro de ±3σ
+export const BL_HARD_OUTLIER_K  = 5.0; // > 5σ: noite vista, NÃO dobrada
+export const BL_SIGMA_FROM_SPREAD = 1.253; // σ ≈ 1.253 × spread (EWMA abs-dev → Gaussiana)
+
+// Composto de recovery (z ponderado) + logística
+export const REC_W_HRV  = 0.50;
+export const REC_W_RHR  = 0.20;
+export const REC_W_SONO = 0.30;
+export const REC_LOGISTIC_K  = 1.6;
+export const REC_LOGISTIC_Z0 = -0.36; // âncora: z=0 (seu normal) → 64
+
+// Teto autonômico: sono bom NÃO resgata dia autonomicamente ruim
+export const REC_CAP_NOGREEN_AUTON = -0.8; // auton z ≤ isto → sem verde
+export const REC_CAP_HARD_AUTON    = -1.5; // auton z ≤ isto → teto duro
+export const REC_CAP_NOGREEN_CEIL  = 66;
+export const REC_CAP_HARD_CEIL     = 45;
+
+// Zonas — RECALIBRADAS para a nova escala (seu normal = 64)
+export const ZONE_GREEN_MIN  = 70; // ≥ : acima do seu normal
+export const ZONE_YELLOW_MIN = 42; // ≥ : em torno/abaixo do normal; < isto = vermelho
