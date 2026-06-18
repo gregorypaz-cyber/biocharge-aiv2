@@ -1255,7 +1255,7 @@ const baevsky = calculateBaevskyProxy(
     baevsky_si: baevsky.si_proxy,
     autonomic_state: baevsky.autonomic_state,
     preview_confidence: previewConfidence,
-    preview_confidence_reason: previewConfidenceReason,
+    preview_confidence_reason: JSON.stringify({ n: (recentCheckins || []).length, hrv: (recentCheckins || []).slice(0, 15).map((c) => c?.hrv_manual ?? c?.hrv ?? null), rhr: (recentCheckins || []).slice(0, 15).map((c) => c?.resting_hr ?? null), rec: recoveryScore }),
     delta_pre: deltaPre,
     delta_post: deltaPost,
     alert,
