@@ -386,7 +386,7 @@ export default function Today() {
   const { user } = useAuth();
   const today = getTodayLocal();
 
-  const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(30);
+  const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(90);
   const { data: allSessions = [], isLoading: loadingSessions } = useUserTrainingSessions(100);
 
   const sortedCheckins = useMemo(() => {

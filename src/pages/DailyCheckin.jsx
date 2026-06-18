@@ -172,7 +172,7 @@ export default function DailyCheckin() {
   const { user } = useAuth();
 
   // For post mode + delayed fatigue: fetch history
-  const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(30);
+  const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(90);
   const { data: allSessions = [] } = useUserTrainingSessions(100);
   const todayDate = getTodayLocal();
   const todayRecord = checkins.find(c => c.date === todayDate);
