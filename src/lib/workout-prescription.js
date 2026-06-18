@@ -89,7 +89,7 @@ export function buildWorkoutDecision(analysis, userPrefs = {}, context = {}) {
     };
   }
 
-  if (recovery >= (today.recovery_high_threshold ?? 80) && !sleepIsLimiting && trainingRisk !== 'high' && trainingRisk !== 'moderate') {
+  if (recovery >= (today.recovery_high_threshold ?? 74) && !sleepIsLimiting && trainingRisk !== 'high' && trainingRisk !== 'moderate') {
     return {
       mode: 'train_high',
       headline: 'Hoje é uma boa janela para intensidade',
@@ -519,7 +519,7 @@ function scoreOptions(options, analysis, userPrefs, adaptationHint, decision) {
       explain.push({ feature: 'protective_under_high_load', impact: +10 });
     }
 
-    if (recovery != null && recovery >= (analysis.today?.recovery_high_threshold ?? 80) && opt.key === 'A' && decision?.mode === 'train_high') {
+    if (recovery != null && recovery >= (analysis.today?.recovery_high_threshold ?? 74) && opt.key === 'A' && decision?.mode === 'train_high') {
       score += 10;
       explain.push({ feature: 'high_recovery_supports_A', impact: +10 });
     }

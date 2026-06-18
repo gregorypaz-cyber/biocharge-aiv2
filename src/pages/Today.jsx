@@ -326,7 +326,7 @@ if (canUseStoredDecision) {
       (checkin?.hrv && checkin.hrv > 0)) ||
     (checkin?.resting_hr && checkin.resting_hr > 0);
 
-if (prescriptionScore >= 82 && !sleepIsLimiting && !highLoad && hasPhysio) {
+if (prescriptionScore >= 74 && !sleepIsLimiting && !highLoad && hasPhysio) {
 
     return {
       mode: 'train_high',
@@ -338,7 +338,7 @@ if (prescriptionScore >= 82 && !sleepIsLimiting && !highLoad && hasPhysio) {
     };
   }
 
-  if (displayedScore >= 65) {
+  if (displayedScore >= 55) {
     if (sleepIsLimiting || highLoad) {
       return {
         mode: 'train_moderate',
@@ -360,7 +360,7 @@ if (prescriptionScore >= 82 && !sleepIsLimiting && !highLoad && hasPhysio) {
     };
   }
 
-  if (displayedScore >= 50) {
+  if (displayedScore >= 42) {
     return {
       mode: 'train_light',
       workoutIntensity: 'low',
@@ -672,10 +672,10 @@ const hrvTrend = useMemo(() => {
   const displayedScore = getDayScore(checkin) ?? 0;
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
-  const personalHigh = enrichedCheckin?.recovery_high_threshold ?? 80;
+  const personalHigh = enrichedCheckin?.recovery_high_threshold ?? 74;
   const readinessFaixa =
   displayedScore >= personalHigh ? 'Alta' :
-  displayedScore >= 65 ? 'Moderada' :
+  displayedScore >= 55 ? 'Moderada' :
   'Baixa';
 
   // Alvo de strain ALINHADO à decisão do dia (decision_mode), pra o anel não
@@ -688,8 +688,8 @@ const hrvTrend = useMemo(() => {
     verdictMode === 'train_light' ? 9 :
     verdictMode === 'recover' ? 6 :
     (prescriptionScore >= personalHigh ? 16 :
-     prescriptionScore >= 65 ? 13 :
-     prescriptionScore >= 50 ? 10 :
+     prescriptionScore >= 55 ? 13 :
+     prescriptionScore >= 42 ? 10 :
      7);
 
   const cappedStrain = Math.min(21, totalStrain);
@@ -1340,12 +1340,12 @@ function ExecutionCard() {
     ? 'hsl(215,30%,55%)'
     : displayedScore >= personalHigh
     ? 'hsl(142,70%,50%)'
-    : displayedScore >= 65
+    : displayedScore >= 55
     ? 'hsl(45,93%,58%)'
     : 'hsl(0,72%,55%)';
   const recoveryCaptionColor =
     displayedScore >= personalHigh ? 'text-emerald-400'
-    : displayedScore >= 65 ? 'text-yellow-400'
+    : displayedScore >= 55 ? 'text-yellow-400'
     : 'text-red-400';
 
   const sleepVal = enrichedCheckin?.sleep_score ?? enrichedCheckin?.sleep_quality ?? null;
@@ -1401,9 +1401,9 @@ function ExecutionCard() {
 
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              displayedScore >= 82
+              displayedScore >= 74
                 ? 'bg-emerald-500/15 text-emerald-400'
-                : displayedScore >= 65
+                : displayedScore >= 55
                 ? 'bg-yellow-500/15 text-yellow-400'
                 : 'bg-red-500/15 text-red-400'
             }`}
@@ -1517,7 +1517,7 @@ function ExecutionCard() {
           )}
 
         {/* Lembrete do gargalo pessoal nos dias de recuperação mais baixa */}
-        {displayedScore < 65 &&
+        {displayedScore < 55 &&
           analysis?.personalBottleneck?.hasSignal &&
           analysis.personalBottleneck.bottleneck && (() => {
             const b = analysis.personalBottleneck.bottleneck;

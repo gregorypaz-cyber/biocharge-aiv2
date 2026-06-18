@@ -602,12 +602,12 @@ export function getPersonalHighRecovery(recentCheckins = []) {
     .map((c) => Number(c?.recovery_score))
     .filter((v) => Number.isFinite(v) && v > 0)
     .sort((a, b) => a - b);
-  if (vals.length < 14) return 75;
+  if (vals.length < 14) return 74;
   const idx = Math.min(vals.length - 1, Math.max(0, Math.ceil(vals.length * 0.8) - 1));
-  return Math.round(Math.max(72, Math.min(85, vals[idx])));
+  return Math.round(Math.max(70, Math.min(78, vals[idx]))); // escala v3: p80 adaptativo, teto verde-forte
 }
 
-function getDailyMasterSignal(checkinLike, recoveryHighThreshold = 80) {
+function getDailyMasterSignal(checkinLike, recoveryHighThreshold = 74) {
   const recovery = clamp(checkinLike?.recovery_score ?? 0);
   const readiness = clamp(checkinLike?.readiness_score ?? recovery);
   const fatigue = clamp(checkinLike?.fatigue_score ?? checkinLike?.fatigue ?? 0);
@@ -627,8 +627,8 @@ function getDailyMasterSignal(checkinLike, recoveryHighThreshold = 80) {
   if (restDay) return 'recover';
 
   if (
-    recovery < 50 ||
-    readiness < 50 ||
+    recovery < 42 ||
+    readiness < 42 ||
     fatigue >= 72 ||
     soreness >= 4 ||
     (deepSleep > 0 && deepSleep < 8)
@@ -648,11 +648,11 @@ function getDailyMasterSignal(checkinLike, recoveryHighThreshold = 80) {
     return 'train_high';
   }
 
-  if (recovery >= 65 && readiness >= 62) {
+  if (recovery >= 55 && readiness >= 52) {
     return 'train_moderate';
   }
 
-  if (recovery >= 50) {
+  if (recovery >= 42) {
     return 'train_light';
   }
 

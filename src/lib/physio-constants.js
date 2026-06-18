@@ -28,9 +28,9 @@ export const STRESS_HIGH_THRESHOLD = 4;
 /** Stress level ≤ this → stress low (controlled) signal */
 export const STRESS_LOW_THRESHOLD = 2;
 /** Recovery score ≥ this → positive recovery signal */
-export const RECOVERY_HIGH_THRESHOLD = 80;
+export const RECOVERY_HIGH_THRESHOLD = 74; // escala v3: verde-forte
 /** Recovery score < this → negative recovery signal */
-export const RECOVERY_LOW_THRESHOLD = 55;
+export const RECOVERY_LOW_THRESHOLD = 42; // escala v3: limiar do vermelho
 /** Fatigue score > this → fatigue signal */
 export const FATIGUE_HIGH_THRESHOLD = 65;
 /** Fatigue score > this → state classified as Fatigued vs High Stress */
