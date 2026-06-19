@@ -697,22 +697,54 @@ const hrvTrend = useMemo(() => {
 
   const cappedStrain = Math.min(21, totalStrain);
 
-  // Strain acumulado RELATIVO ao alvo do dia (estilo WHOOP strain target).
-  // Abaixo do alvo = construindo (neutro, não é alerta); no alvo = ideal;
-  // acima = passou do que a recovery sugeria.
+  // Zonas WHOOP de strain (escala 0-21, absoluta).
+  const STRAIN_ZONES = [
+    { key: 'leve', label: 'Leve', min: 0 },
+    { key: 'moderado', label: 'Moderado', min: 10 },
+    { key: 'alto', label: 'Alto', min: 14 },
+    { key: 'esgotamento', label: 'Esgotamento', min: 18 },
+  ];
+  const strainZoneOf = (s) => {
+    let z = STRAIN_ZONES[0];
+    for (const cand of STRAIN_ZONES) if (s >= cand.min) z = cand;
+    return z;
+  };
+  const zoneIdx = (key) => STRAIN_ZONES.findIndex((z) => z.key === key);
+
+  // Zona-ALVO do dia, definida pela decisão (decision_mode). recover = sem carga.
+  const targetZoneKey =
+    verdictMode === 'train_high' ? 'alto' :
+    verdictMode === 'train_moderate' ? 'moderado' :
+    verdictMode === 'train_light' ? 'leve' :
+    verdictMode === 'recover' ? 'recuperacao' :
+    (prescriptionScore >= personalHigh ? 'alto' :
+     prescriptionScore >= 55 ? 'moderado' :
+     prescriptionScore >= 42 ? 'leve' : 'recuperacao');
+  const targetZoneLabel =
+    targetZoneKey === 'alto' ? 'Alto' :
+    targetZoneKey === 'moderado' ? 'Moderado' :
+    targetZoneKey === 'leve' ? 'Leve' : 'Recuperação';
+
+  // Strain acumulado relativo à ZONA-ALVO (estilo WHOOP). Esgotamento (18+) é
+  // sempre alerta, independente da meta. A mesma carga lê diferente conforme o
+  // dia: 14 num dia "Alto" = na zona; 14 num dia de recuperação = acima.
   const strainVsTarget = (() => {
-    const t = strainTarget || 1;
-    const pct = Math.max(0, Math.min(100, Math.round((cappedStrain / t) * 100)));
+    const curZone = strainZoneOf(cappedStrain);
     if (cappedStrain <= 0) {
-      return { pct: 0, label: 'Sem treino ainda', color: 'text-muted-foreground', barColor: 'bg-muted-foreground/40' };
+      return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta: ${targetZoneLabel}` };
     }
-    if (cappedStrain > t * 1.15) {
-      return { pct: 100, label: 'Acima do alvo', color: 'text-orange-400', barColor: 'bg-orange-400' };
+    if (curZone.key === 'esgotamento') {
+      return { color: 'text-red-400', ring: 'hsl(0,84%,60%)', short: 'Esgotamento — recupere' };
     }
-    if (cappedStrain >= t * 0.85) {
-      return { pct, label: 'No alvo', color: 'text-emerald-400', barColor: 'bg-emerald-400' };
+    if (targetZoneKey === 'recuperacao') {
+      return curZone.key === 'leve'
+        ? { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
+        : { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
-    return { pct, label: 'Construindo', color: 'text-sky-400', barColor: 'bg-sky-400' };
+    const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
+    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} · meta ${targetZoneLabel}` };
+    if (diff === 0) return { color: 'text-emerald-400', ring: 'hsl(142,70%,50%)', short: `Na zona · ${targetZoneLabel}` };
+    return { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · meta ${targetZoneLabel}` };
   })();
 
   const dayMetrics = enrichedCheckin
@@ -1372,16 +1404,8 @@ function ExecutionCard() {
     : sleepVal >= 65 ? 'text-sky-400'
     : 'text-yellow-400';
 
-  const strainColor =
-    cappedStrain <= 0 ? 'hsl(215,20%,45%)'
-    : strainVsTarget.label === 'Acima do alvo' ? 'hsl(25,95%,58%)'
-    : strainVsTarget.label === 'No alvo' ? 'hsl(142,70%,50%)'
-    : 'hsl(199,89%,60%)';
-  const strainCaption = isRestMode
-    ? 'foco recuperar'
-    : cappedStrain <= 0
-    ? `alvo ${strainTarget}`
-    : `${strainVsTarget.label} · alvo ${strainTarget}`;
+  const strainColor = strainVsTarget.ring;
+  const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
   return (
     <motion.div
