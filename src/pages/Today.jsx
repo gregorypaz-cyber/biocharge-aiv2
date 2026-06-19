@@ -326,7 +326,11 @@ if (canUseStoredDecision) {
       (checkin?.hrv && checkin.hrv > 0)) ||
     (checkin?.resting_hr && checkin.resting_hr > 0);
 
-if (prescriptionScore >= 74 && !sleepIsLimiting && !highLoad && hasPhysio) {
+  // train_high usa o personalHigh adaptativo (mesmo gate da decisão e do strain),
+  // não o 74 fixo — resíduo de antes da recalibração relativa-a-você.
+  const personalHighGate = checkin?.recovery_high_threshold ?? 74;
+
+if (prescriptionScore >= personalHighGate && !sleepIsLimiting && !highLoad && hasPhysio) {
 
     return {
       mode: 'train_high',
@@ -676,9 +680,11 @@ const hrvTrend = useMemo(() => {
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
   const personalHigh = enrichedCheckin?.recovery_high_threshold ?? 74;
+  // Faixa = ESTADO de recovery, alinhada às zonas do anel (verde ≥70 / amarelo ≥42).
+  // A DOSE de treino (train_high / strain Alto) usa personalHigh — é outro eixo.
   const readinessFaixa =
-  displayedScore >= personalHigh ? 'Alta' :
-  displayedScore >= 55 ? 'Moderada' :
+  displayedScore >= 70 ? 'Alta' :
+  displayedScore >= 42 ? 'Moderada' :
   'Baixa';
 
   // Alvo de strain ALINHADO à decisão do dia (decision_mode), pra o anel não
@@ -1431,9 +1437,9 @@ function ExecutionCard() {
 
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              displayedScore >= 74
+              displayedScore >= 70
                 ? 'bg-emerald-500/15 text-emerald-400'
-                : displayedScore >= 55
+                : displayedScore >= 42
                 ? 'bg-yellow-500/15 text-yellow-400'
                 : 'bg-red-500/15 text-red-400'
             }`}
