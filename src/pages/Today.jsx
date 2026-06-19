@@ -601,8 +601,10 @@ const hrvTrend = useMemo(() => {
     const sorted = [...sortedCheckins].sort((a, b) => b.date.localeCompare(a.date));
     let consecutiveNights = 0;
 
+    // Limiar alinhado à nova banda: 13% é o piso saudável (idealLow). 13-22% =
+    // saudável, NÃO alerta. Só sequências abaixo de 13% sinalizam profundo baixo.
     for (const c of sorted) {
-      if (c.deep_sleep_pct != null && c.deep_sleep_pct < 18) {
+      if (c.deep_sleep_pct != null && c.deep_sleep_pct < 13) {
         consecutiveNights++;
       } else {
         break;
@@ -621,18 +623,19 @@ const hrvTrend = useMemo(() => {
 
     let framing;
     if (isImproving) {
-      framing = `Sono melhorando. Continue assim.`;
+      framing = `Profundo melhorando, mas ainda abaixo do seu saudável.`;
     } else if (consecutiveNights >= 7) {
-      framing = `Uma semana de sono fragmentado.`;
+      framing = `Uma semana com profundo baixo.`;
     } else if (consecutiveNights >= 4) {
-      framing = `Dia ${consecutiveNights} de uma sequência ruim de sono.`;
+      framing = `Dia ${consecutiveNights} de profundo abaixo do saudável.`;
     } else {
-      framing = `Noite ${consecutiveNights} de sono fragmentado.`;
+      framing = `Noite ${consecutiveNights} de profundo baixo.`;
     }
 
-    return `${framing} Hoje isso pede mais controle da intensidade. (sono profundo: ${pct}%)`;
+    // Ação no lever CERTO (higiene de sono), não na intensidade — a dose de
+    // treino é decidida só pela engine principal, p/ não dar duas ordens na tela.
+    return `${framing} Priorize dormir cedo, em quarto fresco e escuro — é onde o profundo se recupera. (sono profundo: ${pct}%)`;
   }, [sortedCheckins, rawCheckin?.deep_sleep_pct]); // eslint-disable-line
-
   const capacityContradictionNote = useMemo(() => {
     if (!rawCheckin) return null;
 
