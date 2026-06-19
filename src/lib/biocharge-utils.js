@@ -66,19 +66,23 @@ function normalizeDeepSleep(deepSleepPct) {
 }
 
 function normalizeRemSleep(remSleepPct) {
+  // REM em BANDA LARGA e tolerante. Ressalva honesta: só ~12 noites com REM
+  // salvo, e Amazfit/Zepp erram muito em REM (provável superestimação — seu REM
+  // corre alto, 23-33%). Por isso NÃO personalizo fino: o platô [18, 32] cobre
+  // a faixa de literatura (~20-25%) E o seu observado, punindo só REM claramente
+  // baixo. Não premia "mais REM" (pode ser artefato). Teto 90 (abaixo de
+  // profundo/duração: REM é o sinal menos confiável). Peso 8%.
   if (remSleepPct == null) return null;
-
   const v = Number(remSleepPct);
-
-  if (v < 10) return 28;
-  if (v < 15) return 42;
-  if (v < 18) return 56;
-  if (v < 22) return 68;
-  if (v < 26) return 78;
-  if (v < 30) return 86;
-
-  // acima disso, não seguimos premiando muito
-  return 90;
+  if (!Number.isFinite(v)) return null;
+  return Math.round(
+    bandScore(v, {
+      idealLow: 18, idealHigh: 32,
+      softLow: 12, softHigh: 38,
+      hardLow: 6, hardHigh: 45,
+      points: 90,
+    })
+  );
 }
 
 // Protege contra "baseline móvel": quando uma queda sustentada faz a média curta
