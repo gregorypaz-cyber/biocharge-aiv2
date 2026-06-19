@@ -139,23 +139,39 @@ function getRecentRhrBaseline(recentCheckins = []) {
 
 
 
+// Pontuação por faixa: platô de crédito cheio + ombros suaves + caudas lineares.
+// Substitui as escadas (degraus de 8 pts por 0,01h). Reaproveitado depois por
+// profundo e REM. Teto = `points`; usamos 92 p/ alinhar ao teto dos outros
+// sub-scores e NÃO inflar o sono (validado vs Zepp: fica conservador, sem placebo).
+function bandScore(value, { idealLow, idealHigh, softLow, softHigh, hardLow, hardHigh, points }) {
+  const v = Number(value);
+  if (!Number.isFinite(v)) return null;
+  const cl = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+  if (v >= idealLow && v <= idealHigh) return points;                       // platô: cheio
+  if (v < idealLow && v >= softLow)                                         // ombro inferior
+    return points * (0.65 + 0.35 * ((v - softLow) / (idealLow - softLow)));
+  if (v > idealHigh && v <= softHigh)                                       // ombro superior
+    return points * (0.65 + 0.35 * ((softHigh - v) / (softHigh - idealHigh)));
+  if (v < softLow)                                                          // cauda inferior
+    return points * 0.65 * cl((v - hardLow) / (softLow - hardLow), 0, 1);
+  return points * 0.65 * cl((hardHigh - v) / (hardHigh - softHigh), 0, 1);  // cauda superior
+}
+
 function getSleepHoursScore(hours) {
-  // Curva centrada na META REALISTA do usuário (~7.5h): acorda 6h em dia útil
-  // e deita 22:30-23h, então ~7-7.5h é o ótimo ALCANÇÁVEL. Não faz sentido só
-  // dar nota cheia a partir de 8.5h (inalcançável na rotina dele). Se a rotina
-  // mudar (ex.: férias), ajuste os limiares.
+  // Faixa ASPIRACIONAL (escolha do Grégory): piso ideal em 7.5h pra o score
+  // DESAFIAR a dormir mais — cada meia hora até 7.5h aparece na nota (7.0h≈81,
+  // 7.5h=92). Platô até 9.0h pra NÃO punir sono de recuperação. Teto 92 (igual
+  // profundo/REM). Validado em dados reais jun/2026: sem inflar (gap vs Zepp +2).
   const h = Number(hours ?? 0);
   if (!h || h <= 0) return null;
-
-  if (h >= 7.75) return 92;
-  if (h >= 7.5) return 90;
-  if (h >= 7.25) return 86;
-  if (h >= 7.0) return 80;
-  if (h >= 6.75) return 72;
-  if (h >= 6.5) return 65;
-  if (h >= 6.0) return 52;
-  if (h >= 5.5) return 40;
-  return 28;
+  return Math.round(
+    bandScore(h, {
+      idealLow: 7.5, idealHigh: 9.0,
+      softLow: 6.0, softHigh: 9.5,
+      hardLow: 4.5, hardHigh: 11.0,
+      points: 92,
+    })
+  );
 }
 function getPreviewConfidence(checkin, recentCheckins = []) {
   const hrvValue = resolveHrvValue(checkin);
