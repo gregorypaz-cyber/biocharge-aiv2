@@ -296,7 +296,9 @@ function _sleepZ(todayScore, recentCheckins) {
   const w = prior.slice(0, 14);
   const m = w.reduce((a, b) => a + b, 0) / w.length;
   const sd = Math.max(Math.sqrt(w.reduce((a, b) => a + (b - m) * (b - m), 0) / (w.length - 1)), 5);
-  return (todayScore - m) / sd;
+  const z = (todayScore - m) / sd;
+  // Cap: como o sono tem baixa variância, uma única noite ruim/ótima não pode dominar o recovery.
+  return Math.max(-2.5, Math.min(2.5, z));
 }
 
 export function calculateRecoveryScore(checkin, recentCheckins = []) {

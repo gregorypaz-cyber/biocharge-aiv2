@@ -878,14 +878,18 @@ const AUTONOMIC_PT = {
     },
   };
 
-  const phase = (locked && intent === 'recovery')
-    ? 'RECOVERY_DAY'
-    : Phase ? (dayPhase ?? 'PLANNING') : (intent === 'recovery' ? 'RECOVERY_DAY' : 'PLANNING');
+  // Desacoplado: herói entra em descanso só se VOCÊ escolheu (botão/toggle).
+  // Fase automática (carga/prontidão) vira só sugestão (banner), sem sequestrar a decisão.
+  const userRest = intent === 'recovery';
+  const phase = userRest ? 'RECOVERY_DAY' : 'PLANNING';
+  const advisoryPhase = (!userRest && Phase) ? (dayPhase ?? 'PLANNING') : 'PLANNING';
 
   const phaseCfg = PHASE_CONFIG[phase] ?? PHASE_CONFIG.PLANNING;
+  const advisoryCfg = PHASE_CONFIG[advisoryPhase] ?? PHASE_CONFIG.PLANNING;
+  const bannerCfg = userRest ? phaseCfg : advisoryCfg;
   const CtaIcon = phaseCfg.ctaIcon;
 
-  const isRestMode = phase === 'OVERLOAD' || phase === 'RECOVERY_DAY';
+  const isRestMode = userRest;
 
   const dailyVerdict = useMemo(() => {
     return getDailyVerdict({
@@ -1337,14 +1341,14 @@ function ExecutionCard() {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
 
   const recoveryColor =
-    displayedScore >= personalHigh
+    displayedScore >= 70
     ? 'hsl(142,70%,50%)'
-    : displayedScore >= 55
+    : displayedScore >= 42
     ? 'hsl(45,93%,58%)'
     : 'hsl(0,72%,55%)';
   const recoveryCaptionColor =
-    displayedScore >= personalHigh ? 'text-emerald-400'
-    : displayedScore >= 55 ? 'text-yellow-400'
+    displayedScore >= 70 ? 'text-emerald-400'
+    : displayedScore >= 42 ? 'text-yellow-400'
     : 'text-red-400';
 
   const sleepVal = enrichedCheckin?.sleep_score ?? enrichedCheckin?.sleep_quality ?? null;
@@ -1752,14 +1756,14 @@ if (isLoading) {
         )}
       </div>
 
-      {phaseCfg.bannerText && (
+      {bannerCfg.bannerText && (
         <motion.div
-          key={phase}
+          key={advisoryPhase + (userRest ? '-rest' : '-adv')}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', phaseCfg.bannerClass)}
+          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', bannerCfg.bannerClass)}
         >
-          {phaseCfg.bannerText}
+          {bannerCfg.bannerText}
         </motion.div>
       )}
 
