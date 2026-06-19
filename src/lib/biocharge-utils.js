@@ -47,19 +47,22 @@ function resolveHrvValue(checkin) {
 
 
 function normalizeDeepSleep(deepSleepPct) {
+  // Profundo em BANDA, não "mais=melhor": faixa saudável de adulto ~13-22% do
+  // sono. Abaixo falta sono restaurador; muito acima (>26%) costuma ser rebote
+  // de privação ou erro de fase do wearable, não "melhor". Profundo não se
+  // controla de propósito (é homeostático), então não cobramos máximo. Ancorado
+  // nos seus dados (mediana 16%, faixa 8-25%). Teto 92 (igual duração).
   if (deepSleepPct == null) return null;
-
   const v = Number(deepSleepPct);
-
-  if (v < 10) return 25;
-  if (v < 15) return 42;
-  if (v < 18) return 55;
-  if (v < 22) return 68;
-  if (v < 26) return 80;
-  if (v < 30) return 88;
-
-  // acima disso, não seguimos premiando muito
-  return 92;
+  if (!Number.isFinite(v)) return null;
+  return Math.round(
+    bandScore(v, {
+      idealLow: 13, idealHigh: 22,
+      softLow: 9, softHigh: 28,
+      hardLow: 5, hardHigh: 40,
+      points: 92,
+    })
+  );
 }
 
 function normalizeRemSleep(remSleepPct) {
