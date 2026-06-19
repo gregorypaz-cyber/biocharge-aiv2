@@ -170,8 +170,13 @@ const hasSleepHours = !!(checkin?.sleep_hours && checkin.sleep_hours > 0);
   const hasRegularity = checkin?.sleep_regularity_pct != null;
   const hasSleepHr = checkin?.sleep_heart_rate != null;
 
-  const hrvBaseline = getRecentHrvBaseline(recentCheckins);
-  const rhrBaseline = getRecentRhrBaseline(recentCheckins);
+  // Maturidade do baseline: o z-score só é confiável se "seu normal" já existe.
+  // Conta noites prévias com HRV; abaixo de BL_TRUST_NIGHTS, o baseline ainda é jovem.
+  const priorHrvNights = (recentCheckins || []).filter((c) => {
+    const v = resolveHrvValue(c);
+    return v && v > 0;
+  }).length;
+  const baselineMature = priorHrvNights >= RC.BL_TRUST_NIGHTS;
 
   // Conta só sinais duros. sleep_score/horas/profundo/REM têm default não-nulo,
   // então "estar preenchido" não prova que foram informados — ficam fora da contagem.
@@ -183,7 +188,7 @@ const hasSleepHours = !!(checkin?.sleep_hours && checkin.sleep_hours > 0);
     (hasSleepHr ? 1 : 0);
 
   // "high": sinal cardíaco real (HRV ou FC) + ao menos 2 sinais duros no total.
-  if ((hasHrv || hasRhr) && hardSignals >= 2) {
+  if ((hasHrv || hasRhr) && hardSignals >= 2 && baselineMature) {
     return 'high';
   }
 
