@@ -546,7 +546,7 @@ export default function Today() {
     }
     return {
       recovery: chrono.map((c) => c.recovery_score ?? c.biocharge_morning ?? c.readiness_score).filter((v) => v != null),
-      sono: chrono.map((c) => c.sleep_score ?? c.sleep_quality).filter((v) => v != null),
+      sono: chrono.map((c) => c.sleep_quality ?? c.sleep_score).filter((v) => v != null),
       strain: chrono.map((c) => Math.min(21, strainByDate[c.date] || 0)),
     };
   }, [last7Checkins, sortedSessions]); // eslint-disable-line
@@ -647,7 +647,7 @@ const hrvTrend = useMemo(() => {
 
     const bio = rawCheckin.biocharge_morning ?? 0;
     const cap = enrichedCheckin?.remaining_capacity;
-    const sleep = rawCheckin.sleep_score ?? rawCheckin.sleep_quality ?? 100;
+    const sleep = rawCheckin.sleep_quality ?? rawCheckin.sleep_score ?? 100;
 
     if (bio < 70 && ['High', 'Alta'].includes(cap) && sleep < 75) {
       return 'Sua capacidade muscular parece melhor do que o sono sugere. Se treinar, mantenha o foco em controle e não em intensidade máxima.';
@@ -1354,7 +1354,7 @@ function ExecutionCard() {
     : displayedScore >= 42 ? 'text-yellow-400'
     : 'text-red-400';
 
-  const sleepVal = enrichedCheckin?.sleep_score ?? enrichedCheckin?.sleep_quality ?? null;
+  const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
   const sleepColor =
     sleepVal == null ? 'hsl(215,30%,55%)'
     : sleepVal >= 80 ? 'hsl(142,65%,50%)'
