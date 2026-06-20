@@ -104,12 +104,11 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setAuthChecked(true);
       
-      // If user auth fails, it might be an expired token
+      // Token inválido (expirado ou usuário excluído): faz logout de verdade,
+      // que limpa o token local E o cookie de sessão no servidor — evita
+      // o loop de redirecionar mantendo um token que nunca vai funcionar.
       if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+        logout();
       }
     }
   };
