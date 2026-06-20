@@ -61,12 +61,13 @@ function hhmmToHours(value) {
   return Number(h.toFixed(2));
 }
 
-function HRVField({ value, onChange }) {
+function HRVField({ value, onChange, metric = 'rMSSD' }) {
   const [showTip, setShowTip] = useState(false);
+  const isSdnn = metric === 'SDNN';
   return (
     <div className="space-y-1.5">
       <label className="text-xs text-muted-foreground flex items-center gap-1">
-        <Activity className="w-3 h-3" /> HRV — RMSSD (ms)
+        <Activity className="w-3 h-3" /> HRV — {metric} (ms)
         <button
           type="button"
           onClick={() => setShowTip(p => !p)}
@@ -78,11 +79,22 @@ function HRVField({ value, onChange }) {
       </label>
       {showTip && (
   <div className="text-[10px] text-muted-foreground bg-secondary rounded-xl p-3 leading-relaxed border border-border/40">
-    <p className="font-semibold text-foreground mb-1">Como medir RMSSD:</p>
-    Use apps como HRV4Training, Elite HRV ou seu wearable para medir RMSSD ao acordar,
-    sempre em repouso e antes de levantar.<br />
-    No Zepp, use o valor de HRV mostrado na manhã do dia.<br />
-    Faixa comum: 20–100 ms. Em geral, quanto maior em relação à sua média, melhor.
+    <p className="font-semibold text-foreground mb-1">Como medir {metric}:</p>
+    {isSdnn ? (
+      <>
+        O Apple Watch reporta HRV como <strong>SDNN</strong> (app Saúde → Variabilidade da FC).
+        Use o valor noturno/de repouso.<br />
+        SDNN e rMSSD não são intercambiáveis — mantenha sempre a mesma fonte.<br />
+        Em geral, quanto maior em relação à sua média, melhor.
+      </>
+    ) : (
+      <>
+        Use apps como HRV4Training, Elite HRV ou seu wearable para medir rMSSD ao acordar,
+        sempre em repouso e antes de levantar.<br />
+        No Zepp, use o valor de HRV mostrado na manhã do dia.<br />
+        Faixa comum: 20–100 ms. Em geral, quanto maior em relação à sua média, melhor.
+      </>
+    )}
   </div>
 )}
       <Input
@@ -170,6 +182,8 @@ export default function DailyCheckin() {
   const editData = location.state?.editData;
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const wearableProfile = user?.preferences?.wearable_profile || 'zepp';
+  const isApple = wearableProfile === 'apple';
 
   // For post mode + delayed fatigue: fetch history
   const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(90);
@@ -186,6 +200,11 @@ export default function DailyCheckin() {
 
   const [savedCheckin, setSavedCheckin] = useState(null);
   const [touched, setTouched] = useState({ biocharge_morning: !!editData, sleep_hours: !!editData, sleep_score: !!editData });
+  // No Apple Watch não existe HybridCharge nem Pontuação de Sono do Zepp,
+  // então esses campos somem e a trava do salvar exige só as horas de sono.
+  const morningReady = isApple
+    ? touched.sleep_hours
+    : (touched.biocharge_morning && touched.sleep_hours && touched.sleep_score);
 
   // Carrega o check-in já salvo de hoje uma única vez, para não sobrescrever
   // dados reais com os valores default ao reabrir a página.
@@ -841,6 +860,7 @@ if (isPostMode) {
 
         {/* Quick Check-in */}
         <CheckinStep title="Check-in rápido" emoji="⚡" delay={0.05}>
+          {!isApple && (
           <SliderField
   label="Como você acordou? (0–100)"
   hint="Sua percepção geral ao acordar"
@@ -850,8 +870,10 @@ if (isPostMode) {
   midLabel="Médio"
   highLabel="Alto"
 />
+          )}
 
 
+          {!isApple && (
           <SliderField
   label="Pontuação do Sono (Zepp)"
   hint="Valor de 0–100 do app Zepp → Sono"
@@ -862,6 +884,7 @@ if (isPostMode) {
   midLabel="Ok"
   highLabel="Boa"
 />
+          )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">
@@ -916,6 +939,7 @@ if (isPostMode) {
             <HRVField
               value={form.hrv_manual ?? form.hrv}
               onChange={updateHrv}
+              metric={isApple ? 'SDNN' : 'rMSSD'}
             />
 
             <div className="space-y-1.5">
@@ -1214,14 +1238,16 @@ if (isPostMode) {
         {/* Salvar — botão principal único, no fim da página */}
         {!savedCheckin && (
           <div className="space-y-2 pt-1">
-            {(!touched.biocharge_morning || !touched.sleep_hours || !touched.sleep_score) && (
+            {!morningReady && (
               <p className="text-[11px] text-amber-400/80 px-1 text-center">
-                ⬆️ Ajuste como você acordou, a pontuação do sono (Zepp) e as horas de sono para salvar
+                {isApple
+                  ? '⬆️ Informe as horas de sono para salvar'
+                  : '⬆️ Ajuste como você acordou, a pontuação do sono (Zepp) e as horas de sono para salvar'}
               </p>
             )}
             <Button
               onClick={() => saveMorningMutation.mutate(form)}
-              disabled={saveMorningMutation.isPending || !touched.biocharge_morning || !touched.sleep_hours || !touched.sleep_score}
+              disabled={saveMorningMutation.isPending || !morningReady}
               className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saveMorningMutation.isPending ? (
