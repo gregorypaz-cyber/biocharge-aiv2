@@ -40,7 +40,7 @@ export const WEARABLES = [
 ];
 
 export default function AppSettings() {
-  const { user } = useAuth();
+  const { user, checkUserAuth } = useAuth();
   const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const [prefs, setPrefs] = useState({
@@ -106,6 +106,7 @@ export default function AppSettings() {
 
     try {
       await base44.auth.updateMe({ preferences: prefs });
+      await checkUserAuth();
       toast.success('Preferências salvas!');
     } catch (err) {
       console.error('savePrefs failed', err);
