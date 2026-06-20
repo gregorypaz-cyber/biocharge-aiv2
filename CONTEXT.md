@@ -1,6 +1,8 @@
 # CONTEXT.md — BioCharge AI
 
 > Documento de contexto para qualquer agente de IA (Claude Code incluído) que vá editar este repositório. **Leia antes de mexer no código.** Estas regras não são preferências de estilo — são o núcleo do projeto. Violá-las quebra a confiança do app.
+>
+> **Última sincronização com o código real: 20/06/2026.** Antes desta data, a §3 (Fórmulas) estava desatualizada — descrevia uma versão anterior do Recovery que já tinha sido substituída no código sem o documento ser atualizado junto. Se uma instância de IA notar o código divergindo deste arquivo, **o código manda** — e o patch que resolver a divergência deve atualizar este documento na mesma sessão, não depois.
 
 ---
 
@@ -25,19 +27,24 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 ---
 
-## 3. Fórmulas atuais (estado vigente)
+## 3. Fórmulas atuais (estado vigente — verificado contra `physio-constants.js`/`biocharge-utils.js` em 20/06/2026)
 
-**Recovery** = HRV 30% + RHR 10% + Sono 35% + Subjetivo 25%.
-- Curvas HRV/RHR com centro deslocado para −8% (estar no seu normal já conta como recuperado → verde alcançável). HRV scale 13, RHR scale 9.
-- Baseline personalizado (7d HRV / 14d RHR), exclui o dia atual, com proteção anti-"baseline móvel" (mistura 70/30 com janela de 30d se houver queda sustentada >5%).
+**Recovery** — baseline EWMA winsorizado + z-score relativo ao próprio histórico (não é mais curva absoluta):
+- HRV 50% + RHR 20% + Sono 30% (`REC_W_HRV`/`REC_W_RHR`/`REC_W_SONO`).
+- Baseline pessoal por EWMA (seed/maturidade em `BL_SEED_NIGHTS`/`BL_TRUST_NIGHTS`), winsorizado (±`BL_WINSOR_K`·spread, outlier duro em ±`BL_HARD_OUTLIER_K`·spread), janela fixa de `BL_WINDOW_NIGHTS` dias.
+- Squash logístico ancorado: z=0 (seu normal) → score 64 (`REC_LOGISTIC_K=1.6`, `REC_LOGISTIC_Z0=-0.36`).
+- Teto autonômico: combinação HRV+RHR ruim trava o score (sem verde abaixo de `REC_CAP_NOGREEN_AUTON`; teto duro 45 abaixo de `REC_CAP_HARD_AUTON`) — sono bom não resgata dia autonomicamente ruim.
+- Cold-start: sem HRV hoje OU baseline imaturo (<4 noites) → `recovery_score` é `null` (a UI mostra "Calibrando", nunca 0 falso).
 
-**Sleep score (Sono v2)** — reconstruído a partir de sinais **crus portáveis**, NÃO do score proprietário do Zepp:
-- duração 42% (curva centrada na meta realista do dono, ~7,5h) / regularidade 25% / continuidade-despertares 15% / profundo 10% / REM 8% (renormalizado sobre os componentes presentes).
-- O `sleep_score` do Zepp foi **removido da fórmula** (era 55% — dupla contagem + violação de portabilidade), mas **continua sendo salvo como referência de calibração** (não é input do cálculo).
+**Sleep score (Sono v2)** — sinais crus portáveis, NÃO o score do Zepp:
+- duração 42% (curva centrada em ~7,5h) / regularidade 25% / continuidade-despertares 15% / profundo 10% / REM 8% (renormalizado sobre os componentes presentes).
+- `sleep_score` (Zepp) e `biocharge_morning` (HybridCharge do Zepp) **não entram em nenhuma fórmula** — ficam só como referência de calibração. Por decisão do dono (20/06/2026), continuam sendo coletados no check-in por mais ~15 dias para comparar com o score novo na próxima calibração, mas **não são mais obrigatórios para salvar**.
 
-**Score do dia** = Recovery × 0,80 + (100 − fadiga) × 0,20.
+**Dois números diferentes no check-in — não confundir:**
+- `recovery_score` = o "Score do dia" oficial, o número do anel (`getDayScore()`). É só o composto fisiológico acima — **a fadiga subjetiva não entra aqui**.
+- `readiness_score` = Recovery×0,80 + (100 − `fatigue_score`)×0,20, onde `fatigue_score` = fadiga×0,65 + dor muscular(%)×0,20 + estresse(%)×0,15. Esse número quase não aparece na UI (cai atrás de `recovery_score ?? readiness_score` na maioria dos componentes); seu efeito real é categórico via `getDailyMasterSignal`/`decision_mode`: fadiga ≥72 força "recuperar", readiness participa do limiar de "treino forte". Confirmado nos dados reais (jun/2026): a fadiga do dono nunca passou de 52 — esse gatilho nunca disparou na prática.
 
-**Strain** é métrica **SEPARADA** — NUNCA entra no recovery (confirmado por WHOOP/Oura). Escala 0–21. `calculateStrainScore` prefere o Training Effect (Efeito do Treino) do Zepp em corridas, com FC média como fallback. FC máx default 185 (≈ Tanaka 184 para o dono).
+**Strain** é métrica **SEPARADA** — NUNCA entra no recovery (confirmado por WHOOP/Oura). Escala 0–21. `calculateStrainScore` prefere o Training Effect (Efeito do Treino) do Zepp em corridas, com FC média como fallback. FC máx default 185 (≈ Tanaka 184 para o dono). *(não reauditado em 20/06 — herdado de versão anterior deste documento)*
 
 > ⚠️ **Não recalibrar sem necessidade.** Recalibrar a fórmula no meio do histórico torna scores antigos não-comparáveis (invalida cálculo de tendência no campo afetado). Avisar isso ANTES de qualquer mudança de peso. Deixar a fórmula assentar 10–14 dias antes de nova calibração — não perseguir alvo móvel.
 
@@ -49,6 +56,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 - **Campos fora do schema são DESCARTADOS no save.** Se um campo precisa persistir, ele TEM que estar no `.jsonc` da entidade. (Já mordeu: REM, hora de dormir, jantar, e os campos de compromisso do WorkoutFeedback estavam sendo descartados — corrigidos.)
 - **Inputs crus** (HRV, sono, FC, horários) **precisam** estar no schema — se descartados, o dado é perdido pra sempre.
 - **Campos computados** (readiness_score, fatigue_score, stress_score, autonomic_state, hrv_trend, recovery_high_threshold, etc.) **NÃO precisam ser persistidos** — todas as telas recalculam ao vivo via `computeCheckinScores`. **Não persistir score computado** (evita o problema de score "congelado" desalinhado da fórmula atual). Exceção deliberada já existente: `morning_recovery_score` (âncora do dia) é salvo de propósito.
+  - **Confirmado via MCP em 20/06/2026:** isso não é só "não precisa" — na prática `fatigue_score`, `stress_score`, `sleep_quality` e `readiness_score` **não existem em nenhum registro salvo** (vêm ausentes mesmo pedindo explicitamente por `fields`), porque não estão no `.jsonc` da entidade. `computeCheckinScores` os calcula e devolve, mas o save descarta silenciosamente. Qualquer tela que precise desses valores do dia atual TEM que rodar `computeCheckinScores` ao vivo (como `Today.jsx` já fazia) — não dá pra ler do histórico. Já mordeu: o `ScoresGrid` ficou meses pronto e nunca usado porque ninguém tinha feito esse recálculo ao vivo pra ele (corrigido em 20/06 — ver §7).
 - **`computeCheckinScores`** (em `src/lib/biocharge-utils.js`) é a função canônica. Telas que mostram histórico devem recalcular a partir dos sinais crus salvos, não ler score salvo (exceto a âncora da manhã).
 
 ---
@@ -56,6 +64,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 ## 5. Regras de UX
 
 - **Não inchar o check-in nem as telas.** Cada campo novo precisa justificar sua existência. Resistir a over-engineering.
+- **O gate de "salvar" do check-in deve exigir o sinal que a fórmula realmente precisa, não o que parece mais "principal" na tela.** Hoje exige HRV + horas de sono (são os únicos cuja ausência muda o resultado: sem HRV, `recovery_score` sai `null`). Campos de calibração (Zepp: `biocharge_morning`, `sleep_score`) nunca devem ser obrigatórios — eles não entram em fórmula nenhuma (corrigido em 20/06/2026, antes travava o save nos campos errados).
 - Premium visual = hierarquia + herói gráfico + espaço em branco + **menos** texto.
 - 6 abas com papéis distintos, sem redundância: **Hoje** (decisão do dia), **Insights** (padrões e o que explica), **Check-in**, **Tendências** (evolução no tempo), **Resumo** (estado + semana), **Timeline** (histórico dia-a-dia).
 - UI em **português-BR**.
@@ -74,12 +83,16 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 ## 7. Backlog (em ordem de prioridade)
 
 1. **Camada de normalização de fonte** (`source-normalize.js`, arquivo novo) — mapeia nomes de campo de cada marca de relógio → formato canônico. É a tese de portabilidade no nível do código.
-2. **Recovery v2** — baseline robusto (EWMA + Winsorização). Projeto deliberado, validar nos dados reais ANTES, só depois de estabilizar. Reseta a estabilização.
-3. **Chrononutrição Fase 2** — após ~3–4 semanas de dados de `dinner_time` + `sleep_start_time`, testar `corr(intervalo jantar→cama, despertares)` com o portão |r|≥0,35 / p≤0,05.
+2. ~~Recovery v2 — baseline robusto (EWMA + Winsorização)~~ **✅ já em produção** (confirmado em `physio-constants.js`/`calculateRecoveryScore` em 20/06/2026 — ver §3). Estava registrado aqui como pendente, mas já tinha sido implementado; este documento não tinha sido atualizado junto. **Lição:** ao concluir um item de backlog, atualizar este arquivo no mesmo patch que entrega o código, não depois.
+3. **Chrononutrição Fase 2** — após ~3–4 semanas de dados de `dinner_time` + `sleep_start_time`, testar `corr(intervalo jantar→cama, despertares)` com o portão |r|≥0,35 / p≤0,05. `dinner_time` hoje só alimenta o prompt de IA opcional — zero uso determinístico ainda.
 
 **Já descartado (não reabrir sem dados novos):** strain→recovery D+1 (r=+0,17, sem sinal; strain do dono é de baixa variância).
 
 **Entidades órfãs** (no schema, nunca escritas — candidatas a limpeza): SleepRecord, WorkoutSession, HRVRecord, WeeklyRetrospect. `cadence_spm` é loop morto (nunca preenchido).
+
+**Componentes órfãos (resolvido 20/06/2026):** `ScoresGrid.jsx` e `HeroSection.jsx` existiam calculados/prontos, mas não importados em nenhuma rota — código morto, zero retorno pro dono. `HeroSection` foi removido (duplicava a Today: mesmo anel, mesma recomendação, até tinha um botão "Ver plano do dia → /today"). `ScoresGrid` foi religado no Resumo com recálculo ao vivo (e corrigido o rótulo "Prontidão"→"Recovery", que tinha o mesmo erro de nomenclatura do §3). **Lição de processo:** antes de declarar um componente "pronto", confirmar com `grep -rl "NomeDoComponente" src` que ele é de fato importado em alguma página roteada (`App.jsx`) — código calculado e nunca exibido é o tipo de placebo mais fácil de não perceber, porque "funciona" em todo teste que só olha o cálculo, nunca a tela.
+
+**Auditoria de regularidade circular (revisitada 20/06/2026):** `calculateSleepConsistency` (baseada em `sleep_start_time`, usada em Insights/Resumo) já recentraliza os horários em torno da meia-noite antes do desvio-padrão — não é o bug catastrófico (SRI saindo 0 quando deveria ser ≈63) que constava como pendente no `Esquema-Alvo-Sono-Portavel.md`. Não é estatística circular de livro-texto (média vetorial), mas funciona corretamente para o padrão de sono do dono (deitar entre ~22h–01h). Rebaixado de "bug a corrigir" para "melhoria opcional, baixa prioridade" — não mexer sem necessidade nova.
 
 ---
 
