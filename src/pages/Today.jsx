@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
@@ -1709,6 +1709,32 @@ function ExecutionCard() {
     </motion.div>
   );
 }
+
+const prefs = user?.preferences || {};
+const missingSettings = [];
+if (!prefs.birth_year) missingSettings.push('ano de nascimento');
+if (!prefs.sex) missingSettings.push('sexo');
+if (!prefs.height_cm) missingSettings.push('altura');
+const settingsBanner = missingSettings.length > 0 ? (
+  <Link
+    to="/settings"
+    className="block rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 hover:bg-amber-500/15 transition-all"
+  >
+    <div className="flex items-start gap-3">
+      <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+        <Settings className="w-4 h-4 text-amber-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-amber-200">Complete suas configurações</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+          Falta informar {missingSettings.join(', ')}. Necessário para idade de condicionamento, VO₂max e leituras honestas — toque para ajustar.
+        </p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-amber-400/70 shrink-0 mt-1" />
+    </div>
+  </Link>
+) : null;
+
 if (isLoading) {
     return (
       <div className="space-y-4 max-w-2xl mx-auto">
@@ -1727,10 +1753,12 @@ if (isLoading) {
 
   if (!enrichedCheckin) {
     return (
+      <div className="space-y-4 max-w-2xl mx-auto pt-2">
+        {settingsBanner}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center justify-center h-[70vh] text-center px-6"
+        className="flex flex-col items-center justify-center h-[60vh] text-center px-6"
       >
         <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
           <Zap className="w-10 h-10 text-primary" />
@@ -1746,6 +1774,7 @@ if (isLoading) {
           <Plus className="w-4 h-4" /> Fazer check-in
         </Link>
       </motion.div>
+      </div>
     );
   }
 
@@ -1757,6 +1786,7 @@ if (isLoading) {
         isRestMode && 'saturate-[0.7]'
       )}
     >
+      {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
