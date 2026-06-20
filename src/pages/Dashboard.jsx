@@ -7,10 +7,12 @@ import { Link } from 'react-router-dom';
 import { computeCheckinScores, calculateStreak } from '@/lib/biocharge-utils';
 import { runPhysiologicalAnalysisAsync, calculateRunningEconomy, calculatePerformanceWindow, detectCardiacDrift, calculateSleepConsistency } from '@/lib/physiological-engine';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
+import { getTodayLocal } from '@/lib/date-utils';
 
 import MiniChart from '@/components/dashboard/MiniChart';
 import WeekStrip from '@/components/dashboard/WeekStrip';
 import StreakCard from '@/components/dashboard/StreakCard';
+import ScoresGrid from '@/components/dashboard/ScoresGrid';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
@@ -40,6 +42,25 @@ export default function Dashboard() {
   const streak = calculateStreak(checkins);
   const sleepConsistency = useMemo(() => calculateSleepConsistency(checkins), [checkins.length]);
   const [hrvAlertDismissed, setHrvAlertDismissed] = useState(false);
+
+  // Snapshot de HOJE para o ScoresGrid. fatigue_score/stress_score/sleep_quality/
+  // hrv resolvido não são persistidos (CONTEXT.md: campo computado não vai pro
+  // schema) — por isso recalcula ao vivo aqui, igual o Today.jsx já faz. Só
+  // recalcula o dia de hoje, não o histórico (o `computed` de cima continua
+  // usando score salvo, de propósito, pra não divergir da Timeline).
+  const todayDate = getTodayLocal();
+  const rawToday = useMemo(
+    () => checkins.find((c) => c.date === todayDate) || null,
+    [checkins, todayDate]
+  );
+  const todayScores = useMemo(() => {
+    if (!rawToday) return null;
+    const recentCheckins = [...checkins]
+      .filter((c) => c.date !== todayDate)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const todaySessions = allSessions.filter((s) => s.date === todayDate);
+    return computeCheckinScores(rawToday, recentCheckins, todaySessions);
+  }, [rawToday, checkins, allSessions, todayDate]);
 
   // ✅ FIX: analysis state declarado aqui, junto com os outros hooks
   const [analysis, setAnalysis] = useState(null);
@@ -115,6 +136,11 @@ export default function Dashboard() {
         <h1 className="text-2xl font-black tracking-tight">Resumo</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Seu estado atual e a semana</p>
       </motion.div>
+
+      {/* Snapshot numérico de hoje — números crus (HRV ms, FC bpm, Fadiga,
+          Estresse) que não aparecem em nenhum outro lugar do app. Hoje só, não
+          histórico — recalculado ao vivo. */}
+      {todayScores && <ScoresGrid today={todayScores} />}
 
 
       {/* HRV Anomaly Banner */}

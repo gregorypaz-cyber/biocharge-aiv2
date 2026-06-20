@@ -4,11 +4,11 @@ import ScoreCard from '@/components/ui-bio/ScoreCard';
 export default function ScoresGrid({ today }) {
   const scores = [
     {
-      label: 'Prontidão',
-      value: today.readiness_score ?? today.recovery_score,
+      label: 'Recovery',
+      value: today.recovery_score,
       icon: Zap,
       color: 'hsl(142,70%,50%)',
-      sublabel: 'Prontidão geral',
+      sublabel: 'Mesmo número do anel em Hoje',
       delay: 0,
     },
     {

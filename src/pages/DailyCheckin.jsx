@@ -199,12 +199,12 @@ export default function DailyCheckin() {
 
 
   const [savedCheckin, setSavedCheckin] = useState(null);
-  const [touched, setTouched] = useState({ biocharge_morning: !!editData, sleep_hours: !!editData, sleep_score: !!editData });
-  // No Apple Watch não existe HybridCharge nem Pontuação de Sono do Zepp,
-  // então esses campos somem e a trava do salvar exige só as horas de sono.
-  const morningReady = isApple
-    ? touched.sleep_hours
-    : (touched.biocharge_morning && touched.sleep_hours && touched.sleep_score);
+  const [touched, setTouched] = useState({ sleep_hours: !!editData, hrv: !!editData });
+  // Exige HRV + horas de sono — não biocharge_morning/sleep_score (Zepp). Esses
+  // dois ficam só como referência de calibração (não entram em nenhuma fórmula);
+  // HRV é o único sinal sem o qual recovery_score sai null. Mesma exigência para
+  // Apple e Zepp, porque é o mesmo motor por trás dos dois perfis.
+  const morningReady = touched.sleep_hours && touched.hrv;
 
   // Carrega o check-in já salvo de hoje uma única vez, para não sobrescrever
   // dados reais com os valores default ao reabrir a página.
@@ -220,7 +220,7 @@ export default function DailyCheckin() {
     ) {
       loadedTodayRef.current = true;
       dispatch({ type: 'LOAD_EDIT', data: { rest_day: !!todayRecord.rest_day, ...todayRecord } });
-      setTouched({ biocharge_morning: true, sleep_hours: true, sleep_score: true });
+      setTouched({ sleep_hours: true, hrv: true });
       setEditingExisting(true);
     }
   }, [isPostMode, editData, savedCheckin, todayRecord]);
@@ -251,6 +251,7 @@ const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updateHrv = (value) => {
     update('hrv_manual', value);
     update('hrv', value); // espelha por compatibilidade com legado
+    setTouched((t) => ({ ...t, hrv: true }));
   };
 
 const { intent: dayIntent, setDayIntent } = useDayContext();
@@ -863,9 +864,9 @@ if (isPostMode) {
           {!isApple && (
           <SliderField
   label="Como você acordou? (0–100)"
-  hint="Sua percepção geral ao acordar"
+  hint="Sua percepção geral ao acordar — fica como referência de calibração, não entra na fórmula"
   value={form.biocharge_morning}
-  onChange={(v) => { update('biocharge_morning', v); setTouched(t => ({ ...t, biocharge_morning: true })); }}
+  onChange={(v) => update('biocharge_morning', v)}
   lowLabel="Baixo"
   midLabel="Médio"
   highLabel="Alto"
@@ -876,9 +877,9 @@ if (isPostMode) {
           {!isApple && (
           <SliderField
   label="Pontuação do Sono (Zepp)"
-  hint="Valor de 0–100 do app Zepp → Sono"
+  hint="Valor de 0–100 do app Zepp → Sono — fica como referência de calibração, não entra na fórmula"
   value={form.sleep_score}
-  onChange={(v) => { update('sleep_score', v); setTouched(t => ({ ...t, sleep_score: true })); }}
+  onChange={(v) => update('sleep_score', v)}
   icon={Moon}
   lowLabel="Ruim"
   midLabel="Ok"
@@ -1145,22 +1146,16 @@ if (isPostMode) {
 
             <CheckinStep title="Bem-estar" emoji="🧠" delay={0.2}>
               <EmojiSelector
-                label="Humor"
-                type="mood"
-                value={form.mood}
-                onChange={(v) => update('mood', v)}
+                label="Disposição (humor + energia)"
+                type="energy"
+                value={form.energy}
+                onChange={(v) => { update('energy', v); update('mood', v); }}
               />
               <EmojiSelector
                 label="Estresse"
                 type="stress"
                 value={form.stress}
                 onChange={(v) => update('stress', v)}
-              />
-              <EmojiSelector
-                label="Energia"
-                type="energy"
-                value={form.energy}
-                onChange={(v) => update('energy', v)}
               />
               <EmojiSelector
                 label="Hidratação"
@@ -1240,9 +1235,7 @@ if (isPostMode) {
           <div className="space-y-2 pt-1">
             {!morningReady && (
               <p className="text-[11px] text-amber-400/80 px-1 text-center">
-                {isApple
-                  ? '⬆️ Informe as horas de sono para salvar'
-                  : '⬆️ Ajuste como você acordou, a pontuação do sono (Zepp) e as horas de sono para salvar'}
+                ⬆️ Informe o HRV e as horas de sono para salvar
               </p>
             )}
             <Button
