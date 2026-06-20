@@ -34,6 +34,10 @@ const GUIDANCE_GOALS = [
   { value: 'recuperacao', label: 'Recuperar melhor', desc: 'Melhorar sono, absorção de carga e margem diária' },
 ];
 
+const WEARABLES = [
+  { value: 'zepp', label: 'Amazfit / Zepp', desc: 'HRV em rMSSD · tem Pontuação de Sono', emoji: '⌚' },
+  { value: 'apple', label: 'Apple Watch', desc: 'HRV em SDNN · sem score de sono (usa sinais crus)', emoji: '🍎' },
+];
 
 export default function AppSettings() {
   const { user } = useAuth();
@@ -48,6 +52,7 @@ export default function AppSettings() {
     training_times: [],
     recovery_goal: 'health',
     max_hr: 185,
+    wearable_profile: 'zepp',
     // Perfil físico (usado na Idade de Condicionamento / VO2max)
     birth_year: '',
     sex: '',
@@ -452,6 +457,43 @@ export default function AppSettings() {
       </motion.div>
 
       {/* Recovery Goal */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Wearable</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Define os rótulos e os campos do check-in. O app guarda só sinais crus, então a fórmula não muda — muda o que você vê e preenche.
+        </p>
+        <div className="space-y-2">
+          {WEARABLES.map(w => (
+            <button
+              key={w.value}
+              onClick={() => setPrefs(p => ({ ...p, wearable_profile: w.value }))}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all border text-left ${
+                prefs.wearable_profile === w.value
+                  ? 'border-primary/50 bg-primary/10'
+                  : 'border-border bg-secondary hover:border-border/80'
+              }`}
+            >
+              <span className="text-2xl">{w.emoji}</span>
+              <div>
+                <p className="text-sm font-semibold">{w.label}</p>
+                <p className="text-xs text-muted-foreground">{w.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-amber-300/90 leading-relaxed">
+          ⚠️ rMSSD e SDNN são métricas de HRV diferentes. Misturar wearables contamina seu baseline — ao trocar, considere recomeçar o histórico de HRV.
+        </p>
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
