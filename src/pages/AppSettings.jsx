@@ -34,7 +34,7 @@ const GUIDANCE_GOALS = [
   { value: 'recuperacao', label: 'Recuperar melhor', desc: 'Melhorar sono, absorção de carga e margem diária' },
 ];
 
-const WEARABLES = [
+export const WEARABLES = [
   { value: 'zepp', label: 'Amazfit / Zepp', desc: 'HRV em rMSSD · tem Pontuação de Sono', emoji: '⌚' },
   { value: 'apple', label: 'Apple Watch', desc: 'HRV em SDNN · sem score de sono (usa sinais crus)', emoji: '🍎' },
 ];
