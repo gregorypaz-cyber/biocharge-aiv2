@@ -736,8 +736,10 @@ const hrvTrend = useMemo(() => {
   // dia: 14 num dia "Alto" = na zona; 14 num dia de recuperação = acima.
   const strainVsTarget = (() => {
     const curZone = strainZoneOf(cappedStrain);
+    // Alvo SEMPRE com o número (não só o nome da zona), pra "moderado" virar "moderado · 12".
+    const targetLabelNum = `${targetZoneLabel} · ${strainTarget}`;
     if (cappedStrain <= 0) {
-      return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta: ${targetZoneLabel}` };
+      return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta: ${targetLabelNum}` };
     }
     if (curZone.key === 'esgotamento') {
       return { color: 'text-red-400', ring: 'hsl(0,84%,60%)', short: 'Esgotamento — recupere' };
@@ -748,9 +750,9 @@ const hrvTrend = useMemo(() => {
         : { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
-    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} · meta ${targetZoneLabel}` };
-    if (diff === 0) return { color: 'text-emerald-400', ring: 'hsl(142,70%,50%)', short: `Na zona · ${targetZoneLabel}` };
-    return { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · meta ${targetZoneLabel}` };
+    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} → ${strainTarget}` };
+    if (diff === 0) return { color: 'text-emerald-400', ring: 'hsl(142,70%,50%)', short: `Na zona · meta ${strainTarget}` };
+    return { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} → ${strainTarget}` };
   })();
 
   const dayMetrics = enrichedCheckin
@@ -1610,11 +1612,12 @@ function ExecutionCard() {
                     )}
                 </div>
 
-                {/* Contexto numérico que faltava */}
+                {/* Contexto numérico — sem repetir "strain X/21" que o anel já mostra */}
                 <p className="text-[11px] opacity-75">
-                  {rec != null ? <>Recuperação <b className="opacity-100">{rec}</b> · </> : null}
-                  strain <b className="opacity-100">{strain}/21</b>
-                  {strain <= 0 ? ' (sem carga de treino)' : ''}
+                  {rec != null && strain > 0 && <>Recuperação <b className="opacity-100">{rec}</b> · carga de hoje já soma no anel acima.</>}
+                  {rec != null && strain <= 0 && <>Recuperação <b className="opacity-100">{rec}</b> · sem carga de treino ainda hoje.</>}
+                  {rec == null && strain > 0 && <>Carga de hoje já soma no anel de Strain acima.</>}
+                  {rec == null && strain <= 0 && <>Sem carga de treino ainda hoje.</>}
                 </p>
 
                 {/* Antes escondido no "Entender" — é a orientação do dia, sempre visível agora */}
