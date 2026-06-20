@@ -994,14 +994,27 @@ const primaryInsight = useMemo(() => {
     };
   }
 
+  // Com poucos registros, a causa mais provável é mesmo falta de dados.
+  // Com muitos registros (≥20) e ainda sem descoberta, o motivo costuma ser
+  // baixa variação no seu comportamento (ex.: sono e stress pouco variam) —
+  // não falta de consistência. Dizer "continue registrando" nesse caso seria
+  // prometer algo que mais dados não resolvem.
+  const lowDataCount = computed.length < 20;
+
   return {
     eyebrow: 'Leitura principal',
     icon: BarChart3,
-    title: 'Ainda calibrando seus padrões individuais',
-    text: 'Continue registrando check-ins, sono e treinos. O app já consegue orientar o dia, mas precisa de mais consistência para detectar padrões fortes com confiança.',
+    title: lowDataCount
+      ? 'Ainda calibrando seus padrões individuais'
+      : 'Sem padrão forte o suficiente para destacar agora',
+    text: lowDataCount
+      ? 'Continue registrando check-ins, sono e treinos. O app já consegue orientar o dia, mas precisa de mais consistência para detectar padrões fortes com confiança.'
+      : 'Seus registros já são suficientes, mas nenhuma relação passou no critério de confiança do app. Isso costuma acontecer quando sono, stress ou treino variam pouco dia a dia — não é falta de dado, é rotina estável.',
     tone: 'neutral',
     badge: `${computed.length} registros`,
-    meta: 'Quanto mais consistente o registro, melhores ficam as leituras de recovery, carga e sono.',
+    meta: lowDataCount
+      ? 'Quanto mais consistente o registro, melhores ficam as leituras de recovery, carga e sono.'
+      : 'Quando algo variar mais (sono, carga, rotina), o app volta a testar e mostra aqui se encontrar um padrão real.',
   };
 }, [discoveries, recentShifts, analysis, computed.length]);
 
@@ -1211,28 +1224,23 @@ Regras:
        {/* Idade corporal (BodyAgeCard) */}
       <BodyAgeCard />
 
-      {/* 1. High-value discoveries */}
-      <div className="space-y-3">
-        <SectionHeader
+      {/* 1. High-value discoveries — só aparece quando há descoberta real.
+          Quando vazio, o herói no topo (PrimaryInsightCard) já cobre o aviso
+          de "ainda calibrando" — repetir aqui era duplicar a mesma mensagem. */}
+      {discoveries.length > 0 && (
+        <div className="space-y-3">
+          <SectionHeader
   title="O que seu corpo está mostrando"
   subtitle="Padrões e sinais recentes que ajudam a explicar sua recuperação."
 />
 
-        {discoveries.length > 0 ? (
           <div className="space-y-3">
             {discoveries.map((item, i) => (
               <DiscoveryCard key={`${item.title}-${i}`} item={item} />
             ))}
           </div>
-        ) : (
-          <SmallInsightCard
-  icon={BarChart3}
-  title="Ainda calibrando seus padrões"
-  text="Já existem dados úteis, mas o app ainda está separando ruído de padrão real. Continue registrando sono, recuperação e treino para fortalecer esta leitura."
-  tone="neutral"
-/>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 2. Recent shifts */}
       <div className="space-y-3">
