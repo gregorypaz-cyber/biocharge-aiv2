@@ -53,8 +53,55 @@ function getConfidenceChip(confidence) {
   };
 }
 
+function CalibratingCard({ hasHrvToday, compact }) {
+  const title = hasHrvToday ? 'Calibrando seu baseline' : 'Falta o sinal principal';
+  const body = hasHrvToday
+    ? 'HRV de hoje registrado. Antes de cravar um número de recovery, preciso de algumas noites de HRV para aprender o seu normal — é assim que o app evita inventar dado. Pode salvar normalmente; o histórico já está sendo construído.'
+    : 'Informe o HRV (e a FC de repouso, se tiver) acima para calcular o recovery do dia. Sem HRV, o número não teria base fisiológica.';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-border/60 bg-card p-4 space-y-3"
+    >
+      <div className="flex items-center gap-2">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400/60" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-400" />
+        </span>
+        <p className="text-xs uppercase tracking-wider font-semibold text-sky-300">
+          {hasHrvToday ? 'Calibrando' : 'Aguardando HRV'}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm font-semibold leading-snug">{title}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed mt-1.5">{body}</p>
+      </div>
+
+      {!compact && (
+        <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            O recovery aparece quando seu baseline pessoal de HRV amadurece. Até lá, o app não mostra um número que não confiaria.
+          </p>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 export default function LivePreview({ preview, compact = false }) {
   if (!preview) return null;
+
+  // Recovery null = não há número honesto a mostrar. Dois motivos: (1) HRV de
+  // hoje ainda não informado; (2) HRV informado, mas baseline jovem (< 4 noites)
+  // → "calibrando". Nunca mostrar "0".
+  if (preview.recovery_score == null) {
+    const hrvToday = preview.hrv_manual ?? preview.hrv ?? null;
+    const hasHrvToday = hrvToday != null && Number(hrvToday) > 0;
+    return <CalibratingCard hasHrvToday={hasHrvToday} compact={compact} />;
+  }
 
   const recoveryScore = preview.recovery_score ?? 0;
   const readinessScore = preview.readiness_score ?? recoveryScore;
