@@ -910,6 +910,35 @@ if (isPostMode) {
             </p>
           </div>
 
+          {/* HRV + FC repouso — sinais dominantes do recovery, promovidos
+              do avançado para cá: sem HRV a prévia não calcula. */}
+          <div className="grid grid-cols-2 gap-4 pt-1">
+            <HRVField
+              value={form.hrv_manual ?? form.hrv}
+              onChange={updateHrv}
+            />
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Heart className="w-3 h-3" /> FC Repouso
+              </label>
+              <Input
+                type="number"
+                step="1"
+                min={30}
+                max={220}
+                value={form.resting_hr || ''}
+                onChange={(e) => update('resting_hr', parseFloat(e.target.value) || null)}
+                onBlur={(e) => {
+                  const v = parseFloat(e.target.value);
+                  if (!isNaN(v)) update('resting_hr', Math.min(220, Math.max(30, v)));
+                }}
+                placeholder="—"
+                className="bg-secondary border-border/40 font-mono"
+              />
+            </div>
+          </div>
+
         </CheckinStep>
 
 {/* Mini Preview */}
@@ -1125,31 +1154,6 @@ if (isPostMode) {
 
             <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Heart className="w-3 h-3" /> FC Repouso
-                  </label>
-                  <Input
-                    type="number"
-                    step="1"
-                    min={30}
-                    max={220}
-                    value={form.resting_hr || ''}
-                    onChange={(e) => update('resting_hr', parseFloat(e.target.value) || null)}
-                    onBlur={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (!isNaN(v)) update('resting_hr', Math.min(220, Math.max(30, v)));
-                    }}
-                    placeholder="—"
-                    className="bg-secondary border-border/40 font-mono"
-                  />
-                </div>
-
-                <HRVField
-                  value={form.hrv_manual ?? form.hrv}
-                  onChange={updateHrv}
-                />
-
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1">
                     <Scale className="w-3 h-3" /> Peso (kg)
