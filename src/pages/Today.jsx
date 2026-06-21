@@ -45,32 +45,13 @@ function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions,
   const sleepNeed = checkin?.sleep_need_tonight ?? null;
   const ratio = analysis?.trainingLoad?.ratio ?? null;
 
-  if (delayedFatigue) {
-    return {
-      tone: 'warning',
-      heroLine: 'Hoje pede mais controle porque o custo pode aparecer amanhã.',
-      title: 'Sinal para amanhã',
-      text: delayedFatigue,
-    };
-  }
+    // (Removidos) 3 ganchos de "amanhã" que eram placebo:
+  //  • fadiga retardada → atribuição causal a treino de 2 dias atrás (refutada);
+  //  • "prévia de amanhã" → texto templated/horóscopo (meta de sono está no SleepForecastCard);
+  //  • carga>1.25 → relação carga→recovery que não se sustenta (r≈+0,17, ns).
+  // O hero mantém só leituras honestas (janela de recuperação / estímulo).
 
-  if (forecast) {
-    return {
-      tone: 'info',
-      heroLine: 'O que você fizer hoje influencia diretamente a leitura de amanhã.',
-      title: 'Prévia de amanhã',
-      text: forecast,
-    };
-  }
 
-  if (todaySessions.length > 0 && ratio != null && ratio > 1.25) {
-    return {
-      tone: 'warning',
-      heroLine: 'A carga de hoje já merece respeito para proteger a recuperação seguinte.',
-      title: 'Atenção para amanhã',
-      text: 'Sua carga de hoje já foi relevante. Amanhã pode exigir mais controle do que parece agora.',
-    };
-  }
 
   if (isRestMode && sleepNeed != null) {
     return {
@@ -1857,7 +1838,9 @@ if (isLoading) {
       
       {orderedPrimaryCards.map((desc) => renderCard(desc))}
 
-      {!shouldHideTomorrowHook && <TomorrowHookCard hook={tomorrowHook} />}
+           {/* (Removido) TomorrowHookCard: previsão templated + fadiga-retardada causal +
+          gancho "volte amanhã". A meta de sono real fica no SleepForecastCard. */}
+
 
       {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
         <Link
