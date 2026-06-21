@@ -155,10 +155,12 @@ function BottleneckInsight({ bottleneck }) {
             <span className="text-foreground font-semibold">{b.label.toLowerCase()}</span> é
             o fator com a{' '}
             <span className="text-foreground font-semibold">{bottleneck.strengthLabel} associação</span>{' '}
-            com a sua recuperação.{' '}
+                        com o seu HRV do dia seguinte — um marcador independente de recuperação
+            (medir contra ele evita o score se correlacionando com ele mesmo).{' '}
             {isPositive
-              ? 'Dias em que ele está mais alto tendem a aparecer com recovery melhor.'
-              : 'Dias em que ele está mais alto tendem a aparecer com recovery pior.'}
+              ? 'Dias em que ele está mais alto tendem a ser seguidos por HRV melhor.'
+              : 'Dias em que ele está mais alto tendem a ser seguidos por HRV mais baixo.'}
+
           </p>
 
           <div className="flex items-center gap-2 mt-3">
