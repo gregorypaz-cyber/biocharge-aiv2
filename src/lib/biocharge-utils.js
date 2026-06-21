@@ -902,7 +902,13 @@ export function normalizeDailySignals(checkinLike, recentCheckins = []) {
 // ─── Delayed Fatigue Alert ─────────────────────────────────────────────────
 
 export function calcDelayedFatigueAlert(checkin, recentCheckins, recentSessions) {
+  // DESATIVADO (validado): "treino intenso -> queda de recovery ~48h depois" não se
+  // sustenta (r≈+0,17, ns). Fazia atribuição CAUSAL que os dados contradizem — placebo.
+  // Para reativar, remova o `return null` abaixo.
+  return null;
+  // eslint-disable-next-line no-unreachable
   if (!recentCheckins || recentCheckins.length < 2) return null;
+
 
   const recoveryToday = checkin.recovery_score ?? calculateRecoveryScore(checkin);
   const sorted = [...recentCheckins].sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -944,7 +950,13 @@ export function calcSleepNeedTonight(recoveryScore, strainAccumulated, recentChe
 }
 
 export function calcNextDayForecast(checkinLike, recentCheckins = []) {
+  // DESATIVADO: "previsão de amanhã" era texto templated (horóscopo), não-falsificável,
+  // com gancho "volte amanhã". A meta de sono real já está no SleepForecastCard.
+  // Para reativar, remova o `return null` abaixo.
+  return null;
+  // eslint-disable-next-line no-unreachable
   const recovery = clamp(checkinLike?.recovery_score ?? 0);
+
   const sleepNeedTonight = Number(checkinLike?.sleep_need_tonight ?? 0);
   const recentForecasts = getRecentTextValues(recentCheckins, 'next_day_forecast', 3);
   const ctx = buildNarrativeContext(checkinLike);
