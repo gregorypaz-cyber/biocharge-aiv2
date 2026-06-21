@@ -657,7 +657,17 @@ const hrvTrend = useMemo(() => {
     }
   };
 
-  const displayedScore = getDayScore(checkin) ?? 0;
+    // Cold-start: o recovery é null enquanto o baseline de HRV é jovem (<4 noites).
+  // NUNCA mostramos "0" nesse caso — seria um número falso (anti-placebo).
+  const rawDayScore = getDayScore(checkin);
+  const isCalibrating = !!checkin && rawDayScore == null;
+  const displayedScore = rawDayScore ?? 0; // só p/ comparações de lógica; a UI usa isCalibrating
+  // Noites de HRV já registradas antes de hoje (o baseline matura em 4 — BL_SEED_NIGHTS).
+  const priorHrvNights = (sortedCheckins || []).filter(
+    (c) => c.date !== today && Number(c?.hrv_manual ?? c?.hrv) > 0
+  ).length;
+  const calibratingNightsLeft = Math.max(0, 4 - priorHrvNights);
+
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
   const personalHigh = enrichedCheckin?.recovery_high_threshold ?? 74;
@@ -1410,38 +1420,49 @@ function ExecutionCard() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                Decisão de hoje
             </span>
-            <h2 className="text-xl font-black mt-1 leading-tight">
-              {dailyVerdict.headline}
+                        <h2 className="text-xl font-black mt-1 leading-tight">
+              {isCalibrating ? 'Calibrando seu baseline' : dailyVerdict.headline}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {heroDynamicContext?.heroLine || dailyVerdict.subheadline}
+              {isCalibrating
+                ? (calibratingNightsLeft > 0
+                    ? `Faltam ${calibratingNightsLeft} ${calibratingNightsLeft === 1 ? 'noite' : 'noites'} de HRV para o Recovery ficar confiável. Continue registrando — não vou inventar um número antes disso.`
+                    : 'Quase lá — mais uma leitura e o Recovery abre.')
+                : (heroDynamicContext?.heroLine || dailyVerdict.subheadline)}
             </p>
+
           </div>
 
           <span
+                      <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              displayedScore >= 70
+              isCalibrating
+                ? 'bg-muted text-muted-foreground'
+                : displayedScore >= 70
                 ? 'bg-emerald-500/15 text-emerald-400'
                 : displayedScore >= 42
                 ? 'bg-yellow-500/15 text-yellow-400'
                 : 'bg-red-500/15 text-red-400'
             }`}
           >
-            {readinessFaixa}
+            {isCalibrating ? 'Calibrando' : readinessFaixa}
           </span>
+
         </div>
 
         {/* TRIO DE ANÉIS — Recovery / Sono / Strain */}
         <div className="grid grid-cols-3 gap-2 pt-1">
           <MiniRing
-            value={displayedScore}
+                      <MiniRing
+            value={isCalibrating ? null : displayedScore}
             max={100}
             color={recoveryColor}
             label="Recovery"
-            caption={readinessFaixa}
-            captionColor={recoveryCaptionColor}
-            trend={ringTrends.recovery}
+            caption={isCalibrating ? 'Calibrando' : readinessFaixa}
+            captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
+            trend={isCalibrating ? [] : ringTrends.recovery}
           />
+
           <MiniRing
             value={sleepVal}
             max={100}
