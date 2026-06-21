@@ -5,58 +5,90 @@ import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function WeeklyRetrospectCard({ weekStart, weekEnd, checkins, sessions }) {
-  const [retrospect, setRetrospect] = useState(null);
+    const [retrospect, setRetrospect] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [canGenerate, setCanGenerate] = useState(false);
   const { user } = useAuth();
 
+  // EFEITO = SÓ LEITURA DE CACHE (não gasta crédito de IA).
+  // A geração via InvokeLLM virou opt-in (botão handleGenerate), alinhada ao
+  // princípio de nunca disparar IA automática no runtime (CONTEXT §6).
   useEffect(() => {
-    if (!weekStart || checkins.length < 4) return;
+    if (!weekStart || checkins.length < 4) { setCanGenerate(false); return; }
 
     let cancelled = false;
 
-    async function load() {
+    async function loadCache() {
       setLoading(true);
       try {
-        // First try to read from DB
         const existing = await base44.entities.WeeklyRetrospect.filter({ week_start: weekStart, created_by: user?.email });
-        if (existing?.length > 0) {
-          if (!cancelled) setRetrospect(existing[0]);
+        if (!cancelled && existing?.length > 0) {
+          setRetrospect(existing[0]);
+          setCanGenerate(false);
           return;
         }
-
-        // Only generate if week is complete enough (≥4 check-ins) and is a past week
+        // Sem cache: apenas fica ELEGÍVEL para gerar (semana passada e completa).
+        // Não invoca nada aqui — espera o clique do usuário.
         const today = new Date().toISOString().slice(0, 10);
-        if (weekEnd >= today) return; // don't generate for current/future week
-
-        const res = await base44.functions.invoke('generateWeeklyRetrospect', {
-          week_start: weekStart,
-          checkins,
-          sessions,
-        });
-        if (!cancelled && res?.data?.retrospect) {
-          setRetrospect(res.data.retrospect);
-        }
+        if (!cancelled) setCanGenerate(weekEnd < today);
       } catch (e) {
-        console.warn('WeeklyRetrospectCard: failed to load', e);
+        console.warn('WeeklyRetrospectCard: cache read failed', e);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
-    load();
+    loadCache();
     return () => { cancelled = true; };
   }, [weekStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) {
+  // Geração explícita (opt-in) — ÚNICA via que chama o InvokeLLM (gasta crédito).
+  async function handleGenerate() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await base44.functions.invoke('generateWeeklyRetrospect', {
+        week_start: weekStart,
+        checkins,
+        sessions,
+      });
+      if (res?.data?.retrospect) {
+        setRetrospect(res.data.retrospect);
+        setCanGenerate(false);
+      }
+    } catch (e) {
+      console.warn('WeeklyRetrospectCard: generate failed', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+    if (loading) {
     return (
       <div className="mx-4 mb-2 px-3 py-2.5 rounded-xl border border-primary/15 bg-primary/5 flex items-center gap-2">
         <div className="w-3 h-3 border border-primary border-t-transparent rounded-full animate-spin shrink-0" />
-        <p className="text-[11px] text-muted-foreground">Gerando retrospecto...</p>
+        <p className="text-[11px] text-muted-foreground">Carregando…</p>
       </div>
     );
   }
 
-  if (!retrospect) return null;
+  // Sem retrospecto salvo: oferece GERAR (opt-in) em vez de gerar sozinho.
+  if (!retrospect) {
+    if (!canGenerate) return null;
+    return (
+      <button
+        onClick={handleGenerate}
+        className="mx-4 mb-2 w-[calc(100%-2rem)] px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/5 flex items-center gap-2 text-left hover:bg-primary/10 transition-colors"
+      >
+        <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+        <span className="text-[11px] text-muted-foreground">
+          Gerar retrospecto desta semana <span className="opacity-60">(usa IA)</span>
+        </span>
+      </button>
+    );
+  }
+
 
   return (
     <motion.div
