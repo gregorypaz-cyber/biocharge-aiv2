@@ -127,12 +127,9 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
             </div>
           )}
 
-          {checkin.next_day_forecast && (
-            <div className="mt-3 p-3 rounded-xl bg-primary/8 border border-primary/15">
-              <p className="text-xs text-primary font-semibold mb-1">Previsão para o dia seguinte</p>
-              <p className="text-xs text-muted-foreground">{checkin.next_day_forecast}</p>
-            </div>
-          )}
+                    {/* (Removido) "Previsão para o dia seguinte": previsão templated já resolvida,
+              mostrada sem comparar com o que de fato aconteceu — ruído. */}
+
         </div>
       </motion.div>
     </motion.div>
@@ -257,7 +254,8 @@ export default function History() {
                           const rawScore = getDayScore(c);
                           const hasScore = rawScore != null;
                           const score = hasScore ? rawScore : 0;
-                          const isAlert = c.current_body_state === 'Overreached' || (hasScore && rawScore < 50);
+                          const isAlert = c.current_body_state === 'Overreached' || (hasScore && rawScore < 42);
+
 
                           return (
                             <motion.button
@@ -280,8 +278,8 @@ export default function History() {
                               <div
                                 className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
                                 style={{
-                                  background: !hasScore ? 'rgba(148,163,184,0.12)' : isAlert ? 'rgba(220,38,38,0.15)' : score >= 80 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
-                                  color: !hasScore ? '#94a3b8' : isAlert ? '#ef4444' : score >= 80 ? '#22c55e' : '#eab308'
+                                  background: !hasScore ? 'rgba(148,163,184,0.12)' : isAlert ? 'rgba(220,38,38,0.15)' : score >= 70 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
+                                  color: !hasScore ? '#94a3b8' : isAlert ? '#ef4444' : score >= 70 ? '#22c55e' : '#eab308'
                                 }}
                               >
                                 {hasScore ? score : '—'}
@@ -319,15 +317,21 @@ export default function History() {
                               </div>
 
                               {/* Trend arrow */}
-                              <div className="shrink-0">
-                                {i < items.length - 1 ? (
-                                  score > (items[i + 1]?.recovery_score || 0) + 3
-                                    ? <TrendingUp className="w-4 h-4 text-emerald-400" title="Prontidão subindo" />
-                                    : score < (items[i + 1]?.recovery_score || 0) - 3
-                                    ? <TrendingDown className="w-4 h-4 text-red-400" title="Prontidão caindo" />
-                                    : <Minus className="w-4 h-4 text-muted-foreground" title="Prontidão estável" />
-                                ) : null}
+                                                            <div className="shrink-0">
+                                {(() => {
+                                  if (i >= items.length - 1) return null;
+                                  const next = getDayScore(items[i + 1]);
+                                  // Sem score válido (cold-start/dia sem dado) não inventa seta —
+                                  // o antigo `|| 0` virava "subindo" falso de 0 → 70.
+                                  if (!hasScore || next == null) return null;
+                                  if (score > next + 3)
+                                    return <TrendingUp className="w-4 h-4 text-emerald-400" title="Prontidão subindo" />;
+                                  if (score < next - 3)
+                                    return <TrendingDown className="w-4 h-4 text-red-400" title="Prontidão caindo" />;
+                                  return <Minus className="w-4 h-4 text-muted-foreground" title="Prontidão estável" />;
+                                })()}
                               </div>
+
                             </motion.button>
                           );
                         })}
