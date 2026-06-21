@@ -579,105 +579,84 @@ export function getBaselineInsights(today, baseline) {
 
 export function detectCorrelations(checkins) {
   checkins = _ensure(checkins);
-  checkins = [...checkins].sort((a, b) => (b.date > a.date ? 1 : -1));
-  const insights = [];
-  if (checkins.length < CORRELATION_MIN_CHECKINS) return insights;
+  if (checkins.length < CORRELATION_MIN_CHECKINS) return [];
 
-  // Sono RELATIVO ao seu padrão pessoal, não a um limiar genérico (7h30).
-  // Compara seus dias de "mais sono" (terço superior) vs "menos sono" (terço
-  // inferior) DOS SEUS PRÓPRIOS DADOS. Assim o insight dispara mesmo para quem
-  // dorme numa faixa estreita — desde que haja variação real (filtros de segurança
-  // herdados da lição do gargalo: mínimo de valores distintos + grupos suficientes).
-  {
-    const sleepValues = checkins
-      .map((c) => c.sleep_hours)
-      .filter((v) => v != null && v > 0);
-    const distinctSleep = new Set(sleepValues.map((v) => Math.round(v * 2) / 2)).size;
+  // Ordena do mais ANTIGO p/ o mais RECENTE para parear sinal[i] com alvo[i+1].
+  // (Sem dedup: a RLS + o filtro por usuário já garantem 1 registro por dia.)
+  const chrono = [...checkins].sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
-    if (sleepValues.length >= CORRELATION_MIN_CHECKINS && distinctSleep >= 4) {
-      const sorted = [...sleepValues].sort((a, b) => a - b);
-      const p33 = sorted[Math.floor(sorted.length / 3)];
-      const p66 = sorted[Math.floor((2 * sorted.length) / 3)];
+  // ANTI-CIRCULARIDADE: só correlacionamos contra alvos INDEPENDENTES do sinal.
+  // Nunca contra recovery_score quando o sinal já é componente dele (HRV/RHR/sono)
+  // — seria tautologia. Alvos válidos: HRV do dia seguinte (independente) e recovery
+  // do dia seguinte SÓ p/ sinais que NÃO entram no recovery (dor, strain). Todo
+  // achado passa pelos mesmos portões do gargalo: variação mínima, valores distintos,
+  // anti quase-binário, |r|>=0,35 e p<=0,05.
+  const HRV_NEXT = (c) => c?.hrv;
+  const RECOVERY_NEXT = (c) => c?.recovery_score;
 
-      // Só faz sentido se os terços forem realmente distintos
-      if (p66 - p33 >= 0.5) {
-        const highDays = checkins.filter((c) => c.sleep_hours >= p66);
-        const lowDays = checkins.filter((c) => c.sleep_hours > 0 && c.sleep_hours <= p33);
+  const relations = [
+    { signal: (c) => c.sleep_hours, target: HRV_NEXT, lag: 1, icon: '🌙',
+      pos: 'Noites de mais sono aparecem com HRV ~{d}ms melhor no dia seguinte.',
+      neg: 'Noites de mais sono aparecem com HRV ~{d}ms mais baixo no dia seguinte — vale observar o contexto.' },
+    { signal: (c) => c.deep_sleep_pct, target: HRV_NEXT, lag: 1, icon: '🔬',
+      pos: 'Mais sono profundo vem com HRV ~{d}ms melhor no dia seguinte.',
+      neg: 'Mais sono profundo aparece com HRV ~{d}ms mais baixo no dia seguinte.' },
+    { signal: (c) => c.stress ?? c.stress_level, target: HRV_NEXT, lag: 1, icon: '🧠',
+      pos: 'Dias de stress mais alto aparecem com HRV ~{d}ms melhor no dia seguinte.',
+      neg: 'Dias de stress mais alto reduzem seu HRV no dia seguinte em ~{d}ms.' },
+    { signal: (c) => c.muscle_soreness ?? c.muscle_soreness_level, target: RECOVERY_NEXT, lag: 1, icon: '💪',
+      pos: 'Mais dor muscular aparece com recovery ~{d} pts melhor no dia seguinte.',
+      neg: 'Mais dor muscular puxa o recovery do dia seguinte para baixo (~{d} pts).' },
+    { signal: (c) => c.daily_strain_accumulated ?? c.strain_accumulated, target: RECOVERY_NEXT, lag: 1, icon: '⚡',
+      pos: 'Dias de carga mais alta aparecem com recovery ~{d} pts melhor no dia seguinte.',
+      neg: 'Dias de carga mais alta reduzem o recovery do dia seguinte (~{d} pts).' },
+  ];
 
-        if (highDays.length >= 3 && lowDays.length >= 3) {
-          const avgHigh = highDays.reduce((s, c) => s + (c.recovery_score || 0), 0) / highDays.length;
-          const avgLow = lowDays.reduce((s, c) => s + (c.recovery_score || 0), 0) / lowDays.length;
-          const diff = avgHigh - avgLow;
-
-          if (diff > SLEEP_RECOVERY_DIFF_MIN) {
-            insights.push({
-              icon: '🌙',
-              type: 'positive',
-              text: `Suas noites de mais sono (${p66.toFixed(1)}h+) trazem Recovery ~${Math.round(diff)} pontos maior que as de menos sono (até ${p33.toFixed(1)}h)`,
-            });
-          }
-        }
+  const out = [];
+  for (const rel of relations) {
+    const xs = [];
+    const ys = [];
+    for (let i = 0; i < chrono.length - rel.lag; i++) {
+      const x = rel.signal(chrono[i]);
+      const y = rel.target(chrono[i + rel.lag]);
+      if (x != null && y != null && !Number.isNaN(Number(x)) && !Number.isNaN(Number(y))) {
+        xs.push(Number(x));
+        ys.push(Number(y));
       }
     }
+    if (xs.length < CORRELATION_MIN_CHECKINS) continue;
+    if (_coefVariation(xs) < BOTTLENECK_MIN_VARIATION) continue;
+    if (new Set(xs).size < BOTTLENECK_MIN_DISTINCT) continue;
+    const counts = {};
+    for (const v of xs) counts[v] = (counts[v] || 0) + 1;
+    const top2 = Object.values(counts).sort((a, b) => b - a).slice(0, 2).reduce((s, c) => s + c, 0);
+    if (top2 / xs.length > 0.85) continue;
+
+    const r = _pearson(xs, ys);
+    if (r == null || Math.abs(r) < TREND_MIN_R) continue;          // |r| >= 0,35
+    if (_corrPValue(r, xs.length) > CORRELATION_MAX_P) continue;   // p <= 0,05
+
+    const meanX = xs.reduce((s, v) => s + v, 0) / xs.length;
+    const meanY = ys.reduce((s, v) => s + v, 0) / ys.length;
+    const hiY = ys.filter((_, i) => xs[i] > meanX);
+    const loY = ys.filter((_, i) => xs[i] <= meanX);
+    const avgHi = hiY.length ? hiY.reduce((s, v) => s + v, 0) / hiY.length : meanY;
+    const avgLo = loY.length ? loY.reduce((s, v) => s + v, 0) / loY.length : meanY;
+    const delta = Math.max(1, Math.round(Math.abs(avgHi - avgLo)));
+
+    const positive = r > 0;
+    out.push({
+      icon: rel.icon,
+      type: positive ? 'positive' : 'warning',
+      text: (positive ? rel.pos : rel.neg).replace('{d}', String(delta)),
+      r: Math.round(r * 100) / 100,
+      samples: xs.length,
+    });
   }
 
-  const highRpeDays = checkins.filter((c, i) => c.rpe >= RPE_HIGH_THRESHOLD && i - 1 >= 0);
-  if (highRpeDays.length >= 2) {
-    const afterHighRpe = highRpeDays
-      .map((_, i) => {
-        const idx = checkins.indexOf(highRpeDays[i]);
-        return checkins[idx - 1];
-      })
-      .filter(Boolean);
-
-    if (afterHighRpe.length >= 2) {
-      const avgAfter = afterHighRpe.reduce((s, c) => s + (c.recovery_score || 0), 0) / afterHighRpe.length;
-      const avgAll = checkins.reduce((s, c) => s + (c.recovery_score || 0), 0) / checkins.length;
-
-      if (avgAll - avgAfter > RPE_RECOVERY_DROP_MIN) {
-        insights.push({
-          icon: '⚡',
-          type: 'warning',
-          text: `Treinos com RPE ≥8 reduzem seu Recovery no dia seguinte em ~${Math.round(avgAll - avgAfter)} pts`,
-        });
-      }
-    }
-  }
-
-  const highStressDays = checkins.filter((c) => (c.stress || 0) >= STRESS_HIGH_CORR && c.hrv);
-  const lowStressDays = checkins.filter((c) => (c.stress || 0) <= STRESS_LOW_CORR && c.hrv);
-
-  if (highStressDays.length >= 2 && lowStressDays.length >= 2) {
-    const avgHrvHigh = highStressDays.reduce((s, c) => s + c.hrv, 0) / highStressDays.length;
-    const avgHrvLow = lowStressDays.reduce((s, c) => s + c.hrv, 0) / lowStressDays.length;
-
-    if (avgHrvLow - avgHrvHigh > STRESS_HRV_DIFF_MIN) {
-      insights.push({
-        icon: '🧠',
-        type: 'warning',
-        text: `Dias de stress alto reduzem seu HRV em média ${Math.round(avgHrvLow - avgHrvHigh)}ms`,
-      });
-    }
-  }
-
-  const goodHydration = checkins.filter((c) => (c.hydration || 0) >= HYDRATION_GOOD_THRESHOLD);
-  const poorHydration = checkins.filter((c) => c.hydration > 0 && c.hydration <= HYDRATION_POOR_THRESHOLD);
-
-  if (goodHydration.length >= 2 && poorHydration.length >= 2) {
-    const avgGood = goodHydration.reduce((s, c) => s + (c.recovery_score || 0), 0) / goodHydration.length;
-    const avgPoor = poorHydration.reduce((s, c) => s + (c.recovery_score || 0), 0) / poorHydration.length;
-
-    if (avgGood - avgPoor > HYDRATION_RECOVERY_DIFF_MIN) {
-      insights.push({
-        icon: '💧',
-        type: 'positive',
-        text: `Boa hidratação melhora seu Recovery em ~${Math.round(avgGood - avgPoor)} pts`,
-      });
-    }
-  }
-
-  return insights.slice(0, 4);
+  return out.slice(0, 4);
 }
+
 
 // ─── Análise de Gargalo Pessoal ───────────────────────────────────────────────
 // Descobre qual variável controlável tem a MAIOR associação com o recovery
@@ -869,8 +848,14 @@ export function detectPersonalBottleneck(checkins) {
 export function detectLaggedEffects(checkins) {
   checkins = _ensure(checkins);
   checkins = [...checkins].sort((a, b) => (b.date > a.date ? 1 : -1));
-  const effects = [];
+    const effects = [];
   if (checkins.length < LAGGED_MIN_CHECKINS) return effects;
+
+  // DESATIVADO (validado): "treino intenso -> queda de recovery ~48h depois" não se
+  // sustenta nos dados (strain de baixa variância; r≈+0,17, ns) e disparava com n=2
+  // — placebo. Cálculo preservado abaixo p/ reativação futura: remova o return.
+  return effects;
+
 
   const intenseDays = checkins
     .map((c, i) => ({ c, i }))
