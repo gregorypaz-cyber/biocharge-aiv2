@@ -417,8 +417,25 @@ function pearson(x, y) {
     y.reduce((s, yi) => s + (yi - my) ** 2, 0)
   );
 
-  return den === 0 ? 0 : num / den;
+    return den === 0 ? 0 : num / den;
 }
+
+// Φ(x) — aproximação Abramowitz-Stegun da normal padrão acumulada.
+function normalCdf(x) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp((-x * x) / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return x > 0 ? 1 - p : p;
+}
+
+// p-valor bicaudal de uma correlação via transformação z de Fisher.
+function corrPValue(r, n) {
+  if (n < 4 || Math.abs(r) >= 1) return 0;
+  const z = Math.atanh(r);
+  const zStat = Math.abs(z * Math.sqrt(n - 3));
+  return 2 * (1 - normalCdf(zStat));
+}
+
 
 const CORRELATION_FIELDS = [
   {
@@ -1142,8 +1159,12 @@ export default function Trends() {
   const periodAvg = avg(filtered, selectedMetric);
   const trend = last7Avg && prev7Avg ? last7Avg - prev7Avg : null;
 
+    const lowerIsBetter = selectedMetric === 'fatigue_score' || selectedMetric === 'stress_score';
+  const trendIsGood = trend === null ? false : lowerIsBetter ? trend < -2 : trend > 2;
+  const trendIsBad = trend === null ? false : lowerIsBetter ? trend > 2 : trend < -2;
   const TrendIcon = trend === null ? Minus : trend > 2 ? TrendingUp : trend < -2 ? TrendingDown : Minus;
-  const trendColor = trend === null ? 'text-muted-foreground' : trend > 2 ? 'text-[hsl(142,70%,55%)]' : trend < -2 ? 'text-[hsl(0,72%,60%)]' : 'text-muted-foreground';
+  const trendColor = trend === null ? 'text-muted-foreground' : trendIsGood ? 'text-[hsl(142,70%,55%)]' : trendIsBad ? 'text-[hsl(0,72%,60%)]' : 'text-muted-foreground';
+
 
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
@@ -1362,30 +1383,32 @@ export default function Trends() {
           return acc;
         }, []);
 
+                if (scatterPoints.length < 5) return null;
+
+        const rx = scatterPoints.map((p) => p.x);
+        const ry = scatterPoints.map((p) => p.y);
+        const r = pearson(rx, ry);
+        const pVal = corrPValue(r, scatterPoints.length);
+        // Só traça linha se a associação for real: |r|>=0,35, p<=0,05 e amostra mínima.
+        const significant =
+          Math.abs(r) >= 0.35 && pVal <= 0.05 && scatterPoints.length >= 8;
+
         let trendLine = [];
-        if (scatterPoints.length >= 3) {
+        if (significant) {
           const n = scatterPoints.length;
           const sumX = scatterPoints.reduce((s, p) => s + p.x, 0);
           const sumY = scatterPoints.reduce((s, p) => s + p.y, 0);
           const sumXY = scatterPoints.reduce((s, p) => s + p.x * p.y, 0);
           const sumX2 = scatterPoints.reduce((s, p) => s + p.x * p.x, 0);
-
-          const slope =
-            (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+          const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
           const intercept = (sumY - slope * sumX) / n;
-
           const xVals = [
             Math.min(...scatterPoints.map((p) => p.x)),
             Math.max(...scatterPoints.map((p) => p.x)),
           ];
-
-          trendLine = xVals.map((x) => ({
-            x,
-            trend: Math.round(slope * x + intercept),
-          }));
+          trendLine = xVals.map((x) => ({ x, trend: Math.round(slope * x + intercept) }));
         }
 
-        if (scatterPoints.length < 3) return null;
 
         return (
           <motion.div
@@ -1395,7 +1418,8 @@ export default function Trends() {
             className="rounded-xl border border-border/60 bg-card p-4"
           >
             <h3 className="text-sm font-semibold mb-0.5 tracking-tight">
-              Impacto do Sono no Recovery
+              Sono × Recovery do dia seguinte
+
             </h3>
             <p className="text-[11px] text-muted-foreground mb-3">
               Cada ponto representa um dia com dados válidos
@@ -1474,9 +1498,12 @@ export default function Trends() {
               </ResponsiveContainer>
             </div>
 
-            <p className="text-[11px] text-muted-foreground mt-2">
-              Linha verde = tendência. Pontos mais à direita = mais sono.
+                        <p className="text-[11px] text-muted-foreground mt-2">
+              {significant
+                ? `Linha = tendência estatística (r=${r.toFixed(2)}, p=${pVal.toFixed(3)}, n=${scatterPoints.length}). Pontos à direita = mais sono.`
+                : `Sem associação significativa nos seus dados (r=${r.toFixed(2)}, n=${scatterPoints.length}) — por isso não traçamos linha. Pontos à direita = mais sono.`}
             </p>
+
           </motion.div>
         );
       })()}
