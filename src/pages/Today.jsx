@@ -987,7 +987,7 @@ const tomorrowHook = useMemo(() => {
   const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
     if (!enrichedCheckin) return { primary: [], secondary: [] };
 
-    return buildCardLayout({
+    const layout = buildCardLayout({
       phase,
       workoutIntensity: dailyVerdict?.workoutIntensity ?? 'unknown',
       scheduledSport,
@@ -997,6 +997,21 @@ const tomorrowHook = useMemo(() => {
       hasNarrative: !!analysis?.narrative,
       hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
     });
+
+    // Durante a calibração (sem recovery confiável) não exibimos cards que
+    // PRESCREVEM a partir do score (treino, narrativa, "porquê", estado, demanda).
+    // Mantemos só os honestos: sinais crus da manhã, meta de sono, sessões,
+    // anomalia de HRV (tem gate próprio) e o CTA de pós-treino.
+    if (isCalibrating) {
+      const ALLOW = new Set([
+        'morning_recovery', 'sleep_forecast', 'training_sessions',
+        'hrv_anomaly', 'post_workout_cta',
+      ]);
+      const keep = (arr) => (arr || []).filter((d) => ALLOW.has(d?.id));
+      return { primary: keep(layout.primary), secondary: keep(layout.secondary) };
+    }
+
+    return layout;
   }, [
     enrichedCheckin,
     phase,
@@ -1005,6 +1020,7 @@ const tomorrowHook = useMemo(() => {
     todaySessions.length,
     analysis,
     morningRecovery,
+    isCalibrating,
   ]);
 
   const orderedPrimaryCards = useMemo(() => {
@@ -1433,7 +1449,6 @@ function ExecutionCard() {
 
           </div>
 
-          <span
                       <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
               isCalibrating
@@ -1452,7 +1467,6 @@ function ExecutionCard() {
 
         {/* TRIO DE ANÉIS — Recovery / Sono / Strain */}
         <div className="grid grid-cols-3 gap-2 pt-1">
-          <MiniRing
                       <MiniRing
             value={isCalibrating ? null : displayedScore}
             max={100}
