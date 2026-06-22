@@ -1004,6 +1004,7 @@ const tomorrowHook = useMemo(() => {
     // anomalia de HRV (tem gate próprio) e o CTA de pós-treino.
     if (isCalibrating) {
       const ALLOW = new Set([
+        'execution',        // o card-herói (anéis + Calibrando) — NUNCA remover
         'morning_recovery', 'sleep_forecast', 'training_sessions',
         'hrv_anomaly', 'post_workout_cta',
       ]);
@@ -1556,7 +1557,13 @@ function ExecutionCard() {
           !todaySessions.length && !isRestMode && (
             <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
               <span className="font-semibold text-primary">Linha do dia:</span>{' '}
-              sua recuperação define a margem do dia. O plano logo abaixo transforma isso na melhor dose para hoje.
+              {isCalibrating
+                ? 'ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
+                : displayedScore >= 70
+                ? 'recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
+                : displayedScore >= 42
+                ? 'recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
+                : 'recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
             </div>
           )
         )}

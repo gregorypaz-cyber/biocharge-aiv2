@@ -76,11 +76,16 @@ function Qualifier({ ctx }) {
 }
 
 export default function MorningRecoveryCard({ checkin, delta = null, recentCheckins = [] }) {
-  const score = checkin?.morning_recovery_score || checkin?.recovery_score || 0;
+  // Cold-start: sem recovery confiável, NÃO mostramos "0"/"Manhã crítica" (falso).
+  const rawScore = checkin?.morning_recovery_score ?? checkin?.recovery_score ?? null;
+  const isCalibrating = rawScore == null;
+  const score = rawScore ?? 0;
   const zone = checkin?.zone || 'yellow';
-  const color = getZoneColor(zone) || 'hsl(45,93%,58%)';
-  const summary = getRecoverySummary(score);
-  const deltaText = formatDelta(delta);
+  const color = isCalibrating ? 'hsl(215,15%,55%)' : (getZoneColor(zone) || 'hsl(45,93%,58%)');
+  const summary = isCalibrating
+    ? { title: 'Calibrando', subtitle: 'Ainda reunindo noites de HRV para um Recovery confiável. Os sinais crus abaixo já valem.' }
+    : getRecoverySummary(score);
+  const deltaText = isCalibrating ? null : formatDelta(delta);
 
   const { initial, transition: reducedTransition } = useMotionSafe();
 
@@ -129,7 +134,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
           className="w-14 h-14 rounded-2xl flex items-center justify-center font-mono font-black text-xl shrink-0"
           style={{ backgroundColor: toHSLA(color, 0.2), color }}
         >
-          {score}
+          {isCalibrating ? '—' : score}
         </div>
 
         <div className="min-w-0">
