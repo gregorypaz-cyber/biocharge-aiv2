@@ -420,9 +420,10 @@ export default function Today() {
   'stress_score',
   'sleep_quality',
   'sleep_performance_pct',
-  'recovery_score',
-  'morning_recovery_score',
-  'zone',
+  // recovery_score / morning_recovery_score / zone NÃO entram aqui de propósito:
+  // o score é a FONTE ÚNICA gravada no check-in. A Today lê o salvo (via getDayScore),
+  // igual ao Histórico/Timeline — nunca recalcula pra exibir. Só os campos DERIVADOS
+  // (decision_mode, thresholds, hrv_trend, etc.) seguem sendo calculados ao vivo.
   'alert',
   'recommendation',
   'training_load',
@@ -1577,131 +1578,105 @@ function ExecutionCard() {
             </div>
           )}
 
-        {/* Lembrete do gargalo pessoal nos dias de recuperação mais baixa */}
-        {displayedScore < 55 &&
-          analysis?.personalBottleneck?.hasSignal &&
-          analysis.personalBottleneck.bottleneck && (() => {
-            const b = analysis.personalBottleneck.bottleneck;
-            const isPositive = b.direction === 'positive';
-            return (
-              <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-xs leading-snug">
-                <span className="font-semibold text-primary">
-                  {b.icon} Seu maior fator hoje:
-                </span>{' '}
-                nos seus dados, <span className="font-medium">{b.label.toLowerCase()}</span> é
-                o que mais acompanha a variação da sua recuperação.{' '}
-                {isPositive
-                  ? `Quando está mais alto, seu corpo tende a responder melhor no dia seguinte.`
-                  : `Quando está mais alto, sua recuperação no dia seguinte tende a cair.`}
-              </div>
+        {/* LEITURA DE HOJE — estado do corpo + modo autonômico + orçamento + alavanca, num card só */}
+        {!isCalibrating && enrichedCheckin.current_body_state && (() => {
+          const bodyKey = enrichedCheckin.current_body_state;
+          const autoKey = enrichedCheckin.autonomic_state || 'balanced';
+          const si = enrichedCheckin.baevsky_si;
+          const cap = enrichedCheckin.remaining_capacity;
+
+          // Frase fundida estado + modo (cobre bom E ruim, nunca só elogio).
+          const bodyClause = {
+            Recovered: 'Corpo recuperado', Activated: 'Corpo ativado',
+            Balanced: 'Corpo equilibrado', Loaded: 'Corpo carregado',
+            Sympathetic_Load: 'Corpo sob carga simpática', Fatigued: 'Corpo fatigado',
+            Overreached: 'Corpo em sobrecarga',
+          }[bodyKey] || 'Corpo estável';
+          const autoClause = {
+            parasympathetic: 'sistema nervoso em recuperação',
+            balanced: 'sistema nervoso calmo',
+            sympathetic: 'sistema nervoso em alerta',
+          }[autoKey] || 'sistema nervoso estável';
+          const tail =
+            displayedScore >= 70 ? 'dá pra puxar hoje.' :
+            displayedScore >= 42 ? 'dá pra treinar com controle.' :
+            'hoje é segurar.';
+          const toneClass =
+            displayedScore >= 70 ? 'text-emerald-400' :
+            displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
+
+          // Orçamento: faixa-alvo do dia vs carga já gasta.
+          const spentPct = strainTarget > 0 ? Math.min(100, Math.round((cappedStrain / strainTarget) * 100)) : 0;
+          const overTarget = cappedStrain > strainTarget;
+
+          // Alavanca pra amanhã: gargalo validado (raro) OU sono vs SEU normal (descritivo, sem causa).
+          const fmtH = (h) => { const H = Math.floor(h); const M = Math.round((h - H) * 60); return M ? `${H}h${String(M).padStart(2, '0')}` : `${H}h`; };
+          const bn = analysis?.personalBottleneck;
+          const sleepBase = (() => {
+            const xs = (sortedCheckins || [])
+              .filter((c) => c.date !== today && Number(c?.sleep_hours) > 0)
+              .map((c) => Number(c.sleep_hours)).slice(0, 14);
+            return xs.length >= 3 ? xs.reduce((a, v) => a + v, 0) / xs.length : null;
+          })();
+          const lastSleep = Number(enrichedCheckin.sleep_hours) > 0 ? Number(enrichedCheckin.sleep_hours) : null;
+          const dMin = (lastSleep != null && sleepBase != null) ? Math.round((lastSleep - sleepBase) * 60) : null;
+
+          let lever;
+          if (bn?.hasSignal && bn.bottleneck) {
+            const b = bn.bottleneck;
+            const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
+            lever = (
+              <>
+                <b className="text-amber-300">Validado:</b> nos seus dados, <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte (correlação {bn.strengthLabel}).{' '}
+                {isSleepH
+                  ? `Ontem ${fmtH(lastSleep)}, ${dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~${fmtH(sleepBase)}). Amanhã, mire seu normal.`
+                  : (b.direction === 'positive' ? 'Mais alto tende a ajudar o dia seguinte.' : 'Mais alto tende a derrubar o dia seguinte.')}
+              </>
             );
-          })()}
+          } else if (lastSleep != null && sleepBase != null && dMin < -20) {
+            lever = <>Sem gargalo provado hoje. O desvio do dia foi o sono: <b>{fmtH(lastSleep)}</b>, {Math.abs(dMin)}min abaixo do seu normal (~{fmtH(sleepBase)}). Vale mirar seu normal amanhã.</>;
+          } else if (lastSleep != null && sleepBase != null) {
+            lever = <>Sem gargalo provado, e seus controláveis estão no seu normal. Nada pra ajustar — siga assim.</>;
+          } else {
+            lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
+          }
 
-        {enrichedCheckin.current_body_state &&
-          BODY_STATE_PT[enrichedCheckin.current_body_state] && (() => {
-            const stateKey = enrichedCheckin.current_body_state;
-            const meta = BODY_STATE_META[stateKey] || BODY_STATE_META.Balanced;
-            const rec = enrichedCheckin.morning_recovery_score ?? enrichedCheckin.recovery_score ?? null;
-            const strain = enrichedCheckin.daily_strain_accumulated ?? 0;
+          return (
+            <div className="rounded-xl border border-border/40 bg-secondary/40 px-3 py-3 space-y-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
 
-            return (
-              <div className={cn('rounded-xl border px-3 py-3 space-y-2', meta.tone)}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-                      Estado do corpo
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm leading-none">{meta.emoji}</span>
-                      <p className="text-sm font-semibold">
-                        {BODY_STATE_PT[stateKey]}
-                      </p>
-                    </div>
-                    <p className="text-[11px] mt-1 opacity-90">
-                      {meta.short}
-                    </p>
-                  </div>
+              <p className="text-sm leading-snug">
+                <span className={toneClass}>{bodyClause}</span>, {autoClause} — {tail}
+              </p>
 
-                  {enrichedCheckin.remaining_capacity &&
-                    CAPACITY_PT[enrichedCheckin.remaining_capacity] && (
-                      <div className="text-right shrink-0">
-                        <p className="text-[10px] uppercase tracking-wider opacity-70">
-                          Capacidade
-                        </p>
-                        <p className="text-sm font-bold">
-                          {CAPACITY_PT[enrichedCheckin.remaining_capacity]}
-                        </p>
-                      </div>
-                    )}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Quanto dá pra puxar</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    gasto <b>{cappedStrain}</b>{cap && CAPACITY_PT[cap] ? <> · sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b></> : null}
+                  </span>
                 </div>
-
-                {/* Contexto numérico — sem repetir "strain X/21" que o anel já mostra */}
-                <p className="text-[11px] opacity-75">
-                  {rec != null && strain > 0 && <>Recuperação <b className="opacity-100">{rec}</b> · carga de hoje já soma no anel acima.</>}
-                  {rec != null && strain <= 0 && <>Recuperação <b className="opacity-100">{rec}</b> · sem carga de treino ainda hoje.</>}
-                  {rec == null && strain > 0 && <>Carga de hoje já soma no anel de Strain acima.</>}
-                  {rec == null && strain <= 0 && <>Sem carga de treino ainda hoje.</>}
-                </p>
-
-                {/* Antes escondido no "Entender" — é a orientação do dia, sempre visível agora */}
-                {BODY_STATE_HINT[stateKey] && (
-                  <p className="text-[11px] opacity-75">→ {BODY_STATE_HINT[stateKey]}</p>
-                )}
-              </div>
-            );
-          })()}
-
-        {enrichedCheckin.autonomic_state &&
-          enrichedCheckin.baevsky_si != null &&
-          AUTONOMIC_PT[enrichedCheckin.autonomic_state] &&
-          (() => {
-            const autoKey = enrichedCheckin.autonomic_state;
-            const baseMeta = AUTONOMIC_META[autoKey] || AUTONOMIC_META.balanced;
-            const si = enrichedCheckin.baevsky_si;
-            // Cor graduada: alerta logo acima do limiar (60–69) é laranja, não vermelho cheio.
-            const autoMeta =
-              autoKey === 'sympathetic' && si != null && si < 70
-                ? { ...baseMeta, tone: 'bg-orange-500/10 border-orange-500/20 text-orange-300', emoji: '🟠' }
-                : baseMeta;
-            const positiveState = ['Recovered', 'Balanced', 'Activated'].includes(
-              enrichedCheckin.current_body_state
-            );
-            const bridge =
-              autoKey === 'sympathetic' && positiveState
-                ? 'Você tem margem de carga (estado equilibrado), mas o sistema nervoso ainda está em alerta — por isso o dia pede controle, não intensidade.'
-                : null;
-
-            return (
-              <div className={cn('rounded-xl border px-3 py-3 space-y-2', autoMeta.tone)}>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-                    Modo do corpo
-                  </p>
-                  <div className="flex items-center justify-between gap-2 mt-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm leading-none">{autoMeta.emoji}</span>
-                      <p className="text-sm font-semibold">{AUTONOMIC_PT[autoKey]}</p>
-                    </div>
-                    <span className="text-[10px] font-mono font-semibold opacity-90">
-                      Baevsky {si}/100
-                    </span>
-                  </div>
-                  <p className="text-[11px] mt-1 opacity-90">{autoMeta.short}</p>
-                  <p className="text-[10px] mt-0.5 opacity-70">{baevskyContext(si, autoKey)}</p>
+                <div className="h-2 rounded-full bg-white/10 overflow-hidden mb-1.5">
+                  <div className={cn('h-full rounded-full', overTarget ? 'bg-orange-400' : 'bg-emerald-400')} style={{ width: `${Math.max(6, spentPct)}%` }} />
                 </div>
-
-                <p className="text-[11px] leading-relaxed font-medium">
-                  → {autoMeta.action}
+                <p className="text-[12px] text-muted-foreground leading-snug">
+                  Faixa de hoje: <b>~{strainTarget} · {targetZoneLabel}</b>. Você escolhe o quê — corrida, força ou descanso.
                 </p>
-
-                {bridge && (
-                  <p className="text-[11px] leading-relaxed opacity-80">{bridge}</p>
-                )}
-
-                <CollapsibleHint>{autoMeta.detail}</CollapsibleHint>
               </div>
-            );
-          })()}
+
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
+                <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
+              </div>
+
+              {si != null && (
+                <CollapsibleHint>
+                  Baevsky {si}/100 · {AUTONOMIC_PT[autoKey] || 'modo estável'}{cap && CAPACITY_PT[cap] ? ` · capacidade ${CAPACITY_PT[cap].toLowerCase()}` : ''}
+                </CollapsibleHint>
+              )}
+            </div>
+          );
+        })()}
 
         {capacityContradictionNote && (
           <p className="text-[11px] text-muted-foreground leading-relaxed">

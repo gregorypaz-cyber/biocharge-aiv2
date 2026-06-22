@@ -1124,7 +1124,13 @@ export default function Trends() {
   const { data: checkins = [] } = useUserCheckins(365);
   const { data: trainingSessions = [] } = useUserTrainingSessions(365);
 
-  const computed = checkins.map((c, i) => computeCheckinScores(c, checkins.slice(i + 1), []));
+  // Score é a FONTE ÚNICA gravada no check-in. Aqui os derivados ainda são calculados
+  // ao vivo, mas recovery_score/zone exibidos vêm do SALVO (recompute só como fallback
+  // para registros antigos sem score gravado) — assim Tendências = Histórico = Today.
+  const computed = checkins.map((c, i) => {
+    const e = computeCheckinScores(c, checkins.slice(i + 1), []);
+    return { ...e, recovery_score: c.recovery_score ?? e.recovery_score, zone: c.zone ?? e.zone };
+  });
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - period);
   const filtered = computed.filter(c => c.date && parseLocalDate(c.date) >= cutoff);
