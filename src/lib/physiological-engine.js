@@ -394,49 +394,78 @@ export function explainRecoveryScore(today, baseline) {
   const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
   const baseSleep = baseline?.sleepScore?.d14 || baseline?.sleepScore?.d7;
   const baseDeepSleep = baseline?.deepSleep?.d14 || baseline?.deepSleep?.d7;
-  const baseSleepHr = baseline?.sleepHr?.d14 || baseline?.sleepHr?.d7;
+
+  // RECOVERY = fisiologia + sono.
+  // Não incluir subjetivo aqui (energia, mood, stress, dor, fadiga),
+  // porque esses sinais não explicam o recovery_score oficial do dia.
 
   if (today.hrv && baseHrv) {
     const d = pctDelta(today.hrv, baseHrv);
     if (d != null && d < WHY_HRV_NEGATIVE_PCT) {
-      reasons.push({ impact: 'negative', text: `HRV reduzido (${d}% abaixo do seu baseline de ${Math.round(baseHrv)}ms)` });
+      reasons.push({
+        impact: 'negative',
+        text: `HRV reduzido (${Math.abs(d)}% abaixo do seu baseline de ${Math.round(baseHrv)}ms)`,
+      });
     } else if (d != null && d > WHY_HRV_POSITIVE_PCT) {
-      reasons.push({ impact: 'positive', text: `HRV elevado (${d}% acima do seu baseline)` });
+      reasons.push({
+        impact: 'positive',
+        text: `HRV elevado (${d}% acima do seu baseline de ${Math.round(baseHrv)}ms)`,
+      });
     }
   }
 
   if (today.resting_hr && baseRhr) {
     const d = pctDelta(today.resting_hr, baseRhr);
     if (d != null && d > WHY_RHR_HIGH_PCT) {
-      reasons.push({ impact: 'negative', text: `FC em repouso acima do normal (+${d}% vs. baseline de ${Math.round(baseRhr)} bpm)` });
+      reasons.push({
+        impact: 'negative',
+        text: `FC de repouso acima do normal (+${d}% vs seu baseline de ${Math.round(baseRhr)} bpm)`,
+      });
+    } else if (d != null && d < 0) {
+      reasons.push({
+        impact: 'positive',
+        text: `FC de repouso abaixo do seu normal (${Math.abs(d)}% melhor que seu baseline de ${Math.round(baseRhr)} bpm)`,
+      });
     }
   }
 
   if (today.sleep_quality && baseSleep) {
     const d = pctDelta(today.sleep_quality, baseSleep);
     if (d != null && d < WHY_SLEEP_NEGATIVE_PCT) {
-      reasons.push({ impact: 'negative', text: `Qualidade do sono abaixo do seu padrão (${d}%)` });
+      reasons.push({
+        impact: 'negative',
+        text: `Qualidade do sono abaixo do seu padrão (${Math.abs(d)}% abaixo do normal)`,
+      });
     } else if (d != null && d > WHY_SLEEP_POSITIVE_PCT) {
-      reasons.push({ impact: 'positive', text: `Sono de boa qualidade (${d}% acima do normal)` });
+      reasons.push({
+        impact: 'positive',
+        text: `Sono de boa qualidade (${d}% acima do seu padrão)`,
+      });
     }
   }
 
-  // Sono profundo vs sua média — o sinal de sono que mais costuma pesar
+  // Quebra do sono dentro do eixo "sono" — ajuda a explicar por que o score de sono subiu/caiu.
   if (today.deep_sleep_pct != null && today.deep_sleep_pct > 0 && baseDeepSleep) {
     const pct = Math.round(today.deep_sleep_pct);
     const avg = Math.round(baseDeepSleep);
+
     if (pct < avg - 4) {
-      reasons.push({ impact: 'negative', text: `Sono profundo baixo: ${pct}% vs sua média de ${avg}%` });
+      reasons.push({
+        impact: 'negative',
+        text: `Sono profundo baixo (${pct}% vs sua média de ${avg}%)`,
+      });
     } else if (pct > avg + 4) {
-      reasons.push({ impact: 'positive', text: `Sono profundo acima da sua média (${pct}% vs ${avg}%)` });
+      reasons.push({
+        impact: 'positive',
+        text: `Sono profundo acima da sua média (${pct}% vs ${avg}%)`,
+      });
     }
   }
 
-  // Sono fragmentado — despertares noturnos
   if (today.sleep_awakenings != null && today.sleep_awakenings >= 4) {
     reasons.push({
       impact: 'negative',
-      text: `Sono fragmentado: você acordou ${today.sleep_awakenings}x essa noite`,
+      text: `Sono fragmentado: ${today.sleep_awakenings} despertares durante a noite`,
     });
   } else if (today.sleep_awakenings != null && today.sleep_awakenings <= 1) {
     reasons.push({
@@ -445,32 +474,23 @@ export function explainRecoveryScore(today, baseline) {
     });
   }
 
-  // FC durante o sono elevada vs baseline — sinal precoce de stress/sobrecarga
-  if (today.sleep_heart_rate != null && today.sleep_heart_rate > 0 && baseSleepHr) {
-    const hr = Math.round(today.sleep_heart_rate);
-    const avg = Math.round(baseSleepHr);
-    if (hr > avg + 3) {
-      reasons.push({
-        impact: 'negative',
-        text: `FC durante o sono elevada (${hr} vs sua média de ${avg} bpm)`,
-      });
-    }
-  }
-
-  if ((today.stress || 0) >= WHY_STRESS_HIGH) {
-    reasons.push({ impact: 'negative', text: `Stress elevado hoje (${today.stress}/5) pesando na recuperação` });
-  }
-  if ((today.fatigue_score || 0) > WHY_FATIGUE_HIGH) {
-    reasons.push({ impact: 'negative', text: `Fadiga acumulada alta (${Math.round(today.fatigue_score)}/100)` });
-  }
-  if ((today.muscle_soreness || 0) >= WHY_SORENESS_HIGH) {
-    reasons.push({ impact: 'negative', text: `Dor muscular significativa (${today.muscle_soreness}/5)` });
-  }
-  if ((today.energy || 0) >= WHY_ENERGY_HIGH) {
-    reasons.push({ impact: 'positive', text: `Energia subjetiva elevada (${today.energy}/5)` });
-  }
-  if ((today.mood || 0) >= WHY_MOOD_HIGH) {
-    reasons.push({ impact: 'positive', text: `Mood e disposição positivos (${today.mood}/5)` });
+  // Teto autonômico / estado autonômico — esse sinal pode limitar o recovery mesmo com sono ok.
+  if (today.autonomic_state === 'sympathetic') {
+    reasons.push({
+      impact: 'negative',
+      text:
+        today.baevsky_si != null
+          ? `Sistema nervoso em alerta (Baevsky ${Math.round(today.baevsky_si)}) limitando o recovery`
+          : 'Sistema nervoso em alerta limitando o recovery',
+    });
+  } else if (today.autonomic_state === 'parasympathetic') {
+    reasons.push({
+      impact: 'positive',
+      text:
+        today.baevsky_si != null
+          ? `Sistema nervoso em modo recuperação (Baevsky ${Math.round(today.baevsky_si)})`
+          : 'Sistema nervoso em modo recuperação',
+    });
   }
 
   return reasons;
