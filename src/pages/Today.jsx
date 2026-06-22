@@ -997,9 +997,16 @@ const tomorrowHook = useMemo(() => {
       hasHrvAnomaly: !!analysis?.hrvAnomaly,
       hasNarrative: !!analysis?.narrative,
       hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
-    });
+        });
+
+    // 'current_state' (CurrentStateCard "Estado do corpo agora") foi consolidado
+    // no card "Leitura de hoje" do herói — não renderizar separado.
+    const strip = (arr) => (arr || []).filter((d) => d?.id !== 'current_state');
+    layout.primary = strip(layout.primary);
+    layout.secondary = strip(layout.secondary);
 
     // Durante a calibração (sem recovery confiável) não exibimos cards que
+
     // PRESCREVEM a partir do score (treino, narrativa, "porquê", estado, demanda).
     // Mantemos só os honestos: sinais crus da manhã, meta de sono, sessões,
     // anomalia de HRV (tem gate próprio) e o CTA de pós-treino.
@@ -1634,14 +1641,16 @@ function ExecutionCard() {
           if (bn?.hasSignal && bn.bottleneck) {
             const b = bn.bottleneck;
             const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
-            lever = (
+                        lever = isSleepH ? (
               <>
-                <b className="text-amber-300">Validado:</b> nos seus dados, <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte (correlação {bn.strengthLabel}).{' '}
-                {isSleepH
-                  ? `Ontem ${fmtH(lastSleep)}, ${dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~${fmtH(sleepBase)}). Amanhã, mire seu normal.`
-                  : (b.direction === 'positive' ? 'Mais alto tende a ajudar o dia seguinte.' : 'Mais alto tende a derrubar o dia seguinte.')}
+                <b className="text-amber-300">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
+              </>
+            ) : (
+              <>
+                <b className="text-amber-300">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
               </>
             );
+
           } else if (lastSleep != null && sleepBase != null && dMin < -20) {
             lever = <>Sem gargalo provado hoje. O desvio do dia foi o sono: <b>{fmtH(lastSleep)}</b>, {Math.abs(dMin)}min abaixo do seu normal (~{fmtH(sleepBase)}). Vale mirar seu normal amanhã.</>;
           } else if (lastSleep != null && sleepBase != null) {
@@ -1659,41 +1668,52 @@ function ExecutionCard() {
               </p>
 
               <div>
+                              <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Quanto dá pra puxar
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    <b>{cappedStrain}</b> / 21 · meta <b>{strainTarget}</b>
-                    {cap && CAPACITY_PT[cap] ? <> · sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b></> : null}
-                  </span>
+                  {cap && CAPACITY_PT[cap] ? (
+                    <span className="text-[11px] text-muted-foreground">
+                      sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b>
+                    </span>
+                  ) : null}
                 </div>
 
-                <div className="relative h-2 rounded-full bg-white/10 overflow-hidden mb-1.5">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-[width]',
-                      overTarget ? 'bg-orange-400' : 'bg-emerald-400'
-                    )}
-                    style={{ width: `${currentStrainPct}%` }}
-                  />
-
-                  <div
-                    className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/75 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]"
+                {/* barra absoluta 0–21; a meta entra como MARCADOR rotulado, não como largura */}
+                <div className="relative pt-3.5 mb-1">
+                  <span
+                    className="absolute top-0 -translate-x-1/2 text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap"
                     style={{ left: `${targetStrainPct}%` }}
-                    aria-hidden="true"
-                  />
+                  >
+                    META {strainTarget}
+                  </span>
+                  <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-[width]',
+                        overTarget ? 'bg-orange-400' : 'bg-emerald-400'
+                      )}
+                      style={{ width: `${currentStrainPct}%` }}
+                    />
+                    <div
+                      className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/75"
+                      style={{ left: `${targetStrainPct}%` }}
+                      aria-hidden="true"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] text-muted-foreground/70">0</span>
                   <span className="text-[10px] text-muted-foreground/70">21</span>
                 </div>
 
                 <p className="text-[12px] text-muted-foreground leading-snug">
-                  Faixa de hoje: <b>~{strainTarget}/21 · {targetZoneLabel}</b>. A barra mostra seu strain total na escala real; o traço marca a meta do dia.
+                  Você está em <b>{cappedStrain}</b>. Bom puxar até <b>~{strainTarget}</b> ({(targetZoneLabel || '').toLowerCase()}); acima começa a cavar a recuperação de amanhã.
                 </p>
               </div>
+
 
 
               <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
