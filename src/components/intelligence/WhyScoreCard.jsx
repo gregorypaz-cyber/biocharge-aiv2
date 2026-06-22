@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 function getTitle(score) {
-  if (score >= 80) return 'O que mais sustentou sua prontidão hoje';
-  if (score >= 65) return 'O que mais influenciou sua prontidão hoje';
-  return 'O que mais puxou sua prontidão para baixo hoje';
+  if (score >= 80) return 'O que mais sustentou seu recovery hoje';
+  if (score >= 65) return 'O que mais influenciou seu recovery hoje';
+  return 'O que mais puxou seu recovery para baixo hoje';
 }
 
 export default function WhyScoreCard({ whyScore, recoveryScore }) {
-  // Em dias de recuperação baixa (< 65), a causa importa mais — abre por padrão
-  // para que a explicação fique visível sem exigir um clique.
+  // Em dias de recovery mais baixo (< 65), a causa importa mais —
+  // abre por padrão para a explicação ficar visível sem exigir clique.
   const [open, setOpen] = useState((recoveryScore ?? 100) < 65);
 
   if (!whyScore || whyScore.length === 0) return null;
@@ -21,9 +21,8 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
       className="rounded-2xl border border-border/50 bg-card overflow-hidden"
     >
       <button
@@ -31,26 +30,27 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-secondary/30 transition-colors"
       >
         <div className="flex items-start gap-3 text-left">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <HelpCircle className="w-4 h-4 text-primary" />
+          <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+            <HelpCircle className="w-4 h-4 text-emerald-400" />
           </div>
 
           <div>
-            <span className="text-sm font-semibold block">
+            <p className="text-base font-semibold leading-tight">
               {getTitle(recoveryScore)}
-            </span>
-            <span className="text-[11px] text-muted-foreground block mt-1">
-              Explicação detalhada dos fatores que mais pesaram no seu score.
-            </span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Explicação detalhada dos fatores que mais pesaram no seu recovery.
+            </p>
           </div>
         </div>
 
-        <ChevronDown
-          className={cn(
-            'w-4 h-4 text-muted-foreground transition-transform shrink-0',
-            open && 'rotate-180'
-          )}
-        />
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="shrink-0 ml-3"
+        >
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        </motion.div>
       </button>
 
       <AnimatePresence initial={false}>
@@ -62,23 +62,25 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 pt-4 space-y-4 border-t border-border/30">
+            <div className="px-5 pb-4 space-y-4">
               {negatives.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold text-destructive uppercase tracking-wider mb-2">
-                    Pesaram contra hoje
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-red-400">
+                    Pesaram contra seu recovery hoje
                   </p>
 
                   <div className="space-y-2">
                     {negatives.map((r, i) => (
                       <div
-                        key={i}
-                        className="flex items-start gap-2.5 rounded-xl bg-secondary/40 border border-border/30 px-3 py-2.5"
+                        key={`neg-${i}-${r.text}`}
+                        className="flex items-start gap-3 rounded-xl bg-secondary/40 border border-border/40 px-3 py-3"
                       >
-                        <ArrowDown className="w-3.5 h-3.5 text-destructive mt-0.5 shrink-0" />
-                        <span className="text-sm text-muted-foreground leading-relaxed">
+                        <div className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <ArrowDown className="w-3 h-3 text-red-400" />
+                        </div>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
                           {r.text}
-                        </span>
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -86,21 +88,23 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
               )}
 
               {positives.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-2">
-                    Sustentaram seu dia
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                    Sustentaram seu recovery hoje
                   </p>
 
                   <div className="space-y-2">
                     {positives.map((r, i) => (
                       <div
-                        key={i}
-                        className="flex items-start gap-2.5 rounded-xl bg-secondary/40 border border-border/30 px-3 py-2.5"
+                        key={`pos-${i}-${r.text}`}
+                        className="flex items-start gap-3 rounded-xl bg-secondary/40 border border-border/40 px-3 py-3"
                       >
-                        <ArrowUp className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-                        <span className="text-sm text-muted-foreground leading-relaxed">
+                        <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <ArrowUp className="w-3 h-3 text-emerald-400" />
+                        </div>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
                           {r.text}
-                        </span>
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -108,9 +112,11 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
               )}
 
               {negatives.length === 0 && positives.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Ainda não há detalhes suficientes para explicar este score.
-                </p>
+                <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-3">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Ainda não há detalhes suficientes para explicar este recovery.
+                  </p>
+                </div>
               )}
             </div>
           </motion.div>
