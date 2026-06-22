@@ -314,13 +314,13 @@ if (canUseStoredDecision) {
 if (prescriptionScore >= personalHighGate && !sleepIsLimiting && !highLoad && hasPhysio) {
 
     return {
-      mode: 'train_high',
-      workoutIntensity: 'high',
-      headline: 'Hoje é uma boa janela para intensidade',
-      subheadline: 'Seu corpo acordou bem e tem margem para um estímulo mais forte com controle.',
-      rationale: 'Prontidão alta',
-      caution: lowLoad ? 'Há margem de carga, mas ainda vale respeitar sua percepção no aquecimento.' : 'Aqueça progressivamente e confirme a resposta do corpo.',
-    };
+        mode: 'train_high',
+        workoutIntensity: 'high',
+        headline: 'Hoje é uma boa janela para intensidade',
+        subheadline: 'Seu corpo acordou bem e tem margem para um estímulo mais forte com controle.',
+        rationale: 'Recovery alto',
+        caution: lowLoad ? 'Há margem de carga, mas ainda vale respeitar sua percepção no aquecimento.' : 'Aqueça progressivamente e confirme a resposta do corpo.',
+      };
   }
 
   if (displayedScore >= 55) {
@@ -361,7 +361,7 @@ if (prescriptionScore >= personalHighGate && !sleepIsLimiting && !highLoad && ha
     workoutIntensity: 'low',
     headline: 'Recuperação é a melhor decisão',
     subheadline: 'Seu corpo não mostra boa margem para carga útil hoje.',
-    rationale: 'Baixa prontidão',
+    rationale: 'Recovery baixo',
     caution: 'Sono, hidratação e redução de estresse geram mais retorno do que forçar treino.',
   };
 }
@@ -1527,15 +1527,15 @@ function ExecutionCard() {
               <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
                 <p className="text-[11px] leading-relaxed">
                   <span className="font-semibold text-foreground">Recovery</span>{' '}
-                  <span className="text-muted-foreground">— sua prontidão do dia (recovery, sono, fadiga e sinais fisiológicos). É o que orienta a decisão de treino.</span>
+                  <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
                 </p>
                 <p className="text-[11px] leading-relaxed">
                   <span className="font-semibold text-foreground">Sono</span>{' '}
-                  <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, profundo e REM).</span>
+                  <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
                 </p>
                 <p className="text-[11px] leading-relaxed">
                   <span className="font-semibold text-foreground">Strain</span>{' '}
-                  <span className="text-muted-foreground">— esforço acumulado hoje (0–21), comparado ao alvo que sua recuperação sugere.</span>
+                  <span className="text-muted-foreground">— esforço acumulado hoje (0–21). É separado do recovery e comparado à meta sugerida para o dia.</span>
                 </p>
               </div>
             </motion.div>
@@ -1605,8 +1605,17 @@ function ExecutionCard() {
             displayedScore >= 70 ? 'text-emerald-400' :
             displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
 
-          // Orçamento: faixa-alvo do dia vs carga já gasta.
-          const spentPct = strainTarget > 0 ? Math.min(100, Math.round((cappedStrain / strainTarget) * 100)) : 0;
+          // Escala ABSOLUTA de strain (0–21), alinhada ao anel.
+          // A meta do dia entra como MARCADOR, não como a largura total da barra.
+          const STRAIN_MAX = 21;
+          const currentStrainPct = Math.max(
+            0,
+            Math.min(100, (cappedStrain / STRAIN_MAX) * 100)
+          );
+          const targetStrainPct = Math.max(
+            0,
+            Math.min(100, (strainTarget / STRAIN_MAX) * 100)
+          );
           const overTarget = cappedStrain > strainTarget;
 
           // Alavanca pra amanhã: gargalo validado (raro) OU sono vs SEU normal (descritivo, sem causa).
@@ -1651,18 +1660,41 @@ function ExecutionCard() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Quanto dá pra puxar</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Quanto dá pra puxar
+                  </span>
                   <span className="text-[11px] text-muted-foreground">
-                    gasto <b>{cappedStrain}</b>{cap && CAPACITY_PT[cap] ? <> · sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b></> : null}
+                    <b>{cappedStrain}</b> / 21 · meta <b>{strainTarget}</b>
+                    {cap && CAPACITY_PT[cap] ? <> · sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b></> : null}
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-white/10 overflow-hidden mb-1.5">
-                  <div className={cn('h-full rounded-full', overTarget ? 'bg-orange-400' : 'bg-emerald-400')} style={{ width: `${Math.max(6, spentPct)}%` }} />
+
+                <div className="relative h-2 rounded-full bg-white/10 overflow-hidden mb-1.5">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-[width]',
+                      overTarget ? 'bg-orange-400' : 'bg-emerald-400'
+                    )}
+                    style={{ width: `${currentStrainPct}%` }}
+                  />
+
+                  <div
+                    className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/75 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]"
+                    style={{ left: `${targetStrainPct}%` }}
+                    aria-hidden="true"
+                  />
                 </div>
+
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-muted-foreground/70">0</span>
+                  <span className="text-[10px] text-muted-foreground/70">21</span>
+                </div>
+
                 <p className="text-[12px] text-muted-foreground leading-snug">
-                  Faixa de hoje: <b>~{strainTarget} · {targetZoneLabel}</b>. Você escolhe o quê — corrida, força ou descanso.
+                  Faixa de hoje: <b>~{strainTarget}/21 · {targetZoneLabel}</b>. A barra mostra seu strain total na escala real; o traço marca a meta do dia.
                 </p>
               </div>
+
 
               <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
@@ -1766,7 +1798,7 @@ if (isLoading) {
         </div>
         <h2 className="text-xl font-black mb-2">Sem check-in hoje</h2>
         <p className="text-muted-foreground mb-6 text-sm">
-          Faça seu check-in para calcular sua prontidão e decidir melhor o treino do dia.
+          Faça seu check-in para calcular seu recovery e decidir melhor o treino do dia.
         </p>
         <Link
           to="/checkin"
