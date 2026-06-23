@@ -1443,9 +1443,18 @@ function ExecutionCard() {
       key={phase + '-card'}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
+      className={cn('relative overflow-hidden rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
     >
-      <div className="space-y-4">
+      {/* Glow atmosférico — o herói "respira" a cor do recovery do dia (estilo Noop) */}
+      {!isCalibrating && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+          <div
+            className="absolute -top-1/3 left-1/2 -translate-x-1/2 w-[150%] h-[120%] opacity-[0.16] blur-2xl"
+            style={{ background: `radial-gradient(ellipse at center top, ${recoveryColor}, transparent 60%)` }}
+          />
+        </div>
+      )}
+      <div className="relative z-10 space-y-4">
         {/* Decisão de hoje */}
         <div className="flex items-start justify-between gap-3">
           <div>
