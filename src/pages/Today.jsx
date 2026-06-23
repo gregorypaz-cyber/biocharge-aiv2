@@ -182,6 +182,13 @@ function TomorrowHookCard({ hook }) {
 }
 
 
+// ── dim: versão escura da cor HSL (início do degradê do anel) ──
+function dimHsl(hsl) {
+  const m = hsl.match(/hsl\(\s*([^,]+),\s*([\d.]+)%?,\s*([\d.]+)%?/);
+  if (!m) return hsl;
+  return `hsl(${m[1]},${Math.max(10, parseFloat(m[2]) * 0.5).toFixed(0)}%,${Math.max(8, parseFloat(m[3]) * 0.38).toFixed(0)}%)`;
+}
+
 function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [] }) {
   const stroke = 8;
   const R = (size - stroke) / 2 - 2;
@@ -190,20 +197,55 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
   const hasValue = value != null && !Number.isNaN(value);
   const pct = max > 0 && hasValue ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   const offset = C - (pct / 100) * C;
+  const gradId = `rg-${(label || 'x').replace(/\s/g, '')}`;
+  // Posição da tip bead (coords SVG pré-rotação: 0°=3h, sentido horário)
+  const tipRad = (pct / 100) * 2 * Math.PI;
+  const tipX = c + R * Math.cos(tipRad);
+  const tipY = c + R * Math.sin(tipRad);
   return (
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+          <defs>
+            {/* Degradê dim→brilhante alinhado com o arco (direita→esquerda em SVG = topo→base visual) */}
+            <linearGradient id={gradId} gradientUnits="userSpaceOnUse"
+              x1={c + R} y1={c} x2={c - R} y2={c}>
+              <stop offset="0%" stopColor={dimHsl(color)} />
+              <stop offset="100%" stopColor={color} />
+            </linearGradient>
+          </defs>
           <circle cx={c} cy={c} r={R} fill="none" stroke="hsl(215,25%,18%)" strokeWidth={stroke} />
           {hasValue && (
-            <motion.circle
-              cx={c} cy={c} r={R} fill="none" stroke={color} strokeWidth={stroke}
-              strokeLinecap="round" strokeDasharray={C}
-              initial={{ strokeDashoffset: C }}
-              animate={{ strokeDashoffset: offset }}
-              transition={{ duration: 1, ease: 'easeOut' }}
-              style={{ filter: `drop-shadow(0 0 5px ${color}55)` }}
-            />
+            <>
+              {/* Bloom — halo difuso atrás do arco */}
+              <motion.circle
+                cx={c} cy={c} r={R} fill="none" stroke={color} strokeWidth={stroke + 6}
+                strokeLinecap="round" strokeDasharray={C}
+                initial={{ strokeDashoffset: C }}
+                animate={{ strokeDashoffset: offset }}
+                transition={{ duration: 1, ease: 'easeOut' }}
+                opacity={0.12}
+                style={{ filter: 'blur(6px)' }}
+              />
+              {/* Arco principal com degradê */}
+              <motion.circle
+                cx={c} cy={c} r={R} fill="none" stroke={`url(#${gradId})`} strokeWidth={stroke}
+                strokeLinecap="round" strokeDasharray={C}
+                initial={{ strokeDashoffset: C }}
+                animate={{ strokeDashoffset: offset }}
+                transition={{ duration: 1, ease: 'easeOut' }}
+              />
+              {/* Tip bead — ponto luminoso na ponta do arco */}
+              {pct > 4 && (
+                <motion.circle
+                  cx={tipX} cy={tipY} r={stroke * 0.5}
+                  fill="white"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.8 }}
+                  transition={{ delay: 0.85, duration: 0.3 }}
+                />
+              )}
+            </>
           )}
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
