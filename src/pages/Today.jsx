@@ -1874,6 +1874,9 @@ if (isLoading) {
       {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
+            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+          </p>
           <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 

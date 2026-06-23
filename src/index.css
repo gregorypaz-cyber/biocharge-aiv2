@@ -108,6 +108,14 @@
   border-radius: 4px;
 }
 
+/* ─── Polish global de cards: hairline de luz no topo + leve profundidade (Noop) ─── */
+@layer components {
+  .bg-card {
+    background-image: linear-gradient(to bottom, hsl(0 0% 100% / 0.025), hsl(0 0% 100% / 0) 42%);
+    box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.06), 0 1px 3px hsl(0 0% 0% / 0.28);
+  }
+}
+
 /* Smooth transitions */
 .transition-bio {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
