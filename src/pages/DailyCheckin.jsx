@@ -767,7 +767,7 @@ if (isPostMode) {
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
-          <h1 className="text-base font-bold">Check-in da manhã</h1>
+          <h1 className="text-lg font-black tracking-tight">Check-in da manhã</h1>
           <div className="w-16" />
         </div>
 
