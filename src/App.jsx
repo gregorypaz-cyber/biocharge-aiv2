@@ -7,7 +7,6 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
-import Dashboard from '@/pages/Dashboard';
 import DailyCheckin from '@/pages/DailyCheckin';
 import Insights from '@/pages/Insights';
 import History from '@/pages/History';
