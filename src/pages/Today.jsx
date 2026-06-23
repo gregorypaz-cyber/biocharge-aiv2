@@ -997,7 +997,7 @@ const tomorrowHook = useMemo(() => {
       hasHrvAnomaly: !!analysis?.hrvAnomaly,
       hasNarrative: !!analysis?.narrative,
       hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
-        });
+    });
 
     // 'current_state' (CurrentStateCard "Estado do corpo agora") foi consolidado
     // no card "Leitura de hoje" do herói — não renderizar separado.
@@ -1006,7 +1006,6 @@ const tomorrowHook = useMemo(() => {
     layout.secondary = strip(layout.secondary);
 
     // Durante a calibração (sem recovery confiável) não exibimos cards que
-
     // PRESCREVEM a partir do score (treino, narrativa, "porquê", estado, demanda).
     // Mantemos só os honestos: sinais crus da manhã, meta de sono, sessões,
     // anomalia de HRV (tem gate próprio) e o CTA de pós-treino.
@@ -1641,7 +1640,7 @@ function ExecutionCard() {
           if (bn?.hasSignal && bn.bottleneck) {
             const b = bn.bottleneck;
             const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
-                        lever = isSleepH ? (
+            lever = isSleepH ? (
               <>
                 <b className="text-amber-300">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
               </>
@@ -1650,7 +1649,6 @@ function ExecutionCard() {
                 <b className="text-amber-300">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
               </>
             );
-
           } else if (lastSleep != null && sleepBase != null && dMin < -20) {
             lever = <>Sem gargalo provado hoje. O desvio do dia foi o sono: <b>{fmtH(lastSleep)}</b>, {Math.abs(dMin)}min abaixo do seu normal (~{fmtH(sleepBase)}). Vale mirar seu normal amanhã.</>;
           } else if (lastSleep != null && sleepBase != null) {
@@ -1668,7 +1666,6 @@ function ExecutionCard() {
               </p>
 
               <div>
-                              <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Quanto dá pra puxar
@@ -1713,7 +1710,6 @@ function ExecutionCard() {
                   Você está em <b>{cappedStrain}</b>. Bom puxar até <b>~{strainTarget}</b> ({(targetZoneLabel || '').toLowerCase()}); acima começa a cavar a recuperação de amanhã.
                 </p>
               </div>
-
 
 
               <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
