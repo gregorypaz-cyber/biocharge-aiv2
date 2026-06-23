@@ -669,6 +669,14 @@ const hrvTrend = useMemo(() => {
   ).length;
   const calibratingNightsLeft = Math.max(0, 4 - priorHrvNights);
 
+  // Tier de confiança do baseline (honestidade): nos dias 4–13 o Recovery já existe,
+  // mas o baseline matura até 14 noites (BL_TRUST_NIGHTS). Surfacar isso evita que um
+  // score com baseline provisório pareça tão firme quanto um já consolidado.
+  // calibrando (sem score) → o título já avisa; construindo (<14) → âmbar; sólido (≥14) → verde.
+  const baselineTier = isCalibrating
+    ? 'calibrando'
+    : (priorHrvNights >= 14 ? 'solido' : 'construindo');
+
 
   const prescriptionScore = checkin?.recovery_score ?? displayedScore;
   const personalHigh = enrichedCheckin?.recovery_high_threshold ?? 74;
@@ -1412,9 +1420,9 @@ function ExecutionCard() {
   const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
   const sleepColor =
     sleepVal == null ? 'hsl(215,30%,55%)'
-    : sleepVal >= 80 ? 'hsl(142,65%,50%)'
-    : sleepVal >= 65 ? 'hsl(199,89%,60%)'
-    : 'hsl(45,93%,58%)';
+    : sleepVal >= 80 ? 'hsl(205,90%,62%)'
+    : sleepVal >= 65 ? 'hsl(210,85%,55%)'
+    : 'hsl(222,60%,52%)';
   const sleepWord =
     sleepVal == null ? 'Sem dado'
     : sleepVal >= 80 ? 'Ótimo'
@@ -1423,9 +1431,9 @@ function ExecutionCard() {
     : 'Baixo';
   const sleepCaptionColor =
     sleepVal == null ? 'text-muted-foreground'
-    : sleepVal >= 80 ? 'text-emerald-400'
-    : sleepVal >= 65 ? 'text-sky-400'
-    : 'text-yellow-400';
+    : sleepVal >= 80 ? 'text-sky-400'
+    : sleepVal >= 65 ? 'text-blue-400'
+    : 'text-blue-500';
 
   const strainColor = strainVsTarget.ring;
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
@@ -1454,6 +1462,25 @@ function ExecutionCard() {
                     : 'Quase lá — mais uma leitura e o Recovery abre.')
                 : (heroDynamicContext?.heroLine || dailyVerdict.subheadline)}
             </p>
+
+            {!isCalibrating && (
+              <span
+                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                  baselineTier === 'solido'
+                    ? 'bg-emerald-500/10 text-emerald-400/90'
+                    : 'bg-amber-500/10 text-amber-400/90'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    baselineTier === 'solido' ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}
+                />
+                {baselineTier === 'solido'
+                  ? 'Baseline sólido'
+                  : `Baseline construindo · ${priorHrvNights}/14 noites`}
+              </span>
+            )}
 
           </div>
 
