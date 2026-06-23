@@ -240,7 +240,7 @@ function LongTermTrendsCard({ trends }) {
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-5"
+      className="rounded-2xl border border-border/60 bg-card tint-recovery p-5"
     >
       <div className="flex items-center gap-2 mb-1">
         <BarChart3 className="w-4 h-4 text-primary" />

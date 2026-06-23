@@ -240,7 +240,7 @@ Responda APENAS em JSON:
 <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
+      className="rounded-xl border border-border/60 bg-card tint-recovery p-4 space-y-3.5"
     >
 
 <div className="flex items-start gap-2.5">
@@ -777,7 +777,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
     >
 <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <Gauge className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <Gauge className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Balance de carga e recuperação</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
@@ -876,10 +876,10 @@ function RunningEconomyCard({ sessions = [] }) {
   if (!eco) return null;
   const positive = eco.isImproving;
   return (
-    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5">
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card tint-strain p-4 space-y-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <Gauge className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <Gauge className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Economia de corrida</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
@@ -970,10 +970,10 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
   const DirIcon = deltaKm > 0.1 ? TrendingUp : deltaKm < -0.1 ? TrendingDown : Minus;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5">
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card tint-strain p-4 space-y-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <Footprints className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <Footprints className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Volume de corrida (semanal)</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
