@@ -75,6 +75,35 @@ function Qualifier({ ctx }) {
   return <p className={`text-[10px] mt-0.5 leading-tight ${cls}`}>{ctx.text}</p>;
 }
 
+// ─── Marcadores estilo Noop: sparkline 14d + chip de delta vs baseline ──────
+function MiniSpark({ data = [], color = 'hsl(215,20%,55%)' }) {
+  const vals = (data || []).filter((v) => v != null && !Number.isNaN(v));
+  if (vals.length < 3) return null;
+  const mn = Math.min(...vals);
+  const range = Math.max(...vals) - mn || 1;
+  const pts = vals
+    .map((v, i) => `${((i / (vals.length - 1)) * 100).toFixed(1)},${(18 - ((v - mn) / range) * 16).toFixed(1)}`)
+    .join(' ');
+  return (
+    <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" className="mt-1.5" aria-hidden="true">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+    </svg>
+  );
+}
+
+function DeltaChip({ delta, goodUp = true, unit = '' }) {
+  if (delta == null || Number.isNaN(delta)) return null;
+  const r = Math.round(delta);
+  if (Math.abs(r) <= 1) return <p className="text-[10px] mt-0.5 text-muted-foreground">no seu normal</p>;
+  const good = goodUp ? r > 0 : r < 0;
+  const cls = good ? 'text-emerald-400' : 'text-amber-400';
+  return (
+    <p className={`text-[10px] mt-0.5 font-medium ${cls}`}>
+      {r > 0 ? '+' : ''}{r}{unit} vs base
+    </p>
+  );
+}
+
 export default function MorningRecoveryCard({ checkin, delta = null, recentCheckins = [] }) {
   // Cold-start: sem recovery confiável, NÃO mostramos "0"/"Manhã crítica" (falso).
   const rawScore = checkin?.morning_recovery_score ?? checkin?.recovery_score ?? null;
@@ -107,6 +136,20 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
   const hrvCtx = hrvContext(hrvVal, mean(hrvSamples));
   const rhrCtx = rhrContext(rhrVal, mean(rhrSamples));
   const sleepCtx = sleepContext(sleepVal, checkin?.sleep_need_tonight ?? 7.5);
+
+  // Séries 14d (cronológicas: antigo → recente) e deltas vs baseline pessoal.
+  // Puramente descritivo dos sinais crus — não entra em nenhum score (não-circular).
+  const sleepSamples = (recentCheckins || [])
+    .map((c) => (typeof c.sleep_hours === 'number' ? c.sleep_hours : null))
+    .filter((v) => v != null)
+    .slice(0, 14);
+  const sparkHrv = [...hrvSamples].reverse();
+  const sparkRhr = [...rhrSamples].reverse();
+  const sparkSleep = [...sleepSamples].reverse();
+  const hrvBase = mean(hrvSamples);
+  const rhrBase = mean(rhrSamples);
+  const hrvDelta = hrvVal != null && hrvBase != null ? hrvVal - hrvBase : null;
+  const rhrDelta = rhrVal != null && rhrBase != null ? rhrVal - rhrBase : null;
 
   return (
     <motion.div
@@ -167,7 +210,8 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
           <p className="text-sm font-semibold">
             {hrvVal != null ? <>{hrvVal}<span className="text-[10px] font-normal text-muted-foreground"> ms</span></> : '—'}
           </p>
-          <Qualifier ctx={hrvCtx} />
+          <DeltaChip delta={hrvDelta} goodUp unit=" ms" />
+          <MiniSpark data={sparkHrv} color="hsl(199,89%,60%)" />
         </div>
 
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
@@ -178,7 +222,8 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
           <p className="text-sm font-semibold">
             {rhrVal != null ? <>{rhrVal}<span className="text-[10px] font-normal text-muted-foreground"> bpm</span></> : '—'}
           </p>
-          <Qualifier ctx={rhrCtx} />
+          <DeltaChip delta={rhrDelta} goodUp={false} unit=" bpm" />
+          <MiniSpark data={sparkRhr} color="hsl(215,20%,55%)" />
         </div>
 
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
@@ -190,6 +235,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
             {sleepVal != null ? `${sleepVal}h` : '—'}
           </p>
           <Qualifier ctx={sleepCtx} />
+          <MiniSpark data={sparkSleep} color="hsl(199,89%,60%)" />
         </div>
       </div>
     </motion.div>
