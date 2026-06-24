@@ -35,11 +35,12 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
             transition={{ delay: 0.1 + i * 0.06 }}
             className={cn(
               'flex items-start gap-3 p-3 rounded-xl border text-sm',
-              item.type === 'warning' || item.source === 'lagged'
-                ? 'bg-yellow-500/5 border-yellow-500/15'
-                : item.type === 'positive'
-                ? 'bg-primary/5 border-primary/15'
-                : 'bg-secondary/30 border-border/30'
+              (() => {
+                const dom = { '🌙':'sleep','💤':'sleep','🔬':'sleep','⚡':'strain','💪':'strain','🏃':'strain' }[item.icon];
+                if (dom === 'sleep') return 'bg-blue-500/5 border-blue-400/20';
+                if (dom === 'strain') return 'bg-secondary/30 border-border/50';
+                return 'bg-emerald-500/5 border-emerald-500/15';
+              })()
             )}
           >
             <span className="text-base mt-0.5 shrink-0">{item.icon}</span>

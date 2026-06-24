@@ -316,19 +316,22 @@ function InsightChip({ confidence }) {
   );
 }
 
+// Mapa emoji → domínio → cor do card (verde recovery, azul sono, cinza strain)
+const DOMAIN_OF = { '🌙':'sleep','💤':'sleep','🔬':'sleep','⚡':'strain','💪':'strain','🏃':'strain' };
+const DOMAIN_CARD = {
+  sleep:  'border-blue-400/20 bg-blue-500/5',
+  strain: 'border-border/50 bg-secondary/30',
+};
+const DOMAIN_DEFAULT = 'border-emerald-500/20 bg-emerald-500/5'; // recovery (verde)
+
 function DiscoveryCard({ item }) {
-  const negative = item.sentiment === 'negative';
+  const domainCls = DOMAIN_CARD[DOMAIN_OF[item.icon]] || DOMAIN_DEFAULT;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        'rounded-xl border p-3.5 space-y-2',
-        negative
-          ? 'border-red-500/20 bg-red-500/5'
-          : 'border-emerald-500/20 bg-emerald-500/5'
-      )}
+      className={cn('rounded-xl border p-3.5 space-y-2', domainCls)}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
