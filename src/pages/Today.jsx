@@ -1924,7 +1924,7 @@ if (isLoading) {
   return (
     <div
       className={cn(
-        'space-y-6 max-w-2xl mx-auto transition-all duration-500',
+        'space-y-4 max-w-2xl mx-auto transition-all duration-500',
         isSilentMode && 'opacity-90',
         isRestMode && 'saturate-[0.7]'
       )}
