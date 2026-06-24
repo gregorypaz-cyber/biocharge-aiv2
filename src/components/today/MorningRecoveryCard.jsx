@@ -104,6 +104,57 @@ function DeltaChip({ delta, goodUp = true, unit = '' }) {
   );
 }
 
+// ─── Estágios do sono — breakdown bar estilo WHOOP/Noop ──────────────────────
+function SleepStages({ sleepHours, deepPct, remPct }) {
+  if (deepPct == null || sleepHours == null || sleepHours <= 0) return null;
+  const hasRem = remPct != null && remPct > 0;
+  const deep = Math.round(deepPct);
+  const rem = hasRem ? Math.round(remPct) : 0;
+  const light = Math.max(0, 100 - deep - rem);
+  const fmtH = (pct) => {
+    const hrs = sleepHours * pct / 100;
+    const h = Math.floor(hrs);
+    const m = Math.round((hrs - h) * 60);
+    return `${h}h${String(m).padStart(2, '0')}`;
+  };
+  const stages = [
+    { label: 'Profundo', pct: deep, color: 'hsl(222,55%,38%)' },
+    ...(hasRem ? [{ label: 'REM', pct: rem, color: 'hsl(205,88%,58%)' }] : []),
+    { label: 'Leve', pct: light, color: 'hsl(215,35%,50%)' },
+  ];
+  return (
+    <div className="space-y-2.5">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        Estágios do sono
+      </p>
+      <div className="flex h-3 rounded-full overflow-hidden gap-[2px]">
+        {stages.map((s) => (
+          <motion.div
+            key={s.label}
+            initial={{ width: 0 }}
+            animate={{ width: `${s.pct}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            style={{ backgroundColor: s.color }}
+            className="h-full first:rounded-l-full last:rounded-r-full"
+          />
+        ))}
+      </div>
+      <div className={`grid gap-2 ${hasRem ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        {stages.map((s) => (
+          <div key={s.label} className="text-center">
+            <div className="flex items-center justify-center gap-1.5 mb-0.5">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+              <span className="text-[10px] text-muted-foreground">{s.label}</span>
+            </div>
+            <p className="text-sm font-mono font-semibold">{s.pct}%</p>
+            <p className="text-[10px] text-muted-foreground">{fmtH(s.pct)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function MorningRecoveryCard({ checkin, delta = null, recentCheckins = [] }) {
   // Cold-start: sem recovery confiável, NÃO mostramos "0"/"Manhã crítica" (falso).
   const rawScore = checkin?.morning_recovery_score ?? checkin?.recovery_score ?? null;
@@ -238,6 +289,12 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
           <MiniSpark data={sparkSleep} color="hsl(199,89%,60%)" />
         </div>
       </div>
+
+      <SleepStages
+        sleepHours={sleepVal}
+        deepPct={checkin?.deep_sleep_pct}
+        remPct={checkin?.rem_sleep_pct}
+      />
     </motion.div>
   );
 }
