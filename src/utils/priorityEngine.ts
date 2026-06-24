@@ -223,7 +223,7 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
   }
 }
 
-const MAX_PRIMARY = 3;
+const MAX_PRIMARY = 6;
 
 export function buildCardLayout(input: PriorityEngineInput): PriorityResult {
   const allCards = rulesForPhase(input.phase, input)

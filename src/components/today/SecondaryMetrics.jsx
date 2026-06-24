@@ -30,7 +30,7 @@ export default function SecondaryMetrics({ children, count = 0 }) {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Dados avançados
+                Seu dia completo
               </span>
 
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-border text-muted-foreground">
@@ -39,7 +39,7 @@ export default function SecondaryMetrics({ children, count = 0 }) {
             </div>
 
             <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-              Métricas, contexto fisiológico e explicação da recomendação.
+              Sono, treino e sinais da manhã.
             </p>
           </div>
         </div>
