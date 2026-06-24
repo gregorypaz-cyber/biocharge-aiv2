@@ -1743,8 +1743,13 @@ function ExecutionCard() {
           }
 
           return (
-            <div className="rounded-xl border border-border/40 bg-secondary/40 px-3 py-3 space-y-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
+            <div className="rounded-2xl border border-border/40 bg-secondary/40 px-4 py-4 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400'
+                }`} />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
+              </div>
 
               <p className="text-sm leading-snug">
                 <span className={toneClass}>{bodyClause}</span>, {autoClause} — {tail}
@@ -1762,33 +1767,37 @@ function ExecutionCard() {
                   ) : null}
                 </div>
 
-                {/* barra absoluta 0–21; a meta entra como MARCADOR rotulado, não como largura */}
-                <div className="relative pt-3.5 mb-1">
-                  <span
-                    className="absolute top-0 -translate-x-1/2 text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap"
+                {/* barra absoluta 0–21; meta como marcador triangular + fill degradê */}
+                <div className="relative pt-5 mb-1">
+                  <div
+                    className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
                     style={{ left: `${targetStrainPct}%` }}
                   >
-                    META {strainTarget}
-                  </span>
-                  <div className="relative h-2 rounded-full bg-white/10 overflow-hidden">
+                    <span className="text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap">
+                      META {strainTarget}
+                    </span>
+                    <span className="text-white/50 text-[7px] mt-px">▾</span>
+                  </div>
+                  <div className="relative h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
                     <div
-                      className={cn(
-                        'h-full rounded-full transition-[width]',
-                        overTarget ? 'bg-orange-400' : 'bg-emerald-400'
-                      )}
-                      style={{ width: `${currentStrainPct}%` }}
+                      className="h-full rounded-full transition-[width]"
+                      style={{
+                        width: `${currentStrainPct}%`,
+                        background: overTarget
+                          ? 'linear-gradient(90deg, hsl(35,80%,35%), hsl(25,95%,55%))'
+                          : 'linear-gradient(90deg, hsl(142,50%,25%), hsl(142,65%,48%))',
+                      }}
                     />
                     <div
-                      className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/75"
+                      className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/60 rounded-full"
                       style={{ left: `${targetStrainPct}%` }}
                       aria-hidden="true"
                     />
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] text-muted-foreground/70">0</span>
-                  <span className="text-[10px] text-muted-foreground/70">21</span>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[9px] font-mono text-muted-foreground/40">0</span>
+                    <span className="text-[9px] font-mono text-muted-foreground/40">21</span>
+                  </div>
                 </div>
 
                 <p className="text-[12px] text-muted-foreground leading-snug">
@@ -1797,7 +1806,7 @@ function ExecutionCard() {
               </div>
 
 
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-2.5 py-2">
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
                 <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
               </div>
