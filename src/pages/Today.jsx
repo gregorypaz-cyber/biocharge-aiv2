@@ -1827,7 +1827,7 @@ function ExecutionCard() {
         )}
       </div>
 
-      {phaseCfg.showCta ? (
+      {phaseCfg.showCta && (
         <button
           onClick={() => setShowAddModal(true)}
           className={cn(
@@ -1837,16 +1837,6 @@ function ExecutionCard() {
         >
           <CtaIcon className="w-4 h-4" />
           {phaseCfg.ctaLabel}
-        </button>
-      ) : (
-        <button
-          disabled
-          className={cn(
-            'w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-medium text-xs transition-all opacity-60 cursor-not-allowed',
-            phaseCfg.ctaClass
-          )}
-        >
-          <CtaIcon className="w-3.5 h-3.5" /> {phaseCfg.ctaLabel}
         </button>
       )}
     </motion.div>
