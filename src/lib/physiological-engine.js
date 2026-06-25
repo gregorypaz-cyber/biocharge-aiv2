@@ -1648,3 +1648,7 @@ export function detectLongTermTrends(checkins) {
     hasAnyTrend: trending.length > 0,
   };
 }
+// ─── Helpers estatísticos expostos (Swing 1 — expansão) ──────────────────────
+// Reuso pela camada de UI (ex.: scatter da Trends) e blindagem por teste contra
+// valores de referência (scipy). São a base de TODOS os gates anti-placebo.
+export { _pearson as pearson, _corrPValue as corrPValue, _coefVariation as coefVariation };
