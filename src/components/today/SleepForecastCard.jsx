@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Moon } from 'lucide-react';
+import { Moon, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // "Missão da noite": meta de sono PERSONALIZADA + débito.
 // A previsão de amanhã (next_day_forecast) NÃO é mostrada aqui de propósito —
@@ -54,6 +55,14 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
           </p>
         </div>
       ) : null}
+
+      <Link
+        to="/trends"
+        className="flex items-center justify-end gap-1 text-[11px] font-medium text-blue-300/80 hover:text-blue-200 transition-colors"
+      >
+        Ver tendência do sono
+        <ArrowRight className="w-3 h-3" />
+      </Link>
     </motion.div>
   );
 }
