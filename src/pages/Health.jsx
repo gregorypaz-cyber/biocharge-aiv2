@@ -235,7 +235,7 @@ function HonestyFooter() {
 export default function Health() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: rawCheckins } = useUserCheckins(user?.email);
+  const { data: rawCheckins } = useUserCheckins(90);
 
   const checkins = useMemo(() => sortDesc(rawCheckins || []), [rawCheckins]);
   const baseline = useMemo(() => buildBaseline(checkins), [checkins]);
