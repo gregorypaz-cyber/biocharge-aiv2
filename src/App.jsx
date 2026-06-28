@@ -13,6 +13,7 @@ import History from '@/pages/History';
 import Today from '@/pages/Today';
 import Trends from '@/pages/Trends';
 import AppSettings from '@/pages/AppSettings';
+import Health from '@/pages/Health';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -63,6 +64,8 @@ const AuthenticatedApp = () => {
           <Route path="/trends" element={<Trends />} />
           <Route path="/settings" element={<AppSettings />} />
         </Route>
+        {/* /saude: sem AppLayout (sem nav bar) — acesso só por tap no card da Today */}
+        <Route path="/saude" element={<Health />} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

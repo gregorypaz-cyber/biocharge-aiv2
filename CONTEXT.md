@@ -80,7 +80,23 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 ---
 
-## 7. Backlog (em ordem de prioridade)
+## 7. Monitor de Saúde (adicionado em 28/06/2026)
+
+**Fase 0 ativa. Fase 1 dormente (slots mapeados).**
+
+- `assessHealthSignals(checkins, baseline)` em `src/lib/physiological-engine.js` — nova função exportada. Reusa a matemática de `detectHRVAnomaly` (intacta). Adiciona gate de ≥2 flags simultâneas e persistência de 2 dias consecutivos.
+- `analysis.healthSignals` wired no objeto retornado por `runPhysiologicalAnalysis` (ao lado do `hrvAnomaly` que continua intacto para CI).
+- `src/components/today/HealthStatusCard.jsx` — card âmbar (acute) / vermelho (sustained) / linha "✓" (normal) na Today.
+- `src/pages/Health.jsx` — página `/saude` com veredito, painel de vitais, flags ativas, histórico e rodapé de honestidade. Fora do `AppLayout` (sem entrada no menu).
+- Estados: `calibrating` (<7 noites de HRV) → silêncio. `normal` → linha "✓" no colapsável. `acute` → card âmbar. `sustained` (2 dias consecutivos) → card vermelho.
+- Slots do anel (Fase 1): `skin_temp`, `spo2`, `respiratory` já presentes em `flags[]` com `status:'pending'`. Quando o anel validar, basta popular os valores e virar `status:'live'` — o gate e a persistência não mudam.
+- 8 novos testes em `src/lib/__tests__/health-signals.test.js`. Constantes em `HEALTH_MIN_BASELINE_NIGHTS=7` e `HEALTH_FLAG_GATE=2` (physio-constants.js).
+
+**Invariante central:** 1 sinal isolado nunca alerta. Desvio isolado = âmbar. Desvio sustentado (2 dias) = vermelho.
+
+---
+
+## 8. Backlog (em ordem de prioridade)
 
 1. **Camada de normalização de fonte** (`source-normalize.js`, arquivo novo) — mapeia nomes de campo de cada marca de relógio → formato canônico. É a tese de portabilidade no nível do código.
 2. ~~Recovery v2 — baseline robusto (EWMA + Winsorização)~~ **✅ já em produção** (confirmado em `physio-constants.js`/`calculateRecoveryScore` em 20/06/2026 — ver §3). Estava registrado aqui como pendente, mas já tinha sido implementado; este documento não tinha sido atualizado junto. **Lição:** ao concluir um item de backlog, atualizar este arquivo no mesmo patch que entrega o código, não depois.
@@ -96,7 +112,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 ---
 
-## 8. Método de trabalho (OBRIGATÓRIO antes de mudar lógica)
+## 9. Método de trabalho (OBRIGATÓRIO antes de mudar lógica)
 
 1. **Auditar o código real** antes de editar (não assumir estado).
 2. **Validar a matemática/lógica contra os dados reais** antes de mudar qualquer fórmula (há acesso aos dados via MCP do Base44; entidades DailyCheckin, TrainingSession, WorkoutFeedback, User). Nunca criar registros de teste (contamina dados reais).
@@ -106,7 +122,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 ---
 
-## 9. Arquivos-chave
+## 10. Arquivos-chave
 
 - `src/lib/biocharge-utils.js` — motor de cálculo (computeCheckinScores, calculateStrainScore, calculateSleepScore, getSmartMessage…).
 - `src/lib/physiological-engine.js` — análise fisiológica / correlações / portão de p-valor.

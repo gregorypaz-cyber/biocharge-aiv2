@@ -68,6 +68,8 @@ const HRV_ANOMALY_MIN_CHECKINS                 = C.HRV_ANOMALY_MIN_CHECKINS     
 const HRV_ANOMALY_MIN_READINGS                 = C.HRV_ANOMALY_MIN_READINGS                 ?? 5;
 const HRV_ANOMALY_ZSCORE_THRESHOLD             = C.HRV_ANOMALY_ZSCORE_THRESHOLD             ?? -1.5;
 const HRV_ANOMALY_RHR_ELEVATED_PCT             = C.HRV_ANOMALY_RHR_ELEVATED_PCT             ?? 1.07;
+const HEALTH_MIN_BASELINE_NIGHTS               = C.HEALTH_MIN_BASELINE_NIGHTS               ?? 7;
+const HEALTH_FLAG_GATE                         = C.HEALTH_FLAG_GATE                         ?? 2;
 const SLEEP_CONSISTENCY_MIN_ENTRIES            = C.SLEEP_CONSISTENCY_MIN_ENTRIES            ?? 5;
 const SLEEP_CONSISTENCY_GOOD_STDDEV            = C.SLEEP_CONSISTENCY_GOOD_STDDEV            ?? 20;
 const SLEEP_CONSISTENCY_BAD_STDDEV             = C.SLEEP_CONSISTENCY_BAD_STDDEV             ?? 60;
@@ -1043,6 +1045,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
   const performanceWindow = calculatePerformanceWindow(sessions, checkins);
   const cardiacDrift = detectCardiacDrift(sessions);
   const hrvAnomaly = detectHRVAnomaly(checkins, baseline);
+  const healthSignals = assessHealthSignals(checkins, baseline);
   const personalBottleneck = detectPersonalBottleneck(checkins);
   const longTermTrends = detectLongTermTrends(checkins);
 
@@ -1060,6 +1063,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
     performanceWindow,
     cardiacDrift,
     hrvAnomaly,
+    healthSignals,
     personalBottleneck,
     longTermTrends,
   };
@@ -1337,6 +1341,168 @@ export function detectHRVAnomaly(checkins, baseline) {
       type: rhrElevated ? 'critical' : 'warning',
     },
   };
+}
+
+// ─── Health Monitor ───────────────────────────────────────────────────────────
+// Fase 0 = HRV + RHR.
+// Fase 1 acende skin_temp / SpO₂ / respiração (slots em flags[], status:'pending');
+// o gate de 2+ e a persistência continuam idênticos quando chegarem.
+
+/**
+ * Evaluates the HRV flag for a checkin against a 14-day window.
+ * Returns { zScore, mean, raised } or null if data is insufficient.
+ */
+function _evalHrvFlag(checkinHrv, window14) {
+  if (checkinHrv == null) return null;
+  const vals = window14.map((c) => c.hrv).filter((v) => v != null && v > 0);
+  if (vals.length < HRV_ANOMALY_MIN_READINGS) return null;
+  const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
+  const stdDev = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / vals.length);
+  if (!stdDev || stdDev === 0) return null;
+  const z = (checkinHrv - mean) / stdDev;
+  return { zScore: z, mean, raised: z <= HRV_ANOMALY_ZSCORE_THRESHOLD };
+}
+
+/**
+ * Evaluates all live flags for a checkin and returns { flagCount, hrvResult, rhrRaised }.
+ * window14: array of checkins used for HRV z-score computation.
+ * baseRhr: moving-average RHR baseline.
+ * Simplification: baseRhr is the same across today/yesterday evaluations —
+ * the 1-day delta in the baseline is negligible and avoids a full re-computation.
+ */
+function _evalFlags(c, window14, baseRhr) {
+  if (!c || !c.hrv) return { flagCount: 0, hrvResult: null, rhrRaised: false };
+  const hrvResult = _evalHrvFlag(c.hrv, window14);
+  const rhrRaised = !!(c.resting_hr && baseRhr && c.resting_hr > baseRhr * HRV_ANOMALY_RHR_ELEVATED_PCT);
+  const flagCount = (hrvResult?.raised ? 1 : 0) + (rhrRaised ? 1 : 0);
+  // TODO(anel Fase 1): add skin_temp, spo2, respiratory flags here; gate stays at HEALTH_FLAG_GATE
+  return { flagCount, hrvResult, rhrRaised };
+}
+
+/**
+ * assessHealthSignals(checkins, baseline)
+ *
+ * Promotes HRV+RHR anomaly detection from an ephemeral alert to a persistent
+ * Health surface with multi-flag gate, consecutive-day persistence, and history.
+ *
+ * Does NOT modify Recovery, Sleep score, or Strain formulas.
+ *
+ * @param {Array}  checkins - sorted newest-first, already filtered by user
+ * @param {object} baseline - from buildBaseline(checkins); passed in to avoid re-computation
+ * @returns {object|null}
+ */
+export function assessHealthSignals(checkins, baseline) {
+  checkins = _ensure(checkins);
+  if (!checkins || checkins.length === 0) return null;
+
+  const today = checkins[0];
+  const baseHrv = baseline?.hrv?.d14 || baseline?.hrv?.d7;
+  const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
+
+  // Maturity: need HEALTH_MIN_BASELINE_NIGHTS past checkins with HRV data.
+  // Counted from checkins[1..] so today doesn't inflate the count.
+  const pastHrvCount = checkins.slice(1).filter((c) => c.hrv != null && c.hrv > 0).length;
+
+  if (pastHrvCount < HEALTH_MIN_BASELINE_NIGHTS || !baseHrv) {
+    return {
+      state: 'calibrating',
+      flagCount: 0,
+      sleepHoursToday: today.sleep_hours ?? null,
+      flags: _buildHealthFlagsList(today, null, null, baseHrv, baseRhr),
+      history: [],
+    };
+  }
+
+  // Evaluate today
+  const window14Today = checkins.slice(0, 14);
+  const todayEval = _evalFlags(today, window14Today, baseRhr);
+  const desvioHoje = todayEval.flagCount >= HEALTH_FLAG_GATE;
+
+  // Evaluate yesterday (checkins[1]) using its own rolling window.
+  // Using baseRhr from today's baseline — 1-day delta is negligible.
+  const yesterday = checkins[1] ?? null;
+  const window14Yesterday = checkins.slice(1, 15);
+  const yesterdayEval = yesterday ? _evalFlags(yesterday, window14Yesterday, baseRhr) : { flagCount: 0 };
+  const desvioOntem = yesterdayEval.flagCount >= HEALTH_FLAG_GATE;
+
+  const state = !desvioHoje ? 'normal' : desvioOntem ? 'sustained' : 'acute';
+
+  // Build deviation history (past days only — up to ~45 days back)
+  const HIST_LIMIT = Math.min(checkins.length, 46);
+
+  // Pass 1: determine which past days had a deviation
+  const hasDesvio = new Map();
+  for (let i = 1; i < HIST_LIMIT; i++) {
+    const c = checkins[i];
+    const win = checkins.slice(i, i + 14);
+    hasDesvio.set(c.date, _evalFlags(c, win, baseRhr).flagCount >= HEALTH_FLAG_GATE);
+  }
+
+  // Pass 2: classify each deviation day
+  const history = [];
+  for (let i = 1; i < HIST_LIMIT; i++) {
+    const c = checkins[i];
+    if (!hasDesvio.get(c.date)) continue;
+    // "sustained" when the more-recent day (checkins[i-1]) also deviated
+    const newerHasDesvio = i > 0 && hasDesvio.get(checkins[i - 1]?.date);
+    history.push({ date: c.date, state: newerHasDesvio ? 'sustained' : 'acute' });
+  }
+
+  return {
+    state,
+    flagCount: todayEval.flagCount,
+    sleepHoursToday: today.sleep_hours ?? null,
+    flags: _buildHealthFlagsList(today, todayEval.hrvResult, todayEval.rhrRaised, baseHrv, baseRhr),
+    history,
+  };
+}
+
+/**
+ * Builds the flags[] array for the output shape.
+ * hrvResult: return value of _evalHrvFlag (may be null before maturity)
+ * rhrRaised: boolean
+ */
+function _buildHealthFlagsList(today, hrvResult, rhrRaised, baseHrv, baseRhr) {
+  const todayHrv = today?.hrv ?? null;
+  const todayRhr = today?.resting_hr ?? null;
+
+  const hrvDelta = todayHrv != null && baseHrv != null
+    ? Math.round(((todayHrv - baseHrv) / baseHrv) * 100) : null;
+  const rhrDelta = todayRhr != null && baseRhr != null
+    ? Math.round(((todayRhr - baseRhr) / baseRhr) * 100) : null;
+
+  const dirOf = (delta, lowerIsBetter) => {
+    if (delta == null) return 'neutral';
+    if (delta === 0) return 'neutral';
+    return (delta > 0) === lowerIsBetter ? 'bad' : 'good';
+  };
+
+  return [
+    {
+      id: 'hrv',
+      label: 'HRV',
+      today: todayHrv,
+      baseline: baseHrv != null ? Math.round(baseHrv) : null,
+      deltaPct: hrvDelta,
+      direction: dirOf(hrvDelta, false), // higher HRV is better
+      raised: hrvResult?.raised ?? false,
+      status: 'live',
+    },
+    {
+      id: 'rhr',
+      label: 'FC de repouso',
+      today: todayRhr,
+      baseline: baseRhr != null ? Math.round(baseRhr) : null,
+      deltaPct: rhrDelta,
+      direction: dirOf(rhrDelta, true), // lower RHR is better
+      raised: rhrRaised ?? false,
+      status: 'live',
+    },
+    // TODO(anel Fase 1): populate today/baseline/direction and flip to status:'live' when ring data arrives
+    { id: 'skin_temp',   label: 'Temperatura de pele', today: null, baseline: null, deltaPct: null, direction: 'neutral', raised: false, status: 'pending' },
+    { id: 'spo2',        label: 'SpO2',                today: null, baseline: null, deltaPct: null, direction: 'neutral', raised: false, status: 'pending' },
+    { id: 'respiratory', label: 'Respiração',          today: null, baseline: null, deltaPct: null, direction: 'neutral', raised: false, status: 'pending' },
+  ];
 }
 
 // ─── Async Analysis Wrapper ───────────────────────────────────────────────────
