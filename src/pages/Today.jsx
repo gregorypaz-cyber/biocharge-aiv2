@@ -29,6 +29,7 @@ import NarrativeCard from '@/components/intelligence/NarrativeCard';
 import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardingCard';
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
+import HealthStatusCard from '@/components/today/HealthStatusCard';
 import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
@@ -914,7 +915,7 @@ const tomorrowHook = useMemo(() => {
       scheduledSport,
       hasWorkoutSessions: todaySessions.length > 0,
       hasAnalysis: !!analysis,
-      hasHrvAnomaly: !!analysis?.hrvAnomaly,
+      hasHrvAnomaly: !!analysis?.hrvAnomaly || ['acute', 'sustained'].includes(analysis?.healthSignals?.state),
       hasNarrative: !!analysis?.narrative,
       hasRecoveryDemandAlert: (enrichedCheckin?.recovery_demand || 0) > morningRecovery,
     });
@@ -1188,34 +1189,13 @@ function renderCard(desc) {
         );
 
       case 'hrv_anomaly':
-        return analysis?.hrvAnomaly ? (
-          <motion.div
+        return (
+          <HealthStatusCard
             key="hrv_anomaly"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`rounded-2xl border p-4 flex gap-3 ${
-              analysis.hrvAnomaly.alert.type === 'critical'
-                ? 'border-red-500/40 bg-red-500/8'
-                : 'border-yellow-500/40 bg-yellow-500/8'
-            }`}
-          >
-            <span className="text-xl shrink-0">{analysis.hrvAnomaly.alert.icon}</span>
-            <div>
-              <p
-                className={`text-sm font-semibold ${
-                  analysis.hrvAnomaly.alert.type === 'critical'
-                    ? 'text-red-400'
-                    : 'text-yellow-400'
-                }`}
-              >
-                {analysis.hrvAnomaly.alert.title}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {analysis.hrvAnomaly.alert.text}
-              </p>
-            </div>
-          </motion.div>
-        ) : null;
+            healthSignals={analysis?.healthSignals}
+            variant="card"
+          />
+        );
 
       case 'recovery_demand':
         return (enrichedCheckin.recovery_demand || 0) > morningRecovery ? (
@@ -1874,8 +1854,12 @@ if (isLoading) {
         </Link>
       )}
 
-      <SecondaryMetrics count={secondaryCards.filter((d) => d.action !== 'exclude').length}>
+      <SecondaryMetrics count={
+        secondaryCards.filter((d) => d.action !== 'exclude').length +
+        (analysis?.healthSignals?.state === 'normal' ? 1 : 0)
+      }>
         {secondaryCards.map((desc) => renderCard(desc))}
+        <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
       </SecondaryMetrics>
 
       {analysisError && (

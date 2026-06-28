@@ -158,6 +158,13 @@ export const CARDIAC_DRIFT_HIGH_CONFIDENCE_RUNS = 5;
 /** Number of most recent sessions used for drift average */
 export const CARDIAC_DRIFT_RECENT_N = 3;
 
+// ── Health Monitor ────────────────────────────────────────────────────────────
+/** Min nights with HRV data before health monitor evaluates (senão → calibrating) */
+export const HEALTH_MIN_BASELINE_NIGHTS = 7;
+/** Min simultaneous flags to declare a "deviation day" (gate anti-ruído) */
+export const HEALTH_FLAG_GATE           = 2;
+// reuses: HRV_ANOMALY_ZSCORE_THRESHOLD (-1.5), HRV_ANOMALY_RHR_ELEVATED_PCT (1.07)
+
 // ── HRV Anomaly ───────────────────────────────────────────────────────────────
 /** Min checkins before HRV anomaly detector runs */
 export const HRV_ANOMALY_MIN_CHECKINS = 5;
