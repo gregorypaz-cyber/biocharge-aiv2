@@ -230,3 +230,7 @@ export const ZONE_YELLOW_MIN = 42; // ≥ : em torno/abaixo do normal; < isto = 
 // Janela de baseline (dias). Usada por TODOS os caminhos p/ o score ser idêntico
 // independentemente de onde é calculado (Today recomputa ao vivo; DailyCheckin salva).
 export const BL_WINDOW_NIGHTS = 90;
+
+// ── HRV Variabilidade (Esco 2026 — médias semanais) ───────────────────────────
+/** Janela de dias para a média móvel do HRV (RMSSDmean) */
+export const RMSSD_MEAN_WINDOW = 7;
