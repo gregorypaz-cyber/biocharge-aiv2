@@ -247,14 +247,19 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-3xl font-black font-mono leading-none tracking-tight"
-            style={{ color: hasValue ? color : 'hsl(var(--muted-foreground))' }}
-          >
-            {hasValue ? (displayValue != null ? displayValue : value) : '—'}
-          </span>
+  className="font-mono leading-none tracking-tight"
+  style={{
+    color: hasValue ? color : 'hsl(var(--muted-foreground))',
+    fontSize: size >= 120 ? 56 : 30,
+    fontWeight: 600,
+    fontFeatureSettings: '"tnum"',
+  }}
+>
+  {hasValue ? (displayValue != null ? displayValue : value) : '—'}
+</span>
         </div>
       </div>
-      <p className="text-support font-bold uppercase tracking-wider text-foreground mt-2">{label}</p>
+      <p className="text-section text-foreground mt-2">{label}</p>
       {caption && (
         <p className={cn('text-micro mt-0.5 text-center leading-tight', captionColor || 'text-muted-foreground')}>
           {caption}
@@ -1030,7 +1035,7 @@ function renderCard(desc) {
         if (todaySessions.length > 0) {
           return (
             <section key="workout-wrapper" className="space-y-2">
-              <p className="px-1 text-micro st text-zone-green">
+              <p className="px-1 text-section text-zone-green">
                 Treino → resposta do corpo
               </p>
               <WorkoutLoggedState
@@ -1125,7 +1130,7 @@ function renderCard(desc) {
 
         return (
           <section key="workout-wrapper" className="space-y-2">
-            <p className="px-1 text-micro st text-primary">
+            <p className="px-1 text-section text-primary">
               Treino → resposta do corpo
             </p>
             {impactoOntem}
@@ -1269,7 +1274,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex items-center gap-1 text-micro font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
+        className="flex items-center gap-1 text-section opacity-60 hover:opacity-90 transition-opacity"
       >
         {label}
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
@@ -1440,7 +1445,7 @@ function ExecutionCard() {
             type="button"
             aria-expanded={showProntidaoHint}
             onClick={() => setShowProntidaoHint((v) => !v)}
-            className="flex items-center gap-1 text-micro font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-section text-muted-foreground hover:text-foreground transition-colors"
           >
             <Info className="w-3 h-3" />
             Entender os anéis
@@ -1591,7 +1596,7 @@ function ExecutionCard() {
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-yellow' : 'bg-orange-400'
                 }`} />
-                <p className="text-micro st text-muted-foreground">Leitura de hoje</p>
+                <p className="text-section text-muted-foreground">Leitura de hoje</p>
               </div>
 
               <p className="text-sm leading-snug">
@@ -1765,7 +1770,7 @@ if (isLoading) {
       {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-micro st text-muted-foreground/70 mb-0.5">
+          <p className="text-section text-muted-foreground/70 mb-0.5">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
           <h1 className="text-2xl font-black tracking-tight">Hoje</h1>

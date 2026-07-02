@@ -176,6 +176,41 @@
     letter-spacing: 0.08em;
     font-feature-settings: "tnum";
   }
+
+  .text-section {
+    font-family: var(--font-inter);
+    font-size: 12px;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+
+  .text-nav-label {
+    font-family: var(--font-inter);
+    font-size: 10.5px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+  }
+
+  .text-metric {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 650;
+    font-feature-settings: "tnum";
+  }
+
+  .text-unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: hsl(var(--muted-foreground));
+  }
 }
 
 /* ─── Polish global de cards: hairline de luz no topo + leve profundidade ─── */

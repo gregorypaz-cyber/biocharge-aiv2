@@ -313,13 +313,13 @@ export default function AppLayout() {
                   <item.icon className="w-[22px] h-[22px] relative" />
                 )}
                 <span
-                  className={cn(
-                    'text-micro font-semibold relative whitespace-nowrap',
-                    item.primary ? 'text-muted-foreground' : ''
-                  )}
-                >
-                  {item.label}
-                </span>
+  className={cn(
+    'text-nav-label relative whitespace-nowrap',
+    item.primary ? 'text-muted-foreground' : ''
+  )}
+>
+  {item.label}
+</span>
               </Link>
             );
           })}
