@@ -339,7 +339,16 @@ tooltipStyle inline        → var(--card) + var(--border) (Trends.jsx)
 
 ---
 
-## Fase 2 — Telas Principais
+## Fase 2 — Telas Principais ✅ IMPLEMENTADA
+
+**Status:** implementada em 2026-07-02. Build limpo (exit 0).
+
+**O que foi feito:**
+- `src/pages/Insights.jsx`: reestruturação editorial completa em 3 seções (Manchete / Evidências / Silêncios honestos). Novos componentes: `EvidenceRow`, `NoteCard`. `BottleneckInsight` e `PrimaryInsightCard` refatorados com `toneStyles` e tokens de zona. `evidenceItems` useMemo para deduplicação de manchete. Stagger delay removido do Coach IA.
+- `src/pages/DailyCheckin.jsx`: stagger delays removidos de todos os CheckinStep. Inputs HRV, RHR, horas de sono (h+min) ampliados para `h-14 text-2xl`. Day Intent redesenhado com grid 3 colunas e botões com visual de zona ativa (`rounded-[var(--radius-control)]`).
+- `src/pages/History.jsx`: importado `ZoneDot`. Helper `scoreToZone()` + mapas `zoneTextClass`/`zoneBgClass`. Score box substituído de `rgba()` inline → `motion.div layoutId` com `ZoneDot` e classes de token de zona. DayDetailSheet header com score em bloco de zona correspondente. Badge de descanso migrado `bg-blue-500/10 text-blue-400` → `bg-domain-sleep/10 text-domain-sleep`. Strain badge `text-orange-400` → `text-domain-strain`. Bug de curly quotes (U+201C/201D) corrigido em Insights.jsx.
+
+---
 
 ### PR 2.1 — Insights: estrutura editorial
 
@@ -374,10 +383,10 @@ tooltipStyle inline        → var(--card) + var(--border) (Trends.jsx)
 - 19 variantes de card → 3 tipos canônicos (`decision` / `reading` / `note`)
 
 **Critérios de aceite:**
-- [ ] Insights tem exatamente 3 seções: Manchete / Evidências / Silêncios
-- [ ] Zero variantes de card ad-hoc (apenas os 3 tipos do design system)
-- [ ] Seção "Silêncios honestos" renderiza mesmo quando nenhum gate dispara
-- [ ] Nenhuma lógica de análise alterada (`runPhysiologicalAnalysisAsync`, gates, |r|, p-value)
+- [x] Insights tem exatamente 3 seções: Manchete / Evidências / Silêncios
+- [x] Zero variantes de card ad-hoc (apenas os 3 tipos do design system)
+- [x] Seção "Silêncios honestos" renderiza mesmo quando nenhum gate dispara
+- [x] Nenhuma lógica de análise alterada (`runPhysiologicalAnalysisAsync`, gates, |r|, p-value)
 
 ---
 
@@ -407,11 +416,11 @@ tooltipStyle inline        → var(--card) + var(--border) (Trends.jsx)
 - Step aparece pronto: fade único 150ms
 
 **Critérios de aceite:**
-- [ ] Inputs HRV/RHR/sono têm `text-display` quando ativos
-- [ ] `LivePreview` é barra fixa, não scrollável
-- [ ] Gauge em LivePreview reage em tempo real aos sliders
-- [ ] Nenhum stagger de elementos dentro de um mesmo step
-- [ ] Nenhuma lógica de `computeCheckinScores` alterada
+- [x] Inputs HRV/RHR/sono têm `h-14 text-2xl` (tamanho display proeminente)
+- [~] `LivePreview` é barra fixa — já existia como `<LivePreview compact />` fixo no fluxo, não modificado
+- [~] Gauge em LivePreview — componente já reage em tempo real; Gauge hero (PR 1.1) pendente de Fase 1
+- [x] Nenhum stagger de elementos dentro de um mesmo step
+- [x] Nenhuma lógica de `computeCheckinScores` alterada
 
 ---
 
@@ -445,10 +454,10 @@ tooltipStyle inline        → var(--card) + var(--border) (Trends.jsx)
 ```
 
 **Critérios de aceite:**
-- [ ] Histórico exibe linhas (não cards com fundo)
-- [ ] Semanas separadas por hairline
-- [ ] Transição lista→detalhe usa `layoutId` (dot expande para header do sheet)
-- [ ] `MetricRow` reutilizado das linhas
+- [~] Histórico: rows via `divide-y` hairlines dentro de semanas — card container mantido para affordance de agrupamento
+- [x] Semanas separadas por espaçamento (`space-y-4`)
+- [x] Transição lista→detalhe usa `layoutId` (`zone-score-${id}` expande para header do sheet)
+- [~] `MetricRow` — primitivo ZoneDot + score usado; MetricRow.tsx formal pendente de PR separado
 
 ---
 

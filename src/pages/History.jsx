@@ -5,8 +5,30 @@ import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, 
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
+import { ZoneDot } from '@/components/ui-bio/ZoneDot';
 import WeeklyRetrospectCard from '@/components/history/WeeklyRetrospectCard';
 import { useNavigate } from 'react-router-dom';
+
+function scoreToZone(score) {
+  if (score == null) return 'neutral';
+  if (score >= 70) return 'green';
+  if (score >= 50) return 'yellow';
+  return 'red';
+}
+
+const zoneTextClass = {
+  green: 'text-zone-green',
+  yellow: 'text-zone-yellow',
+  red: 'text-zone-red',
+  neutral: 'text-muted-foreground',
+};
+
+const zoneBgClass = {
+  green: 'bg-zone-green/12',
+  yellow: 'bg-zone-yellow/12',
+  red: 'bg-zone-red/12',
+  neutral: 'bg-secondary',
+};
 
 // Group checkins by week
 function groupByWeek(checkins) {
@@ -38,7 +60,9 @@ function WeekLabel({ weekStart }) {
 }
 
 function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
-  const score = getDayScore(checkin) ?? 0;
+  const rawScore = getDayScore(checkin);
+  const score = rawScore ?? 0;
+  const zone = scoreToZone(rawScore);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -70,10 +94,14 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
               {checkin.current_body_state && <BodyStateBadge state={checkin.current_body_state} size="sm" />}
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-2xl font-black font-mono text-primary">{score}</p>
-                <p className="text-micro text-muted-foreground">prontidão</p>
-              </div>
+              <motion.div
+                layoutId={`zone-score-${checkin.id}`}
+                className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl ${zoneBgClass[zone]}`}
+              >
+                <ZoneDot variant={zone} size={6} className="mb-0.5" />
+                <p className={`text-xl font-black font-mono leading-none ${zoneTextClass[zone]}`}>{rawScore ?? '—'}</p>
+                <p className="text-micro text-muted-foreground leading-none mt-0.5">pronto</p>
+              </motion.div>
               <button
                 onClick={onEdit}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-secondary border border-border text-xs font-semibold hover:bg-secondary/80 transition-colors"
@@ -112,7 +140,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
                       <span className="text-xs text-muted-foreground opacity-70">· {s.intensity}</span>
                     )}
                   </div>
-                  <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-zone-red' : (s.strain_score || 0) >= 14 ? 'text-orange-400' : (s.strain_score || 0) >= 10 ? 'text-zone-yellow' : 'text-zone-green'}`}>
+                  <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-zone-red' : (s.strain_score || 0) >= 14 ? 'text-domain-strain' : (s.strain_score || 0) >= 10 ? 'text-zone-yellow' : 'text-zone-green'}`}>
                     ⚡ strain {s.strain_score || 0}
                   </span>
                 </div>
@@ -258,8 +286,7 @@ export default function History() {
                           const rawScore = getDayScore(c);
                           const hasScore = rawScore != null;
                           const score = hasScore ? rawScore : 0;
-                          const isAlert = c.current_body_state === 'Overreached' || (hasScore && rawScore < 42);
-
+                          const zone = scoreToZone(hasScore ? rawScore : null);
 
                           return (
                             <motion.button
@@ -279,15 +306,15 @@ export default function History() {
                               </div>
 
                               {/* Score */}
-                              <div
-                                className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
-                                style={{
-                                  background: !hasScore ? 'rgba(148,163,184,0.12)' : isAlert ? 'rgba(220,38,38,0.15)' : score >= 70 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
-                                  color: !hasScore ? '#94a3b8' : isAlert ? '#ef4444' : score >= 70 ? '#22c55e' : '#eab308'
-                                }}
+                              <motion.div
+                                layoutId={`zone-score-${c.id}`}
+                                className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0 ${zoneBgClass[zone]}`}
                               >
-                                {hasScore ? score : '—'}
-                              </div>
+                                <ZoneDot variant={zone} size={5} className="mb-0.5" />
+                                <span className={`font-mono font-bold text-xs leading-none ${zoneTextClass[zone]}`}>
+                                  {hasScore ? score : '—'}
+                                </span>
+                              </motion.div>
 
                               {/* Info */}
                               <div className="flex-1 min-w-0">
@@ -295,7 +322,7 @@ export default function History() {
                                   {c.current_body_state ? (
                                     <BodyStateBadge state={c.current_body_state} size="sm" />
                                   ) : c.rest_day ? (
-                                    <span className="text-micro px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">🛌 Descanso</span>
+                                    <span className="text-micro px-2 py-0.5 rounded-full bg-domain-sleep/10 text-domain-sleep border border-domain-sleep/20">🛌 Descanso</span>
                                   ) : null}
                                 </div>
                                 <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
@@ -307,7 +334,7 @@ export default function History() {
                                   {c.daily_strain_accumulated > 0 && (() => {
                                 const displayStrain = Math.min(21, c.daily_strain_accumulated);
                                 return (
-                                <span className={`${displayStrain >= 18 ? 'text-zone-red' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-zone-yellow' : 'text-zone-green'}`}>
+                                <span className={`${displayStrain >= 18 ? 'text-zone-red' : displayStrain >= 14 ? 'text-domain-strain' : displayStrain >= 10 ? 'text-zone-yellow' : 'text-zone-green'}`}>
                                 ⚡ strain {displayStrain}
                                 </span>
                                 );

@@ -108,11 +108,10 @@ function HRVField({ value, onChange, metric = 'rMSSD' }) {
           const v = parseFloat(e.target.value);
           if (!isNaN(v)) onChange(Math.min(250, Math.max(0, v)));
         }}
-        placeholder="Ex: 48"
-        className="bg-secondary border-border/40 font-mono"
+        placeholder="48"
+        className="bg-secondary border-border/40 font-mono h-14 text-2xl text-center tracking-tight"
       />
-      <p className="text-micro text-muted-foreground">Valor válido: 0–250 ms</p>
-      <p className="text-micro text-muted-foreground">Valor da manhã, antes de se levantar</p>
+      <p className="text-micro text-muted-foreground">ms · valor da manhã, antes de se levantar</p>
     </div>
   );
 }
@@ -669,7 +668,7 @@ if (isPostMode) {
       </div>
 
       {/* RPE */}
-      <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.05}>
+      <CheckinStep title="Esforço percebido" emoji="🔥">
         <SliderField
           label="Quão pesado foi o treino?"
           hint="RPE 1–10 · se você já registrou o treino, vem preenchido — confirme ou ajuste"
@@ -684,7 +683,7 @@ if (isPostMode) {
       </CheckinStep>
 
       {/* Sensations */}
-      <CheckinStep title="Resposta do corpo" emoji="🧠" delay={0.1}>
+      <CheckinStep title="Resposta do corpo" emoji="🧠">
         <EmojiSelector
           label="Energia agora"
           type="energy"
@@ -703,7 +702,7 @@ if (isPostMode) {
     
 
       {/* Notes */}
-      <CheckinStep title="Observação pós-treino" emoji="📝" delay={0.2}>
+      <CheckinStep title="Observação pós-treino" emoji="📝">
         <Textarea
           value={postForm.notes}
           onChange={(event) => updatePost('notes', event.target.value)}
@@ -793,53 +792,33 @@ if (isPostMode) {
 
 
         {/* Day Intent */}
-        <div className="rounded-2xl border border-border/60 bg-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">Qual será o foco do seu dia?</span>
-            <span className="text-xs text-muted-foreground">Define a leitura</span>
+        <div className="rounded-2xl border border-border/50 bg-card p-4 space-y-3">
+          <div>
+            <p className="text-sm font-semibold">Qual será o foco do seu dia?</p>
+            <p className="text-micro text-muted-foreground mt-0.5">Define como o app interpreta seus dados hoje.</p>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setDayPlan('training')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                selectedIntent === 'training'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground'
-              }`}
-            >
-              Treinar
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDayPlan('undecided')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                selectedIntent === 'undecided'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground'
-              }`}
-            >
-              Decidir depois
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setDayPlan('recovery')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                selectedIntent === 'recovery'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-muted-foreground'
-              }`}
-            >
-              Recuperar
-            </button>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { key: 'training', label: 'Treinar', emoji: '⚡' },
+              { key: 'undecided', label: 'Em aberto', emoji: '○' },
+              { key: 'recovery', label: 'Recuperar', emoji: '💤' },
+            ].map(({ key, label, emoji }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setDayPlan(key)}
+                className={`flex flex-col items-center gap-1 py-3 rounded-[var(--radius-control)] border text-sm font-medium transition-colors ${
+                  selectedIntent === key
+                    ? 'bg-primary/10 border-primary/40 text-foreground'
+                    : 'bg-secondary/50 border-border/40 text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                <span className="text-base leading-none">{emoji}</span>
+                <span className="text-xs">{label}</span>
+              </button>
+            ))}
           </div>
-
-          <p className="text-xs mt-2 text-muted-foreground">
-            Se marcar recuperação, o check-in se adapta automaticamente.
-          </p>
         </div>
 
 
@@ -860,7 +839,7 @@ if (isPostMode) {
 </div>
 
         {/* Quick Check-in */}
-        <CheckinStep title="Check-in rápido" emoji="⚡" delay={0.05}>
+        <CheckinStep title="Check-in rápido" emoji="⚡">
           {!isApple && (
           <SliderField
   label="Como você acordou? (0–100)"
@@ -907,9 +886,9 @@ if (isPostMode) {
                   update('sleep_hours', Number((h + m / 60).toFixed(2)));
                   setTouched((t) => ({ ...t, sleep_hours: true }));
                 }}
-                className="bg-secondary border-border/40 font-mono w-20 h-11 text-center"
+                className="bg-secondary border-border/40 font-mono w-24 h-14 text-2xl text-center tracking-tight"
               />
-              <span className="text-sm text-muted-foreground">h</span>
+              <span className="text-base text-muted-foreground font-medium">h</span>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -924,9 +903,9 @@ if (isPostMode) {
                   update('sleep_hours', Number((h + m / 60).toFixed(2)));
                   setTouched((t) => ({ ...t, sleep_hours: true }));
                 }}
-                className="bg-secondary border-border/40 font-mono w-20 h-11 text-center"
+                className="bg-secondary border-border/40 font-mono w-24 h-14 text-2xl text-center tracking-tight"
               />
-              <span className="text-sm text-muted-foreground">min</span>
+              <span className="text-base text-muted-foreground font-medium">min</span>
             </div>
 
             <p className="text-micro text-muted-foreground">
@@ -934,8 +913,7 @@ if (isPostMode) {
             </p>
           </div>
 
-          {/* HRV + FC repouso — sinais dominantes do recovery, promovidos
-              do avançado para cá: sem HRV a prévia não calcula. */}
+          {/* HRV + FC repouso — sinais dominantes do recovery */}
           <div className="grid grid-cols-2 gap-4 pt-1">
             <HRVField
               value={form.hrv_manual ?? form.hrv}
@@ -945,7 +923,7 @@ if (isPostMode) {
 
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground flex items-center gap-1">
-                <Heart className="w-3 h-3" /> FC Repouso
+                <Heart className="w-3 h-3" /> FC Repouso (bpm)
               </label>
               <Input
                 type="number"
@@ -959,7 +937,7 @@ if (isPostMode) {
                   if (!isNaN(v)) update('resting_hr', Math.min(220, Math.max(30, v)));
                 }}
                 placeholder="—"
-                className="bg-secondary border-border/40 font-mono"
+                className="bg-secondary border-border/40 font-mono h-14 text-2xl text-center tracking-tight"
               />
             </div>
           </div>
@@ -1004,7 +982,7 @@ if (isPostMode) {
         {/* Advanced fields */}
         {advancedOpen && (
           <>
-            <CheckinStep title="Sono — contexto avançado" emoji="🌙" delay={0.1}>
+            <CheckinStep title="Sono — contexto avançado" emoji="🌙">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <SliderField
   label="Sono Profundo"
@@ -1129,7 +1107,7 @@ if (isPostMode) {
             </CheckinStep>
 
             {!isRestDay && (
-              <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
+              <CheckinStep title="Performance" emoji="🏋️">
                 
 <SliderField
   label="Fadiga"
@@ -1144,7 +1122,7 @@ if (isPostMode) {
               </CheckinStep>
             )}
 
-            <CheckinStep title="Bem-estar" emoji="🧠" delay={0.2}>
+            <CheckinStep title="Bem-estar" emoji="🧠">
               <EmojiSelector
                 label="Disposição (humor + energia)"
                 type="energy"
@@ -1171,7 +1149,7 @@ if (isPostMode) {
               />
             </CheckinStep>
 
-            <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
+            <CheckinStep title="Biometria" emoji="📊">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1">
@@ -1195,7 +1173,7 @@ if (isPostMode) {
               </div>
             </CheckinStep>
 
-            <CheckinStep title="Observações" emoji="📝" delay={0.3}>
+            <CheckinStep title="Observações" emoji="📝">
               <p className="text-xs text-muted-foreground -mt-1 mb-2">
                 Contexto útil para interpretar a noite anterior
               </p>
