@@ -1119,9 +1119,9 @@ function renderCard(desc) {
                   </div>
                 ))}
               </div>
-              <p className="text-micro text-muted-foreground/70 leading-relaxed">
-                Como seu corpo respondeu hoje ao treino de ontem (vs. o dia anterior).
-              </p>
+              <p className="text-support text-muted-foreground/70 leading-relaxed">
+  Como seu corpo respondeu hoje ao treino de ontem (vs. o dia anterior).
+</p>
             </div>
           );
         })();
@@ -1773,11 +1773,11 @@ if (isLoading) {
           <p className="text-section text-muted-foreground/70 mb-0.5">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
-          <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
+          <h1 className="text-title">Hoje</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (
-            <p className="text-micro text-muted-foreground flex items-center gap-1 mt-1">
+            <p className="text-support text-muted-foreground flex items-center gap-1 mt-1">
               <span>Check-in às</span>
               <span className="font-medium text-foreground/60">
                 {new Date(checkin.created_at).toLocaleTimeString('pt-BR', {
@@ -1787,7 +1787,7 @@ if (isLoading) {
               </span>
             </p>
           ) : checkin?.date ? (
-            <p className="text-micro text-muted-foreground mt-1">Check-in de hoje registrado</p>
+            <p className="text-support text-muted-foreground mt-1">Check-in de hoje registrado</p>
           ) : null}
         </div>
 
@@ -1844,21 +1844,40 @@ if (isLoading) {
 
       {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
         <Link
-          to="/insights"
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
-        >
-          Quer entender o que está guiando seu recovery?
-          <span className="text-primary font-medium">→ Ver padrões</span>
-        </Link>
+  to="/insights"
+  className="flex items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card px-4 py-3 text-support text-muted-foreground hover:text-foreground transition-colors"
+>
+  <span className="leading-relaxed">
+    Quer entender o que está guiando seu recovery?
+  </span>
+  <span className="shrink-0 text-primary font-semibold">
+    Ver padrões →
+  </span>
+</Link>
       )}
 
-      <SecondaryMetrics count={
-        secondaryCards.filter((d) => d.action !== 'exclude').length +
-        (analysis?.healthSignals?.state === 'normal' ? 1 : 0)
-      }>
-        {secondaryCards.map((desc) => renderCard(desc))}
+      {(() => {
+  const visibleSecondaryCards = secondaryCards.filter((d) => d.action !== 'exclude');
+  const showNormalHealthLine = analysis?.healthSignals?.state === 'normal';
+  const secondaryCount = visibleSecondaryCards.length + (showNormalHealthLine ? 1 : 0);
+
+  if (secondaryCount === 0) return null;
+
+  if (secondaryCount === 1 && showNormalHealthLine && visibleSecondaryCards.length === 0) {
+    return (
+      <div className="rounded-2xl border border-border/40 bg-card px-4 py-3">
         <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
-      </SecondaryMetrics>
+      </div>
+    );
+  }
+
+  return (
+    <SecondaryMetrics count={secondaryCount}>
+      {visibleSecondaryCards.map((desc) => renderCard(desc))}
+      <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
+    </SecondaryMetrics>
+  );
+})()}
 
       {analysisError && (
         <p className="text-support text-zone-yellow/80 px-1">
