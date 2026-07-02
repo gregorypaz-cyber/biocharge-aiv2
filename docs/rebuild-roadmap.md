@@ -19,9 +19,22 @@
 
 ---
 
-## Fase 0 — Design Foundation
+## Fase 0 — Design Foundation ✅ IMPLEMENTADA
 
 > Invisível ao usuário mas destravam todo o resto. Sem este alicerce, cada PR subsequente introduz mais divergência.
+
+**Status:** implementada em 2026-07-02. Build limpo (exit 0). Lint sem erros novos (11 erros pré-existentes não relacionados).
+
+**O que foi feito:**
+- `src/index.css`: tokens semânticos adicionados (`--zone-*`, `--domain-*`, `--gauge-track/bloom`, `--radius-card/control/inner`); `--muted-foreground` corrigido 50% → 58% (WCAG AA); classes tipográficas `@layer components` (`.text-display` → `.text-micro`); tints migrados para tokens
+- `tailwind.config.js`: aliases de cor com `/ <alpha-value>` (`zone-green`, `zone-yellow`, `zone-red`, `domain-recovery`, `domain-sleep`, `domain-strain`, `health-amber`, `gauge-track`); raios semânticos (`rounded-card`, `rounded-control`, `rounded-inner`)
+- `src/components/checkin/CheckinStep.jsx`: prop `icon: LucideIcon` adicionada (backward-compat — `emoji` ainda funciona)
+- `src/components/ui-bio/ZoneDot.tsx`: novo componente (substitui 🟢🔴🟡, com `aria-label`)
+- `src/components/ui-bio/ZoneBadge.tsx`: novo componente (pill de zona, usa ZoneDot)
+
+**Pendente da Fase 0 (sweep — PRs separados):**
+- Varredura tipográfica (PR 0.2): substituir `text-[10px]`/`[9px]`/`[7px]` → `.text-micro`/`.text-support` em todos os arquivos (155+ ocorrências)
+- Varredura de emojis (PR 0.3): migrar callers do `CheckinStep` de `emoji=` para `icon=`, e substituir emojis decorativos nas páginas
 
 ### PR 0.1 — Token sweep: cor, tipografia, raio
 
