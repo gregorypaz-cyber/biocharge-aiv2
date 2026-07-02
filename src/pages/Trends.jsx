@@ -8,7 +8,7 @@ import {
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
-import { calculateTrainingLoad, calculateRunningEconomy } from '@/lib/physiological-engine';
+import { calculateTrainingLoad, calculateRunningEconomy, pearson, corrPValue } from '@/lib/physiological-engine';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
@@ -404,37 +404,6 @@ Responda APENAS em JSON:
   );
 }
 
-function pearson(x, y) {
-  const n = x.length;
-  if (n < 2) return 0;
-
-  const mx = x.reduce((a, b) => a + b, 0) / n;
-  const my = y.reduce((a, b) => a + b, 0) / n;
-
-  const num = x.reduce((s, xi, i) => s + (xi - mx) * (y[i] - my), 0);
-  const den = Math.sqrt(
-    x.reduce((s, xi) => s + (xi - mx) ** 2, 0) *
-    y.reduce((s, yi) => s + (yi - my) ** 2, 0)
-  );
-
-    return den === 0 ? 0 : num / den;
-}
-
-// Φ(x) — aproximação Abramowitz-Stegun da normal padrão acumulada.
-function normalCdf(x) {
-  const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp((-x * x) / 2);
-  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  return x > 0 ? 1 - p : p;
-}
-
-// p-valor bicaudal de uma correlação via transformação z de Fisher.
-function corrPValue(r, n) {
-  if (n < 4 || Math.abs(r) >= 1) return 0;
-  const z = Math.atanh(r);
-  const zStat = Math.abs(z * Math.sqrt(n - 3));
-  return 2 * (1 - normalCdf(zStat));
-}
 
 function avgList(values) {
   const valid = values.filter((v) => v != null && !isNaN(v));
