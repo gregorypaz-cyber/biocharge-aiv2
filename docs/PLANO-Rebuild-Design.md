@@ -3,7 +3,7 @@
 
 **Escopo:** elevar a qualidade percebida do produto inteiro ao nível de apps de consumo premium (WHOOP, Oura, Linear, Things), **sem criar features novas** e **preservando o DNA existente**: dark-first, verde 142 como cor de marca, Inter + JetBrains Mono, voz honesta em pt-BR, silêncio > sinal fabricado.
 
-**Método:** este plano foi escrito depois de auditar o código real do zip (não screenshots, não memória). Todos os diagnósticos abaixo citam números medidos no repositório.
+**Método:** este plano foi escritos depois de auditar o código real do zip (não screenshots, não memória). Todos os diagnósticos abaixo citam números medidos no repositório.
 
 ---
 
