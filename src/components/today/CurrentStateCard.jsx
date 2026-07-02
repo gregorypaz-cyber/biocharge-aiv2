@@ -60,19 +60,19 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
         </div>
 
         <div className="text-right shrink-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          <p className="text-micro text-muted-foreground uppercase tracking-wider">
             Strain hoje
           </p>
           <p
             className={`text-xl font-black font-mono ${
-              strain >= 16 ? 'text-red-400' :
-              strain >= 12 ? 'text-yellow-400' :
-              'text-emerald-400'
+              strain >= 16 ? 'text-zone-red' :
+              strain >= 12 ? 'text-zone-yellow' :
+              'text-zone-green'
             }`}
           >
             {strain}
           </p>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-micro text-muted-foreground">
             acumulado
           </span>
         </div>
@@ -104,7 +104,7 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
         </div>
 
         {exceedsCapacity ? (
-          <div className="flex items-start gap-2 text-xs text-red-400">
+          <div className="flex items-start gap-2 text-xs text-zone-red">
             <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <p className="leading-relaxed">
               A demanda do dia já passou da margem que seu corpo mostrou pela manhã. Agora vale mais recuperar do que adicionar carga.

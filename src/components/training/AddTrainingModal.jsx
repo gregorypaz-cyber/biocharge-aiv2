@@ -49,8 +49,8 @@ function getStrainZone(strain) {
     return {
       emoji: '🔴',
       label: 'Máximo (18-21) — Requer 1-2 dias de recuperação',
-      color: 'text-red-400',
-      bg: 'bg-red-500/10 border-red-500/20',
+      color: 'text-zone-red',
+      bg: 'bg-zone-red/10 border-zone-red/20',
     };
   }
 
@@ -67,16 +67,16 @@ function getStrainZone(strain) {
     return {
       emoji: '🟡',
       label: 'Moderado (10-13) — Manutenção do condicionamento',
-      color: 'text-yellow-400',
-      bg: 'bg-yellow-500/10 border-yellow-500/20',
+      color: 'text-zone-yellow',
+      bg: 'bg-zone-yellow/10 border-zone-yellow/20',
     };
   }
 
   return {
     emoji: '🟢',
     label: 'Leve (0-9) — Recuperação ativa',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10 border-emerald-500/20',
+    color: 'text-zone-green',
+    bg: 'bg-zone-green/10 border-zone-green/20',
   };
 }
 
@@ -99,10 +99,10 @@ function StrainPreview({ form, maxHr }) {
       <p className={`text-xs font-bold mb-0.5 ${zone.color}`}>
         ⚡ Strain estimado: {strain}
       </p>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-support text-muted-foreground">
         {zone.emoji} {zone.label}
       </p>
-      <p className="text-[10px] text-muted-foreground mt-1 opacity-80">
+      <p className="text-micro text-muted-foreground mt-1 opacity-80">
         Cálculo {strainSource}.
       </p>
     </div>
@@ -396,7 +396,7 @@ export default function AddTrainingModal({
                       key={i.value}
                       type="button"
                       onClick={() => set('intensity', i.value)}
-                      className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-[10px] font-semibold transition-all border ${
+                      className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl text-micro font-semibold transition-all border ${
                         form.intensity === i.value
                           ? 'border-primary/50 bg-primary/10 text-foreground'
                           : 'border-border bg-secondary text-muted-foreground'
@@ -437,7 +437,7 @@ export default function AddTrainingModal({
                         key={t.value}
                         type="button"
                         onClick={() => set('time_of_day', t.value)}
-                        className={`py-1.5 rounded-lg text-[10px] font-semibold transition-all border ${
+                        className={`py-1.5 rounded-lg text-micro font-semibold transition-all border ${
                           form.time_of_day === t.value
                             ? 'border-primary/50 bg-primary/10 text-foreground'
                             : 'border-border bg-secondary text-muted-foreground'
@@ -464,7 +464,7 @@ export default function AddTrainingModal({
                   onChange={(e) => set('perceived_effort', e.target.value)}
                   className="bg-secondary border-border"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1.5 leading-relaxed">
+                <p className="text-micro text-muted-foreground mt-1.5 leading-relaxed">
                   Teste da fala — <strong>1-2</strong>: quase parado · <strong>3-4</strong>: converso em frases inteiras · <strong>5-6</strong>: só frases curtas · <strong>7-8</strong>: só palavras soltas · <strong>9-10</strong>: não consigo falar. Em corrida, o Efeito do Treino do Zepp é mais preciso.
                 </p>
               </div>
@@ -483,7 +483,7 @@ export default function AddTrainingModal({
                     onChange={(e) => set('heart_rate_avg', e.target.value)}
                     className="bg-secondary border-border"
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-micro text-muted-foreground mt-1">
                     Média — veja no Zepp
                   </p>
                 </div>
@@ -500,7 +500,7 @@ export default function AddTrainingModal({
                     onChange={(e) => set('heart_rate_max', e.target.value)}
                     className="bg-secondary border-border"
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-micro text-muted-foreground mt-1">
                     Pico de FC — veja no Zepp
                   </p>
                 </div>
@@ -509,7 +509,7 @@ export default function AddTrainingModal({
               {/* Corrida: distância e pace — alimentam o motor de economia de corrida */}
               {form.sport && form.sport.toLowerCase().includes('corr') && (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-3">
-                  <p className="text-[11px] font-semibold text-primary uppercase tracking-wider">
+                  <p className="text-support font-semibold text-primary uppercase tracking-wider">
                     Dados da corrida (melhoram seus insights)
                   </p>
 
@@ -550,7 +550,7 @@ export default function AddTrainingModal({
                           className="bg-secondary border-border text-center"
                         />
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">
+                      <p className="text-micro text-muted-foreground mt-1">
                         Ex: 5 : 30 = 5min30/km
                       </p>
                     </div>
@@ -588,7 +588,7 @@ export default function AddTrainingModal({
                       />
                     </div>
                   </div>
-                  <p className="text-[11px] text-primary/90 mt-2 leading-relaxed">
+                  <p className="text-support text-primary/90 mt-2 leading-relaxed">
                     💡 Preencha o <strong>Efeito do Treino</strong> (Zepp → resumo da corrida): quando informado, o strain da corrida vem direto dele — mais preciso que estimar por FC/RPE.
                   </p>
                 </div>

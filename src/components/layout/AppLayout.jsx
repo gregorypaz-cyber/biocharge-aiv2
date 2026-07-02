@@ -2,10 +2,20 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Plus, Brain, Clock, Activity, Settings, TrendingUp, Sparkles, ShieldCheck, Compass, Dumbbell, Watch, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { WEARABLES } from '@/pages/AppSettings';
+import { duration, easing, spring } from '@/lib/motion-tokens';
+
+const pageTitles = {
+  '/today':    'Hoje',
+  '/insights': 'Padrões',
+  '/checkin':  'Check-in',
+  '/trends':   'Tendências',
+  '/history':  'Histórico',
+  '/settings': 'Configurações',
+};
 
 const navItems = [
   { path: '/today', icon: Activity, label: 'Hoje' },
@@ -145,7 +155,7 @@ function OnboardingWizard({ user, onComplete }) {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-amber-300/90 leading-relaxed mt-3">
+              <p className="text-support text-health-amber/60/90 leading-relaxed mt-3">
                 ⚠️ Dá pra trocar depois em Configurações — mas trocar de wearable no meio contamina seu histórico de HRV.
               </p>
             </motion.div>
@@ -190,6 +200,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const reduce = useReducedMotion();
 
   const needsOnboarding =
     user &&
@@ -201,12 +212,18 @@ export default function AppLayout() {
     return <OnboardingWizard user={user} onComplete={() => setOnboardingDismissed(true)} />;
   }
 
+  const pageTitle = pageTitles[location.pathname] ?? '';
+  const pageTransition = reduce
+    ? { duration: 0 }
+    : { duration: duration.base / 1000, ease: easing.out };
+
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
-      {/* Header */}
+      {/* Header — logo symbol + page title crossfade + settings */}
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/today" className="flex items-center gap-2">
+          {/* Logo: symbol only */}
+          <Link to="/today" aria-label="Reck — página inicial" className="shrink-0">
             <svg viewBox="0 0 120 120" className="w-7 h-7" role="img" aria-label="Reck">
               <circle cx="60" cy="60" r="42" fill="none" stroke="hsl(142 70% 50%)" strokeWidth="13" />
               <g fill="none" stroke="hsl(210 40% 96%)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
@@ -215,12 +232,26 @@ export default function AppLayout() {
                 <path d="M56 62 L70 79" />
               </g>
             </svg>
-            <span className="font-black text-foreground tracking-tight text-sm">Reck</span>
           </Link>
+
+          {/* Page title — crossfade on route change */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.p
+              key={pageTitle}
+              initial={reduce ? false : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? {} : { opacity: 0, y: -4 }}
+              transition={pageTransition}
+              className="text-sm font-semibold text-foreground tracking-tight absolute left-1/2 -translate-x-1/2"
+            >
+              {pageTitle}
+            </motion.p>
+          </AnimatePresence>
+
           <Link
             to="/settings"
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-lg transition-colors shrink-0',
               location.pathname === '/settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -229,13 +260,26 @@ export default function AppLayout() {
         </div>
       </header>
 
-      {/* Content */}
+      {/* Content — page transition on route change */}
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-32 overflow-y-auto">
-        <Outlet />
+        <AnimatePresence mode="sync" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={reduce ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? {} : { opacity: 0 }}
+            transition={pageTransition}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-md"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
@@ -244,7 +288,7 @@ export default function AppLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 py-1 h-full transition-all relative',
+                  'flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] h-full transition-colors relative',
                   item.primary
                     ? ''
                     : isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
@@ -254,19 +298,23 @@ export default function AppLayout() {
                   <motion.div
                     layoutId="mobileActiveTab"
                     className="absolute inset-1 bg-primary/8 rounded-xl"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                    transition={spring.default}
                   />
                 )}
                 {item.primary ? (
-                  <div className="w-12 h-12 -mt-5 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40 ring-4 ring-background relative">
-                    <item.icon className="w-6 h-6 text-primary-foreground" />
-                  </div>
+                  <motion.div
+                    whileTap={reduce ? undefined : { scale: 0.92 }}
+                    transition={{ duration: duration.fast / 1000 }}
+                    className="w-12 h-12 -mt-5 rounded-full bg-zone-green flex items-center justify-center shadow-lg shadow-zone-green/30 ring-4 ring-background relative"
+                  >
+                    <item.icon className="w-[22px] h-[22px] text-primary-foreground" />
+                  </motion.div>
                 ) : (
-                  <item.icon className="w-5 h-5 relative" />
+                  <item.icon className="w-[22px] h-[22px] relative" />
                 )}
                 <span
                   className={cn(
-                    'text-[10px] font-semibold relative whitespace-nowrap',
+                    'text-micro font-semibold relative whitespace-nowrap',
                     item.primary ? 'text-muted-foreground' : ''
                   )}
                 >

@@ -6,18 +6,18 @@ const STATE_CONFIG = {
   Recovered: {
     label: 'Recuperado',
     emoji: '🟢',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/5',
-    border: 'border-emerald-500/20',
+    color: 'text-zone-green',
+    bg: 'bg-zone-green/5',
+    border: 'border-zone-green/20',
     desc: 'Seu sistema parece responder bem à carga recente.',
     interpretation: 'Bom contexto fisiológico para treinos mais ambiciosos, se o resto do quadro acompanhar.',
   },
   Activated: {
     label: 'Ativado',
     emoji: '⚡',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/5',
-    border: 'border-emerald-500/20',
+    color: 'text-zone-green',
+    bg: 'bg-zone-green/5',
+    border: 'border-zone-green/20',
     desc: 'Você parece responsivo à carga atual.',
     interpretation: 'Sinal de boa ativação, mas ainda vale confirmar isso no aquecimento e no comportamento do dia seguinte.',
   },
@@ -33,9 +33,9 @@ const STATE_CONFIG = {
   Fatigued: {
     label: 'Fatigado',
     emoji: '🟡',
-    color: 'text-yellow-400',
-    bg: 'bg-yellow-500/5',
-    border: 'border-yellow-500/20',
+    color: 'text-zone-yellow',
+    bg: 'bg-zone-yellow/5',
+    border: 'border-zone-yellow/20',
     desc: 'Há sinais relevantes de fadiga acumulada.',
     interpretation: 'Seu corpo ainda pode se mover, mas a margem para intensidade está mais estreita.',
   },
@@ -51,9 +51,9 @@ const STATE_CONFIG = {
   Overreached: {
     label: 'Sobrecarregado',
     emoji: '🔴',
-    color: 'text-red-400',
-    bg: 'bg-red-500/5',
-    border: 'border-red-500/20',
+    color: 'text-zone-red',
+    bg: 'bg-zone-red/5',
+    border: 'border-zone-red/20',
     desc: 'Seu sistema mostra sinais de sobrecarga.',
     interpretation: 'Aqui, proteger e recuperar tende a render mais do que insistir em estímulo.',
   },
@@ -89,7 +89,7 @@ export default function PhysioStateCard({ physioState }) {
       </div>
 
       <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+        <p className="text-micro text-muted-foreground mb-1">
           O que isso significa
         </p>
         <p className="text-xs text-foreground/85 leading-relaxed">
@@ -99,7 +99,7 @@ export default function PhysioStateCard({ physioState }) {
 
       {physioState.signals?.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+          <p className="text-micro text-muted-foreground font-semibold">
             Sinais usados nesta leitura
           </p>
 
@@ -110,8 +110,8 @@ export default function PhysioStateCard({ physioState }) {
                 className={cn(
                   'text-xs px-2 py-1 rounded-full border font-medium',
                   s.type === 'positive'
-                    ? 'bg-emerald-500/8 text-emerald-400 border-emerald-500/20'
-                    : 'bg-red-500/8 text-red-400 border-red-500/20'
+                    ? 'bg-zone-green/8 text-zone-green border-zone-green/20'
+                    : 'bg-zone-red/8 text-zone-red border-zone-red/20'
                 )}
               >
                 {s.type === 'positive' ? '↑' : '↓'} {s.text}

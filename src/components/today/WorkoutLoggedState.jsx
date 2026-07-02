@@ -64,9 +64,9 @@ function getPostWorkoutVerdict(checkin, analysis, totalStrain, hasPostWorkout) {
         ? 'A leitura de amanhã agora vai combinar check-in, treino, resposta pós-treino e sono desta noite.'
         : 'Amanhã pode começar com prontidão baixa a moderada se a recuperação de hoje não for boa.',
       tone: 'strong',
-      color: 'text-red-400',
-      border: 'border-red-500/25',
-      bg: 'bg-red-500/5',
+      color: 'text-zone-red',
+      border: 'border-zone-red/25',
+      bg: 'bg-zone-red/5',
       badge: 'Carga alta',
     };
   }
@@ -80,9 +80,9 @@ function getPostWorkoutVerdict(checkin, analysis, totalStrain, hasPostWorkout) {
         ? 'A leitura de amanhã ficou mais completa. O sono desta noite ainda será o principal fator restante.'
         : 'Amanhã tende a depender bastante da qualidade do sono desta noite.',
       tone: 'moderate',
-      color: 'text-yellow-400',
-      border: 'border-yellow-500/25',
-      bg: 'bg-yellow-500/5',
+      color: 'text-zone-yellow',
+      border: 'border-zone-yellow/25',
+      bg: 'bg-zone-yellow/5',
       badge: 'Carga moderada',
     };
   }
@@ -95,9 +95,9 @@ function getPostWorkoutVerdict(checkin, analysis, totalStrain, hasPostWorkout) {
       ? 'Com o pós-treino salvo, a leitura de amanhã terá uma visão melhor da resposta do seu corpo.'
       : 'Se você recuperar bem hoje, amanhã tende a começar com margem moderada a boa.',
     tone: 'good',
-    color: 'text-emerald-400',
-    border: 'border-emerald-500/25',
-    bg: 'bg-emerald-500/5',
+    color: 'text-zone-green',
+    border: 'border-zone-green/25',
+    bg: 'bg-zone-green/5',
     badge: 'Dia controlado',
   };
 }
@@ -132,14 +132,14 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-zone-green shrink-0" />
 
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zone-green">
             Treino registrado
           </span>
         </div>
 
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 ${verdict.color}`}>
+        <span className={`text-micro font-bold px-2 py-0.5 rounded-full bg-white/5 ${verdict.color}`}>
           {verdict.badge}
         </span>
       </div>
@@ -157,22 +157,22 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
       {/* Primary CTA */}
       {hasPostWorkout ? (
-        <div className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/25">
+        <div className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-zone-green/10 border border-zone-green/25">
           <div className="flex items-center gap-2">
-            <ClipboardCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <ClipboardCheck className="w-4 h-4 text-zone-green shrink-0" />
 
             <div>
-              <p className="text-sm font-bold leading-tight text-emerald-400">
+              <p className="text-sm font-bold leading-tight text-zone-green">
                 Pós-treino registrado
               </p>
 
-              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              <p className="text-support text-muted-foreground leading-tight mt-0.5">
                 Sua resposta ao treino já entrou na leitura de amanhã.
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+          <span className="text-micro font-bold px-2 py-1 rounded-full bg-zone-green/10 text-zone-green border border-zone-green/20 shrink-0">
             Salvo
           </span>
         </div>
@@ -189,7 +189,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
                 Registrar pós-treino
               </p>
 
-              <p className="text-[11px] opacity-85 leading-tight mt-0.5">
+              <p className="text-support opacity-85 leading-tight mt-0.5">
                 RPE, energia e dor muscular · melhora a leitura de amanhã
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
       {/* Session summary */}
       <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-3 space-y-2">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+        <p className="text-micro text-muted-foreground uppercase tracking-wider font-semibold">
           Sessão registrada
         </p>
 
@@ -228,13 +228,13 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
               <div className="text-right shrink-0">
                 {session.strain_score != null && (
-                  <span className="text-sm font-mono font-bold text-emerald-400">
+                  <span className="text-sm font-mono font-bold text-zone-green">
                     ⚡ {session.strain_score}
                   </span>
                 )}
 
                 {session.perceived_effort != null && (
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-micro text-muted-foreground">
                     RPE {session.perceived_effort}
                   </p>
                 )}
@@ -246,7 +246,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
         <div className="flex justify-between pt-2 border-t border-border/30 text-xs text-muted-foreground">
           <span>Carga total de hoje</span>
 
-          <span className="font-mono font-bold text-emerald-400">
+          <span className="font-mono font-bold text-zone-green">
             ⚡ {totalStrain}
           </span>
         </div>
@@ -258,7 +258,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           <div className="flex items-center gap-2 mb-1">
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
 
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="text-micro text-muted-foreground uppercase tracking-wider">
               Recovery manhã
             </p>
           </div>
@@ -267,7 +267,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             {recoveryScore}
           </p>
 
-          <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+          <p className="text-micro text-muted-foreground mt-1 leading-snug">
             Como você começou o dia.
           </p>
         </div>
@@ -276,7 +276,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           <div className="flex items-center gap-2 mb-1">
             <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
 
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="text-micro text-muted-foreground uppercase tracking-wider">
               ACWR
             </p>
           </div>
@@ -286,7 +286,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           </p>
 
           {acwrInterpretation && (
-            <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+            <p className="text-micro text-muted-foreground mt-1 leading-snug">
               {acwrInterpretation}
             </p>
           )}
@@ -296,7 +296,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           <div className="flex items-center gap-2 mb-1">
             <Moon className="w-3.5 h-3.5 text-muted-foreground" />
 
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="text-micro text-muted-foreground uppercase tracking-wider">
               Sono hoje
             </p>
           </div>
@@ -305,7 +305,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             {sleepNeed != null ? `${sleepNeed}h` : 'Recuperar'}
           </p>
 
-          <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+          <p className="text-micro text-muted-foreground mt-1 leading-snug">
             {verdict.tonightFocus}
           </p>
         </div>
@@ -313,7 +313,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
       {/* Tomorrow projection */}
       <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+        <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
           Amanhã cedo
         </p>
 
@@ -321,7 +321,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           {verdict.tomorrow}
         </p>
 
-        <p className="text-[10px] text-muted-foreground mt-1">
+        <p className="text-micro text-muted-foreground mt-1">
           Tendência, não garantia — sono e stress ainda influenciam a leitura.
         </p>
       </div>

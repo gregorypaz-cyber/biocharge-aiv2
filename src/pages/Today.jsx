@@ -75,11 +75,11 @@ function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions,
 
 function getHeroDynamicToneClass(tone) {
   if (tone === 'warning') {
-    return 'bg-yellow-500/8 border-yellow-500/20 text-yellow-100';
+    return 'bg-zone-yellow/8 border-zone-yellow/20 text-zone-yellow/12';
   }
 
   if (tone === 'positive') {
-    return 'bg-emerald-500/8 border-emerald-500/20 text-emerald-100';
+    return 'bg-zone-green/8 border-zone-green/20 text-zone-green/12';
   }
 
   if (tone === 'info') {
@@ -144,18 +144,18 @@ function TomorrowHookCard({ hook }) {
 
   const toneClass =
     hook.tone === 'warning'
-      ? 'border-yellow-500/25 bg-yellow-500/8'
+      ? 'border-zone-yellow/25 bg-zone-yellow/8'
       : hook.tone === 'positive'
-      ? 'border-emerald-500/25 bg-emerald-500/8'
+      ? 'border-zone-green/25 bg-zone-green/8'
       : hook.tone === 'info'
       ? 'border-primary/20 bg-primary/5'
       : 'border-border/40 bg-card';
 
   const titleClass =
     hook.tone === 'warning'
-      ? 'text-yellow-300'
+      ? 'text-zone-yellow/60'
       : hook.tone === 'positive'
-      ? 'text-emerald-300'
+      ? 'text-zone-green/60'
       : hook.tone === 'info'
       ? 'text-primary'
       : 'text-foreground';
@@ -167,13 +167,13 @@ function TomorrowHookCard({ hook }) {
       className={cn('rounded-2xl border px-4 py-3 space-y-2', toneClass)}
     >
       <div>
-        <p className={cn('text-[10px] font-bold uppercase tracking-widest', titleClass)}>
+        <p className={cn('text-micro st', titleClass)}>
           {hook.title}
         </p>
         <p className="text-sm leading-relaxed mt-1">{hook.text}</p>
       </div>
 
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
+      <p className="text-support text-muted-foreground leading-relaxed">
         {hook.footer}
       </p>
     </motion.div>
@@ -213,7 +213,7 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
               <stop offset="100%" stopColor={color} />
             </linearGradient>
           </defs>
-          <circle cx={c} cy={c} r={R} fill="none" stroke="hsl(215,25%,18%)" strokeWidth={stroke} />
+          <circle cx={c} cy={c} r={R} fill="none" stroke="hsl(var(--gauge-track))" strokeWidth={stroke} />
           {hasValue && (
             <>
               {/* Bloom — halo difuso atrás do arco */}
@@ -250,15 +250,15 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
         <div className="absolute inset-0 flex items-center justify-center">
           <span
             className="text-3xl font-black font-mono leading-none tracking-tight"
-            style={{ color: hasValue ? color : 'hsl(215,15%,55%)' }}
+            style={{ color: hasValue ? color : 'hsl(var(--muted-foreground))' }}
           >
             {hasValue ? (displayValue != null ? displayValue : value) : '—'}
           </span>
         </div>
       </div>
-      <p className="text-[11px] font-bold uppercase tracking-wider text-foreground mt-2">{label}</p>
+      <p className="text-support font-bold uppercase tracking-wider text-foreground mt-2">{label}</p>
       {caption && (
-        <p className={cn('text-[10px] mt-0.5 text-center leading-tight', captionColor || 'text-muted-foreground')}>
+        <p className={cn('text-micro mt-0.5 text-center leading-tight', captionColor || 'text-muted-foreground')}>
           {caption}
         </p>
       )}
@@ -457,8 +457,8 @@ export default function Today() {
     const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
     const diff = Math.round(rawCheckin.biocharge_morning - avg);
 
-    if (diff > 5) return { text: `↑ +${diff} pts acima da sua média da semana`, color: 'text-emerald-400' };
-    if (diff < -5) return { text: `↓ ${diff} pts abaixo da sua média da semana`, color: 'text-red-400' };
+    if (diff > 5) return { text: `↑ +${diff} pts acima da sua média da semana`, color: 'text-zone-green' };
+    if (diff < -5) return { text: `↓ ${diff} pts abaixo da sua média da semana`, color: 'text-zone-red' };
     return { text: '→ Dentro da sua média da semana', color: 'text-muted-foreground' };
   }, [last7Checkins, rawCheckin?.biocharge_morning]); // eslint-disable-line
 
@@ -474,20 +474,20 @@ const hrvTrend = useMemo(() => {
     if (trend === 'above_avg') {
       return {
         text: `RMSSD ${Math.abs(pctDiff)}% acima da sua média (7d)`,
-        color: 'text-emerald-400',
+        color: 'text-zone-green',
       };
     }
 
     if (trend === 'below_avg') {
       return {
         text: `RMSSD ${Math.abs(pctDiff)}% abaixo da sua média (7d)`,
-        color: 'text-red-400',
+        color: 'text-zone-red',
       };
     }
 
     return {
       text: 'RMSSD em linha com sua média (7d)',
-      color: 'text-yellow-400',
+      color: 'text-zone-yellow',
     };
   }, [rawCheckin?.hrv, rawCheckin?.hrv_manual, enrichedCheckin?.hrv_7d_avg, enrichedCheckin?.hrv_trend]);
 
@@ -652,10 +652,10 @@ const hrvTrend = useMemo(() => {
     // Alvo SEMPRE com o número (não só o nome da zona), pra "moderado" virar "moderado · 12".
     const targetLabelNum = `${targetZoneLabel} · ${strainTarget}`;
     if (cappedStrain <= 0) {
-      return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta: ${targetLabelNum}` };
+      return { color: 'text-muted-foreground', ring: 'hsl(var(--muted-foreground))', short: `meta: ${targetLabelNum}` };
     }
     if (curZone.key === 'esgotamento') {
-      return { color: 'text-red-400', ring: 'hsl(0,84%,60%)', short: 'Esgotamento — recupere' };
+      return { color: 'text-zone-red', ring: 'hsl(var(--zone-red))', short: 'Esgotamento — recupere' };
     }
     if (targetZoneKey === 'recuperacao') {
       return curZone.key === 'leve'
@@ -663,9 +663,9 @@ const hrvTrend = useMemo(() => {
         : { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
-    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} → ${strainTarget}` };
-    if (diff === 0) return { color: 'text-emerald-400', ring: 'hsl(142,70%,50%)', short: `Na zona · meta ${strainTarget}` };
-    return { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} → ${strainTarget}` };
+    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(var(--domain-sleep))', short: `${curZone.label} → ${strainTarget}` };
+    if (diff === 0) return { color: 'text-zone-green', ring: 'hsl(var(--zone-green))', short: `Na zona · meta ${strainTarget}` };
+    return { color: 'text-orange-400', ring: 'hsl(var(--domain-strain))', short: `${curZone.label} → ${strainTarget}` };
   })();
 
   const dayMetrics = enrichedCheckin
@@ -704,7 +704,7 @@ const hrvTrend = useMemo(() => {
 const BODY_STATE_META = {
   Recovered: {
     emoji: '🟢',
-    tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
+    tone: 'bg-zone-green/10 border-zone-green/20 text-zone-green/60',
     short: 'Sistema pronto para render',
   },
   Activated: {
@@ -719,7 +719,7 @@ const BODY_STATE_META = {
   },
   Loaded: {
     emoji: '🟠',
-    tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
+    tone: 'bg-zone-yellow/10 border-zone-yellow/20 text-zone-yellow/60',
     short: 'Margem menor — recuperação parcial',
   },
   Sympathetic_Load: {
@@ -729,12 +729,12 @@ const BODY_STATE_META = {
   },
   Fatigued: {
     emoji: '🔴',
-    tone: 'bg-red-500/10 border-red-500/20 text-red-300',
+    tone: 'bg-zone-red/10 border-zone-red/20 text-zone-red/60',
     short: 'Fadiga acima do ideal',
   },
   Overreached: {
     emoji: '🚨',
-    tone: 'bg-red-500/10 border-red-500/20 text-red-300',
+    tone: 'bg-zone-red/10 border-zone-red/20 text-zone-red/60',
     short: 'Sobrecarga clara',
   },
 };
@@ -748,21 +748,21 @@ const AUTONOMIC_PT = {
   const AUTONOMIC_META = {
     parasympathetic: {
       emoji: '🟢',
-      tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
+      tone: 'bg-zone-green/10 border-zone-green/20 text-zone-green/60',
       short: 'Sistema nervoso relaxado e em recuperação.',
       action: 'Boa janela para treinar com qualidade, se a recuperação acompanhar.',
       detail: 'Predomínio parassimpático (recuperação). Índice Baevsky mais baixo = corpo mais relaxado.',
     },
     balanced: {
       emoji: '🟡',
-      tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
+      tone: 'bg-zone-yellow/10 border-zone-yellow/20 text-zone-yellow/60',
       short: 'Ativação e recuperação em equilíbrio.',
       action: 'Sem sinal de estresse autonômico — siga a leitura de recuperação do dia.',
       detail: 'Equilíbrio entre ativação (simpático) e recuperação (parassimpático) do sistema nervoso.',
     },
     sympathetic: {
       emoji: '🔴',
-      tone: 'bg-red-500/10 border-red-500/20 text-red-300',
+      tone: 'bg-zone-red/10 border-zone-red/20 text-zone-red/60',
       short: 'Sistema nervoso mais ativado (alerta) que o ideal.',
       action: 'Pesa a favor de manter leve hoje e priorizar sono, respiração e relaxamento — evitar intensidade alta.',
       detail: 'Predomínio simpático (alerta) — carga acumulada, estresse ou sono insuficiente. Índice Baevsky mais alto = mais ativação.',
@@ -1032,7 +1032,7 @@ function renderCard(desc) {
         if (todaySessions.length > 0) {
           return (
             <section key="workout-wrapper" className="space-y-2">
-              <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+              <p className="px-1 text-micro st text-zone-green">
                 Treino → resposta do corpo
               </p>
               <WorkoutLoggedState
@@ -1091,7 +1091,7 @@ function renderCard(desc) {
                 <TrendingUp className="w-4 h-4 text-primary shrink-0" />
                 <div>
                   <p className="text-sm font-bold leading-tight">Impacto de ontem</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                  <p className="text-support text-muted-foreground leading-tight mt-0.5">
                     {resume}
                   </p>
                 </div>
@@ -1102,13 +1102,13 @@ function renderCard(desc) {
                     key={p.k}
                     className="rounded-xl bg-secondary/50 border border-border/40 px-2 py-2 text-center"
                   >
-                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="text-micro text-muted-foreground font-semibold">
                       {p.k}
                     </p>
                     <p
                       className={cn(
                         'text-base font-black font-mono leading-none mt-1',
-                        p.good ? 'text-emerald-400' : 'text-yellow-400'
+                        p.good ? 'text-zone-green' : 'text-zone-yellow'
                       )}
                     >
                       {p.v}
@@ -1116,7 +1116,7 @@ function renderCard(desc) {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+              <p className="text-micro text-muted-foreground/70 leading-relaxed">
                 Como seu corpo respondeu hoje ao treino de ontem (vs. o dia anterior).
               </p>
             </div>
@@ -1127,7 +1127,7 @@ function renderCard(desc) {
 
         return (
           <section key="workout-wrapper" className="space-y-2">
-            <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+            <p className="px-1 text-micro st text-primary">
               Treino → resposta do corpo
             </p>
             {impactoOntem}
@@ -1203,11 +1203,11 @@ function renderCard(desc) {
             key="recovery_demand"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
+            className="rounded-2xl border border-zone-red/30 bg-zone-red/8 p-4 flex gap-3"
           >
             <span className="text-xl">🚨</span>
             <div>
-              <p className="text-sm font-semibold text-red-400">
+              <p className="text-sm font-semibold text-zone-red">
                 Carga acima da recuperação disponível
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -1271,7 +1271,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
+        className="flex items-center gap-1 text-micro font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
       >
         {label}
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
@@ -1287,7 +1287,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">{children}</p>
+            <p className="text-support leading-relaxed opacity-80 pt-1.5">{children}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1300,21 +1300,21 @@ function ExecutionCard() {
 
   const recoveryColor =
     displayedScore >= 70
-    ? 'hsl(142,70%,50%)'
+    ? 'hsl(var(--zone-green))'
     : displayedScore >= 42
-    ? 'hsl(45,93%,58%)'
-    : 'hsl(0,72%,55%)';
+    ? 'hsl(var(--zone-yellow))'
+    : 'hsl(var(--zone-red))';
   const recoveryCaptionColor =
-    displayedScore >= 70 ? 'text-emerald-400'
-    : displayedScore >= 42 ? 'text-yellow-400'
-    : 'text-red-400';
+    displayedScore >= 70 ? 'text-zone-green'
+    : displayedScore >= 42 ? 'text-zone-yellow'
+    : 'text-zone-red';
 
   const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
   const sleepColor =
-    sleepVal == null ? 'hsl(215,30%,55%)'
-    : sleepVal >= 80 ? 'hsl(205,90%,62%)'
-    : sleepVal >= 65 ? 'hsl(210,85%,55%)'
-    : 'hsl(222,60%,52%)';
+    sleepVal == null ? 'hsl(var(--muted-foreground))'
+    : sleepVal >= 80 ? 'hsl(var(--domain-sleep))'
+    : sleepVal >= 65 ? 'hsl(var(--domain-sleep))'
+    : 'hsl(var(--domain-sleep))';
   const sleepWord =
     sleepVal == null ? 'Sem dado'
     : sleepVal >= 80 ? 'Ótimo'
@@ -1340,15 +1340,10 @@ function ExecutionCard() {
       {/* Scenic hero — fundo atmosférico com starfield + domain bloom (estilo Noop) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 36%, hsl(220 25% 11%), hsl(220 20% 4%) 85%)' }} />
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 260" preserveAspectRatio="xMidYMin slice">
-          {[[23,18],[87,44],[141,12],[195,62],[263,28],[311,52],[349,8],[42,91],[108,72],[172,106],[238,85],[302,118],[67,142],[153,131],[217,155],[289,139],[31,38],[127,58],[201,22],[267,78]].map(([x,y],i) => (
-            <circle key={i} cx={x} cy={y} r={i%7===0?1.2:0.55} fill="white" opacity={i%4===0?0.32:0.14} />
-          ))}
-        </svg>
         {!isCalibrating && (
           <div
             className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[140%] h-[100%] blur-2xl"
-            style={{ background: `radial-gradient(ellipse at center top, ${recoveryColor}, transparent 55%)`, opacity: 0.18 }}
+            style={{ background: `radial-gradient(ellipse at center top, ${recoveryColor}, transparent 55%)`, opacity: 0.12 }}
           />
         )}
         <div className="absolute inset-x-0 bottom-0 h-2/5" style={{ background: 'linear-gradient(to bottom, transparent, hsl(220 18% 7% / 0.8))' }} />
@@ -1373,15 +1368,15 @@ function ExecutionCard() {
 
             {!isCalibrating && (
               <span
-                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                className={`mt-2 inline-flex items-center gap-1.5 text-micro font-medium px-2 py-0.5 rounded-full ${
                   baselineTier === 'solido'
-                    ? 'bg-emerald-500/10 text-emerald-400/90'
-                    : 'bg-amber-500/10 text-amber-400/90'
+                    ? 'bg-zone-green/10 text-zone-green/90'
+                    : 'bg-health-amber/10 text-health-amber/90'
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    baselineTier === 'solido' ? 'bg-emerald-400' : 'bg-amber-400'
+                    baselineTier === 'solido' ? 'bg-zone-green' : 'bg-health-amber'
                   }`}
                 />
                 {baselineTier === 'solido'
@@ -1397,10 +1392,10 @@ function ExecutionCard() {
               isCalibrating
                 ? 'bg-muted text-muted-foreground'
                 : displayedScore >= 70
-                ? 'bg-emerald-500/15 text-emerald-400'
+                ? 'bg-zone-green/15 text-zone-green'
                 : displayedScore >= 42
-                ? 'bg-yellow-500/15 text-yellow-400'
-                : 'bg-red-500/15 text-red-400'
+                ? 'bg-zone-yellow/15 text-zone-yellow'
+                : 'bg-zone-red/15 text-zone-red'
             }`}
           >
             {isCalibrating ? 'Calibrando' : readinessFaixa}
@@ -1447,7 +1442,7 @@ function ExecutionCard() {
             type="button"
             aria-expanded={showProntidaoHint}
             onClick={() => setShowProntidaoHint((v) => !v)}
-            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-micro font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
           >
             <Info className="w-3 h-3" />
             Entender os anéis
@@ -1466,15 +1461,15 @@ function ExecutionCard() {
               className="overflow-hidden"
             >
               <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
-                <p className="text-[11px] leading-relaxed">
+                <p className="text-support leading-relaxed">
                   <span className="font-semibold text-foreground">Recovery</span>{' '}
                   <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
                 </p>
-                <p className="text-[11px] leading-relaxed">
+                <p className="text-support leading-relaxed">
                   <span className="font-semibold text-foreground">Sono</span>{' '}
                   <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
                 </p>
-                <p className="text-[11px] leading-relaxed">
+                <p className="text-support leading-relaxed">
                   <span className="font-semibold text-foreground">Strain</span>{' '}
                   <span className="text-muted-foreground">— esforço acumulado hoje (0–21). É separado do recovery e comparado à meta sugerida para o dia.</span>
                 </p>
@@ -1543,8 +1538,8 @@ function ExecutionCard() {
             displayedScore >= 42 ? 'dá pra treinar com controle.' :
             'hoje é segurar.';
           const toneClass =
-            displayedScore >= 70 ? 'text-emerald-400' :
-            displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
+            displayedScore >= 70 ? 'text-zone-green' :
+            displayedScore >= 42 ? 'text-zone-yellow' : 'text-orange-400';
 
           // Escala ABSOLUTA de strain (0–21), alinhada ao anel.
           // A meta do dia entra como MARCADOR, não como a largura total da barra.
@@ -1577,11 +1572,11 @@ function ExecutionCard() {
             const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
             lever = isSleepH ? (
               <>
-                <b className="text-amber-300">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
+                <b className="text-health-amber/60">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
               </>
             ) : (
               <>
-                <b className="text-amber-300">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
+                <b className="text-health-amber/60">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
               </>
             );
           } else if (lastSleep != null && sleepBase != null && dMin < -20) {
@@ -1596,9 +1591,9 @@ function ExecutionCard() {
             <div className="rounded-2xl border border-border/40 bg-secondary/40 px-4 py-4 space-y-4">
               <div className="flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${
-                  displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400'
+                  displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-yellow' : 'bg-orange-400'
                 }`} />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
+                <p className="text-micro st text-muted-foreground">Leitura de hoje</p>
               </div>
 
               <p className="text-sm leading-snug">
@@ -1607,11 +1602,11 @@ function ExecutionCard() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-support font-semibold uppercase tracking-wider text-muted-foreground">
                     Quanto dá pra puxar
                   </span>
                   {cap && CAPACITY_PT[cap] ? (
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-support text-muted-foreground">
                       sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b>
                     </span>
                   ) : null}
@@ -1623,10 +1618,10 @@ function ExecutionCard() {
                     className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
                     style={{ left: `${targetStrainPct}%` }}
                   >
-                    <span className="text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap">
+                    <span className="text-micro font-bold tracking-wider text-white/80 whitespace-nowrap">
                       META {strainTarget}
                     </span>
-                    <span className="text-white/50 text-[7px] mt-px">▾</span>
+                    <span className="text-white/50 text-micro mt-px">▾</span>
                   </div>
                   <div className="relative h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
                     <div
@@ -1634,8 +1629,8 @@ function ExecutionCard() {
                       style={{
                         width: `${currentStrainPct}%`,
                         background: overTarget
-                          ? 'linear-gradient(90deg, hsl(35,80%,35%), hsl(25,95%,55%))'
-                          : 'linear-gradient(90deg, hsl(142,50%,25%), hsl(142,65%,48%))',
+                          ? 'linear-gradient(90deg, hsl(var(--domain-strain) / 0.5), hsl(var(--domain-strain)))'
+                          : 'linear-gradient(90deg, hsl(var(--zone-green) / 0.4), hsl(var(--zone-green) / 0.85))',
                       }}
                     />
                     <div
@@ -1645,8 +1640,8 @@ function ExecutionCard() {
                     />
                   </div>
                   <div className="flex justify-between mt-1">
-                    <span className="text-[9px] font-mono text-muted-foreground/40">0</span>
-                    <span className="text-[9px] font-mono text-muted-foreground/40">21</span>
+                    <span className="text-micro font-mono text-muted-foreground/40">0</span>
+                    <span className="text-micro font-mono text-muted-foreground/40">21</span>
                   </div>
                 </div>
 
@@ -1656,9 +1651,9 @@ function ExecutionCard() {
               </div>
 
 
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
-                <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
+              <div className="rounded-xl border border-health-amber/20 bg-health-amber/5 px-3.5 py-3">
+                <p className="text-micro  text-health-amber/60/90 mb-0.5">↗ Alavanca pra amanhã</p>
+                <p className="text-[12px] text-health-amber/12/90 leading-snug">{lever}</p>
               </div>
 
               {si != null && (
@@ -1671,7 +1666,7 @@ function ExecutionCard() {
         })()}
 
         {capacityContradictionNote && (
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <p className="text-support text-muted-foreground leading-relaxed">
             {capacityContradictionNote}
           </p>
         )}
@@ -1701,19 +1696,19 @@ if (!prefs.height_cm) missingSettings.push('altura');
 const settingsBanner = missingSettings.length > 0 ? (
   <Link
     to="/settings"
-    className="block rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 hover:bg-amber-500/15 transition-all"
+    className="block rounded-2xl border border-health-amber/30 bg-health-amber/10 p-4 hover:bg-health-amber/15 transition-all"
   >
     <div className="flex items-start gap-3">
-      <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-        <Settings className="w-4 h-4 text-amber-400" />
+      <div className="w-9 h-9 rounded-xl bg-health-amber/20 flex items-center justify-center shrink-0">
+        <Settings className="w-4 h-4 text-health-amber" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-amber-200">Complete suas configurações</p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+        <p className="text-sm font-semibold text-health-amber/20">Complete suas configurações</p>
+        <p className="text-support text-muted-foreground leading-relaxed mt-0.5">
           Falta informar {missingSettings.join(', ')}. Necessário para idade de condicionamento, VO₂max e leituras honestas — toque para ajustar.
         </p>
       </div>
-      <ChevronRight className="w-4 h-4 text-amber-400/70 shrink-0 mt-1" />
+      <ChevronRight className="w-4 h-4 text-health-amber/70 shrink-0 mt-1" />
     </div>
   </Link>
 ) : null;
@@ -1772,14 +1767,14 @@ if (isLoading) {
       {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
+          <p className="text-micro st text-muted-foreground/70 mb-0.5">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
           <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (
-            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+            <p className="text-micro text-muted-foreground flex items-center gap-1 mt-1">
               <span>Check-in às</span>
               <span className="font-medium text-foreground/60">
                 {new Date(checkin.created_at).toLocaleTimeString('pt-BR', {
@@ -1789,7 +1784,7 @@ if (isLoading) {
               </span>
             </p>
           ) : checkin?.date ? (
-            <p className="text-[10px] text-muted-foreground mt-1">Check-in de hoje registrado</p>
+            <p className="text-micro text-muted-foreground mt-1">Check-in de hoje registrado</p>
           ) : null}
         </div>
 
@@ -1863,7 +1858,7 @@ if (isLoading) {
       </SecondaryMetrics>
 
       {analysisError && (
-        <p className="text-[11px] text-yellow-400/80 px-1">
+        <p className="text-support text-zone-yellow/80 px-1">
           Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
         </p>
       )}

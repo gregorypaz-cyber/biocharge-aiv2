@@ -22,7 +22,7 @@ export default function SliderField({
           <div className="min-w-0">
             <span className="text-sm font-medium text-foreground">{label}</span>
             {hint && (
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+              <p className="text-micro text-muted-foreground leading-tight mt-0.5">
                 {hint}
               </p>
             )}
@@ -39,9 +39,9 @@ export default function SliderField({
         {/* Zonas visuais */}
         <div className="absolute inset-x-0 top-[11px] h-1.5 rounded-full overflow-hidden pointer-events-none">
           <div className="grid grid-cols-3 h-full">
-            <div className="bg-emerald-500/30" />
-            <div className="bg-yellow-500/30" />
-            <div className="bg-red-500/30" />
+            <div className="bg-zone-green/30" />
+            <div className="bg-zone-yellow/30" />
+            <div className="bg-zone-red/30" />
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function SliderField({
         />
       </div>
 
-      <div className="grid grid-cols-3 text-[10px] text-muted-foreground">
+      <div className="grid grid-cols-3 text-micro text-muted-foreground">
         <span className="text-left">{lowLabel || `${min}${unit}`}</span>
         <span className="text-center">{midLabel || ''}</span>
         <span className="text-right">{highLabel || `${max}${unit}`}</span>

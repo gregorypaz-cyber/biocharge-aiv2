@@ -40,7 +40,7 @@ function Section({ title, items }) {
   return (
     <div className="space-y-1.5">
       {title && (
-        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
+        <p className="text-micro st text-primary/80">
           {title}
         </p>
       )}

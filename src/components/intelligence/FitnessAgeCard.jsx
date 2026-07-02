@@ -111,7 +111,7 @@ export default function FitnessAgeCard() {
   const r = result;
   const younger = r.deltaYears < 0;
   const deltaAbs = Math.abs(r.deltaYears);
-  const accent = younger ? 'text-emerald-400' : r.deltaYears === 0 ? 'text-foreground' : 'text-amber-400';
+  const accent = younger ? 'text-zone-green' : r.deltaYears === 0 ? 'text-foreground' : 'text-health-amber';
 
   return (
     <Card>
@@ -133,7 +133,7 @@ export default function FitnessAgeCard() {
         <div className="text-right">
           <div className="text-xs text-muted-foreground">VO₂max</div>
           <div className="text-2xl font-semibold text-foreground">{r.vo2max}</div>
-          <div className="text-[10px] text-muted-foreground">mL/kg/min</div>
+          <div className="text-micro text-muted-foreground">mL/kg/min</div>
         </div>
       </div>
 
@@ -150,7 +150,7 @@ export default function FitnessAgeCard() {
         <Link to="/settings" className="text-muted-foreground hover:text-foreground">
           Editar meus dados
         </Link>
-        <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground">
+        <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-micro text-muted-foreground">
           confiança: {r.confidence}
         </span>
       </div>

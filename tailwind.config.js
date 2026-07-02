@@ -11,9 +11,24 @@ module.exports = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+  			/* Design System v2 — três raios semânticos */
+  			card:    'var(--radius-card)',
+  			control: 'var(--radius-control)',
+  			inner:   'var(--radius-inner)',
   		},
   		colors: {
+  			/* ─── Design System v2 — semantic zone/domain aliases ─── */
+  			/* Formato com <alpha-value> para suportar bg-zone-green/12 etc. */
+  			'zone-green':       'hsl(var(--zone-green) / <alpha-value>)',
+  			'zone-yellow':      'hsl(var(--zone-yellow) / <alpha-value>)',
+  			'zone-red':         'hsl(var(--zone-red) / <alpha-value>)',
+  			'domain-recovery':  'hsl(var(--domain-recovery) / <alpha-value>)',
+  			'domain-sleep':     'hsl(var(--domain-sleep) / <alpha-value>)',
+  			'domain-strain':    'hsl(var(--domain-strain) / <alpha-value>)',
+  			'health-amber':     'hsl(var(--health-amber) / <alpha-value>)',
+  			'gauge-track':      'hsl(var(--gauge-track) / <alpha-value>)',
+  			/* ─────────────────────────────────────────────────────── */
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

@@ -25,7 +25,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
           </span>
         </div>
 
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+        <span className="text-micro font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
           Sono
         </span>
       </div>
@@ -48,9 +48,9 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
       ) : null}
 
       {sleepDebt >= 2 ? (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/8 border border-amber-500/15">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-health-amber/8 border border-health-amber/15">
           <span className="text-xs">😴</span>
-          <p className="text-xs text-amber-300/90">
+          <p className="text-xs text-health-amber/60/90">
             Débito de sono: <span className="font-semibold">~{Math.round(sleepDebt)}h</span> nos últimos 7 dias{sleepDebt >= 4 ? ' — vale priorizar sono nos próximos dias.' : '.'}
           </p>
         </div>
@@ -58,7 +58,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
 
       <Link
         to="/trends"
-        className="flex items-center justify-end gap-1 text-[11px] font-medium text-blue-300/80 hover:text-blue-200 transition-colors"
+        className="flex items-center justify-end gap-1 text-support font-medium text-blue-300/80 hover:text-blue-200 transition-colors"
       >
         Ver tendência do sono
         <ArrowRight className="w-3 h-3" />

@@ -6,10 +6,10 @@ import { getTimeOfDayLabel } from '@/lib/date-utils';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 
 function getStrainZone(strain) {
-  if (strain >= 18) return { label: 'Máximo', color: 'text-red-400' };
+  if (strain >= 18) return { label: 'Máximo', color: 'text-zone-red' };
   if (strain >= 14) return { label: 'Alto', color: 'text-orange-400' };
-  if (strain >= 10) return { label: 'Moderado', color: 'text-yellow-400' };
-  return { label: 'Leve', color: 'text-emerald-400' };
+  if (strain >= 10) return { label: 'Moderado', color: 'text-zone-yellow' };
+  return { label: 'Leve', color: 'text-zone-green' };
 }
 
 function StrainBadge({ strain }) {
@@ -22,7 +22,7 @@ function StrainBadge({ strain }) {
         ⚡ {value}
       </p>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="text-micro text-muted-foreground">
         {zone.label}
       </p>
     </div>
@@ -38,11 +38,11 @@ const INTENSITY_LABELS = {
 };
 
 const INTENSITY_COLORS = {
-  very_light: 'text-emerald-400',
+  very_light: 'text-zone-green',
   light: 'text-green-400',
-  moderate: 'text-yellow-400',
+  moderate: 'text-zone-yellow',
   hard: 'text-orange-400',
-  very_hard: 'text-red-400',
+  very_hard: 'text-zone-red',
 };
 
 function getDaySummary(totalStrain, sessionsCount) {
@@ -82,7 +82,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
           </span>
 
           {sessions.length > 0 && (
-            <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center">
+            <span className="w-5 h-5 rounded-full bg-primary/15 text-primary text-micro font-bold flex items-center justify-center">
               {sessions.length}
             </span>
           )}
@@ -101,7 +101,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
 
       {/* Daily summary */}
       <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+        <p className="text-micro text-muted-foreground mb-1">
           Resumo do dia
         </p>
 
@@ -153,7 +153,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
 
                     {session.intensity && (
                       <span
-                        className={`text-[10px] font-semibold ${
+                        className={`text-micro font-semibold ${
                           INTENSITY_COLORS[session.intensity] || 'text-muted-foreground'
                         }`}
                       >
@@ -188,7 +188,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
             <div className="rounded-xl bg-black/20 border border-white/5 px-3 py-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  <p className="text-micro text-muted-foreground mb-1">
                     Total do dia
                   </p>
 
@@ -202,7 +202,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
                   <div className="flex items-center gap-1 justify-end">
                     <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
 
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="text-micro text-muted-foreground">
                       Strain total
                     </span>
                   </div>
@@ -214,7 +214,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
               </div>
             </div>
 
-            <p className="text-[10px] text-muted-foreground leading-relaxed px-1">
+            <p className="text-micro text-muted-foreground leading-relaxed px-1">
               O pós-treino é controlado pelo card principal de treino registrado para evitar ações duplicadas.
             </p>
           </div>

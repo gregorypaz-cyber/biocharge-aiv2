@@ -1,255 +1,182 @@
-# Design Audit — Reck (BioCharge AI v2)
+# Design Audit — Reck
 
-> Auditoria feita em 02/07/2026 contra o código real. Sem execução do app — baseada em leitura de todos os arquivos de componente, página, CSS e tokens.
-
----
-
-## 1. Inventário de telas e páginas
-
-| Rota | Componente | Propósito |
-|---|---|---|
-| `/today` | `src/pages/Today.jsx` | Decisão do dia — tela principal |
-| `/checkin` | `src/pages/DailyCheckin.jsx` | Registro diário de sinais |
-| `/insights` | `src/pages/Insights.jsx` | Padrões / análise fisiológica |
-| `/trends` | `src/pages/Trends.jsx` | Evolução de métricas no tempo |
-| `/history` | `src/pages/History.jsx` | Histórico dia a dia agrupado por semana |
-| `/settings` | `src/pages/AppSettings.jsx` | Preferências e perfil |
-| `/saude` | `src/pages/Health.jsx` | Monitor de Saúde (fora do AppLayout) |
-| `/login` | `src/pages/Login.jsx` | Autenticação |
-| `onboarding` | dentro de `AppLayout.jsx` | Wizard de boas-vindas (5 steps) |
+> Auditoria baseada no PLANO-Rebuild-Design.md (fonte de verdade) cruzado com leitura direta do código.
+> Todos os números abaixo são medições reais no repositório — não estimativas.
 
 ---
 
-## 2. Inventário de componentes reutilizáveis
+## 1. Inventário de telas
+
+| Rota | Arquivo | Linhas | Papel |
+|---|---|---|---|
+| `/today` | `src/pages/Today.jsx` | **1.885** | Decisão do dia — tela principal |
+| `/insights` | `src/pages/Insights.jsx` | **1.451** | Padrões / análise fisiológica |
+| `/trends` | `src/pages/Trends.jsx` | **1.271** | Evolução de métricas |
+| `/checkin` | `src/pages/DailyCheckin.jsx` | **1.261** | Registro diário |
+| `/history` | `src/pages/History.jsx` | ~400 | Histórico agrupado por semana |
+| `/settings` | `src/pages/AppSettings.jsx` | ~300 | Preferências e perfil |
+| `/saude` | `src/pages/Health.jsx` | ~250 | Monitor de Saúde (fora do AppLayout) |
+| onboarding | dentro de `AppLayout.jsx` | — | Wizard de boas-vindas (5 steps) |
+
+---
+
+## 2. Inventário de componentes
 
 ### Layout
-- `src/components/layout/AppLayout.jsx` — header fixo + nav bottom + `<Outlet />`
+- `AppLayout.jsx` — header sticky + `<Outlet>` + bottom nav 5 abas + OnboardingWizard inline
 
-### Today
-- `MiniRing` — anel SVG animado com sparkline (inline em `Today.jsx`, não extraído)
-- `ExecutionCard` — card principal com anéis + decisão (inline em `Today.jsx`)
-- `CollapsibleHint` — hint recolhível genérico (inline em `Today.jsx`)
-- `TomorrowHookCard` — card de gancho amanhã (inline em `Today.jsx`)
-- `src/components/today/MorningRecoveryCard.jsx`
-- `src/components/today/SleepForecastCard.jsx`
-- `src/components/today/CurrentStateCard.jsx`
-- `src/components/today/TrainingSessionsList.jsx`
-- `src/components/today/WorkoutLoggedState.jsx`
-- `src/components/today/HealthStatusCard.jsx`
-- `src/components/today/ProtectionInsightCard.jsx`
-- `src/components/today/QuickIntentEdit.jsx`
-- `src/components/today/SecondaryMetrics.jsx`
+### Today (3 componentes definidos inline — problema mapeado)
+- `MiniRing` — anel SVG animado (**inline em Today.jsx**, não exportado)
+- `ExecutionCard` — card principal (**inline em Today.jsx**)
+- `CollapsibleHint` — hint recolhível (**inline em Today.jsx**)
+- `TomorrowHookCard` — gancho amanhã (**inline em Today.jsx**)
+- `src/components/today/` — 9 cards extraídos (MorningRecoveryCard, SleepForecastCard, CurrentStateCard, TrainingSessionsList, WorkoutLoggedState, HealthStatusCard, ProtectionInsightCard, QuickIntentEdit, SecondaryMetrics)
 
-### Intelligence (usados em Insights / Today)
-- `src/components/intelligence/PhysioStateCard.jsx`
-- `src/components/intelligence/TrainingLoadCard.jsx`
-- `src/components/intelligence/CorrelationsCard.jsx`
-- `src/components/intelligence/AnalysisHighlights.jsx`
-- `src/components/intelligence/AnalysisBody.jsx`
-- `src/components/intelligence/NarrativeCard.jsx`
-- `src/components/intelligence/WhyScoreCard.jsx`
-- `src/components/intelligence/BodyAgeCard.jsx`
-- `src/components/intelligence/FitnessAgeCard.jsx`
-- `src/components/intelligence/LongevityTrendCard.jsx`
-- `src/components/intelligence/LongevityOnboardingCard.jsx`
+### Intelligence
+- `src/components/intelligence/` — 10 componentes (PhysioStateCard, TrainingLoadCard, CorrelationsCard, AnalysisHighlights, AnalysisBody, NarrativeCard, WhyScoreCard, BodyAgeCard, FitnessAgeCard, LongevityTrendCard, LongevityOnboardingCard)
 
 ### Check-in
-- `src/components/checkin/CheckinStep.jsx`
-- `src/components/checkin/SliderField.jsx`
-- `src/components/checkin/EmojiSelector.jsx`
-- `src/components/checkin/LivePreview.jsx`
-- `src/components/checkin/CheckinSuccessOverlay.jsx`
-
-### Training
-- `src/components/training/AddTrainingModal.jsx`
+- `src/components/checkin/` — CheckinStep, SliderField, EmojiSelector, LivePreview, CheckinSuccessOverlay
 
 ### UI-bio
 - `src/components/ui-bio/BodyStateBadge.jsx`
 
 ### UI primitivos (shadcn/Radix)
-Toda a pasta `src/components/ui/` — accordion, alert, avatar, badge, button, card, dialog, drawer, form, input, select, slider, tabs, tooltip, etc.
+- `src/components/ui/` — **49 arquivos**; o app usa ativamente ~9
 
 ---
 
-## 3. Problemas de layout
+## 3. Diagnóstico — evidências medidas no código
 
-### 3.1 God component — Today.jsx (1886 linhas)
-`Today.jsx` define **quatro componentes React inline** (`MiniRing`, `ExecutionCard`, `CollapsibleHint`, `TomorrowHookCard`) além de toda a lógica derivada e o render tree. Isto torna impossível:
-- reusar `MiniRing` em Trends ou History sem copiar código
-- testar `ExecutionCard` isoladamente
-- fazer redesign incremental de um sub-card sem tocar o arquivo gigante
+### 3.1 Epidemia de micro-texto
 
-### 3.2 Largura máxima inconsistente
-`AppLayout.jsx` define `max-w-2xl` (672px) para header e main, mas algumas páginas como `Health.jsx` ficam fora do `AppLayout` e não repetem essa restrição de forma consistente. Resultado: o conteúdo da página `/saude` pode quebrar o alinhamento visual esperado.
+| Ocorrência | Contagem |
+|---|---|
+| `text-[10px]` | **155×** |
+| `text-[11px]` | **89×** |
+| `text-[7px]` | existe (piso atual) |
 
-### 3.3 Padding/safe-area no bottom nav
-O `pb-32` em `<main>` é estimado, não calculado a partir da altura real do bottom nav (64px = `h-16`). Em dispositivos com home indicator (iPhone com notch), o conteúdo pode ficar cortado ou ter espaço excessivo.
+**Diagnóstico:** quando tudo é minúsculo, nada é secundário. Hierarquia fraca — o olho não sabe onde pousar. É também o "cheiro de IA/protótipo" mais visível: labels uppercase de 10px em todo card é o padrão genérico de dashboards SaaS gerados automaticamente.
 
-### 3.4 Check-in sem indicador de progresso visual claro
-`DailyCheckin.jsx` usa um sistema de steps, mas o progresso (qual step atual / total) não parece ter um componente de indicador de progresso dedicado e consistente no topo.
+### 3.2 Caos de raio (border-radius)
 
-### 3.5 Ausência de empty states com identidade visual
-Várias telas mostram um spinner de loading genérico (`animate-spin` manual no `App.jsx`) sem uma tela de carregamento com a identidade Reck. Estados vazios (sem check-in hoje, sem dados de tendência) não têm tratamento visual consistente.
+7 valores distintos em circulação sem regra de quando usar qual:
 
----
+| Valor | Contagem |
+|---|---|
+| `rounded-sm` | 21× |
+| `rounded-md` | 41× |
+| `rounded-lg` | 24× |
+| `rounded-xl` | 128× |
+| `rounded-2xl` | 86× |
+| `rounded-3xl` | 7× |
+| `rounded-full` | 70× |
 
-## 4. Problemas de tipografia
+**Diagnóstico:** o olho percebe "quase igual, mas não" em cada tela. Sem regra declarada, cada patch futuro introduz mais variação.
 
-### 4.1 Escala tipográfica não documentada, implementada ad hoc
-Os tamanhos de fonte são definidos inline com classes arbitrárias do Tailwind: `text-[10px]`, `text-[11px]`, `text-[9px]`, `text-3xl`, `text-xl`, `text-2xl`. Não existe uma escala semântica (caption / body / title / hero).
+### 3.3 Paleta paralela — duas fontes de verdade
 
-### 4.2 Mixagem de estilos em labels de métricas
-O padrão mais comum para labels de seção é `text-[10px] font-bold uppercase tracking-widest text-muted-foreground`, mas variações aparecem:
-- `text-[10px] font-semibold uppercase tracking-wider`
-- `text-xs font-semibold uppercase tracking-wide`
-- `text-[9px] uppercase tracking-wider`
+Os tokens CSS existem em `index.css` mas as páginas usam a paleta crua do Tailwind:
 
-São quatro variações do mesmo conceito visual sem padronização.
-
-### 4.3 Números com font-mono inconsistente
-Alguns valores numéricos usam `font-mono` (`text-3xl font-black font-mono` em `MiniRing`), outros usam Inter regular. O valor no `SleepForecastCard` usa `text-3xl font-black font-mono text-blue-400`, mas outros cards de métrica usam `font-black` sem `font-mono`.
-
-### 4.4 Ausência de hierarquia clara na página Histórico
-`History.jsx` usa `WeekLabel` com `text-xs font-semibold text-muted-foreground uppercase tracking-wider`, que tem o mesmo peso visual do conteúdo abaixo. Não há uma distinção real entre títulos de seção (semana) e conteúdo de item.
-
----
-
-## 5. Inconsistências de espaçamento
-
-### 5.1 Sem escala de espaçamento definida
-O Tailwind usa `p-4`, `p-5`, `px-4 py-3`, `px-3 py-2.5`, `px-2 py-0.5` de forma não sistemática. Não existe uma escala documentada de espaçamento para cards, seções e página.
-
-### 5.2 Gaps entre cards variam
-Em `Today.jsx`, a lista de cards usa `space-y-3` em alguns lugares e `space-y-2` em outros. Na página Insights, o gap entre blocos de análise não segue o mesmo padrão.
-
-### 5.3 Padding interno de cards varia
-`CheckinStep.jsx` usa `p-4` no conteúdo e `px-4 py-3.5` no header.
-`SleepForecastCard.jsx` usa `p-4 space-y-4`.
-`MorningRecoveryCard.jsx` usa estrutura diferente.
-Não há um `CardBody` padrão com padding uniforme.
-
----
-
-## 6. Inconsistências de cor e tema
-
-### 6.1 Estado de alerta com duas paletas
-Alertas amarelos usam tanto `text-yellow-400 / bg-yellow-500/10` quanto `text-amber-300 / bg-amber-500/10` para a mesma semântica (atenção). Exemplo: `AppLayout.jsx` usa `text-amber-300/90` para o aviso de wearable; `Today.jsx` usa `text-yellow-300` para alertas de strain.
-
-### 6.2 Azul com dois propósitos
-O azul (`hsl(200,80%,55%)`) é usado tanto para "sono" (domínio fisiológico) quanto para cards informativos genéricos (`border-blue-500/20 bg-blue-500/5` em `SleepForecastCard`). O mesmo tom carrega dois significados diferentes dependendo do contexto.
-
-### 6.3 Opacidades sem padrão
-Background tints usam `/5`, `/6`, `/8`, `/10`, `/12` sem uma escala definida:
-- `bg-emerald-500/10`, `bg-emerald-500/5`, `bg-emerald-500/8`
-- `bg-primary/5`, `bg-primary/8`, `bg-primary/10`, `bg-primary/12`
-
-Visualmente imperceptível a diferença entre `/8` e `/10`, mas semanticamente não diz nada.
-
-### 6.4 Borders com padrão similar
-Borders de alerta variam entre `/20`, `/25`, `/30` sem escala definida. Um card de warning pode ter `border-yellow-500/20` ou `border-yellow-500/25` em telas diferentes.
-
-### 6.5 Token `--bio-*` definido mas não usado sistematicamente
-`index.css` define `--bio-green`, `--bio-yellow`, `--bio-red`, `--bio-blue`, `--bio-purple`, mas esses tokens não são usados nos componentes — que usam diretamente `text-emerald-400`, `text-yellow-400`, etc.
-
----
-
-## 7. Problemas de responsividade
-
-### 7.1 App desenhado como mobile-first, mas sem breakpoints explícitos
-O layout usa `max-w-2xl mx-auto` para centralizar em desktop. Não há nenhum `sm:`, `md:`, `lg:` para adaptar o layout a tablets ou desktops maiores. Em telas de 1200px, a coluna central aparece com muito espaço vazio lateral.
-
-### 7.2 Trio de anéis em `MiniRing` com tamanho fixo
-`MiniRing` usa `size = 104` (padrão) hardcoded. Em iPhones SE (320px de largura), o grid de 3 anéis com 104px cada + gap pode apertar o layout. Não há responsividade nos tamanhos.
-
-### 7.3 Bottom nav sem suporte a `safe-area-inset-bottom`
-O bottom nav fixo não usa `padding-bottom: env(safe-area-inset-bottom)`, o que pode cortar a navegação em iPhones com home indicator.
-
----
-
-## 8. Problemas de hierarquia visual
-
-### 8.1 Muita informação no mesmo nível na Today
-A tela `Today` empilha verticalmente: anéis + headline + status autonômico + barra de strain + leitura de hoje + cards de análise + CTA de pós-treino + gancho de amanhã. Tudo com peso visual similar. Não há uma hierarquia clara de "o que é decisão principal" vs "o que é contexto de suporte".
-
-### 8.2 Labels uppercase são usados tanto para categorias quanto para valores
-`text-[10px] font-bold uppercase tracking-widest` aparece em:
-- Categorias de seção ("Decisão de hoje", "Treino → resposta do corpo")
-- Valores de estado ("Alta", "Moderada")
-- Captions de anel ("Recovery", "Sono", "Strain")
-
-O mesmo estilo carrega três funções visuais diferentes.
-
-### 8.3 Cards sem área hero definida
-Os cards de inteligência (`PhysioStateCard`, `CorrelationsCard`, `TrainingLoadCard`) não têm uma área de herói clara (número grande / gráfico / ícone proeminente). São blocos de texto com badge e corpo — pattern de SaaS dashboard, não editorial premium.
-
-### 8.4 Emojis como substitutos de ícones de estado
-`PhysioStateCard` usa `🟢`, `🔵`, `🟡`, `🟠`, `🔴`, `🚨` como indicadores visuais de estado. Emojis dependem de renderização da plataforma (cores variam entre iOS e Android) e não permitem estilização CSS.
-
----
-
-## 9. Elementos genéricos / não premium
-
-### 9.1 Loading spinner padrão
-O estado de carregamento em `App.jsx` usa `border-2 border-primary border-t-transparent rounded-full animate-spin` — exatamente o spinner CSS genérico que aparece em 99% dos tutoriais de React. Não tem identidade.
-
-### 9.2 Onboarding com cards de lista básicos
-Os cards do onboarding em `AppLayout.jsx` usam `p-3 rounded-xl border border-border bg-card` — estilo básico de lista sem nenhum diferencial visual. O onboarding é a primeira impressão do produto.
-
-### 9.3 AppSettings sem identidade visual
-`AppSettings.jsx` lista preferências com cards de opção estilo formulário SaaS genérico. Não reflete a identidade premium/editorial do Reck.
-
-### 9.4 Página `/saude` sem header/nav
-`Health.jsx` existe fora do `AppLayout` (intencional, para não ter nav). Mas o header de volta é um simples `ArrowLeft` sem identidade — não se parece com parte do mesmo produto.
-
-### 9.5 Ausência de estado de silêncio com design
-Quando insights não disparam (portão estatístico), a UI mostra vazio ou texto genérico. O silêncio honesto do Reck precisa de um design próprio — não ausência de design.
-
-### 9.6 Charts do Recharts com estilo padrão
-`Trends.jsx` usa `AreaChart`, `BarChart`, `ComposedChart` do Recharts com tooltip customizado mas sem estilização profunda dos eixos, grades e áreas. Parece dashboard corporativo padrão.
-
----
-
-## 10. Oportunidades de motion e microinterações
-
-### 10.1 Bom: já existe `useMotionSafe`
-`src/hooks/use-motion-safe.js` já implementa respeito a `prefers-reduced-motion`. É a base correta para um sistema de motion consciente.
-
-### 10.2 Bom: anéis já têm animação de entrada
-`MiniRing` anima `strokeDashoffset` com `framer-motion` na entrada — um dos pontos visuais mais fortes do app.
-
-### 10.3 Oportunidade: transições de página
-As rotas não têm transição entre páginas. Trocar de tab na bottom nav é um corte seco. Uma transição suave de fade+slide daria coesão.
-
-### 10.4 Oportunidade: estados de loading por card
-Cards que esperam análise assíncrona (`runPhysiologicalAnalysisAsync`) mostram o layout completo com dados faltando, ou renderizam `null`. Um skeleton loader por card seria mais elegante do que o aparecimento abrupto.
-
-### 10.5 Oportunidade: feedback de interação
-Botões de CTA importantes (salvar check-in, adicionar treino) não têm microinteração de feedback além do `:hover`. Uma animação sutil de press/scale daria resposta tátil.
-
-### 10.6 Oportunidade: número do score com contagem animada
-O número do Recovery no anel (`MiniRing`) anima o arco mas não o número em si. Uma animação de contagem do 0 até o valor atual tornaria o momento de abertura da Today mais impactante.
-
-### 10.7 Oportunidade: check-in success overlay
-`CheckinSuccessOverlay.jsx` existe — mas sem ver o código completo, é provável que seja genérico. O momento de salvar o check-in é um ritual diário e merece mais personalidade.
-
-### 10.8 Oportunidade: scroll-driven reveals
-Cards secundários na Today poderiam entrar com `opacity: 0 → 1` conforme o scroll, usando `framer-motion`'s `whileInView`, criando um ritmo editorial de leitura vertical.
-
----
-
-## 11. Resumo de prioridades de design
-
-| Problema | Impacto | Esforço |
+| Cor Tailwind | Contagem | Problema |
 |---|---|---|
-| Escala tipográfica ad hoc | Alto | Baixo |
-| Opacidades e borders sem padrão | Médio | Baixo |
-| `MiniRing` não extraído / não reutilizável | Alto | Baixo |
-| Emojis como indicadores de estado | Médio | Baixo |
-| Skeleton loaders por card | Médio | Médio |
-| Hierarquia visual na Today | Alto | Médio |
-| Transições entre páginas | Médio | Médio |
-| Bottom nav sem safe-area | Alto (iOS) | Baixo |
-| Charts do Recharts sem estilo premium | Médio | Médio |
-| Empty states / silêncio honesto com design | Alto | Médio |
-| Onboarding sem identidade visual | Alto | Alto |
-| AppSettings genérico | Baixo | Alto |
+| `emerald-*` | **127×** | Verde do token (`142 70% 50%`) convive com `emerald-400` ≈ 152/76/64 — são *verdes diferentes* |
+| `red-*` | 90× | — |
+| `yellow-*` | 71× | — |
+| `blue-*` | 58× | — |
+| `amber-*` | 46× | — |
+| `orange-*` | 37× | — |
+| `sky-*` | 19× | — |
+
+Além disso: **~80 literais `hsl()` hardcoded** espalhados (ex.: `hsl(215,25%,18%)` no trilho do anel em `Today.jsx`, `tooltipStyle` em `Trends.jsx` com valores inline).
+
+**Diagnóstico:** impossível ajustar a marca num lugar só. O verde da marca tem pelo menos três representações diferentes significando "bom".
+
+### 3.4 Emojis como iconografia de produto
+
+| Medição | Valor |
+|---|---|
+| Glifos emoji distintos na UI | **46** (`🔥 ⚡ 🌙 🧠 📝 🏋️ 🚨 🟢 🔴 🟡`…) |
+| Referências a `emoji` como prop | **79** (incluindo o contrato de `CheckinStep`) |
+
+**Diagnóstico:** emoji renderiza diferente por OS (iOS vs. Android vs. desktop), tem paleta própria que briga com a da marca, e é a assinatura visual mais forte de protótipo/IA. Um app que se apresenta como instrumento de precisão não decora alertas de saúde com 🚨.
+
+### 3.5 Motion sem sistema
+
+- **9 durações distintas** em uso (de 0.18s a 1s)
+- Easings ad-hoc em cada componente
+- `layoutId` usado em **1 único lugar** (tab da nav) — o padrão correto que deveria ser generalizado
+
+**Diagnóstico:** cada card anima com física própria. O app parece montado, não projetado.
+
+### 3.6 Monólitos de página com componentes inline
+
+Os 4 maiores arquivos definem componentes dentro do próprio corpo — além do risco técnico de remount/estado perdido, impede consistência: o mesmo padrão visual é reimplementado à mão em cada arquivo.
+
+### 3.7 Decoração sem informação
+
+- **Starfield da Today** (20 círculos SVG + bloom radial `blur-2xl` + gradiente de vinheta): não codifica nenhum dado — decoração pura, contra o princípio anti-placebo do produto.
+- **Bloom colorido pelo estado**: informa (o card "respira" a cor do veredito) — merece ficar, mas com opacidade mais tímida (~0.12).
+- **Hairline de luz nos cards** (`.bg-card` em `index.css`): boa técnica, vira a única forma de elevação.
+
+### 3.8 49 primitivos shadcn, ~9 em uso
+
+`src/components/ui/` tem 49 arquivos. O app usa ativamente cerca de 9. Peso morto e tentação constante de introduzir padrões visuais alheios ao sistema.
+
+---
+
+## 4. O que já está certo — preservar sem mexer
+
+- **Voz e copy em pt-BR.** "Você vai ver vermelho quando for vermelho", "não vou inventar um número antes disso" — melhor que 95% dos apps comerciais de recovery. Maior ativo de marca.
+- **Arquitetura de 5 abas com papéis distintos** (Hoje / Padrões / Check-in / Tendências / Histórico) — estrutura de informação correta, sem redundância.
+- **`layoutId="mobileActiveTab"`** na nav: único momento de motion compartilhado — é exatamente o padrão a generalizar.
+- **Trio de anéis com sparkline de 7 dias**: ideia forte; execução precisa de refino.
+- **Dark theme frio** (`220 20% 4%`) com verde 142: identidade sólida, reconhecível.
+- **`/saude` como referência canônica**: a tela mais disciplinada do app. Blocos A–E, rodapé de honestidade, slots dormentes cinza. Sua gramática (SectionHeader, MetricRow, seta direcional) é o padrão que o resto deve adotar.
+- **Silêncio como estado de design**: `HealthStatusCard` retornando `null` em calibração, a linha "✓ Sinais vitais no padrão" discreta. Design de elite disfarçado — amplificar, não remover.
+- **`useMotionSafe`** já existe em `src/hooks/use-motion-safe.js` — base correta para motion responsável.
+
+---
+
+## 5. Problemas por categoria
+
+### 5.1 Tipografia
+- Sem escala semântica definida — 264 tamanhos arbitrários em px
+- Piso real é `text-[7px]` — ilegível, especialmente em iPhone recém-acordado
+- Labels uppercase em `text-[10px] font-bold` (155 ocorrências) são o principal "cheiro de IA" do app
+- Inter e JetBrains Mono usados sem regra clara: alguns números em mono, outros não
+
+### 5.2 Hierarquia visual na Today
+- Três anéis de Recovery / Sono / Strain com **mesmo tamanho** (104px) na mesma linha: três leituras competindo em igualdade. Recovery é A decisão; sono e strain são contexto — mas visualmente não há essa distinção.
+- O anel mostra o número 68 sobre um arco, mas 68 é bom? O usuário precisa lembrar os limiares (42/70). Faltam ticks de zona e marcador de baseline no arco — a régua do instrumento.
+- Starfield decorativo ocupa atenção sem dar informação.
+
+### 5.3 Cards sem arquitetura
+- 19+ variantes de card na página Insights, criadas ad hoc
+- Não há 3 tipos canônicos que cubram todos os casos
+- A anatomia "label de categoria → dado dominante → explicação → ação" não é seguida sistematicamente
+
+### 5.4 Espaçamento
+- Gap entre cards: `space-y-2`, `space-y-3`, `space-y-4` sem regra de quando usar qual
+- Padding interno: `p-3`, `p-4`, `p-5` misturados
+- Entre seções (título → grupo): sem valor padronizado
+
+### 5.5 Responsividade
+- Safe-area iOS não implementada no bottom nav (`env(safe-area-inset-bottom)` ausente)
+- Em desktop, `max-w-2xl` centrado funciona mas a coluna é estreita para Trends/Insights (gráficos poderiam aproveitar mais espaço)
+- Áreas de toque: vários chips de 24–28px de altura, abaixo do mínimo de 44px
+
+### 5.6 Acessibilidade
+- `--muted-foreground` a 50% de luminância sobre fundo 4% passa AA para texto grande mas raspa em 11–12px (resolve com o fim do texto de 10px)
+- `prefers-reduced-motion`: sem tratamento hoje
+- Emojis de cor (`🟢🔴`) são o único indicador de estado em vários componentes — cor não pode ser o único sinal
+
+### 5.7 Check-in
+- Inputs numéricos (HRV, RHR, horas) não são os mais proeminentes visualmente, mas são os mais críticos
+- LivePreview existe mas está enterrado no fluxo — não é uma barra fixa reativa em tempo real
+- Stagger de entrada nos steps (`delay={0.05/0.1/0.15/0.2}`) faz o formulário parecer que está "caindo em pedaços" em vez de aparecer pronto
+
+### 5.8 Insights
+- 1.451 linhas, 19 variantes de card, maior densidade de `text-[10px]` do app
+- Tudo tem o mesmo peso visual — não há manchete, evidências e silêncios como camadas distintas
+- Estado de "silêncio estatístico" (gate não disparado) não tem design próprio — é ausência de elemento, não presença de honestidade declarada

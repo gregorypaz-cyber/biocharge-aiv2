@@ -59,7 +59,7 @@ export default function ProtectionInsightCard({ mutation }) {
             <ShieldCheck className={`w-5 h-5 ${s.icon}`} />
           )}
 
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${s.chip}`}>
+          <span className={`text-micro font-bold px-2 py-0.5 rounded-full ${s.chip}`}>
             {s.label}
           </span>
         </div>
@@ -81,7 +81,7 @@ export default function ProtectionInsightCard({ mutation }) {
         <div className="flex items-start gap-2">
           <HelperIcon className={`w-4 h-4 mt-0.5 shrink-0 ${s.icon}`} />
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-micro text-muted-foreground mb-1">
               O que fazer agora
             </p>
             <p className="text-xs text-foreground/85 leading-relaxed">

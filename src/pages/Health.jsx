@@ -27,22 +27,22 @@ function stateLabel(state) {
 }
 
 function stateColor(state) {
-  if (state === 'normal') return 'text-emerald-400';
-  if (state === 'acute') return 'text-amber-400';
-  if (state === 'sustained') return 'text-red-400';
+  if (state === 'normal') return 'text-zone-green';
+  if (state === 'acute') return 'text-health-amber';
+  if (state === 'sustained') return 'text-zone-red';
   return 'text-muted-foreground';
 }
 
 function stateBorderBg(state) {
-  if (state === 'normal') return 'border-emerald-500/30 bg-emerald-500/6';
-  if (state === 'acute') return 'border-amber-500/30 bg-amber-500/6';
-  if (state === 'sustained') return 'border-red-500/30 bg-red-500/6';
+  if (state === 'normal') return 'border-zone-green/30 bg-zone-green/6';
+  if (state === 'acute') return 'border-health-amber/30 bg-health-amber/6';
+  if (state === 'sustained') return 'border-zone-red/30 bg-zone-red/6';
   return 'border-border/40 bg-secondary/20';
 }
 
 function directionArrow(direction) {
-  if (direction === 'good') return { symbol: '↓', color: 'text-emerald-400' };
-  if (direction === 'bad')  return { symbol: '↑', color: 'text-red-400' };
+  if (direction === 'good') return { symbol: '↓', color: 'text-zone-green' };
+  if (direction === 'bad')  return { symbol: '↑', color: 'text-zone-red' };
   return { symbol: '—', color: 'text-muted-foreground' };
 }
 
@@ -50,7 +50,7 @@ function directionArrow(direction) {
 
 function SectionHeader({ children }) {
   return (
-    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1 mb-2">
+    <p className="text-micro st text-muted-foreground px-1 mb-2">
       {children}
     </p>
   );
@@ -59,7 +59,7 @@ function SectionHeader({ children }) {
 function VerdictSection({ state, today }) {
   return (
     <div className={`rounded-2xl border p-4 ${stateBorderBg(state)}`}>
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+      <p className="text-support text-muted-foreground uppercase tracking-wider font-semibold mb-1">
         Hoje · {fmtDate(today)}
       </p>
       <p className={`text-2xl font-black ${stateColor(state)}`}>
@@ -99,10 +99,10 @@ function VitalsPanel({ flags }) {
           >
             <div className="flex items-center gap-2">
               {f.raised && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-zone-red shrink-0" />
               )}
               {!f.raised && !isPending && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/50 shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-zone-green/50 shrink-0" />
               )}
               {isPending && (
                 <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 shrink-0" />
@@ -111,7 +111,7 @@ function VitalsPanel({ flags }) {
                 <p className="text-sm font-medium leading-tight">
                   {f.label}
                   {isPending && (
-                    <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">
+                    <span className="ml-1.5 text-micro text-muted-foreground font-normal">
                       em breve (anel)
                     </span>
                   )}
@@ -128,7 +128,7 @@ function VitalsPanel({ flags }) {
                       {f.today ?? '—'}
                     </p>
                     {f.baseline != null && (
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-micro text-muted-foreground">
                         base {f.baseline}
                       </p>
                     )}
@@ -157,10 +157,10 @@ function ActiveFlagsSection({ flags }) {
   });
 
   return (
-    <div className="rounded-2xl border border-red-500/25 bg-red-500/5 p-4 space-y-2">
-      <p className="text-sm font-semibold text-red-400">Flags ativas</p>
+    <div className="rounded-2xl border border-zone-red/25 bg-zone-red/5 p-4 space-y-2">
+      <p className="text-sm font-semibold text-zone-red">Flags ativas</p>
       <p className="text-sm text-muted-foreground">{parts.join(' · ')}</p>
-      <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+      <p className="text-support text-muted-foreground/70 leading-relaxed">
         Preciso de 2+ sinais juntos pra alertar — 1 sinal isolado é ruído.
       </p>
     </div>
@@ -208,7 +208,7 @@ function HistorySection({ history }) {
             </div>
             <span
               className={`text-xs font-semibold ${
-                entry.state === 'sustained' ? 'text-red-400' : 'text-amber-400'
+                entry.state === 'sustained' ? 'text-zone-red' : 'text-health-amber'
               }`}
             >
               {entry.state === 'sustained' ? 'Sustentado' : 'Agudo'}
@@ -223,7 +223,7 @@ function HistorySection({ history }) {
 function HonestyFooter() {
   return (
     <div className="rounded-2xl border border-border/30 bg-secondary/20 px-4 py-4">
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
+      <p className="text-support text-muted-foreground leading-relaxed">
         Isto não é diagnóstico médico. O monitor compara teus sinais ao teu próprio padrão e só fala quando 2 ou mais desviam juntos — o silêncio é intencional. Em caso de sintomas, procure um profissional de saúde.
       </p>
     </div>

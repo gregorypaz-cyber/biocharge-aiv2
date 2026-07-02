@@ -22,7 +22,7 @@ export default function NarrativeCard({ narrative, tone = 'calm', onAlternateReq
           <button
             onClick={onAlternateRequested}
             aria-label="Ver versão alternativa da narrativa"
-            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-secondary"
+            className="flex items-center gap-1 text-micro text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-secondary"
           >
             <RefreshCw className="w-3 h-3" />
             Ver alternativa
