@@ -1421,7 +1421,7 @@ function ExecutionCard() {
             size={150}
           />
 
-          <div className="grid grid-cols-2 gap-8 mt-3">
+          <div className="flex justify-center gap-10 mt-3">
             <MiniRing
               value={sleepVal}
               max={100}
