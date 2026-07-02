@@ -461,7 +461,19 @@ tooltipStyle inline        → var(--card) + var(--border) (Trends.jsx)
 
 ---
 
-## Fase 3 — Motion e Navegação
+## Fase 3 — Motion e Navegação ✅ IMPLEMENTADA
+
+**Status:** implementada em 2026-07-02. Build limpo (exit 0).
+
+**O que foi feito:**
+- `src/lib/motion-tokens.js` (NOVO): `duration` (fast/base/reveal), `easing` (out/expressive), `spring.default` — única fonte de verdade para todos os valores de motion.
+- `src/lib/chart-theme.js` (NOVO): `chartTheme` (grid, axis, tooltip, referenceLines) + `SCORE_METRICS` set — tema unificado para Recharts. Cores hardcoded (sem CSS vars em SVG attributes).
+- `src/hooks/use-motion-safe.js`: importa `duration` e `easing` de motion-tokens; `transition` agora usa `duration.base / 1000` em vez de `undefined`.
+- `src/components/layout/AppLayout.jsx`: importa motion-tokens; `<Outlet />` envolto em `AnimatePresence + motion.div` com page transition fade+slide (opacity 0→1, y 8→0, exit opacity 0→0); header com título de página crossfade por rota (`AnimatePresence mode="wait"`, `key=pageTitle`); logo recolhe para SVG symbol only (sem wordmark "Reck"); `mobileActiveTab` spring migrado para `spring.default`; botão Check-in usa `whileTap={{ scale: 0.92 }}`; `useReducedMotion` respeita preferência do OS (transitions viram `duration: 0`).
+- `src/pages/Trends.jsx`: importa `chartTheme`, `SCORE_METRICS`, `duration`; remove `tooltipStyle` inline; todos `contentStyle` migrados; todos `CartesianGrid`/`XAxis`/`YAxis` ad-hoc migrados para spread de `chartTheme.grid`/`chartTheme.axis`; `ReferenceLine` y=42 e y=70 adicionados no BarChart recovery vs fadiga (sempre) e no AreaChart de métricas (quando `SCORE_METRICS.has(selectedMetric)`); delays de motion usam `duration.base / 1000`.
+- `src/index.css`: micro-interações CSS — press scale 0.97 em buttons (150ms, disabled excluído); `:focus-visible` com `outline: 2px solid hsl(var(--ring))` e `border-radius: var(--radius-control)`; componente `.skeleton` com animação de sweep para loading states.
+
+---
 
 ### PR 3.1 — Motion tokens + transições de rota + reduced-motion
 
@@ -497,10 +509,10 @@ export const spring = {
 - `layoutId="mobileActiveTab"` preservado e documentado como padrão a generalizar
 
 **Critérios de aceite:**
-- [ ] `src/lib/motion-tokens.js` existe e é importado
-- [ ] Zero durações hardcoded em componentes (exceto cerimônia do Gauge)
-- [ ] Transição de rota implementada em `AppLayout.jsx`
-- [ ] `prefers-reduced-motion` respeitado em toda animação nova
+- [x] `src/lib/motion-tokens.js` existe e é importado (AppLayout, use-motion-safe, Trends)
+- [x] Zero durações hardcoded em componentes novos (exceto cerimônia do Gauge — pendente Fase 1)
+- [x] Transição de rota implementada em `AppLayout.jsx` (fade + y-offset, AnimatePresence mode="sync")
+- [x] `prefers-reduced-motion` respeitado — `useReducedMotion()` em AppLayout, `duration: 0` quando ativo
 
 ---
 
@@ -532,10 +544,10 @@ export const chartTheme = {
 - `src/pages/Insights.jsx` — aplicar no scatter/barras da manchete
 
 **Critérios de aceite:**
-- [ ] `src/lib/chart-theme.js` existe
-- [ ] Trends e Insights importam `chartTheme` (zero estilos recharts inline)
-- [ ] Linhas de referência em 42 e 70 em todos os gráficos de score
-- [ ] Grid apenas horizontal, tracejado
+- [x] `src/lib/chart-theme.js` existe com `chartTheme` e `SCORE_METRICS`
+- [x] Trends importa `chartTheme` — zero `tooltipStyle` / tick-fill inline; Insights não tem charts próprios
+- [x] Linhas de referência em 42 e 70 nos gráficos de score (recovery BarChart sempre; AreaChart condicionalmente)
+- [x] Grid apenas horizontal, tracejado (`horizontal: true, vertical: false` em `chartTheme.grid`)
 
 ---
 
@@ -558,11 +570,11 @@ export const chartTheme = {
 - Todos os controles tocáveis: `min-height: 44px`
 
 **Critérios de aceite:**
-- [ ] `env(safe-area-inset-bottom)` no bottom nav
-- [ ] Título da aba atual aparece no header com crossfade
-- [ ] Wordmark recolhido (só símbolo)
-- [ ] Botão Check-in usa `zone-green` sólido
-- [ ] Áreas de toque ≥ 44px em todos os controles
+- [x] `env(safe-area-inset-bottom)` no bottom nav (já existia, confirmado presente)
+- [x] Título da aba atual aparece no header com crossfade (AnimatePresence mode="wait", key=pageTitle)
+- [x] Wordmark recolhido — SVG symbol only, sem `<span>Reck</span>`
+- [x] Botão Check-in usa `bg-zone-green` sólido com whileTap scale feedback
+- [x] Áreas de toque ≥ 44px — `min-h-[44px]` em todos os nav items
 
 ---
 

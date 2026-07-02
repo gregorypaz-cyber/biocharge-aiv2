@@ -3,6 +3,8 @@ import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
+import { chartTheme, SCORE_METRICS } from '@/lib/chart-theme';
+import { duration } from '@/lib/motion-tokens';
 import {
   AreaChart, Area, BarChart, Bar, ScatterChart, Scatter, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
@@ -40,14 +42,7 @@ const metrics = [
   { key: 'biocharge_morning', label: 'BioCharge', color: 'hsl(var(--domain-sleep))' },
 ];
 
-const tooltipStyle = {
-  background: 'hsl(var(--background))',
-  border: '1px solid hsl(var(--border))',
-  borderRadius: 'var(--radius-inner)',
-  fontSize: '12px',
-  color: 'hsl(var(--foreground))',
-  padding: '8px 12px',
-};
+// tooltipStyle migrado para chartTheme.tooltip.contentStyle (src/lib/chart-theme.js)
 
 function safeJsonFromText(text) {
   if (!text || typeof text !== 'string') return null;
@@ -726,10 +721,10 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
       <div role="img" aria-label="Gráfico de volume de corrida por semana" className="h-40">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={weeks}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
-            <XAxis dataKey="label" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} km`, 'Semana']} />
+            <CartesianGrid {...chartTheme.grid} />
+            <XAxis dataKey="label" {...chartTheme.axis} interval="preserveStartEnd" />
+            <YAxis {...chartTheme.axis} width={30} />
+            <Tooltip contentStyle={chartTheme.tooltip.contentStyle} formatter={(v) => [`${Number(v).toFixed(1)} km`, 'Semana']} />
             <Bar dataKey="km" fill="hsl(142,70%,50%)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -829,10 +824,10 @@ function WeightTrendCard({ checkins = [] }) {
                 <stop offset="95%" stopColor="hsl(190,65%,55%)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
-            <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-            <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => v.toFixed(1)} />
-            <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} kg`, 'Média 7d']} />
+            <CartesianGrid {...chartTheme.grid} />
+            <XAxis dataKey="date" {...chartTheme.axis} interval="preserveStartEnd" />
+            <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} {...chartTheme.axis} width={36} tickFormatter={(v) => v.toFixed(1)} />
+            <Tooltip contentStyle={chartTheme.tooltip.contentStyle} formatter={(v) => [`${Number(v).toFixed(1)} kg`, 'Média 7d']} />
             <Area type="monotone" dataKey="ma7" stroke="hsl(190,65%,55%)" fill="url(#weightGrad)" strokeWidth={2} dot={false} name="Média 7d" />
           </AreaChart>
         </ResponsiveContainer>
@@ -1018,11 +1013,14 @@ export default function Trends() {
                     <stop offset="95%" stopColor={metricConfig?.color} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
-                <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <CartesianGrid {...chartTheme.grid} />
+                <XAxis dataKey="date" {...chartTheme.axis} interval="preserveStartEnd" />
+                <YAxis {...chartTheme.axis} width={30} />
+                <Tooltip contentStyle={chartTheme.tooltip.contentStyle} />
                 {periodAvg && <ReferenceLine y={periodAvg} stroke={metricConfig?.color} strokeDasharray="4 4" strokeOpacity={0.4} />}
+                {SCORE_METRICS.has(selectedMetric) && chartTheme.referenceLines.map((rl, i) => (
+                  <ReferenceLine key={i} {...rl} />
+                ))}
                 <Area
                   type="monotone"
                   dataKey={selectedMetric}
@@ -1058,7 +1056,7 @@ export default function Trends() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.1, duration: duration.base / 1000 }}
           className="rounded-xl border border-border/60 bg-card p-4"
         >
           <h3 className="text-sm font-semibold mb-0.5 tracking-tight">Recovery vs Fadiga</h3>
@@ -1066,9 +1064,12 @@ export default function Trends() {
           <div role="img" aria-label="Gráfico de barras comparando Recovery e Fadiga diários" className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} barGap={2}>
-                <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <XAxis dataKey="date" {...chartTheme.axis} interval="preserveStartEnd" />
+                <YAxis {...chartTheme.axis} width={30} />
+                <Tooltip contentStyle={chartTheme.tooltip.contentStyle} />
+                {chartTheme.referenceLines.map((rl, i) => (
+                  <ReferenceLine key={i} {...rl} />
+                ))}
                 <Bar dataKey="recovery_score" radius={[3, 3, 0, 0]} opacity={0.85} name="Recovery">
                   {chartData.map((entry, index) => (
                     <Cell key={index} fill={entry.rest_day ? 'hsl(220,15%,30%)' : 'hsl(142,70%,50%)'} />
@@ -1148,7 +1149,7 @@ export default function Trends() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.15, duration: duration.base / 1000 }}
             className="rounded-xl border border-border/60 bg-card p-4"
           >
             <h3 className="text-sm font-semibold mb-0.5 tracking-tight">
@@ -1166,25 +1167,20 @@ export default function Trends() {
             >
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="hsl(220,15%,10%)"
-                  />
+                  <CartesianGrid {...chartTheme.grid} />
 
                   <XAxis
                     type="number"
                     dataKey="x"
                     name="Sono"
                     domain={['auto', 'auto']}
-                    tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
+                    {...chartTheme.axis}
                     label={{
                       value: 'Horas de sono',
                       position: 'insideBottom',
                       offset: -2,
-                      fill: 'hsl(215,15%,45%)',
-                      fontSize: 10,
+                      fill: chartTheme.axis.tick.fill,
+                      fontSize: chartTheme.axis.tick.fontSize,
                     }}
                   />
 
@@ -1193,14 +1189,12 @@ export default function Trends() {
                     dataKey="y"
                     name="Recovery"
                     domain={[0, 100]}
-                    tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
+                    {...chartTheme.axis}
                     width={30}
                   />
 
                   <Tooltip
-                    contentStyle={tooltipStyle}
+                    contentStyle={chartTheme.tooltip.contentStyle}
                     formatter={(val, name) =>
                       name === 'Recovery'
                         ? [`${val}`, 'Recovery no dia seguinte']
