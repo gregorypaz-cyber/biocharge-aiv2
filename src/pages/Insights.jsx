@@ -143,7 +143,7 @@ function BottleneckInsight({ bottleneck }) {
           <Target className="w-4 h-4 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          <p className="text-micro st text-primary">
             Seu gargalo pessoal
           </p>
           <div className="flex items-center gap-2 mt-1">
@@ -167,17 +167,17 @@ function BottleneckInsight({ bottleneck }) {
           <div className="flex items-center gap-2 mt-3">
             <span
               className={cn(
-                'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md',
-                isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                'inline-flex items-center gap-1 text-support font-semibold px-2 py-1 rounded-md',
+                isPositive ? 'bg-zone-green/10 text-zone-green' : 'bg-health-amber/10 text-health-amber'
               )}
             >
               {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               correlação {b.correlation > 0 ? '+' : ''}{b.correlation}
             </span>
-            <span className="text-[10px] text-muted-foreground">baseado em {b.samples} dias</span>
+            <span className="text-micro text-muted-foreground">baseado em {b.samples} dias</span>
           </div>
 
-          <p className="text-[10px] text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-2">
+          <p className="text-micro text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-2">
             Associação observada nos seus dados, não relação de causa garantida. Use como
             pista de onde focar, não como regra fixa.
           </p>
@@ -219,15 +219,15 @@ function LongTermTrendsCard({ trends }) {
       return {
         label: m.direction === 'up' ? 'melhorando' : 'melhorando',
         Icon: m.direction === 'up' ? TrendingUp : TrendingDown,
-        color: 'text-emerald-400',
-        bg: 'bg-emerald-500/10',
+        color: 'text-zone-green',
+        bg: 'bg-zone-green/10',
       };
     }
     return {
       label: 'piorando',
       Icon: m.direction === 'up' ? TrendingUp : TrendingDown,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10',
+      color: 'text-health-amber',
+      bg: 'bg-health-amber/10',
     };
   };
 
@@ -245,7 +245,7 @@ function LongTermTrendsCard({ trends }) {
     >
       <div className="flex items-center gap-2 mb-1">
         <BarChart3 className="w-4 h-4 text-primary" />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+        <p className="text-micro st text-primary">
           Sua evolução
         </p>
       </div>
@@ -269,8 +269,8 @@ function LongTermTrendsCard({ trends }) {
                 <span className="text-[13px] font-medium truncate">{m.label}</span>
               </div>
               <div className={`flex items-center gap-1.5 shrink-0 ${s.color}`}>
-                {change && <span className="text-[11px] font-mono">{change}</span>}
-                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${s.bg}`}>
+                {change && <span className="text-support font-mono">{change}</span>}
+                <span className={`inline-flex items-center gap-1 text-support font-semibold px-2 py-0.5 rounded-md ${s.bg}`}>
                   <s.Icon className="w-3 h-3" />
                   {s.label}
                 </span>
@@ -281,7 +281,7 @@ function LongTermTrendsCard({ trends }) {
       </div>
 
       {!trends.hasAnyTrend && (
-        <p className="text-[11px] text-muted-foreground/80 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
+        <p className="text-support text-muted-foreground/80 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
           Tudo estável no período — suas métricas estão oscilando em torno da sua
           base, sem uma direção clara. Para evolução de longo prazo, isso é um
           sinal saudável de consistência.
@@ -296,7 +296,7 @@ function SectionHeader({ title, subtitle }) {
     <div className="space-y-0.5">
       <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
       {subtitle ? (
-        <p className="text-[11px] text-muted-foreground leading-relaxed">{subtitle}</p>
+        <p className="text-support text-muted-foreground leading-relaxed">{subtitle}</p>
       ) : null}
     </div>
   );
@@ -305,13 +305,13 @@ function SectionHeader({ title, subtitle }) {
 function InsightChip({ confidence }) {
   const cls =
     confidence === 'Alta'
-      ? 'bg-emerald-500/15 text-emerald-400'
+      ? 'bg-zone-green/15 text-zone-green'
       : confidence === 'Média'
-      ? 'bg-yellow-500/15 text-yellow-400'
+      ? 'bg-zone-yellow/15 text-zone-yellow'
       : 'bg-zinc-500/15 text-zinc-400';
 
   return (
-    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cls}`}>
+    <span className={`text-micro font-bold px-2 py-0.5 rounded-full ${cls}`}>
       {confidence}
     </span>
   );
@@ -323,7 +323,7 @@ const DOMAIN_CARD = {
   sleep:  'border-blue-400/20 bg-blue-500/5',
   strain: 'border-border/50 bg-secondary/30',
 };
-const DOMAIN_DEFAULT = 'border-emerald-500/20 bg-emerald-500/5'; // recovery (verde)
+const DOMAIN_DEFAULT = 'border-zone-green/20 bg-zone-green/5'; // recovery (verde)
 
 function DiscoveryCard({ item }) {
   const domainCls = DOMAIN_CARD[DOMAIN_OF[item.icon]] || DOMAIN_DEFAULT;
@@ -348,7 +348,7 @@ function DiscoveryCard({ item }) {
         <InsightChip confidence={item.confidence} />
       </div>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="text-micro text-muted-foreground">
         Baseado em {item.days} {item.days === 1 ? 'registro' : 'registros'} úteis.
       </p>
     </motion.div>
@@ -358,16 +358,16 @@ function DiscoveryCard({ item }) {
 function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
   const cls =
     tone === 'negative'
-      ? 'border-red-500/20 bg-red-500/5'
+      ? 'border-zone-red/20 bg-zone-red/5'
       : tone === 'positive'
-      ? 'border-emerald-500/20 bg-emerald-500/5'
+      ? 'border-zone-green/20 bg-zone-green/5'
       : 'border-border/40 bg-card';
 
   const iconCls =
     tone === 'negative'
-      ? 'text-red-400'
+      ? 'text-zone-red'
       : tone === 'positive'
-      ? 'text-emerald-400'
+      ? 'text-zone-green'
       : 'text-primary';
 
   return (
@@ -388,20 +388,20 @@ function PrimaryInsightCard({ item }) {
 
   const toneClass =
     item.tone === 'negative'
-      ? 'border-red-500/25 bg-red-500/8'
+      ? 'border-zone-red/25 bg-zone-red/8'
       : item.tone === 'positive'
-      ? 'border-emerald-500/25 bg-emerald-500/8'
+      ? 'border-zone-green/25 bg-zone-green/8'
       : item.tone === 'warning'
-      ? 'border-yellow-500/25 bg-yellow-500/8'
+      ? 'border-zone-yellow/25 bg-zone-yellow/8'
       : 'border-primary/20 bg-primary/5';
 
   const iconClass =
     item.tone === 'negative'
-      ? 'text-red-400'
+      ? 'text-zone-red'
       : item.tone === 'positive'
-      ? 'text-emerald-400'
+      ? 'text-zone-green'
       : item.tone === 'warning'
-      ? 'text-yellow-400'
+      ? 'text-zone-yellow'
       : 'text-primary';
 
   const iconIsText = typeof item.icon === 'string';
@@ -424,7 +424,7 @@ function PrimaryInsightCard({ item }) {
           </div>
 
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <p className="text-micro font-black uppercase tracking-widest text-muted-foreground">
               {item.eyebrow || 'Leitura principal'}
             </p>
 
@@ -439,14 +439,14 @@ function PrimaryInsightCard({ item }) {
         </div>
 
         {item.badge ? (
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-background/40 border border-border/40 text-muted-foreground shrink-0">
+          <span className="text-micro font-bold px-2 py-1 rounded-full bg-background/40 border border-border/40 text-muted-foreground shrink-0">
             {item.badge}
           </span>
         ) : null}
       </div>
 
       {item.meta ? (
-        <p className="text-[11px] text-muted-foreground border-t border-border/25 pt-2">
+        <p className="text-support text-muted-foreground border-t border-border/25 pt-2">
           {item.meta}
         </p>
       ) : null}
@@ -466,7 +466,7 @@ function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
         <div>
           <p className="text-sm font-semibold leading-snug">{title}</p>
           {subtitle ? (
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
+            <p className="text-support text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
           ) : null}
         </div>
 
@@ -1306,7 +1306,7 @@ Regras:
         </div>
 
         <div className="p-4">
-          <p className="text-[10px] text-muted-foreground mb-3">
+          <p className="text-micro text-muted-foreground mb-3">
             Uma leitura mais detalhada dos padrões recentes de recovery, sono, carga e comportamento.
           </p>
 
@@ -1332,7 +1332,7 @@ Regras:
                 onExpand={() => setAnalysisExpanded(true)}
               />
               {analysisGeneratedAt && (
-                <p className="text-[10px] text-muted-foreground mt-3 text-right">
+                <p className="text-micro text-muted-foreground mt-3 text-right">
                   Gerado em{' '}
                   {analysisGeneratedAt.toLocaleDateString('pt-BR', {
                     day: '2-digit',
@@ -1344,7 +1344,7 @@ Regras:
               )}
             </>
           ) : aiInsightError ? (
-            <p className="text-sm text-red-400/80">{aiInsightError}</p>
+            <p className="text-sm text-zone-red/80">{aiInsightError}</p>
           ) : (
             <p className="text-sm text-muted-foreground">
               A análise profunda aparece automaticamente após o check-in, quando disponível. Você também pode gerar uma nova leitura agora.
@@ -1372,7 +1372,7 @@ Regras:
 
           {coachResponse ? (
             <>
-              <p className="text-[10px] text-muted-foreground mb-2">
+              <p className="text-micro text-muted-foreground mb-2">
                 Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
               </p>
 
@@ -1424,7 +1424,7 @@ Regras:
             </Button>
           </div>
 
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-micro text-muted-foreground">
             As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
           </p>
         </div>

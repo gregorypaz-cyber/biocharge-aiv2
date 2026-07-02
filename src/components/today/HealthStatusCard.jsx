@@ -22,7 +22,7 @@ export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
     return (
       <Link
         to="/saude"
-        className="flex items-center justify-between py-1 text-sm text-emerald-400/80 hover:text-emerald-400 transition-colors"
+        className="flex items-center justify-between py-1 text-sm text-zone-green/80 hover:text-zone-green transition-colors"
       >
         <span className="flex items-center gap-2">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -54,11 +54,11 @@ export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-amber-500/40 bg-amber-500/8 p-4 space-y-2"
+        className="rounded-2xl border border-health-amber/40 bg-health-amber/8 p-4 space-y-2"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-amber-400">
+            <p className="text-sm font-semibold text-health-amber">
               Sinais um pouco fora do teu padrão
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -70,7 +70,7 @@ export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
         </div>
         <Link
           to="/saude"
-          className="flex items-center gap-1 text-xs font-semibold text-amber-400/80 hover:text-amber-400 transition-colors"
+          className="flex items-center gap-1 text-xs font-semibold text-health-amber/80 hover:text-health-amber transition-colors"
         >
           Ver detalhes
           <ChevronRight className="w-3.5 h-3.5" />
@@ -84,10 +84,10 @@ export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-red-500/40 bg-red-500/8 p-4 space-y-2"
+        className="rounded-2xl border border-zone-red/40 bg-zone-red/8 p-4 space-y-2"
       >
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-red-400">
+          <p className="text-sm font-semibold text-zone-red">
             🚨 2º dia de sinais alterados
           </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -96,7 +96,7 @@ export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
         </div>
         <Link
           to="/saude"
-          className="flex items-center gap-1 text-xs font-semibold text-red-400/80 hover:text-red-400 transition-colors"
+          className="flex items-center gap-1 text-xs font-semibold text-zone-red/80 hover:text-zone-red transition-colors"
         >
           Ver detalhes
           <ChevronRight className="w-3.5 h-3.5" />

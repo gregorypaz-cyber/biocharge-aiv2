@@ -110,7 +110,7 @@ export default function BodyAgeCard() {
   }
 
   const r = result;
-  const vitBand = r.vitality >= 70 ? 'text-emerald-400' : r.vitality >= 40 ? 'text-amber-400' : 'text-red-400';
+  const vitBand = r.vitality >= 70 ? 'text-zone-green' : r.vitality >= 40 ? 'text-health-amber' : 'text-zone-red';
   const younger = r.deltaYears < 0;
   const deltaAbs = Math.abs(r.deltaYears);
   const fmtYears = (y) => `${y > 0 ? '+' : ''}${y.toFixed(1)} ${Math.abs(y) === 1 ? 'ano' : 'anos'}`;
@@ -128,7 +128,7 @@ export default function BodyAgeCard() {
         <div className="text-right">
           <div className="text-xs text-muted-foreground">Idade corporal</div>
           <div className="text-2xl font-semibold text-foreground">{r.bodyAge}</div>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-micro text-muted-foreground">
             {deltaAbs === 0 ? 'igual à real' : younger ? `${deltaAbs} mais jovem` : `${deltaAbs} acima`} ({r.age})
           </div>
         </div>
@@ -138,13 +138,13 @@ export default function BodyAgeCard() {
         {r.best && r.best.years < 0 && (
           <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
             <span className="text-muted-foreground">Mais ajuda: <span className="text-foreground">{r.best.label}</span></span>
-            <span className="text-emerald-400">{fmtYears(r.best.years)}</span>
+            <span className="text-zone-green">{fmtYears(r.best.years)}</span>
           </div>
         )}
         {r.worst && r.worst.years > 0 && (
           <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
             <span className="text-muted-foreground">Mais atrapalha: <span className="text-foreground">{r.worst.label}</span></span>
-            <span className="text-amber-400">{fmtYears(r.worst.years)}</span>
+            <span className="text-health-amber">{fmtYears(r.worst.years)}</span>
           </div>
         )}
       </div>
@@ -166,7 +166,7 @@ export default function BodyAgeCard() {
               .map((c) => (
                 <li key={c.key} className="flex items-center justify-between">
                   <span>{c.label} <span className="text-muted-foreground/70">({c.detail})</span></span>
-                  <span className={c.years < 0 ? 'text-emerald-400' : c.years > 0 ? 'text-amber-400' : ''}>
+                  <span className={c.years < 0 ? 'text-zone-green' : c.years > 0 ? 'text-health-amber' : ''}>
                     {fmtYears(c.years)}
                   </span>
                 </li>

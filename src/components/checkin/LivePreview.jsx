@@ -25,10 +25,10 @@ function getDecisionLabel(mode) {
 }
 
 function getDecisionTone(mode) {
-  if (mode === 'train_high') return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-  if (mode === 'train_moderate') return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+  if (mode === 'train_high') return 'text-zone-green bg-zone-green/10 border-zone-green/20';
+  if (mode === 'train_moderate') return 'text-zone-yellow bg-zone-yellow/10 border-zone-yellow/20';
   if (mode === 'train_light') return 'text-sky-400 bg-sky-500/10 border-sky-500/20';
-  if (mode === 'recover') return 'text-red-400 bg-red-500/10 border-red-500/20';
+  if (mode === 'recover') return 'text-zone-red bg-zone-red/10 border-zone-red/20';
   return 'text-muted-foreground bg-secondary border-border/40';
 }
 
@@ -36,14 +36,14 @@ function getConfidenceChip(confidence) {
   if (confidence === 'high') {
     return {
       label: 'Confiança alta',
-      className: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      className: 'text-zone-green bg-zone-green/10 border-zone-green/20',
     };
   }
 
   if (confidence === 'medium') {
     return {
       label: 'Confiança média',
-      className: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+      className: 'text-zone-yellow bg-zone-yellow/10 border-zone-yellow/20',
     };
   }
 
@@ -77,12 +77,12 @@ function CalibratingCard({ hasHrvToday, compact }) {
 
       <div>
         <p className="text-sm font-semibold leading-snug">{title}</p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed mt-1.5">{body}</p>
+        <p className="text-support text-muted-foreground leading-relaxed mt-1.5">{body}</p>
       </div>
 
       {!compact && (
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <p className="text-support text-muted-foreground leading-relaxed">
             O recovery aparece quando seu baseline pessoal de HRV amadurece. Até lá, o app não mostra um número que não confiaria.
           </p>
         </div>
@@ -136,14 +136,14 @@ export default function LivePreview({ preview, compact = false }) {
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
               Plano preliminar
             </p>
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-support text-muted-foreground mt-1">
               Você já pode salvar com estes dados e refinar depois.
             </p>
           </div>
 
           <span
             className={cn(
-              'text-[10px] font-bold px-2 py-1 rounded-full border',
+              'text-micro font-bold px-2 py-1 rounded-full border',
               confidenceChip.className
             )}
           >
@@ -153,7 +153,7 @@ export default function LivePreview({ preview, compact = false }) {
 
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
               Recovery do dia
             </p>
             <div className="flex items-end gap-2">
@@ -167,7 +167,7 @@ export default function LivePreview({ preview, compact = false }) {
           </div>
 
           <div className="text-right">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+            <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
               Dose
             </p>
             <p className="text-sm font-semibold">
@@ -179,11 +179,11 @@ export default function LivePreview({ preview, compact = false }) {
         <ZoneBar value={recoveryScore} color={color} />
 
         <div className="rounded-xl bg-secondary/35 border border-border/40 px-3 py-2.5">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
             Linha da manhã
           </p>
           <p className="text-sm font-semibold leading-snug">{headline}</p>
-          <p className="text-[11px] text-muted-foreground leading-relaxed mt-1.5">
+          <p className="text-support text-muted-foreground leading-relaxed mt-1.5">
             {confidenceReason}
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function LivePreview({ preview, compact = false }) {
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
             Plano do dia
           </p>
-          <p className="text-[11px] text-muted-foreground mt-1">
+          <p className="text-support text-muted-foreground mt-1">
             Esta é a leitura com os dados que serão salvos agora.
           </p>
         </div>
@@ -211,7 +211,7 @@ export default function LivePreview({ preview, compact = false }) {
         <div className="flex flex-col items-end gap-1.5">
           <span
             className={cn(
-              'text-[10px] font-bold px-2 py-1 rounded-full border',
+              'text-micro font-bold px-2 py-1 rounded-full border',
               confidenceChip.className
             )}
           >
@@ -221,7 +221,7 @@ export default function LivePreview({ preview, compact = false }) {
           {decisionMode && (
             <span
               className={cn(
-                'text-[10px] font-bold px-2 py-1 rounded-full border',
+                'text-micro font-bold px-2 py-1 rounded-full border',
                 getDecisionTone(decisionMode)
               )}
             >
@@ -233,7 +233,7 @@ export default function LivePreview({ preview, compact = false }) {
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
             Recovery do dia
           </p>
 
@@ -248,7 +248,7 @@ export default function LivePreview({ preview, compact = false }) {
         </div>
 
         <div className="text-right">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
             Prontidão
           </p>
           <p className="text-lg font-mono font-bold text-foreground">
@@ -261,20 +261,20 @@ export default function LivePreview({ preview, compact = false }) {
 
       <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5 space-y-1">
         <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
             Linha do dia
           </p>
           <p className="text-sm font-semibold leading-snug">{headline}</p>
         </div>
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-support text-muted-foreground leading-relaxed">
           {confidenceReason}
         </p>
       </div>
 
       {(preview.deep_sleep_pct != null || preview.rem_sleep_pct != null) && (
         <div className="rounded-xl bg-secondary/25 border border-border/30 px-3 py-2.5">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+          <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
             Sono avançado
           </p>
           <p className="text-xs text-foreground/80 leading-relaxed">
@@ -287,18 +287,18 @@ export default function LivePreview({ preview, compact = false }) {
 
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="text-micro text-muted-foreground mb-1">
             Sono
           </p>
           <p
             className={cn(
               'text-sm font-mono font-bold',
               preview.sleep_performance_pct >= 85
-                ? 'text-emerald-400'
+                ? 'text-zone-green'
                 : preview.sleep_performance_pct >= 70
-                ? 'text-yellow-400'
+                ? 'text-zone-yellow'
                 : preview.sleep_performance_pct != null
-                ? 'text-red-400'
+                ? 'text-zone-red'
                 : 'text-foreground'
             )}
           >
@@ -309,7 +309,7 @@ export default function LivePreview({ preview, compact = false }) {
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="text-micro text-muted-foreground mb-1">
             RMSSD
           </p>
           <p className="text-sm font-mono font-bold">
@@ -318,7 +318,7 @@ export default function LivePreview({ preview, compact = false }) {
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="text-micro text-muted-foreground mb-1">
             Sono hoje
           </p>
           <p className="text-sm font-mono font-bold">

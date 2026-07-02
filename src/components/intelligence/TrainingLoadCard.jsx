@@ -4,23 +4,23 @@ import { Activity, Gauge, Moon } from 'lucide-react';
 const RISK_CONFIG = {
   low: {
     label: 'Controlada',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/5',
-    border: 'border-emerald-500/20',
+    color: 'text-zone-green',
+    bg: 'bg-zone-green/5',
+    border: 'border-zone-green/20',
     summary: 'Sua carga recente está dentro de uma faixa geralmente sustentável.',
   },
   moderate: {
     label: 'Atenção',
-    color: 'text-yellow-400',
-    bg: 'bg-yellow-500/5',
-    border: 'border-yellow-500/20',
+    color: 'text-zone-yellow',
+    bg: 'bg-zone-yellow/5',
+    border: 'border-zone-yellow/20',
     summary: 'Sua carga recente está acima da zona mais confortável e pode começar a pesar na recuperação.',
   },
   high: {
     label: 'Alta',
-    color: 'text-red-400',
-    bg: 'bg-red-500/5',
-    border: 'border-red-500/20',
+    color: 'text-zone-red',
+    bg: 'bg-zone-red/5',
+    border: 'border-zone-red/20',
     summary: 'Sua carga recente está num ponto em que fadiga e necessidade de proteção ficam mais prováveis.',
   },
 };
@@ -31,9 +31,9 @@ function formatRatio(ratio) {
 }
 
 function getSleepDebtTone(debt) {
-  if (debt > 5) return 'text-red-400';
-  if (debt > 2) return 'text-yellow-400';
-  return 'text-emerald-400';
+  if (debt > 5) return 'text-zone-red';
+  if (debt > 2) return 'text-zone-yellow';
+  return 'text-zone-green';
 }
 
 export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
@@ -67,7 +67,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
       <div className={`rounded-xl border px-4 py-3 ${risk.bg} ${risk.border}`}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-micro text-muted-foreground mb-1">
               Interpretação atual
             </p>
             <p className={`text-sm font-semibold ${risk.color}`}>
@@ -76,7 +76,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
           </div>
 
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-micro text-muted-foreground mb-1">
               Ratio A:C
             </p>
             <p className={`text-lg font-mono font-bold ${risk.color}`}>
@@ -93,25 +93,25 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
       {/* Metrics */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-secondary/40 border border-border/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="text-micro text-muted-foreground mb-1">
             Últimos 7 dias
           </p>
           <p className="text-lg font-mono font-bold">
             {trainingLoad.acute ?? '—'}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="text-micro text-muted-foreground mt-1">
             carga aguda
           </p>
         </div>
 
         <div className="rounded-xl bg-secondary/40 border border-border/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="text-micro text-muted-foreground mb-1">
             Últimas 6 semanas
           </p>
           <p className="text-lg font-mono font-bold">
             {trainingLoad.chronic ?? '—'}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="text-micro text-muted-foreground mt-1">
             carga crônica
           </p>
         </div>
@@ -119,14 +119,14 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
         <div className="rounded-xl bg-secondary/40 border border-border/40 p-3">
           <div className="flex items-center gap-1 mb-1">
             <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               Status
             </p>
           </div>
           <p className={`text-sm font-semibold ${risk.color}`}>
             {risk.label}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="text-micro text-muted-foreground mt-1">
             do momento
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
           <div className="flex items-start gap-2">
             <Moon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              <p className="text-micro text-muted-foreground mb-1">
                 Relação com o sono
               </p>
               <p className="text-xs text-foreground/85 leading-relaxed">

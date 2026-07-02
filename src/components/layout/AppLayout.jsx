@@ -145,7 +145,7 @@ function OnboardingWizard({ user, onComplete }) {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-amber-300/90 leading-relaxed mt-3">
+              <p className="text-support text-health-amber/60/90 leading-relaxed mt-3">
                 ⚠️ Dá pra trocar depois em Configurações — mas trocar de wearable no meio contamina seu histórico de HRV.
               </p>
             </motion.div>
@@ -235,7 +235,10 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-md"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
@@ -244,7 +247,7 @@ export default function AppLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 py-1 h-full transition-all relative',
+                  'flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] h-full transition-all relative',
                   item.primary
                     ? ''
                     : isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
@@ -258,15 +261,15 @@ export default function AppLayout() {
                   />
                 )}
                 {item.primary ? (
-                  <div className="w-12 h-12 -mt-5 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40 ring-4 ring-background relative">
-                    <item.icon className="w-6 h-6 text-primary-foreground" />
+                  <div className="w-12 h-12 -mt-5 rounded-full bg-zone-green flex items-center justify-center shadow-lg shadow-zone-green/30 ring-4 ring-background relative">
+                    <item.icon className="w-[22px] h-[22px] text-primary-foreground" />
                   </div>
                 ) : (
-                  <item.icon className="w-5 h-5 relative" />
+                  <item.icon className="w-[22px] h-[22px] relative" />
                 )}
                 <span
                   className={cn(
-                    'text-[10px] font-semibold relative whitespace-nowrap',
+                    'text-micro font-semibold relative whitespace-nowrap',
                     item.primary ? 'text-muted-foreground' : ''
                   )}
                 >

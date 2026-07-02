@@ -30,8 +30,8 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-secondary/30 transition-colors"
       >
         <div className="flex items-start gap-3 text-left">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-            <HelpCircle className="w-4 h-4 text-emerald-400" />
+          <div className="w-8 h-8 rounded-full bg-zone-green/10 border border-zone-green/20 flex items-center justify-center shrink-0 mt-0.5">
+            <HelpCircle className="w-4 h-4 text-zone-green" />
           </div>
 
           <div>
@@ -65,7 +65,7 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
             <div className="px-5 pb-4 space-y-4">
               {negatives.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-red-400">
+                  <p className="text-support font-bold uppercase tracking-wider text-zone-red">
                     Pesaram contra seu recovery hoje
                   </p>
 
@@ -75,8 +75,8 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
                         key={`neg-${i}-${r.text}`}
                         className="flex items-start gap-3 rounded-xl bg-secondary/40 border border-border/40 px-3 py-3"
                       >
-                        <div className="w-5 h-5 rounded-full bg-red-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <ArrowDown className="w-3 h-3 text-red-400" />
+                        <div className="w-5 h-5 rounded-full bg-zone-red/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <ArrowDown className="w-3 h-3 text-zone-red" />
                         </div>
                         <p className="text-sm leading-relaxed text-muted-foreground">
                           {r.text}
@@ -89,7 +89,7 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
 
               {positives.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                  <p className="text-support font-bold uppercase tracking-wider text-zone-green">
                     Sustentaram seu recovery hoje
                   </p>
 
@@ -99,8 +99,8 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
                         key={`pos-${i}-${r.text}`}
                         className="flex items-start gap-3 rounded-xl bg-secondary/40 border border-border/40 px-3 py-3"
                       >
-                        <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <ArrowUp className="w-3 h-3 text-emerald-400" />
+                        <div className="w-5 h-5 rounded-full bg-zone-green/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <ArrowUp className="w-3 h-3 text-zone-green" />
                         </div>
                         <p className="text-sm leading-relaxed text-muted-foreground">
                           {r.text}

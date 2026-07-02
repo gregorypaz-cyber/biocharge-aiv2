@@ -78,7 +78,7 @@ function HRVField({ value, onChange, metric = 'rMSSD' }) {
         </button>
       </label>
       {showTip && (
-  <div className="text-[10px] text-muted-foreground bg-secondary rounded-xl p-3 leading-relaxed border border-border/40">
+  <div className="text-micro text-muted-foreground bg-secondary rounded-xl p-3 leading-relaxed border border-border/40">
     <p className="font-semibold text-foreground mb-1">Como medir {metric}:</p>
     {isSdnn ? (
       <>
@@ -111,8 +111,8 @@ function HRVField({ value, onChange, metric = 'rMSSD' }) {
         placeholder="Ex: 48"
         className="bg-secondary border-border/40 font-mono"
       />
-      <p className="text-[10px] text-muted-foreground">Valor válido: 0–250 ms</p>
-      <p className="text-[10px] text-muted-foreground">Valor da manhã, antes de se levantar</p>
+      <p className="text-micro text-muted-foreground">Valor válido: 0–250 ms</p>
+      <p className="text-micro text-muted-foreground">Valor da manhã, antes de se levantar</p>
     </div>
   );
 }
@@ -524,8 +524,8 @@ const savePostMutation = useMutation({
   if (isPostMode && !loadingCheckins && !todayRecord) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6 max-w-sm mx-auto">
-        <div className="w-20 h-20 rounded-3xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-5">
-          <Zap className="w-10 h-10 text-yellow-400" />
+        <div className="w-20 h-20 rounded-3xl bg-zone-yellow/10 border border-zone-yellow/20 flex items-center justify-center mb-5">
+          <Zap className="w-10 h-10 text-zone-yellow" />
         </div>
         <h2 className="text-xl font-black mb-2">Faça o check-in da manhã primeiro</h2>
         <p className="text-muted-foreground mb-6 text-sm">
@@ -624,7 +624,7 @@ if (isPostMode) {
           </div>
 
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+            <p className="text-micro font-black uppercase tracking-widest text-primary">
               Resposta do corpo
             </p>
 
@@ -640,7 +640,7 @@ if (isPostMode) {
 
         <div className="grid grid-cols-3 gap-2 pt-1">
           <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-micro text-muted-foreground mb-1">
               Recovery manhã
             </p>
             <p className="text-sm font-mono font-bold">
@@ -649,7 +649,7 @@ if (isPostMode) {
           </div>
 
           <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-micro text-muted-foreground mb-1">
               Strain hoje
             </p>
             <p className="text-sm font-mono font-bold text-primary">
@@ -658,7 +658,7 @@ if (isPostMode) {
           </div>
 
           <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-micro text-muted-foreground mb-1">
               Sono alvo
             </p>
             <p className="text-sm font-mono font-bold">
@@ -711,7 +711,7 @@ if (isPostMode) {
           className="bg-secondary border-border/40 min-h-[80px] resize-none"
         />
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-support text-muted-foreground leading-relaxed">
           Só o que você quer acrescentar depois do treino. O que escreveu ao registrar o treino já está salvo e já conta na análise.
         </p>
       </CheckinStep>
@@ -740,7 +740,7 @@ if (isPostMode) {
         Pular por agora
       </button>
 
-      <p className="text-[10px] text-muted-foreground text-center leading-relaxed px-4">
+      <p className="text-micro text-muted-foreground text-center leading-relaxed px-4">
         O pós-treino atualiza o check-in de hoje e melhora os insights de recuperação, carga e resposta ao treino.
       </p>
     </div>
@@ -775,7 +775,7 @@ if (isPostMode) {
   <p className="text-sm text-muted-foreground">
     Informe os sinais da manhã para calcular sua dose do dia.
   </p>
-  <p className="text-[11px] text-muted-foreground">
+  <p className="text-support text-muted-foreground">
     Preencha o que tiver — tudo numa tela só — e salve no fim. Quanto mais sinais (HRV, FC, sono avançado), mais precisa fica a leitura do dia.
   </p>
 </div>
@@ -785,7 +785,7 @@ if (isPostMode) {
     <p className="text-[12px] text-foreground font-medium">
       ✏️ Você já fez o check-in de hoje
     </p>
-    <p className="text-[11px] text-muted-foreground mt-0.5">
+    <p className="text-support text-muted-foreground mt-0.5">
       Estes são os dados que você salvou. Ao salvar de novo, eles serão atualizados — não duplicados.
     </p>
   </div>
@@ -846,7 +846,7 @@ if (isPostMode) {
         {/* Date */}
         <div className="px-1">
   <div className="flex items-center gap-3">
-    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+    <span className="text-support uppercase tracking-wider text-muted-foreground font-semibold">
       Data
     </span>
     <Input
@@ -929,7 +929,7 @@ if (isPostMode) {
               <span className="text-sm text-muted-foreground">min</span>
             </div>
 
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-micro text-muted-foreground">
               Duração total do sono — ex: 7 h 45 min.
             </p>
           </div>
@@ -980,7 +980,7 @@ if (isPostMode) {
           >
             <div>
   <p className="text-sm font-semibold">Refinar leitura</p>
-  <p className="text-[11px] text-muted-foreground mt-1">
+  <p className="text-support text-muted-foreground mt-1">
     Adicione sono avançado, biometria e sensações para deixar a dose do dia mais precisa.
   </p>
 </div>
@@ -992,7 +992,7 @@ if (isPostMode) {
           </button>
 
           {!advancedOpen && (
-  <p className="text-[11px] text-muted-foreground">
+  <p className="text-support text-muted-foreground">
     {isRestDay
       ? 'Opcional: sono profundo/REM, humor, stress, HRV e FC para melhorar a leitura da recuperação.'
       : 'Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC para melhorar a prescrição do dia.'}
@@ -1042,7 +1042,7 @@ if (isPostMode) {
                   onChange={(e) => update('sleep_start_time', e.target.value || null)}
                   className="bg-secondary border-border/40 font-mono w-36"
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-micro text-muted-foreground">
                   Ex: 23:00 — encontre no Zepp → Sono
                 </p>
               </div>
@@ -1057,7 +1057,7 @@ if (isPostMode) {
                   onChange={(e) => update('dinner_time', e.target.value || null)}
                   className="bg-secondary border-border/40 font-mono w-36"
                 />
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-micro text-muted-foreground">
                   Última refeição — contexto p/ analisar despertares (não entra no score)
                 </p>
               </div>
@@ -1081,7 +1081,7 @@ if (isPostMode) {
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
-                  <p className="text-[10px] text-muted-foreground">Zepp → Sono</p>
+                  <p className="text-micro text-muted-foreground">Zepp → Sono</p>
                 </div>
 
                 <div className="space-y-1.5">
@@ -1102,7 +1102,7 @@ if (isPostMode) {
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
-                  <p className="text-[10px] text-muted-foreground">% — Zepp</p>
+                  <p className="text-micro text-muted-foreground">% — Zepp</p>
                 </div>
 
                 <div className="space-y-1.5">
@@ -1123,7 +1123,7 @@ if (isPostMode) {
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
-                  <p className="text-[10px] text-muted-foreground">bpm — Zepp</p>
+                  <p className="text-micro text-muted-foreground">bpm — Zepp</p>
                 </div>
               </div>
             </CheckinStep>
@@ -1220,7 +1220,7 @@ if (isPostMode) {
           >
             <div>
               <p className="text-sm font-semibold">Gerar análise de IA hoje</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <p className="text-support text-muted-foreground mt-0.5">
                 Texto profundo + bullets da Today. Usa crédito de integração — ligue só quando quiser.
               </p>
             </div>
@@ -1234,7 +1234,7 @@ if (isPostMode) {
         {!savedCheckin && (
           <div className="space-y-2 pt-1">
             {!morningReady && (
-              <p className="text-[11px] text-amber-400/80 px-1 text-center">
+              <p className="text-support text-health-amber/80 px-1 text-center">
                 ⬆️ Informe o HRV e as horas de sono para salvar
               </p>
             )}

@@ -225,9 +225,22 @@ CheckinStep({ children, title, icon: LucideIcon, delay })
 
 ---
 
-## Fase 1 — Herói e Identidade
+## Fase 1 — Herói e Identidade ✅ IMPLEMENTADA (parcial)
 
 > O que o usuário nota ao abrir o app. A assinatura do produto.
+
+**Status:** implementada em 2026-07-02. Build limpo (exit 0).
+
+**O que foi feito (sweeps mecânicos + polish de nav + tokens):**
+- Varredura tipográfica: zero `text-[10px/9px/7px]` e zero `text-[11px]` em todo `src/`
+- Varredura de cor: zero `emerald-*`, `yellow-[0-9]*`, `red-[0-9]*`, `amber-[0-9]*` em todo `src/`
+- `AppLayout.jsx`: nav com `bg-background/95 backdrop-blur-md`; `paddingBottom: env(safe-area-inset-bottom)`; `min-h-[44px]` em links; ícones `22px`; botão Check-in: `bg-zone-green`, `shadow-zone-green/30`
+- `Today.jsx`: `stroke="hsl(215,25%,18%)"` → `hsl(var(--gauge-track))`; bloom opacity 0.18 → 0.12; starfield SVG removido; `recoveryColor`/`sleepColor`/strain ring values migrados para tokens CSS; gradiente da barra de carga usa tokens
+- `Trends.jsx`: série de cores do gráfico migrada para tokens; `tooltipStyle` usa `hsl(var(--background))`, `hsl(var(--border))`, `var(--radius-inner)`, `hsl(var(--foreground))`
+
+**Pendente da Fase 1 (PR 1.1):**
+- Criar `src/components/ui-bio/Gauge.tsx` (hero 150px + satellite 76px, zona ticks, baseline mark, cerimônia matinal)
+- Substituir `MiniRing` inline em Today.jsx pelos componentes Gauge (1 hero + 2 satellites)
 
 ### PR 1.1 — Gauge component + herói da Today
 

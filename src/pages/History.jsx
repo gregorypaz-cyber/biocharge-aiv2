@@ -72,7 +72,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-2xl font-black font-mono text-primary">{score}</p>
-                <p className="text-[10px] text-muted-foreground">prontidão</p>
+                <p className="text-micro text-muted-foreground">prontidão</p>
               </div>
               <button
                 onClick={onEdit}
@@ -93,7 +93,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
               { label: 'Humor', val: checkin.mood ?? '—' },
             ].map(m => (
               <div key={m.label} className="rounded-xl bg-secondary p-2.5 text-center">
-                <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                <p className="text-micro text-muted-foreground">{m.label}</p>
                 <p className="text-sm font-bold mt-0.5">{m.val}</p>
               </div>
             ))}
@@ -112,7 +112,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
                       <span className="text-xs text-muted-foreground opacity-70">· {s.intensity}</span>
                     )}
                   </div>
-                  <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-red-400' : (s.strain_score || 0) >= 14 ? 'text-orange-400' : (s.strain_score || 0) >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                  <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-zone-red' : (s.strain_score || 0) >= 14 ? 'text-orange-400' : (s.strain_score || 0) >= 10 ? 'text-zone-yellow' : 'text-zone-green'}`}>
                     ⚡ strain {s.strain_score || 0}
                   </span>
                 </div>
@@ -178,7 +178,7 @@ export default function History() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
+        <p className="text-micro st text-muted-foreground/70 mb-0.5">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
         </p>
         <h1 className="text-2xl font-black tracking-tight">Histórico</h1>
@@ -214,7 +214,7 @@ export default function History() {
               >
                 <div className="flex items-center gap-3">
                   <WeekLabel weekStart={weekStart} />
-                  {hasAlert && <AlertTriangle className="w-3.5 h-3.5 text-red-400" />}
+                  {hasAlert && <AlertTriangle className="w-3.5 h-3.5 text-zone-red" />}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold">avg {weekAvg}</span>
@@ -223,8 +223,8 @@ export default function History() {
                   )}
                   <span className="text-xs text-muted-foreground">{items.length}d</span>
                   {trend !== null && (
-                    trend > 3 ? <TrendingUp className="w-4 h-4 text-emerald-400" /> :
-                    trend < -3 ? <TrendingDown className="w-4 h-4 text-red-400" /> :
+                    trend > 3 ? <TrendingUp className="w-4 h-4 text-zone-green" /> :
+                    trend < -3 ? <TrendingDown className="w-4 h-4 text-zone-red" /> :
                     <Minus className="w-4 h-4 text-muted-foreground" />
                   )}
                   <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -295,7 +295,7 @@ export default function History() {
                                   {c.current_body_state ? (
                                     <BodyStateBadge state={c.current_body_state} size="sm" />
                                   ) : c.rest_day ? (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">🛌 Descanso</span>
+                                    <span className="text-micro px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">🛌 Descanso</span>
                                   ) : null}
                                 </div>
                                 <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
@@ -307,14 +307,14 @@ export default function History() {
                                   {c.daily_strain_accumulated > 0 && (() => {
                                 const displayStrain = Math.min(21, c.daily_strain_accumulated);
                                 return (
-                                <span className={`${displayStrain >= 18 ? 'text-red-400' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                                <span className={`${displayStrain >= 18 ? 'text-zone-red' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-zone-yellow' : 'text-zone-green'}`}>
                                 ⚡ strain {displayStrain}
                                 </span>
                                 );
                                 })()}
                                 </div>
                                 {c.notes && (
-                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[160px] italic">
+                                  <p className="text-micro text-muted-foreground mt-0.5 truncate max-w-[160px] italic">
                                     "{c.notes.slice(0, 40)}{c.notes.length > 40 ? '...' : ''}"
                                   </p>
                                 )}
@@ -329,9 +329,9 @@ export default function History() {
                                   // o antigo `|| 0` virava "subindo" falso de 0 → 70.
                                   if (!hasScore || next == null) return null;
                                   if (score > next + 3)
-                                    return <TrendingUp className="w-4 h-4 text-emerald-400" title="Prontidão subindo" />;
+                                    return <TrendingUp className="w-4 h-4 text-zone-green" title="Prontidão subindo" />;
                                   if (score < next - 3)
-                                    return <TrendingDown className="w-4 h-4 text-red-400" title="Prontidão caindo" />;
+                                    return <TrendingDown className="w-4 h-4 text-zone-red" title="Prontidão caindo" />;
                                   return <Minus className="w-4 h-4 text-muted-foreground" title="Prontidão estável" />;
                                 })()}
                               </div>

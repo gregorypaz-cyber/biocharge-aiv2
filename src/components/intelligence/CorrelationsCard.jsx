@@ -39,7 +39,7 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
                 const dom = { '🌙':'sleep','💤':'sleep','🔬':'sleep','⚡':'strain','💪':'strain','🏃':'strain' }[item.icon];
                 if (dom === 'sleep') return 'bg-blue-500/5 border-blue-400/20';
                 if (dom === 'strain') return 'bg-secondary/30 border-border/50';
-                return 'bg-emerald-500/5 border-emerald-500/15';
+                return 'bg-zone-green/5 border-zone-green/15';
               })()
             )}
           >
@@ -47,7 +47,7 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
             <div className="flex flex-wrap items-center gap-2 flex-1">
               <span className="text-foreground/85">{item.text}</span>
               {item.source === 'lagged' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
+                <span className="text-micro px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
                   Amanhã
                 </span>
               )}

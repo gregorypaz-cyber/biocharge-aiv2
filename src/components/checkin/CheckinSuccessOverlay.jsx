@@ -6,23 +6,23 @@ const ZONE_CONFIG = {
   green: {
     label: 'Alta',
     title: 'Recovery alto',
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/15',
-    border: 'border-emerald-500/20',
+    color: 'text-zone-green',
+    bg: 'bg-zone-green/15',
+    border: 'border-zone-green/20',
   },
   yellow: {
     label: 'Moderada',
     title: 'Recovery moderado',
-    color: 'text-yellow-400',
-    bg: 'bg-yellow-500/15',
-    border: 'border-yellow-500/20',
+    color: 'text-zone-yellow',
+    bg: 'bg-zone-yellow/15',
+    border: 'border-zone-yellow/20',
   },
   red: {
     label: 'Baixa',
     title: 'Recovery baixo',
-    color: 'text-red-400',
-    bg: 'bg-red-500/15',
-    border: 'border-red-500/20',
+    color: 'text-zone-red',
+    bg: 'bg-zone-red/15',
+    border: 'border-zone-red/20',
   },
 };
 
@@ -173,7 +173,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
         <div className="rounded-2xl border border-border/50 bg-card px-4 py-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
                 Score do dia
               </p>
 
@@ -181,7 +181,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
                 {readiness}
               </p>
 
-              <p className="text-[11px] text-muted-foreground mt-1">
+              <p className="text-support text-muted-foreground mt-1">
                 Recovery base {recovery}
               </p>
             </div>
@@ -193,7 +193,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
                 {zoneCfg.label}
               </span>
 
-              <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
+              <p className="text-micro text-muted-foreground mt-2 uppercase tracking-wider">
                 Dose do dia
               </p>
 
@@ -207,7 +207,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
             <div className="flex items-start gap-2">
               <Target className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
                   Missão de hoje
                 </p>
 
@@ -221,9 +221,9 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
           {recommendation && (
             <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
               <div className="flex items-start gap-2">
-                <Zap className="w-3.5 h-3.5 text-yellow-400 shrink-0 mt-0.5" />
+                <Zap className="w-3.5 h-3.5 text-zone-yellow shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                  <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
                     Linha do dia
                   </p>
 
@@ -240,7 +240,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
               <Moon className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
 
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">
                   Hoje à noite
                 </p>
 
@@ -248,7 +248,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
                   {sleepNeed != null ? `Meta de sono: ${sleepNeed}h.` : 'Feche o dia protegendo a recuperação.'}
                 </p>
 
-                <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
+                <p className="text-support text-muted-foreground leading-relaxed mt-1">
                   {tomorrowReason}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
 
         {/* Auto redirect */}
         <div className="space-y-2">
-          <p className="text-[11px] text-muted-foreground text-center">
+          <p className="text-support text-muted-foreground text-center">
             Indo automaticamente para <span className="font-semibold">Hoje</span> em {secondsLeft}s
           </p>
 
