@@ -94,13 +94,13 @@ function MiniSpark({ data = [], color = 'hsl(215,20%,55%)' }) {
 function DeltaChip({ delta, goodUp = true, unit = '' }) {
   if (delta == null || Number.isNaN(delta)) return null;
   const r = Math.round(delta);
-  if (Math.abs(r) <= 1) return <p className="text-micro mt-0.5 text-muted-foreground">no seu normal</p>;
+  if (Math.abs(r) <= 1) return <p className="text-support mt-0.5 text-muted-foreground">no seu normal</p>;
   const good = goodUp ? r > 0 : r < 0;
   const cls = good ? 'text-zone-green' : 'text-health-amber';
   return (
-    <p className={`text-micro mt-0.5 font-medium ${cls}`}>
-      {r > 0 ? '+' : ''}{r}{unit} vs base
-    </p>
+    <p className={`text-support mt-0.5 font-medium ${cls}`}>
+  {r > 0 ? '+' : ''}{r}{unit} vs base
+</p>
   );
 }
 
@@ -124,9 +124,9 @@ function SleepStages({ sleepHours, deepPct, remPct }) {
   ];
   return (
     <div className="space-y-2.5">
-      <p className="text-micro st text-muted-foreground">
-        Estágios do sono
-      </p>
+      <p className="text-section text-muted-foreground">
+  Estágios do sono
+</p>
       <div className="flex h-3 rounded-full overflow-hidden gap-[2px]">
         {stages.map((s) => (
           <motion.div
@@ -144,10 +144,10 @@ function SleepStages({ sleepHours, deepPct, remPct }) {
           <div key={s.label} className="text-center">
             <div className="flex items-center justify-center gap-1.5 mb-0.5">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-              <span className="text-micro text-muted-foreground">{s.label}</span>
+              <span className="text-support text-muted-foreground">{s.label}</span>
             </div>
             <p className="text-sm font-mono font-semibold">{s.pct}%</p>
-            <p className="text-micro text-muted-foreground">{fmtH(s.pct)}</p>
+            <p className="text-support text-muted-foreground">{fmtH(s.pct)}</p>
           </div>
         ))}
       </div>
@@ -212,11 +212,11 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
       {/* Header */}
       <div className="flex items-center gap-2">
         <Moon className="w-4 h-4 text-domain-sleep" />
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Resumo da manhã
-        </span>
+        <span className="text-section text-muted-foreground">
+  Resumo da manhã
+</span>
 
-        <span className="ml-auto text-micro text-muted-foreground flex items-center gap-1">
+        <span className="ml-auto text-support text-muted-foreground flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {formatDateFull(checkin.date)}
         </span>
@@ -232,8 +232,8 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
         </div>
 
         <div className="min-w-0">
-          <p className="text-sm font-semibold leading-snug">{summary.title}</p>
-          <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+          <p className="text-heading leading-snug">{summary.title}</p>
+          <p className="text-support text-muted-foreground leading-relaxed mt-0.5">
             {summary.subtitle}
           </p>
 
@@ -258,8 +258,8 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-micro text-muted-foreground">RMSSD</span>
           </div>
-          <p className="text-sm font-semibold">
-            {hrvVal != null ? <>{hrvVal}<span className="text-micro font-normal text-muted-foreground"> ms</span></> : '—'}
+          <p className="text-metric">
+            {hrvVal != null ? <>{hrvVal}<span className="text-unit"> ms</span></> : '—'}
           </p>
           <DeltaChip delta={hrvDelta} goodUp unit=" ms" />
           <MiniSpark data={sparkHrv} color="hsl(199,89%,60%)" />
@@ -270,8 +270,8 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
             <HeartPulse className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-micro text-muted-foreground">RHR</span>
           </div>
-          <p className="text-sm font-semibold">
-            {rhrVal != null ? <>{rhrVal}<span className="text-micro font-normal text-muted-foreground"> bpm</span></> : '—'}
+          <p className="text-metric">
+            {rhrVal != null ? <>{rhrVal}<span className="text-unit"> bpm</span></> : '—'}
           </p>
           <DeltaChip delta={rhrDelta} goodUp={false} unit=" bpm" />
           <MiniSpark data={sparkRhr} color="hsl(215,20%,55%)" />
@@ -282,7 +282,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
             <BedDouble className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-micro text-muted-foreground">Sono</span>
           </div>
-          <p className="text-sm font-semibold">
+          <p className="text-metric">
             {sleepVal != null ? `${sleepVal}h` : '—'}
           </p>
           <Qualifier ctx={sleepCtx} />

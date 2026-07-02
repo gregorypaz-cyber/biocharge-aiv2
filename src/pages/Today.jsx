@@ -1872,10 +1872,24 @@ if (isLoading) {
   }
 
   return (
+    {(() => {
+  const visibleSecondaryCards = secondaryCards.filter((d) => d.action !== 'exclude');
+  const showNormalHealthLine = analysis?.healthSignals?.state === 'normal';
+  const secondaryCount = visibleSecondaryCards.length + (showNormalHealthLine ? 1 : 0);
+
+  if (secondaryCount === 0) return null;
+
+  if (secondaryCount === 1 && showNormalHealthLine && visibleSecondaryCards.length === 0) {
+    return <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />;
+  }
+
+  return (
     <SecondaryMetrics count={secondaryCount}>
       {visibleSecondaryCards.map((desc) => renderCard(desc))}
       <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
     </SecondaryMetrics>
+  );
+})()}
   );
 })()}
 

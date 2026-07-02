@@ -1,49 +1,46 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ChevronRight, CheckCircle2 } from 'lucide-react';
 
 /**
  * HealthStatusCard
  *
- * variant="card"  → renders amber/red card for acute/sustained; null for normal/calibrating.
- * variant="line"  → renders the "✓ Sinais vitais no padrão" line for normal; null otherwise.
+ * variant="card" → renders amber/red card for acute/sustained; null for normal/calibrating.
+ * variant="line" → renders the "Sinais vitais no padrão" line for normal; null otherwise.
  *
  * Both variants navigate to /saude on tap.
  */
 export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
   if (!healthSignals) return null;
-  const { state, flagCount, sleepHoursToday, flags } = healthSignals;
+
+  const { state, sleepHoursToday, flags } = healthSignals;
 
   if (state === 'calibrating') return null;
 
-  // ── variant="line" — only renders in normal state (lives inside SecondaryMetrics) ──
   if (variant === 'line') {
     if (state !== 'normal') return null;
+
     return (
       <Link
         to="/saude"
-        className="flex items-center justify-between py-1 text-sm text-zone-green/80 hover:text-zone-green transition-colors"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card px-4 py-3 text-support text-muted-foreground hover:text-foreground transition-colors"
       >
         <span className="flex items-center gap-2">
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-          Sinais vitais no padrão
+          <CheckCircle2 className="w-4 h-4 text-zone-green shrink-0" />
+          <span>Sinais vitais no padrão</span>
         </span>
-        <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+        <ChevronRight className="w-4 h-4 text-muted-foreground/60 shrink-0" />
       </Link>
     );
   }
 
-  // ── variant="card" — renders alert card for acute/sustained ──
   if (state === 'normal') return null;
 
   const isAcute = state === 'acute';
   const isSustained = state === 'sustained';
 
-  // Compute HRV drop % for the copy (uses the hrv flag deltaPct)
   const hrvFlag = flags?.find((f) => f.id === 'hrv');
   const hrvDrop = hrvFlag?.deltaPct != null ? Math.abs(hrvFlag.deltaPct) : null;
 
-  // Frase benigna de sono (estado acute com noite curta)
   const fraseSono =
     isAcute && sleepHoursToday != null && sleepHoursToday < 6.5
       ? `Pode ser só a noite curta (${sleepHoursToday}h de sono).`
@@ -51,57 +48,34 @@ export default function HealthStatusCard({ healthSignals, variant = 'card' }) {
 
   if (isAcute) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-health-amber/40 bg-health-amber/8 p-4 space-y-2"
+      <Link
+        to="/saude"
+        className="block rounded-2xl border border-health-amber/30 bg-health-amber/10 p-4 hover:bg-health-amber/15 transition-colors"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-health-amber">
-              Sinais um pouco fora do teu padrão
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {hrvDrop != null ? `HRV ${hrvDrop}% abaixo da tua média e FC de repouso elevada.` : 'HRV e FC de repouso fora do padrão.'}
-              {fraseSono ? ` ${fraseSono}` : ''}
-              {' '}Observe hoje — se persistir amanhã, eu aviso.
-            </p>
-          </div>
-        </div>
-        <Link
-          to="/saude"
-          className="flex items-center gap-1 text-xs font-semibold text-health-amber/80 hover:text-health-amber transition-colors"
-        >
-          Ver detalhes
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </motion.div>
+        <p className="text-heading text-health-amber">Sinais um pouco fora do teu padrão</p>
+        <p className="text-support text-muted-foreground leading-relaxed mt-1">
+          {hrvDrop != null
+            ? `HRV ${hrvDrop}% abaixo da tua média e FC de repouso elevada.`
+            : 'HRV e FC de repouso fora do padrão.'}
+          {fraseSono ? ` ${fraseSono}` : ''} Observe hoje — se persistir amanhã, eu aviso.
+        </p>
+        <p className="text-support text-health-amber mt-2 font-semibold">Ver detalhes →</p>
+      </Link>
     );
   }
 
   if (isSustained) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-zone-red/40 bg-zone-red/8 p-4 space-y-2"
+      <Link
+        to="/saude"
+        className="block rounded-2xl border border-zone-red/30 bg-zone-red/10 p-4 hover:bg-zone-red/15 transition-colors"
       >
-        <div className="space-y-1">
-          <p className="text-sm font-semibold text-zone-red">
-            🚨 2º dia de sinais alterados
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            HRV abaixo do padrão e FC elevada por 2 dias seguidos. Teu corpo pode estar sob carga acumulada ou combatendo algo. Priorize descanso, hidratação e sono hoje.
-          </p>
-        </div>
-        <Link
-          to="/saude"
-          className="flex items-center gap-1 text-xs font-semibold text-zone-red/80 hover:text-zone-red transition-colors"
-        >
-          Ver detalhes
-          <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </motion.div>
+        <p className="text-heading text-zone-red">2º dia de sinais alterados</p>
+        <p className="text-support text-muted-foreground leading-relaxed mt-1">
+          HRV abaixo do padrão e FC elevada por 2 dias seguidos. Teu corpo pode estar sob carga acumulada ou combatendo algo. Priorize descanso, hidratação e sono hoje.
+        </p>
+        <p className="text-support text-zone-red mt-2 font-semibold">Ver detalhes →</p>
+      </Link>
     );
   }
 
