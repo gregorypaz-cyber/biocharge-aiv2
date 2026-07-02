@@ -81,7 +81,7 @@ export default function QuickIntentEdit() {
             className="overflow-hidden"
           >
             <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl border border-domain-sleep/25 bg-domain-sleep/8">
-              <span className="text-xs text-blue-200/80">
+              <span className="text-xs text-domain-sleep/80">
                 🌙 Dia de descanso declarado. As recomendações do dia foram ajustadas para recuperação.
               </span>
               <button

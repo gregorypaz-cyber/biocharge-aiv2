@@ -24,9 +24,9 @@ const STATE_CONFIG = {
   Balanced: {
     label: 'Equilibrado',
     emoji: '🔵',
-    color: 'text-sky-400',
-    bg: 'bg-sky-500/5',
-    border: 'border-sky-500/20',
+    color: 'text-domain-sleep',
+    bg: 'bg-domain-sleep/5',
+    border: 'border-domain-sleep/20',
     desc: 'Seu sistema está estável no momento.',
     interpretation: 'Esse contexto costuma favorecer consistência mais do que agressividade.',
   },

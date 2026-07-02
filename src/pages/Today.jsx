@@ -657,11 +657,11 @@ const hrvTrend = useMemo(() => {
     }
     if (targetZoneKey === 'recuperacao') {
       return curZone.key === 'leve'
-        ? { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
+        ? { color: 'text-domain-sleep', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
         : { color: 'text-domain-strain', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
-    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(var(--domain-sleep))', short: `${curZone.label} → ${strainTarget}` };
+    if (diff < 0) return { color: 'text-domain-sleep', ring: 'hsl(var(--domain-sleep))', short: `${curZone.label} → ${strainTarget}` };
     if (diff === 0) return { color: 'text-zone-green', ring: 'hsl(var(--zone-green))', short: `Na zona · meta ${strainTarget}` };
     return { color: 'text-domain-strain', ring: 'hsl(var(--domain-strain))', short: `${curZone.label} → ${strainTarget}` };
   })();
@@ -707,7 +707,7 @@ const BODY_STATE_META = {
   },
   Activated: {
     emoji: '⚡',
-    tone: 'bg-sky-500/10 border-sky-500/20 text-sky-300',
+    tone: 'bg-domain-sleep/10 border-domain-sleep/20 text-domain-sleep',
     short: 'Boa responsividade hoje',
   },
   Balanced: {
@@ -1321,9 +1321,9 @@ function ExecutionCard() {
     : 'Baixo';
   const sleepCaptionColor =
     sleepVal == null ? 'text-muted-foreground'
-    : sleepVal >= 80 ? 'text-sky-400'
+    : sleepVal >= 80 ? 'text-domain-sleep'
     : sleepVal >= 65 ? 'text-domain-sleep'
-    : 'text-blue-500';
+    : 'text-domain-sleep';
 
   const strainColor = strainVsTarget.ring;
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
@@ -1589,7 +1589,7 @@ function ExecutionCard() {
             <div className="rounded-2xl border border-border/40 bg-secondary/40 px-4 py-4 space-y-4">
               <div className="flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${
-                  displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-yellow' : 'bg-orange-400'
+                  displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-yellow' : 'bg-zone-red'
                 }`} />
                 <p className="text-micro st text-muted-foreground">Leitura de hoje</p>
               </div>
@@ -1818,7 +1818,7 @@ if (isLoading) {
           className="rounded-2xl border border-domain-sleep/25 bg-domain-sleep/8 px-4 py-3 flex items-start gap-3"
         >
           <Moon className="w-4 h-4 text-domain-sleep shrink-0 mt-0.5" />
-          <p className="text-xs text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
+          <p className="text-xs text-domain-sleep flex-1 leading-relaxed">{deepSleepAlert}</p>
           <button
             onClick={() => setDeepSleepAlertDismissed(true)}
             className="text-domain-sleep/60 hover:text-domain-sleep transition-colors shrink-0"

@@ -58,7 +58,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
 
       <Link
         to="/trends"
-        className="flex items-center justify-end gap-1 text-support font-medium text-domain-sleep/80 hover:text-blue-200 transition-colors"
+        className="flex items-center justify-end gap-1 text-support font-medium text-domain-sleep/80 hover:text-domain-sleep transition-colors"
       >
         Ver tendência do sono
         <ArrowRight className="w-3 h-3" />
