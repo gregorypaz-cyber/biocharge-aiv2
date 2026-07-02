@@ -6,7 +6,7 @@ import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import { chartTheme, SCORE_METRICS } from '@/lib/chart-theme';
 import { duration } from '@/lib/motion-tokens';
 import {
-  AreaChart, Area, BarChart, Bar, Line, ComposedChart,
+  AreaChart, Area, BarChart, Bar, Line, ComposedChart, Scatter,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
