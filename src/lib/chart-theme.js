@@ -9,7 +9,7 @@
 const TICK_STYLE = {
   fontSize: 11,
   fontFamily: 'JetBrains Mono, monospace',
-  fill: 'hsl(215, 15%, 45%)',
+  fill: 'hsl(215, 15%, 56%)',
 };
 
 export const chartTheme = {
@@ -29,8 +29,8 @@ export const chartTheme = {
       background: 'hsl(220, 18%, 7%)',
       border: '1px solid hsl(220, 15%, 14%)',
       borderRadius: '12px',
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: 11,
+      fontFamily: 'Inter, sans-serif',
+fontSize: 12,
       color: 'hsl(210, 40%, 96%)',
       padding: '8px 12px',
     },

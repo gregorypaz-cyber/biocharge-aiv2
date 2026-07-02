@@ -188,10 +188,10 @@
 
   .text-nav-label {
     font-family: var(--font-inter);
-    font-size: 10.5px;
+    font-size: 10px;
     line-height: 1;
     font-weight: 700;
-    letter-spacing: 0.055em;
+    letter-spacing: 0.035em;
     text-transform: uppercase;
   }
 

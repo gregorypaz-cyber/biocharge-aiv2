@@ -471,7 +471,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
 <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border/60 bg-card p-4"
+        className="rounded-2xl border border-border/50 bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <Gauge className="w-5 h-5 text-primary mt-0.5 shrink-0" />
@@ -663,7 +663,7 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
 
   if (byWeek.size < 2) {
     return (
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4">
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border/50 bg-card p-4"
         <div className="flex items-start gap-3">
           <Footprints className="w-5 h-5 text-primary mt-0.5 shrink-0" />
           <div>
@@ -698,16 +698,16 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
         <div className="flex items-start gap-2.5">
           <Footprints className="w-4.5 h-4.5 text-health-amber mt-0.5 shrink-0" />
           <div>
-            <h3 className="text-sm font-semibold tracking-tight">Volume de corrida (semanal)</h3>
+            <h3 className="text-heading tracking-tight">Volume de corrida (semanal)</h3>
             <p className="text-support text-muted-foreground mt-0.5 leading-relaxed">
               Soma de km por semana (segunda a domingo). Só corridas com distância informada.
             </p>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-lg font-black font-mono leading-none">
-            {curKm.toFixed(1)}<span className="text-xs font-semibold text-muted-foreground"> km</span>
-          </p>
+          <p className="text-xl font-semibold font-mono leading-none">
+  {curKm.toFixed(1)}<span className="text-unit"> km</span>
+</p>
           <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
             <DirIcon className="w-3.5 h-3.5" />
             <span className="text-support font-mono">
@@ -730,9 +730,9 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-micro text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
-        Subidas bruscas de volume semana a semana aumentam o risco de lesão — use para progredir aos poucos. Não entra no recovery; é leitura de carga de corrida.
-      </p>
+      <p className="text-support text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
+  Subidas bruscas de volume semana a semana aumentam o risco de lesão — use para progredir aos poucos. Não entra no recovery; é leitura de carga de corrida.
+</p>
     </motion.div>
   );
 }
@@ -749,7 +749,7 @@ function WeightTrendCard({ checkins = [] }) {
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border/60 bg-card p-4"
+        className="rounded-2xl border border-border/50 bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <Scale className="w-5 h-5 text-primary mt-0.5 shrink-0" />
@@ -802,10 +802,10 @@ function WeightTrendCard({ checkins = [] }) {
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-lg font-black font-mono leading-none">
-            {lastMa.toFixed(1)}
-            <span className="text-xs font-semibold text-muted-foreground"> kg</span>
-          </p>
+          <p className="text-xl font-semibold font-mono leading-none">
+  {lastMa.toFixed(1)}
+  <span className="text-unit"> kg</span>
+</p>
           <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
             <DirIcon className="w-3.5 h-3.5" />
             <span className="text-support font-mono">
@@ -833,9 +833,9 @@ function WeightTrendCard({ checkins = [] }) {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-micro text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
-        Baseado em {points.length} pesagens. O peso <span className="text-foreground/80">não entra</span> no seu recovery nem em correlações diárias — variação de 1 dia é quase só água. Aqui ele é só direção de médio prazo.
-      </p>
+      <p className="text-support text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
+  Baseado em {points.length} pesagens. O peso <span className="text-foreground/80">não entra</span> no seu recovery nem em correlações diárias — variação de 1 dia é quase só água. Aqui ele é só direção de médio prazo.
+</p>
     </motion.div>
   );
 }
@@ -898,8 +898,8 @@ export default function Trends() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
 <div>
-        <h1 className="text-2xl font-black tracking-tight">Tendências</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-title">Tendências</h1>
+        <p className="text-body text-muted-foreground mt-1">
           Evolução dos seus sinais fisiológicos ao longo do tempo.
         </p>
       </div>
@@ -956,21 +956,21 @@ export default function Trends() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="rounded-xl border border-border/60 bg-card px-3 py-3 text-center"
+            className="rounded-2xl border border-border/50 bg-card px-3 py-3.5 text-center"
           >
-            <span className="text-micro text-muted-foreground block mb-1 leading-tight">
+            <span className="text-support text-muted-foreground block mb-1 leading-tight">
               {s.label}
             </span>
 
             {s.isChange ? (
               <div className="flex items-center justify-center gap-1">
                 <TrendIcon className={cn('w-3.5 h-3.5', trendColor)} />
-                <span className={cn('text-lg font-black font-mono', trendColor)}>
+                <span className={cn('text-lg font-semibold font-mono', trendColor)}>
                   {trend !== null ? (trend > 0 ? `+${trend}` : trend) : '—'}
                 </span>
               </div>
             ) : (
-              <p className="text-xl font-black font-mono" style={{ color: metricConfig?.color }}>
+              <p className="text-xl font-semibold font-mono" style={{ color: metricConfig?.color }}>
                 {s.val ?? '—'}
               </p>
             )}
@@ -995,7 +995,7 @@ export default function Trends() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-border/60 bg-card p-4"
+          className="rounded-2xl border border-border/50 bg-card p-4"
         >
           <div className="flex items-baseline gap-2 mb-0.5">
             <h3 className="text-sm font-semibold tracking-tight">{metricConfig?.label}</h3>
@@ -1057,9 +1057,9 @@ export default function Trends() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: duration.base / 1000 }}
-          className="rounded-xl border border-border/60 bg-card p-4"
+          className="rounded-2xl border border-border/50 bg-card p-4"
         >
-          <h3 className="text-sm font-semibold mb-0.5 tracking-tight">Recovery vs Fadiga</h3>
+          <h3 className="text-heading mb-0.5 tracking-tight">Recovery vs Fadiga</h3>
           <p className="text-support text-muted-foreground mb-3">Equilíbrio carga-recuperação diário</p>
           <div role="img" aria-label="Gráfico de barras comparando Recovery e Fadiga diários" className="h-40">
             <ResponsiveContainer width="100%" height="100%">
@@ -1150,7 +1150,7 @@ export default function Trends() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: duration.base / 1000 }}
-            className="rounded-xl border border-border/60 bg-card p-4"
+            className="rounded-2xl border border-border/50 bg-card p-4"
           >
             <h3 className="text-sm font-semibold mb-0.5 tracking-tight">
               Sono × Recovery do dia seguinte
@@ -1239,9 +1239,9 @@ export default function Trends() {
       {/* ── Leitura avançada / fora do recovery (movido pro fim) ── */}
       <div className="space-y-3">
         <div>
-          <p className="text-micro st text-muted-foreground">
-            Leitura avançada
-          </p>
+          <p className="text-section text-muted-foreground">
+  Leitura avançada
+</p>
           <p className="text-support text-muted-foreground mt-1">
             Equilíbrio semanal de carga — razão ACWR (aguda vs crônica).
           </p>

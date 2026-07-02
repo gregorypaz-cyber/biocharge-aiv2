@@ -261,7 +261,7 @@ export default function AppLayout() {
       </header>
 
       {/* Content — page transition on route change */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-32 overflow-y-auto">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-24 overflow-y-auto">
         <AnimatePresence mode="sync" initial={false}>
           <motion.div
             key={location.pathname}
@@ -277,10 +277,10 @@ export default function AppLayout() {
 
       {/* Mobile bottom nav */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/95 backdrop-blur-md"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
+  className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/92 backdrop-blur-xl"
+  style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+>
+  <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-[68px] px-2">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
             return (
@@ -288,7 +288,7 @@ export default function AppLayout() {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 py-1 min-h-[44px] h-full transition-colors relative',
+                  'flex flex-col items-center justify-center gap-1 py-1 min-h-[44px] h-full transition-colors relative',
                   item.primary
                     ? ''
                     : isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
@@ -297,7 +297,7 @@ export default function AppLayout() {
                 {isActive && !item.primary && (
                   <motion.div
                     layoutId="mobileActiveTab"
-                    className="absolute inset-1 bg-primary/8 rounded-xl"
+                    className="absolute inset-x-2 top-2 bottom-2 bg-primary/8 rounded-2xl"
                     transition={spring.default}
                   />
                 )}
@@ -305,21 +305,20 @@ export default function AppLayout() {
                   <motion.div
                     whileTap={reduce ? undefined : { scale: 0.92 }}
                     transition={{ duration: duration.fast / 1000 }}
-                    className="w-12 h-12 -mt-5 rounded-full bg-zone-green flex items-center justify-center shadow-lg shadow-zone-green/30 ring-4 ring-background relative"
+                    className="w-11 h-11 -mt-3 rounded-2xl bg-zone-green flex items-center justify-center shadow-lg shadow-zone-green/25 ring-4 ring-background relative"
                   >
-                    <item.icon className="w-[22px] h-[22px] text-primary-foreground" />
+                    <item.icon className="w-5 h-5 text-primary-foreground" />
                   </motion.div>
                 ) : (
-                  <item.icon className="w-[22px] h-[22px] relative" />
+                  <item.icon className="w-5 h-5 relative" />
                 )}
-                <span
-  className={cn(
-    'text-nav-label relative whitespace-nowrap',
-    item.primary ? 'text-muted-foreground' : ''
-  )}
->
-  {item.label}
-</span>
+                {item.primary ? (
+  <span className="sr-only">{item.label}</span>
+) : (
+  <span className="text-nav-label relative whitespace-nowrap">
+    {item.label}
+  </span>
+)}
               </Link>
             );
           })}
