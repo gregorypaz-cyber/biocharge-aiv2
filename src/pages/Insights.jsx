@@ -22,6 +22,7 @@ import { computeCheckinScores, getSmartMessage } from '@/lib/biocharge-utils';
 import {
   runPhysiologicalAnalysisAsync,
   calculateSleepConsistency,
+  corrPValue,
 } from '@/lib/physiological-engine';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -535,6 +536,10 @@ function calcDiscoveries(checkins, trainingSessions = []) {
 
     const r = pearsonR(arrA, arrB);
     if (r == null || Math.abs(r) < threshold) return;
+
+    // Gate estatístico (mesmo da engine): além de |r|, exige p <= 0,05.
+    // Sem isso, uma correlação com n=12 e r=0,40 (p~0,20) passaria como "descoberta".
+    if (corrPValue(r, arrA.length) > 0.05) return;
 
     const n = pairs.length;
     const meanA = avg(arrA);
