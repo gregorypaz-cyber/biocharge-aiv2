@@ -189,7 +189,7 @@ function dimHsl(hsl) {
 }
 
 function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [] }) {
-  const stroke = 8;
+  const stroke = size >= 130 ? 11 : size <= 90 ? 6 : 8;
   const R = (size - stroke) / 2 - 2;
   const c = size / 2;
   const C = 2 * Math.PI * R;
@@ -249,8 +249,8 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-3xl font-black font-mono leading-none tracking-tight"
-            style={{ color: hasValue ? color : 'hsl(215,15%,55%)' }}
+            className="font-black font-mono leading-none tracking-tight"
+            style={{ color: hasValue ? color : 'hsl(215,15%,55%)', fontSize: size >= 130 ? '2.9rem' : size <= 90 ? '1.4rem' : '1.875rem' }}
           >
             {hasValue ? (displayValue != null ? displayValue : value) : '—'}
           </span>
@@ -1408,9 +1408,9 @@ function ExecutionCard() {
 
         </div>
 
-        {/* TRIO DE ANÉIS — Recovery / Sono / Strain */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
-                      <MiniRing
+        {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
+        <div className="flex flex-col items-center pt-1">
+          <MiniRing
             value={isCalibrating ? null : displayedScore}
             max={100}
             color={recoveryColor}
@@ -1418,27 +1418,32 @@ function ExecutionCard() {
             caption={isCalibrating ? 'Calibrando' : readinessFaixa}
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
             trend={isCalibrating ? [] : ringTrends.recovery}
+            size={150}
           />
 
-          <MiniRing
-            value={sleepVal}
-            max={100}
-            color={sleepColor}
-            label="Sono"
-            caption={sleepWord}
-            captionColor={sleepCaptionColor}
-            trend={ringTrends.sono}
-          />
-          <MiniRing
-            value={cappedStrain}
-            displayValue={cappedStrain}
-            max={21}
-            color={strainColor}
-            label="Strain"
-            caption={strainCaption}
-            captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
-            trend={ringTrends.strain}
-          />
+          <div className="grid grid-cols-2 gap-8 mt-3">
+            <MiniRing
+              value={sleepVal}
+              max={100}
+              color={sleepColor}
+              label="Sono"
+              caption={sleepWord}
+              captionColor={sleepCaptionColor}
+              trend={ringTrends.sono}
+              size={82}
+            />
+            <MiniRing
+              value={cappedStrain}
+              displayValue={cappedStrain}
+              max={21}
+              color={strainColor}
+              label="Strain"
+              caption={strainCaption}
+              captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
+              trend={ringTrends.strain}
+              size={82}
+            />
+          </div>
         </div>
 
         {/* Entender os anéis (toque — funciona no iPhone) */}
