@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, Pencil } from 'lucide-react';
-import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
+import { getDayScore } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
 import { ZoneDot } from '@/components/ui-bio/ZoneDot';

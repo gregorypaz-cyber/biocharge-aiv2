@@ -15,24 +15,24 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-4"
+      className="rounded-2xl border border-domain-sleep/20 bg-domain-sleep/5 p-4 space-y-4"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Moon className="w-4 h-4 text-blue-400" />
-          <span className="text-xs font-semibold text-blue-300 uppercase tracking-wide">
+          <Moon className="w-4 h-4 text-domain-sleep" />
+          <span className="text-xs font-semibold text-domain-sleep uppercase tracking-wide">
             Missão da noite
           </span>
         </div>
 
-        <span className="text-micro font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+        <span className="text-micro font-bold px-2 py-0.5 rounded-full bg-domain-sleep/10 text-domain-sleep border border-domain-sleep/20">
           Sono
         </span>
       </div>
 
       {sleepNeed ? (
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/8 border border-blue-500/15">
-          <div className="text-3xl font-black font-mono text-blue-400">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-domain-sleep/8 border border-domain-sleep/15">
+          <div className="text-3xl font-black font-mono text-domain-sleep">
             {sleepNeed}h
           </div>
 
@@ -50,7 +50,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
       {sleepDebt >= 2 ? (
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-health-amber/8 border border-health-amber/15">
           <span className="text-xs">😴</span>
-          <p className="text-xs text-health-amber/60/90">
+          <p className="text-xs text-health-amber/60">
             Débito de sono: <span className="font-semibold">~{Math.round(sleepDebt)}h</span> nos últimos 7 dias{sleepDebt >= 4 ? ' — vale priorizar sono nos próximos dias.' : '.'}
           </p>
         </div>
@@ -58,7 +58,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
 
       <Link
         to="/trends"
-        className="flex items-center justify-end gap-1 text-support font-medium text-blue-300/80 hover:text-blue-200 transition-colors"
+        className="flex items-center justify-end gap-1 text-support font-medium text-domain-sleep/80 hover:text-blue-200 transition-colors"
       >
         Ver tendência do sono
         <ArrowRight className="w-3 h-3" />

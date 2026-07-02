@@ -7,7 +7,7 @@ import AddTrainingModal from '@/components/training/AddTrainingModal';
 
 function getStrainZone(strain) {
   if (strain >= 18) return { label: 'Máximo', color: 'text-zone-red' };
-  if (strain >= 14) return { label: 'Alto', color: 'text-orange-400' };
+  if (strain >= 14) return { label: 'Alto', color: 'text-domain-strain' };
   if (strain >= 10) return { label: 'Moderado', color: 'text-zone-yellow' };
   return { label: 'Leve', color: 'text-zone-green' };
 }
@@ -39,9 +39,9 @@ const INTENSITY_LABELS = {
 
 const INTENSITY_COLORS = {
   very_light: 'text-zone-green',
-  light: 'text-green-400',
+  light: 'text-zone-green',
   moderate: 'text-zone-yellow',
-  hard: 'text-orange-400',
+  hard: 'text-domain-strain',
   very_hard: 'text-zone-red',
 };
 

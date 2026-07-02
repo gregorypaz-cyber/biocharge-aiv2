@@ -49,7 +49,7 @@ function getConfidenceChip(confidence) {
 
   return {
     label: 'Confiança baixa',
-    className: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+    className: 'text-domain-strain bg-domain-strain/10 border-domain-strain/20',
   };
 }
 

@@ -155,7 +155,7 @@ function OnboardingWizard({ user, onComplete }) {
                   </button>
                 ))}
               </div>
-              <p className="text-support text-health-amber/60/90 leading-relaxed mt-3">
+              <p className="text-support text-health-amber/60 leading-relaxed mt-3">
                 ⚠️ Dá pra trocar depois em Configurações — mas trocar de wearable no meio contamina seu histórico de HRV.
               </p>
             </motion.div>

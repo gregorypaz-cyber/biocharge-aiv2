@@ -490,7 +490,7 @@ export default function AppSettings() {
             </button>
           ))}
         </div>
-        <p className="text-support text-health-amber/60/90 leading-relaxed">
+        <p className="text-support text-health-amber/60 leading-relaxed">
           ⚠️ rMSSD e SDNN são métricas de HRV diferentes. Misturar wearables contamina seu baseline — ao trocar, considere recomeçar o histórico de HRV.
         </p>
       </motion.div>

@@ -37,7 +37,7 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
               'flex items-start gap-3 p-3 rounded-xl border text-sm',
               (() => {
                 const dom = { '🌙':'sleep','💤':'sleep','🔬':'sleep','⚡':'strain','💪':'strain','🏃':'strain' }[item.icon];
-                if (dom === 'sleep') return 'bg-blue-500/5 border-blue-400/20';
+                if (dom === 'sleep') return 'bg-domain-sleep/5 border-domain-sleep/20';
                 if (dom === 'strain') return 'bg-secondary/30 border-border/50';
                 return 'bg-zone-green/5 border-zone-green/15';
               })()
