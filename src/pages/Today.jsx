@@ -1696,6 +1696,12 @@ const missingSettings = [];
 if (!prefs.birth_year) missingSettings.push('ano de nascimento');
 if (!prefs.sex) missingSettings.push('sexo');
 if (!prefs.height_cm) missingSettings.push('altura');
+const visibleSecondaryCards = secondaryCards.filter((d) => d.action !== 'exclude');
+const showNormalHealthLine = analysis?.healthSignals?.state === 'normal';
+const secondaryCount = visibleSecondaryCards.length + (showNormalHealthLine ? 1 : 0);
+const onlyNormalHealthLine =
+  secondaryCount === 1 && showNormalHealthLine && visibleSecondaryCards.length === 0;
+
 const settingsBanner = missingSettings.length > 0 ? (
   <Link
     to="/settings"
@@ -1856,43 +1862,17 @@ if (isLoading) {
 </Link>
       )}
 
-      {(() => {
-  const visibleSecondaryCards = secondaryCards.filter((d) => d.action !== 'exclude');
-  const showNormalHealthLine = analysis?.healthSignals?.state === 'normal';
-  const secondaryCount = visibleSecondaryCards.length + (showNormalHealthLine ? 1 : 0);
-
-  if (secondaryCount === 0) return null;
-
-  if (secondaryCount === 1 && showNormalHealthLine && visibleSecondaryCards.length === 0) {
-    return (
-      <div className="rounded-2xl border border-border/40 bg-card px-4 py-3">
-        <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
-      </div>
-    );
-  }
-
-  return (
-    {(() => {
-  const visibleSecondaryCards = secondaryCards.filter((d) => d.action !== 'exclude');
-  const showNormalHealthLine = analysis?.healthSignals?.state === 'normal';
-  const secondaryCount = visibleSecondaryCards.length + (showNormalHealthLine ? 1 : 0);
-
-  if (secondaryCount === 0) return null;
-
-  if (secondaryCount === 1 && showNormalHealthLine && visibleSecondaryCards.length === 0) {
-    return <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />;
-  }
-
-  return (
+{secondaryCount > 0 && (
+  onlyNormalHealthLine ? (
+    <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
+  ) : (
     <SecondaryMetrics count={secondaryCount}>
       {visibleSecondaryCards.map((desc) => renderCard(desc))}
       <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
     </SecondaryMetrics>
-  );
-})()}
-  );
-})()}
-
+  )
+)}
+      
       {analysisError && (
         <p className="text-support text-zone-yellow/80 px-1">
           Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
