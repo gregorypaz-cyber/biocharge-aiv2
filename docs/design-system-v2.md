@@ -39,15 +39,16 @@ A paleta crua do Tailwind (`emerald-*`, `yellow-*`, `red-*`…) convive com os t
 
 ```js
 // tailwind.config.js → theme.extend.colors
+// Formato com <alpha-value> obrigatório para suportar classes de opacidade (bg-zone-green/12)
 colors: {
-  'zone-green':  'hsl(var(--zone-green))',
-  'zone-yellow': 'hsl(var(--zone-yellow))',
-  'zone-red':    'hsl(var(--zone-red))',
-  'domain-recovery': 'hsl(var(--domain-recovery))',
-  'domain-sleep':    'hsl(var(--domain-sleep))',
-  'domain-strain':   'hsl(var(--domain-strain))',
-  'health-amber':    'hsl(var(--health-amber))',
-  'gauge-track':     'hsl(var(--gauge-track))',
+  'zone-green':  'hsl(var(--zone-green) / <alpha-value>)',
+  'zone-yellow': 'hsl(var(--zone-yellow) / <alpha-value>)',
+  'zone-red':    'hsl(var(--zone-red) / <alpha-value>)',
+  'domain-recovery': 'hsl(var(--domain-recovery) / <alpha-value>)',
+  'domain-sleep':    'hsl(var(--domain-sleep) / <alpha-value>)',
+  'domain-strain':   'hsl(var(--domain-strain) / <alpha-value>)',
+  'health-amber':    'hsl(var(--health-amber) / <alpha-value>)',
+  'gauge-track':     'hsl(var(--gauge-track) / <alpha-value>)',
 }
 ```
 

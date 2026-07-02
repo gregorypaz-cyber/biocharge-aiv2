@@ -170,14 +170,14 @@ text-[56px] → text-display (56px, mono)
 ⚡ → Zap
 🌙 → Moon
 🧠 → Brain
-📝 → FileText
+📝 → PenLine
 🏋️ → Dumbbell
-🚨 → AlertTriangle
+🚨 → (nenhum ícone) — alerta sustentado usa cor + peso tipográfico, não sirene
 🛡️ → Shield
 🟢 → ZoneDot variant="green"  (novo componente — ver design-system-v2.md)
 🔴 → ZoneDot variant="red"
 🟡 → ZoneDot variant="yellow"
-📊 → BarChart2
+📊 → BarChart3
 💤 → BedDouble
 ❤️ → Heart
 ⬆️ → TrendingUp
@@ -446,15 +446,12 @@ export const duration = {
 };
 
 export const easing = {
-  default:   [0.4, 0, 0.2, 1],
-  decelerate:[0, 0, 0.2, 1],
-  accelerate:[0.4, 0, 1, 1],
-  overshoot: [0.22, 1, 0.36, 1], // gauge arc
+  out:        [0, 0, 0.4, 1],          // ease-out padrão
+  expressive: [0.32, 0.72, 0, 1],     // entradas de cards — mais presença
 };
 
 export const spring = {
-  default: { type: 'spring', bounce: 0.15, duration: 0.5 },
-  snappy:  { type: 'spring', bounce: 0.3,  duration: 0.35 },
+  default: { type: 'spring', bounce: 0.15, duration: 0.5 }, // tudo com layoutId
 };
 ```
 
@@ -575,8 +572,8 @@ export const chartTheme = {
 **Regra de spacing unificada:**
 ```
 Gap entre cards:   space-y-3
-Padding interno:   p-4 (cards normais) / p-5 (cards herói)
-Entre seções:      mt-6 (título → grupo)
+Padding interno:   p-5 / gap-3 (dentro do card)
+Entre seções:      mt-7 (título → grupo, 28px)
 ```
 
 **Critérios de aceite:**
