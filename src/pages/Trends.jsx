@@ -662,20 +662,25 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
   }
 
   if (byWeek.size < 2) {
-    return (
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border/50 bg-card p-4"
-        <div className="flex items-start gap-3">
-          <Footprints className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-          <div>
-            <h3 className="text-sm font-semibold">Volume de corrida (semanal)</h3>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Registre a <strong>distância</strong> das suas corridas ao adicionar o treino. Depois de ~2–3 semanas, o volume semanal e a variação aparecem aqui.
-            </p>
-          </div>
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-border/50 bg-card p-4"
+    >
+      <div className="flex items-start gap-3">
+        <Footprints className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+        <div>
+          <h3 className="text-heading">Volume de corrida (semanal)</h3>
+          <p className="text-support text-muted-foreground mt-1 leading-relaxed">
+            Registre a <strong>distância</strong> das suas corridas ao adicionar o treino. Depois de ~2–3 semanas, o volume semanal e a variação aparecem aqui.
+          </p>
         </div>
-      </motion.div>
-    );
-  }
+      </div>
+    </motion.div>
+  );
+}
+
 
   const WEEK = 7 * 86400000;
   const keys = [...byWeek.keys()].sort((a, b) => a - b);
