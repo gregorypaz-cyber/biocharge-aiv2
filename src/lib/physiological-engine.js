@@ -312,8 +312,8 @@ export function getPhysiologicalState(today, baseline, trainingLoad, sleepDebt) 
   const hrv = today.hrv;
   const rhr = today.resting_hr;
   const stress = today.stress || 3;
-  const recovery = today.recovery_score || 50;
-  const fatigueScore = today.fatigue_score || 50;
+  const recovery = today.recovery_score ?? 50;   // ?? (não ||): um recovery legítimo de 0 não pode virar 50
+  const fatigueScore = today.fatigue_score ?? 50;
   const baseHrv = baseline?.hrv?.d14 || baseline?.hrv?.d7;
   const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
 

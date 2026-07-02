@@ -444,7 +444,7 @@ export default function Today() {
       if (s?.date) strainByDate[s.date] = (strainByDate[s.date] || 0) + (s.strain_score ?? 0);
     }
     return {
-      recovery: chrono.map((c) => c.recovery_score ?? c.biocharge_morning ?? c.readiness_score).filter((v) => v != null),
+      recovery: chrono.map((c) => c.recovery_score ?? null).filter((v) => v != null),
       sono: chrono.map((c) => c.sleep_quality ?? c.sleep_score).filter((v) => v != null),
       strain: chrono.map((c) => Math.min(21, strainByDate[c.date] || 0)),
     };
@@ -544,7 +544,7 @@ const hrvTrend = useMemo(() => {
       !!rawCheckin.rest_day || enrichedCheckin?.decision_mode === 'recover';
     if (isRecoveryDay) return null;
 
-    const bio = rawCheckin.biocharge_morning ?? 0;
+    const bio = rawCheckin.recovery_score ?? 0; // recovery v3, não o composto Zepp (biocharge_morning)
     const cap = enrichedCheckin?.remaining_capacity;
     const sleep = rawCheckin.sleep_quality ?? rawCheckin.sleep_score ?? 100;
 
