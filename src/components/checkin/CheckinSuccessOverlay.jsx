@@ -235,9 +235,9 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
             </div>
           )}
 
-          <div className="rounded-xl bg-blue-500/5 border border-blue-500/15 px-3 py-2.5">
+          <div className="rounded-xl bg-domain-sleep/5 border border-domain-sleep/15 px-3 py-2.5">
             <div className="flex items-start gap-2">
-              <Moon className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+              <Moon className="w-3.5 h-3.5 text-domain-sleep shrink-0 mt-0.5" />
 
               <div>
                 <p className="text-micro text-muted-foreground uppercase tracking-wider mb-1">

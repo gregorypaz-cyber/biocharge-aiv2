@@ -46,7 +46,7 @@ function Section({ title, items }) {
       )}
       <div className="space-y-1.5">
         {items.map((t, i) => (
-          <p key={i} className="text-[13px] text-foreground/80 leading-relaxed">
+          <p key={i} className="text-sm text-foreground/80 leading-relaxed">
             {t}
           </p>
         ))}

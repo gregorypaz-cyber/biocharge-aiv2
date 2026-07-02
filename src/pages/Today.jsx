@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import {
@@ -30,12 +29,11 @@ import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardi
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
-import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { useStreak } from '@/hooks/useStreak';
 import { buildCardLayout } from '@/utils/priorityEngine';
-import { getDailyVerdict, getSleepDebtHours } from '@/lib/decision-engine';
+import { getDailyVerdict } from '@/lib/decision-engine';
 
 
 function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions, isRestMode }) {
@@ -660,12 +658,12 @@ const hrvTrend = useMemo(() => {
     if (targetZoneKey === 'recuperacao') {
       return curZone.key === 'leve'
         ? { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
-        : { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
+        : { color: 'text-domain-strain', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
     if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(var(--domain-sleep))', short: `${curZone.label} → ${strainTarget}` };
     if (diff === 0) return { color: 'text-zone-green', ring: 'hsl(var(--zone-green))', short: `Na zona · meta ${strainTarget}` };
-    return { color: 'text-orange-400', ring: 'hsl(var(--domain-strain))', short: `${curZone.label} → ${strainTarget}` };
+    return { color: 'text-domain-strain', ring: 'hsl(var(--domain-strain))', short: `${curZone.label} → ${strainTarget}` };
   })();
 
   const dayMetrics = enrichedCheckin
@@ -724,7 +722,7 @@ const BODY_STATE_META = {
   },
   Sympathetic_Load: {
     emoji: '🌩️',
-    tone: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
+    tone: 'bg-domain-strain/10 border-domain-strain/20 text-domain-strain',
     short: 'Sistema sob carga nervosa',
   },
   Fatigued: {
@@ -815,9 +813,9 @@ const AUTONOMIC_PT = {
       ctaIcon: Heart,
       ctaClass: 'bg-secondary text-muted-foreground border border-border',
       showCta: false,
-      accentBorder: 'border-blue-500/20',
+      accentBorder: 'border-domain-sleep/20',
       accentBg: 'bg-card',
-      bannerClass: 'border-orange-500/30 bg-orange-500/5 text-orange-400',
+      bannerClass: 'border-domain-strain/30 bg-domain-strain/5 text-domain-strain',
       bannerText: '⚡ Sua carga já chegou num ponto em que mais treino tende a render menos recuperação amanhã.',
     },
     RECOVERY_DAY: {
@@ -827,9 +825,9 @@ const AUTONOMIC_PT = {
       ctaIcon: Moon,
       ctaClass: 'bg-secondary text-muted-foreground border border-border',
       showCta: false,
-      accentBorder: 'border-blue-500/15',
+      accentBorder: 'border-domain-sleep/15',
       accentBg: 'bg-card',
-      bannerClass: 'border-blue-500/25 bg-blue-500/5 text-blue-300',
+      bannerClass: 'border-domain-sleep/25 bg-domain-sleep/5 text-domain-sleep',
       bannerText: '🌙 Hoje o melhor retorno vem de reduzir estresse, recuperar energia e dormir bem.',
     },
   };
@@ -1324,7 +1322,7 @@ function ExecutionCard() {
   const sleepCaptionColor =
     sleepVal == null ? 'text-muted-foreground'
     : sleepVal >= 80 ? 'text-sky-400'
-    : sleepVal >= 65 ? 'text-blue-400'
+    : sleepVal >= 65 ? 'text-domain-sleep'
     : 'text-blue-500';
 
   const strainColor = strainVsTarget.ring;
@@ -1539,7 +1537,7 @@ function ExecutionCard() {
             'hoje é segurar.';
           const toneClass =
             displayedScore >= 70 ? 'text-zone-green' :
-            displayedScore >= 42 ? 'text-zone-yellow' : 'text-orange-400';
+            displayedScore >= 42 ? 'text-zone-yellow' : 'text-domain-strain';
 
           // Escala ABSOLUTA de strain (0–21), alinhada ao anel.
           // A meta do dia entra como MARCADOR, não como a largura total da barra.
@@ -1645,15 +1643,15 @@ function ExecutionCard() {
                   </div>
                 </div>
 
-                <p className="text-[12px] text-muted-foreground leading-snug">
+                <p className="text-support text-muted-foreground leading-snug">
                   Você está em <b>{cappedStrain}</b>. Bom puxar até <b>~{strainTarget}</b> ({(targetZoneLabel || '').toLowerCase()}); acima começa a cavar a recuperação de amanhã.
                 </p>
               </div>
 
 
               <div className="rounded-xl border border-health-amber/20 bg-health-amber/5 px-3.5 py-3">
-                <p className="text-micro  text-health-amber/60/90 mb-0.5">↗ Alavanca pra amanhã</p>
-                <p className="text-[12px] text-health-amber/12/90 leading-snug">{lever}</p>
+                <p className="text-micro  text-health-amber/60 mb-0.5">↗ Alavanca pra amanhã</p>
+                <p className="text-support text-health-amber/70 leading-snug">{lever}</p>
               </div>
 
               {si != null && (
@@ -1791,11 +1789,11 @@ if (isLoading) {
         {hasCheckedInToday && streak >= 3 && (
           <Link
             to="/insights"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-domain-strain/10 border border-domain-strain/20 hover:bg-domain-strain/15 transition-colors shrink-0"
             title={`${streak} dias seguidos`}
           >
             <span className="text-sm leading-none">🔥</span>
-            <span className="text-xs font-bold text-orange-400">{streak}</span>
+            <span className="text-xs font-bold text-domain-strain">{streak}</span>
           </Link>
         )}
       </div>
@@ -1817,13 +1815,13 @@ if (isLoading) {
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-blue-500/25 bg-blue-500/8 px-4 py-3 flex items-start gap-3"
+          className="rounded-2xl border border-domain-sleep/25 bg-domain-sleep/8 px-4 py-3 flex items-start gap-3"
         >
-          <Moon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+          <Moon className="w-4 h-4 text-domain-sleep shrink-0 mt-0.5" />
           <p className="text-xs text-blue-200 flex-1 leading-relaxed">{deepSleepAlert}</p>
           <button
             onClick={() => setDeepSleepAlertDismissed(true)}
-            className="text-blue-400/60 hover:text-blue-300 transition-colors shrink-0"
+            className="text-domain-sleep/60 hover:text-domain-sleep transition-colors shrink-0"
             aria-label="Fechar alerta"
           >
             <X className="w-3.5 h-3.5" />

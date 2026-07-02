@@ -211,7 +211,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
     >
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Moon className="w-4 h-4 text-blue-400" />
+        <Moon className="w-4 h-4 text-domain-sleep" />
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Resumo da manhã
         </span>

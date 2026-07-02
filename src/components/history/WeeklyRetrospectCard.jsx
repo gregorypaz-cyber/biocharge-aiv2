@@ -112,7 +112,7 @@ export default function WeeklyRetrospectCard({ weekStart, weekEnd, checkins, ses
         )}
         {retrospect.avg_sleep_hours != null && (
           <span className="flex items-center gap-1 text-support text-muted-foreground">
-            <Moon className="w-3 h-3 text-blue-400/70" />
+            <Moon className="w-3 h-3 text-domain-sleep/70" />
             Sono médio <span className="font-semibold text-foreground ml-0.5">{retrospect.avg_sleep_hours}h</span>
           </span>
         )}

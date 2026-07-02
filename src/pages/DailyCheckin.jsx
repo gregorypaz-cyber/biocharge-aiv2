@@ -781,7 +781,7 @@ if (isPostMode) {
 
 {editingExisting && (
   <div className="rounded-2xl border border-primary/25 bg-primary/5 p-3 mx-1">
-    <p className="text-[12px] text-foreground font-medium">
+    <p className="text-support text-foreground font-medium">
       ✏️ Você já fez o check-in de hoje
     </p>
     <p className="text-support text-muted-foreground mt-0.5">

@@ -42,9 +42,9 @@ const STATE_CONFIG = {
   'High Stress': {
     label: 'Alto estresse',
     emoji: '🟠',
-    color: 'text-orange-400',
-    bg: 'bg-orange-500/5',
-    border: 'border-orange-500/20',
+    color: 'text-domain-strain',
+    bg: 'bg-domain-strain/5',
+    border: 'border-domain-strain/20',
     desc: 'O sistema está sob carga de stress acima do padrão.',
     interpretation: 'Mesmo quando a recuperação parece aceitável, o custo fisiológico do treino pode subir.',
   },

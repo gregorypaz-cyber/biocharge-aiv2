@@ -6,7 +6,7 @@ import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import { chartTheme, SCORE_METRICS } from '@/lib/chart-theme';
 import { duration } from '@/lib/motion-tokens';
 import {
-  AreaChart, Area, BarChart, Bar, ScatterChart, Scatter, Line, ComposedChart,
+  AreaChart, Area, BarChart, Bar, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
@@ -610,20 +610,20 @@ function RunningEconomyCard({ sessions = [] }) {
             </p>
           </div>
         </div>
-        <span className={cn('text-micro font-semibold px-2 py-0.5 rounded-full shrink-0', positive ? 'bg-zone-green/15 text-zone-green' : 'bg-orange-500/15 text-orange-400')}>
+        <span className={cn('text-micro font-semibold px-2 py-0.5 rounded-full shrink-0', positive ? 'bg-zone-green/15 text-zone-green' : 'bg-domain-strain/15 text-domain-strain')}>
           {positive ? 'Melhorando' : 'Atenção'}
         </span>
       </div>
 
       <div className="flex items-center gap-2">
-        {positive ? <TrendingUp className="w-5 h-5 text-zone-green" /> : <TrendingDown className="w-5 h-5 text-orange-400" />}
-        <span className={cn('text-2xl font-mono font-bold', positive ? 'text-zone-green' : 'text-orange-400')}>
+        {positive ? <TrendingUp className="w-5 h-5 text-zone-green" /> : <TrendingDown className="w-5 h-5 text-domain-strain" />}
+        <span className={cn('text-2xl font-mono font-bold', positive ? 'text-zone-green' : 'text-domain-strain')}>
           {Math.abs(eco.improvement)}%
         </span>
         <span className="text-xs text-muted-foreground">{positive ? 'mais eficiente' : 'menos eficiente'}</span>
       </div>
 
-      <p className="text-[13px] text-foreground/80 leading-relaxed">{eco.discovery.text}</p>
+      <p className="text-sm text-foreground/80 leading-relaxed">{eco.discovery.text}</p>
 
       <p className="text-micro text-muted-foreground">
         Baseado em {eco.sessionsAnalyzed} corridas com pace · confiança {eco.discovery.confidence}
@@ -892,11 +892,11 @@ export default function Trends() {
   const trendIsGood = trend === null ? false : lowerIsBetter ? trend < -2 : trend > 2;
   const trendIsBad = trend === null ? false : lowerIsBetter ? trend > 2 : trend < -2;
   const TrendIcon = trend === null ? Minus : trend > 2 ? TrendingUp : trend < -2 ? TrendingDown : Minus;
-  const trendColor = trend === null ? 'text-muted-foreground' : trendIsGood ? 'text-[hsl(142,70%,55%)]' : trendIsBad ? 'text-[hsl(0,72%,60%)]' : 'text-muted-foreground';
+  const trendColor = trend === null ? 'text-muted-foreground' : trendIsGood ? 'text-zone-green' : trendIsBad ? 'text-zone-red' : 'text-muted-foreground';
 
 
   return (
-    <div className="space-y-4 max-w-3xl mx-auto">
+    <div className="space-y-4 max-w-2xl mx-auto">
 <div>
         <h1 className="text-2xl font-black tracking-tight">Tendências</h1>
         <p className="text-sm text-muted-foreground mt-1">

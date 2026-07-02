@@ -578,7 +578,39 @@ export const chartTheme = {
 
 ---
 
-## Fase 4 — Polimento Final
+## Fase 4 — Polimento Final ✅ IMPLEMENTADA
+
+**Status:** implementada em 2026-07-02. Lint: 0 erros. Build: exit 0.
+
+**O que foi feito:**
+
+**Lint (11 erros → 0):**
+- `WhyScoreCard.jsx`: removido import `cn` não-usado
+- `History.jsx`: removido import `computeCheckinScores` não-usado
+- `Insights.jsx`: removidos imports `PhysioStateCard`, `TrainingLoadCard` não-usados
+- `Login.jsx`: removido import `Zap` não-usado
+- `Today.jsx`: removidos imports `Tooltip`/`TooltipTrigger`/`TooltipContent`, `ProtectionInsightCard`, `getSleepDebtHours` não-usados
+- `Trends.jsx`: removido import `ScatterChart` não-usado
+
+**Toast fix:**
+- `App.jsx`: substituído `import { Toaster } from "@/components/ui/toaster"` (shadcn old, uses use-toast) por `import { Toaster } from 'sonner'` — corrige toasts indo para o black hole
+
+**Consistência de tokens:**
+- `text-blue-400` / `bg-blue-500/*` / `border-blue-*` → `text-domain-sleep` / `bg-domain-sleep/*` / `border-domain-sleep/*` em 14 arquivos
+- `text-orange-400` / `bg-orange-500/*` / `border-orange-*` → `text-domain-strain` / `bg-domain-strain/*` / `border-domain-strain/*` em 14 arquivos
+- `text-green-400` → `text-zone-green` (TrainingSessionsList)
+- `text-[hsl(142,70%,55%)]` → `text-zone-green`; `text-[hsl(0,72%,60%)]` → `text-zone-red` em Trends.jsx (`trendColor`)
+- `max-w-3xl` → `max-w-2xl` em Trends.jsx (consistência com resto do app)
+- `text-health-amber/60/90` (duplo `/` inválido) → `text-health-amber/60` em 4 arquivos
+- `text-health-amber/12/90` → `text-health-amber/70` em Today.jsx
+- `text-[12px]` → `text-support`; `text-[13px]` → `text-sm` em 4 arquivos
+
+**PR 4.2 — Limpeza shadcn:**
+- `src/components/ui/` reduzido de 48 arquivos → 7 (apenas em uso ativo)
+- Mantidos: `button`, `input`, `label`, `skeleton`, `slider`, `textarea`, `tooltip`
+- Deletados 41 componentes não importados em nenhum arquivo src/ (accordion, alert, badge, calendar, card, chart, dialog, drawer, form, select, separator, sheet, sidebar, sonner, table, tabs, toast, toaster, use-toast e outros)
+
+---
 
 ### PR 4.1 — Layout desktop 2 colunas (Tendências e Padrões)
 

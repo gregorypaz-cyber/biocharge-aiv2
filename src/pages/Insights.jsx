@@ -29,8 +29,6 @@ import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
 import { buildCoachContext } from '@/lib/coach-context-builder';
 import { cn } from '@/lib/utils';
-import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
-import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 import AnalysisBody from '@/components/intelligence/AnalysisBody';
@@ -194,7 +192,7 @@ function LongTermTrendsCard({ trends }) {
           </div>
           <div>
             <p className="text-sm font-semibold">Acompanhando sua evolução</p>
-            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+            <p className="text-support text-muted-foreground leading-relaxed mt-1">
               Em cerca de {trends.daysNeeded} dias de registro o app começa a
               mostrar se suas métricas estão melhorando, estáveis ou em queda ao
               longo das semanas.
@@ -243,7 +241,7 @@ function LongTermTrendsCard({ trends }) {
           Sua evolução
         </p>
       </div>
-      <p className="text-[12px] text-muted-foreground leading-relaxed mb-4">
+      <p className="text-support text-muted-foreground leading-relaxed mb-4">
         Tendência das suas métricas ao longo de {trends.metrics[0]?.days || 0} dias.
         O app só chama de tendência o que é estatisticamente claro — o resto é
         normal oscilar.
@@ -260,7 +258,7 @@ function LongTermTrendsCard({ trends }) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-base leading-none shrink-0">{m.icon}</span>
-                <span className="text-[13px] font-medium truncate">{m.label}</span>
+                <span className="text-sm font-medium truncate">{m.label}</span>
               </div>
               <div className={`flex items-center gap-1.5 shrink-0 ${s.color}`}>
                 {change && <span className="text-support font-mono">{change}</span>}
@@ -314,7 +312,7 @@ function InsightChip({ confidence }) {
 // Mapa emoji → domínio → cor do card (verde recovery, azul sono, cinza strain)
 const DOMAIN_OF = { '🌙':'sleep','💤':'sleep','🔬':'sleep','⚡':'strain','💪':'strain','🏃':'strain' };
 const DOMAIN_CARD = {
-  sleep:  'border-blue-400/20 bg-blue-500/5',
+  sleep:  'border-domain-sleep/20 bg-domain-sleep/5',
   strain: 'border-border/50 bg-secondary/30',
 };
 const DOMAIN_DEFAULT = 'border-zone-green/20 bg-zone-green/5'; // recovery (verde)
@@ -333,7 +331,7 @@ function DiscoveryCard({ item }) {
           <span className="text-lg leading-none mt-0.5">{item.icon}</span>
           <div>
             <p className="text-sm font-semibold leading-snug">{item.title}</p>
-            <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">
+            <p className="text-sm text-muted-foreground leading-relaxed mt-1">
               {item.text}
             </p>
           </div>
@@ -370,7 +368,7 @@ function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
         <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconCls}`} />
         <div>
           <p className="text-sm font-semibold leading-snug">{title}</p>
-          <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">{text}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed mt-1">{text}</p>
         </div>
       </div>
     </div>

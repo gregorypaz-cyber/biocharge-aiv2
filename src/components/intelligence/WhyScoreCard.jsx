@@ -1,8 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
-
 function getTitle(score) {
   if (score >= 80) return 'O que mais sustentou seu recovery hoje';
   if (score >= 65) return 'O que mais influenciou seu recovery hoje';
