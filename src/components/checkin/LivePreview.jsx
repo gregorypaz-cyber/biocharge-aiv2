@@ -27,7 +27,7 @@ function getDecisionLabel(mode) {
 function getDecisionTone(mode) {
   if (mode === 'train_high') return 'text-zone-green bg-zone-green/10 border-zone-green/20';
   if (mode === 'train_moderate') return 'text-zone-yellow bg-zone-yellow/10 border-zone-yellow/20';
-  if (mode === 'train_light') return 'text-domain-sleep bg-domain-sleep/10 border-domain-sleep/20';
+  if (mode === 'train_light') return 'text-sky-400 bg-sky-500/10 border-sky-500/20';
   if (mode === 'recover') return 'text-zone-red bg-zone-red/10 border-zone-red/20';
   return 'text-muted-foreground bg-secondary border-border/40';
 }
@@ -67,10 +67,10 @@ function CalibratingCard({ hasHrvToday, compact }) {
     >
       <div className="flex items-center gap-2">
         <span className="relative flex h-2.5 w-2.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-domain-sleep/60" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400/60" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-400" />
         </span>
-        <p className="text-xs uppercase tracking-wider font-semibold text-domain-sleep">
+        <p className="text-xs uppercase tracking-wider font-semibold text-sky-300">
           {hasHrvToday ? 'Calibrando' : 'Aguardando HRV'}
         </p>
       </div>

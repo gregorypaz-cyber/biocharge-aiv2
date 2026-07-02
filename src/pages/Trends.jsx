@@ -421,7 +421,7 @@ function getLoadClassification(load) {
   }
   if (ratio < 0.8) {
     return {
-      label: 'Subcarga', color: 'text-domain-sleep', bg: 'bg-domain-sleep/10', border: 'border-domain-sleep/20', icon: TrendingUp,
+      label: 'Subcarga', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: TrendingUp,
       summary: `Sua carga recente está abaixo da sua média (ACWR ${ratio.toFixed(2)}).`,
       recommendation: 'Há espaço para aumentar volume/intensidade de forma progressiva, se a recuperação acompanhar.',
     };
@@ -549,7 +549,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
       <div className="space-y-2">
         <div className="relative">
           <div className="h-3 w-full rounded-full overflow-hidden border border-border/40 flex">
-            <div className="w-[25%] bg-domain-sleep/75" />
+            <div className="w-[25%] bg-sky-500/75" />
             <div className="w-[35%] bg-zone-green/75" />
             <div className="w-[20%] bg-zone-yellow/75" />
             <div className="w-[20%] bg-zone-red/75" />
