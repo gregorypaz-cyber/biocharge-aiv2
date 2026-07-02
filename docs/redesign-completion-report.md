@@ -27,7 +27,7 @@ Resultado: zero errors de lint, build limpo (exit 0), DNA do produto preservado,
 | Piso real de fonte | `text-[7px]` |
 | Valores distintos de border-radius em circulação | 7 (`sm`, `md`, `lg`, `xl`, `2xl`, `3xl`, `full`) |
 | Ocorrências de `emerald-*` | 127× |
-| Outros Tailwind raws (`red-*`, `yellow-*`, `blue-*`, `amber-*`, `orange-*`) | ~350× combinado |
+| Outros Tailwind raws (`red-*`, `yellow-*`, `blue-*`, `sky-*`, `amber-*`, `orange-*`) | ~350× combinado |
 | Literais `hsl()` hardcoded inline | ~80 |
 | Primitivos shadcn em `src/components/ui/` | 49 arquivos, ~9 em uso |
 | Durações de motion distintas | 9 valores distintos (0.18s a 1s) |
@@ -337,7 +337,7 @@ Emojis em textos de copy e onboarding foram preservados (são voz do produto). A
 
 ### Opacidades de tint fora do sistema
 
-O design system v2 define apenas três opacidades de tint (`/6`, `/12`, `/20`). No código existem variações `/8`, `/10`, `/15`, `/25`. Foram corrigidas as mais visíveis (inválidas `/60/90`), mas não houve varredura completa de opacidades.
+O design system v2 define apenas três opacidades de tint (`/6`, `/12`, `/20`). No código existem variações `/8`, `/10`, `/15`, `/25`. Foram corrigidas as mais visíveis (inválidas `/60/90` e classes `sky-*`/`blue-*` residuais), mas não houve varredura completa de opacidades.
 
 ### Componente `Card.tsx` formal não criado
 

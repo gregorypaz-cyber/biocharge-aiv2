@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { base44 } from '@/api/base44Client';
 import { computeLongevityTrend } from '@/utils/longevityTrend';
+import { chartTheme } from '@/lib/chart-theme';
 
 // Card "Vitalidade ao longo do tempo" (Fase 3) — SOMENTE LEITURA.
 // Recalcula o histórico semanal a partir dos dados existentes. Vai na página Tendências.
@@ -89,14 +90,10 @@ export default function LongevityTrendCard() {
       <div className="h-44 -ml-2">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={trend.points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,100%,0.06)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(0,0%,60%)' }} tickLine={false} axisLine={false} />
-            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: 'hsl(0,0%,60%)' }} tickLine={false} axisLine={false} width={28} />
-            <Tooltip
-              contentStyle={{ background: 'hsl(0,0%,10%)', border: '1px solid hsl(0,0%,20%)', borderRadius: 8, fontSize: 12 }}
-              labelStyle={{ color: 'hsl(0,0%,70%)' }}
-              formatter={(v) => [v, 'Vitalidade']}
-            />
+            <CartesianGrid {...chartTheme.grid} />
+            <XAxis dataKey="label" {...chartTheme.axis} />
+            <YAxis domain={[0, 100]} {...chartTheme.axis} width={28} />
+            <Tooltip contentStyle={chartTheme.tooltip.contentStyle} formatter={(v) => [v, 'Vitalidade']} />
             <Line
               type="monotone"
               dataKey="vitality"
