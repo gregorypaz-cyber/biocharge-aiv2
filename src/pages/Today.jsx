@@ -214,6 +214,446 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
   );
 }
 
+// Explicação recolhível — mostra um botão "entender" que expande o texto ao toque.
+// Mesmo padrão visual das outras seções recolhíveis do app (SecondaryMetrics).
+function CollapsibleHint({ children, label = 'Entender' }) {
+  const [open, setOpen] = useState(false);
+  if (!children) return null;
+  return (
+    <div className="mt-1">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
+      >
+        {label}
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown className="w-3 h-3" />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">{children}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
+  const [showProntidaoHint, setShowProntidaoHint] = useState(false);
+
+  const recoveryColor =
+    displayedScore >= 70
+    ? 'hsl(142,70%,50%)'
+    : displayedScore >= 42
+    ? 'hsl(45,93%,58%)'
+    : 'hsl(0,72%,55%)';
+  const recoveryCaptionColor =
+    displayedScore >= 70 ? 'text-emerald-400'
+    : displayedScore >= 42 ? 'text-yellow-400'
+    : 'text-red-400';
+
+  const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
+  const sleepColor =
+    sleepVal == null ? 'hsl(215,30%,55%)'
+    : sleepVal >= 80 ? 'hsl(205,90%,62%)'
+    : sleepVal >= 65 ? 'hsl(210,85%,55%)'
+    : 'hsl(222,60%,52%)';
+  const sleepWord =
+    sleepVal == null ? 'Sem dado'
+    : sleepVal >= 80 ? 'Ótimo'
+    : sleepVal >= 65 ? 'Bom'
+    : sleepVal >= 50 ? 'Regular'
+    : 'Baixo';
+  const sleepCaptionColor =
+    sleepVal == null ? 'text-muted-foreground'
+    : sleepVal >= 80 ? 'text-sky-400'
+    : sleepVal >= 65 ? 'text-blue-400'
+    : 'text-blue-500';
+
+  const strainColor = strainVsTarget.ring;
+  const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
+
+  return (
+    <motion.div
+      key={phase + '-card'}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn('relative overflow-hidden rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
+    >
+      {/* Scenic hero — fundo atmosférico com starfield + domain bloom (estilo Noop) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 36%, hsl(220 25% 11%), hsl(220 20% 4%) 85%)' }} />
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 260" preserveAspectRatio="xMidYMin slice">
+          {[[23,18],[87,44],[141,12],[195,62],[263,28],[311,52],[349,8],[42,91],[108,72],[172,106],[238,85],[302,118],[67,142],[153,131],[217,155],[289,139],[31,38],[127,58],[201,22],[267,78]].map(([x,y],i) => (
+            <circle key={i} cx={x} cy={y} r={i%7===0?1.2:0.55} fill="white" opacity={i%4===0?0.32:0.14} />
+          ))}
+        </svg>
+        {!isCalibrating && (
+          <div
+            className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[140%] h-[100%] blur-2xl"
+            style={{ background: `radial-gradient(ellipse at center top, ${recoveryColor}, transparent 55%)`, opacity: 0.18 }}
+          />
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-2/5" style={{ background: 'linear-gradient(to bottom, transparent, hsl(220 18% 7% / 0.8))' }} />
+      </div>
+      <div className="relative z-10 space-y-4">
+        {/* Decisão de hoje */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+               Decisão de hoje
+            </span>
+                        <h2 className="text-xl font-black mt-1 leading-tight">
+              {isCalibrating ? 'Calibrando seu baseline' : dailyVerdict.headline}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isCalibrating
+                ? (calibratingNightsLeft > 0
+                    ? `Faltam ${calibratingNightsLeft} ${calibratingNightsLeft === 1 ? 'noite' : 'noites'} de HRV para o Recovery ficar confiável. Continue registrando — não vou inventar um número antes disso.`
+                    : 'Quase lá — mais uma leitura e o Recovery abre.')
+                : (heroDynamicContext?.heroLine || dailyVerdict.subheadline)}
+            </p>
+
+            {!isCalibrating && (
+              <span
+                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                  baselineTier === 'solido'
+                    ? 'bg-emerald-500/10 text-emerald-400/90'
+                    : 'bg-amber-500/10 text-amber-400/90'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    baselineTier === 'solido' ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}
+                />
+                {baselineTier === 'solido'
+                  ? 'Baseline sólido'
+                  : `Baseline construindo · ${priorHrvNights}/14 noites`}
+              </span>
+            )}
+
+          </div>
+
+                      <span
+            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              isCalibrating
+                ? 'bg-muted text-muted-foreground'
+                : displayedScore >= 70
+                ? 'bg-emerald-500/15 text-emerald-400'
+                : displayedScore >= 42
+                ? 'bg-yellow-500/15 text-yellow-400'
+                : 'bg-red-500/15 text-red-400'
+            }`}
+          >
+            {isCalibrating ? 'Calibrando' : readinessFaixa}
+          </span>
+
+        </div>
+
+        {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
+        <div className="flex flex-col items-center pt-1">
+          <MiniRing
+            value={isCalibrating ? null : displayedScore}
+            max={100}
+            color={recoveryColor}
+            label="Recovery"
+            caption={isCalibrating ? 'Calibrando' : readinessFaixa}
+            captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
+            trend={isCalibrating ? [] : ringTrends.recovery}
+            size={150}
+            zoneTicks={[0.42, 0.70]}
+            baselineMark={isCalibrating ? null : recoveryBaseline}
+            animateCount
+          />
+
+          <div className="flex justify-center gap-10 mt-3">
+            <MiniRing
+              value={sleepVal}
+              max={100}
+              color={sleepColor}
+              label="Sono"
+              caption={sleepWord}
+              captionColor={sleepCaptionColor}
+              trend={[]}
+              size={82}
+            />
+            <MiniRing
+              value={cappedStrain}
+              displayValue={cappedStrain}
+              max={21}
+              color={strainColor}
+              label="Strain"
+              caption={strainCaption}
+              captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
+              trend={[]}
+              size={82}
+            />
+          </div>
+        </div>
+
+        {/* Entender os anéis (toque — funciona no iPhone) */}
+        <div className="flex justify-center -mt-1">
+          <button
+            type="button"
+            aria-expanded={showProntidaoHint}
+            onClick={() => setShowProntidaoHint((v) => !v)}
+            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Info className="w-3 h-3" />
+            Entender os anéis
+            <motion.span animate={{ rotate: showProntidaoHint ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown className="w-3 h-3" />
+            </motion.span>
+          </button>
+        </div>
+        <AnimatePresence initial={false}>
+          {showProntidaoHint && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
+                <p className="text-[11px] leading-relaxed">
+                  <span className="font-semibold text-foreground">Recovery</span>{' '}
+                  <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
+                </p>
+                <p className="text-[11px] leading-relaxed">
+                  <span className="font-semibold text-foreground">Sono</span>{' '}
+                  <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
+                </p>
+                <p className="text-[11px] leading-relaxed">
+                  <span className="font-semibold text-foreground">Strain</span>{' '}
+                  <span className="text-muted-foreground">— esforço acumulado hoje (0–21). É separado do recovery e comparado à meta sugerida para o dia.</span>
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {heroDynamicContext ? (
+          <div
+            className={cn(
+              'px-3 py-2.5 rounded-xl border text-xs leading-snug',
+              getHeroDynamicToneClass(heroDynamicContext.tone)
+            )}
+          >
+            <span className="font-semibold">
+              {heroDynamicContext.title}:
+            </span>{' '}
+            {heroDynamicContext.text}
+          </div>
+        ) : (
+          !todaySessions.length && !isRestMode && (
+            <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
+              <span className="font-semibold text-primary">Linha do dia:</span>{' '}
+              {isCalibrating
+                ? 'ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
+                : displayedScore >= 70
+                ? 'recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
+                : displayedScore >= 42
+                ? 'recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
+                : 'recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
+            </div>
+          )
+        )}
+
+        {!heroDynamicContext &&
+          phase !== 'RECOVERY_DAY' &&
+          phase !== 'OVERLOAD' &&
+          dailyVerdict.caution && (
+            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug">
+              <span className="font-semibold">O que pede controle hoje:</span> {dailyVerdict.caution}
+            </div>
+          )}
+
+        {/* LEITURA DE HOJE — estado do corpo + modo autonômico + orçamento + alavanca, num card só */}
+        {!isCalibrating && enrichedCheckin.current_body_state && (() => {
+          const bodyKey = enrichedCheckin.current_body_state;
+          const autoKey = enrichedCheckin.autonomic_state || 'balanced';
+          const si = enrichedCheckin.baevsky_si;
+          const cap = enrichedCheckin.remaining_capacity;
+
+          // Frase fundida estado + modo (cobre bom E ruim, nunca só elogio).
+          const bodyClause = {
+            Recovered: 'Corpo recuperado', Activated: 'Corpo ativado',
+            Balanced: 'Corpo equilibrado', Loaded: 'Corpo carregado',
+            Sympathetic_Load: 'Corpo sob carga simpática', Fatigued: 'Corpo fatigado',
+            Overreached: 'Corpo em sobrecarga',
+          }[bodyKey] || 'Corpo estável';
+          const autoClause = {
+            parasympathetic: 'sistema nervoso em recuperação',
+            balanced: 'sistema nervoso calmo',
+            sympathetic: 'sistema nervoso em alerta',
+          }[autoKey] || 'sistema nervoso estável';
+          const tail =
+            displayedScore >= 70 ? 'dá pra puxar hoje.' :
+            displayedScore >= 42 ? 'dá pra treinar com controle.' :
+            'hoje é segurar.';
+          const toneClass =
+            displayedScore >= 70 ? 'text-emerald-400' :
+            displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
+
+          // Escala ABSOLUTA de strain (0–21), alinhada ao anel.
+          // A meta do dia entra como MARCADOR, não como a largura total da barra.
+          const STRAIN_MAX = 21;
+          const currentStrainPct = Math.max(
+            0,
+            Math.min(100, (cappedStrain / STRAIN_MAX) * 100)
+          );
+          const targetStrainPct = Math.max(
+            0,
+            Math.min(100, (strainTarget / STRAIN_MAX) * 100)
+          );
+          const overTarget = cappedStrain > strainTarget;
+
+          // Alavanca pra amanhã: gargalo validado (raro) OU sono vs SEU normal (descritivo, sem causa).
+          const fmtH = (h) => { const H = Math.floor(h); const M = Math.round((h - H) * 60); return M ? `${H}h${String(M).padStart(2, '0')}` : `${H}h`; };
+          const bn = analysis?.personalBottleneck;
+          const sleepBase = (() => {
+            const xs = (sortedCheckins || [])
+              .filter((c) => c.date !== today && Number(c?.sleep_hours) > 0)
+              .map((c) => Number(c.sleep_hours)).slice(0, 14);
+            return xs.length >= 3 ? xs.reduce((a, v) => a + v, 0) / xs.length : null;
+          })();
+          const lastSleep = Number(enrichedCheckin.sleep_hours) > 0 ? Number(enrichedCheckin.sleep_hours) : null;
+          const dMin = (lastSleep != null && sleepBase != null) ? Math.round((lastSleep - sleepBase) * 60) : null;
+
+          let lever;
+          if (bn?.hasSignal && bn.bottleneck) {
+            const b = bn.bottleneck;
+            const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
+            lever = isSleepH ? (
+              <>
+                <b className="text-amber-300">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
+              </>
+            ) : (
+              <>
+                <b className="text-amber-300">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
+              </>
+            );
+          } else if (lastSleep != null && sleepBase != null && dMin < -20) {
+            lever = <>Sem gargalo provado hoje. O desvio do dia foi o sono: <b>{fmtH(lastSleep)}</b>, {Math.abs(dMin)}min abaixo do seu normal (~{fmtH(sleepBase)}). Vale mirar seu normal amanhã.</>;
+          } else if (lastSleep != null && sleepBase != null) {
+            lever = <>Sem gargalo provado, e seus controláveis estão no seu normal. Nada pra ajustar — siga assim.</>;
+          } else {
+            lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
+          }
+
+          return (
+            <div className="rounded-2xl border border-border/40 bg-secondary/40 px-4 py-4 space-y-4">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400'
+                }`} />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
+              </div>
+
+              <p className="text-sm leading-snug">
+                <span className={toneClass}>{bodyClause}</span>, {autoClause} — {tail}
+              </p>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Quanto dá pra puxar
+                  </span>
+                  {cap && CAPACITY_PT[cap] ? (
+                    <span className="text-[11px] text-muted-foreground">
+                      sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b>
+                    </span>
+                  ) : null}
+                </div>
+
+                {/* barra absoluta 0–21; meta como marcador triangular + fill degradê */}
+                <div className="relative pt-5 mb-1">
+                  <div
+                    className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
+                    style={{ left: `${targetStrainPct}%` }}
+                  >
+                    <span className="text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap">
+                      META {strainTarget}
+                    </span>
+                    <span className="text-white/50 text-[7px] mt-px">▾</span>
+                  </div>
+                  <div className="relative h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-[width]"
+                      style={{
+                        width: `${currentStrainPct}%`,
+                        background: overTarget
+                          ? 'linear-gradient(90deg, hsl(35,80%,35%), hsl(25,95%,55%))'
+                          : 'linear-gradient(90deg, hsl(142,50%,25%), hsl(142,65%,48%))',
+                      }}
+                    />
+                    <div
+                      className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/60 rounded-full"
+                      style={{ left: `${targetStrainPct}%` }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[9px] font-mono text-muted-foreground/40">0</span>
+                    <span className="text-[9px] font-mono text-muted-foreground/40">21</span>
+                  </div>
+                </div>
+
+                <p className="text-[12px] text-muted-foreground leading-snug">
+                  Você está em <b>{cappedStrain}</b>. Bom puxar até <b>~{strainTarget}</b> ({(targetZoneLabel || '').toLowerCase()}); acima começa a cavar a recuperação de amanhã.
+                </p>
+              </div>
+
+
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
+                <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
+              </div>
+
+              {si != null && (
+                <CollapsibleHint>
+                  Baevsky {si}/100 · {AUTONOMIC_PT[autoKey] || 'modo estável'}{cap && CAPACITY_PT[cap] ? ` · capacidade ${CAPACITY_PT[cap].toLowerCase()}` : ''}
+                </CollapsibleHint>
+              )}
+            </div>
+          );
+        })()}
+
+        {capacityContradictionNote && (
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            {capacityContradictionNote}
+          </p>
+        )}
+      </div>
+
+      {phaseCfg.showCta && (
+        <button
+          onClick={() => setShowAddModal(true)}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
+            phaseCfg.ctaClass
+          )}
+        >
+          <CtaIcon className="w-4 h-4" />
+          {phaseCfg.ctaLabel}
+        </button>
+      )}
+    </motion.div>
+  );
+}
+
 export default function Today() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -754,7 +1194,23 @@ function renderCard(desc) {
 
     switch (desc.id) {
       case 'execution':
-        return <ExecutionCard key="execution" />;
+        return (
+          <ExecutionCard
+            key="execution"
+            displayedScore={displayedScore} enrichedCheckin={enrichedCheckin}
+            strainVsTarget={strainVsTarget} isRestMode={isRestMode} phase={phase}
+            phaseCfg={phaseCfg} isCalibrating={isCalibrating} dailyVerdict={dailyVerdict}
+            calibratingNightsLeft={calibratingNightsLeft} heroDynamicContext={heroDynamicContext}
+            baselineTier={baselineTier} priorHrvNights={priorHrvNights}
+            readinessFaixa={readinessFaixa} ringTrends={ringTrends}
+            recoveryBaseline={recoveryBaseline} cappedStrain={cappedStrain}
+            todaySessions={todaySessions} strainTarget={strainTarget} analysis={analysis}
+            sortedCheckins={sortedCheckins} today={today} targetZoneLabel={targetZoneLabel}
+            CAPACITY_PT={CAPACITY_PT} AUTONOMIC_PT={AUTONOMIC_PT}
+            capacityContradictionNote={capacityContradictionNote}
+            setShowAddModal={setShowAddModal} CtaIcon={CtaIcon}
+          />
+        );
 
       case 'workout': {
         // ZONA "Treino -> resposta do corpo" (decisao A da Etapa 3)
@@ -984,445 +1440,6 @@ if (hasPostWorkout) {
     }
   }
  
-// Explicação recolhível — mostra um botão "entender" que expande o texto ao toque.
-// Mesmo padrão visual das outras seções recolhíveis do app (SecondaryMetrics).
-function CollapsibleHint({ children, label = 'Entender' }) {
-  const [open, setOpen] = useState(false);
-  if (!children) return null;
-  return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
-      >
-        {label}
-        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown className="w-3 h-3" />
-        </motion.span>
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">{children}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function ExecutionCard() {
-  const [showProntidaoHint, setShowProntidaoHint] = useState(false);
-
-  const recoveryColor =
-    displayedScore >= 70
-    ? 'hsl(142,70%,50%)'
-    : displayedScore >= 42
-    ? 'hsl(45,93%,58%)'
-    : 'hsl(0,72%,55%)';
-  const recoveryCaptionColor =
-    displayedScore >= 70 ? 'text-emerald-400'
-    : displayedScore >= 42 ? 'text-yellow-400'
-    : 'text-red-400';
-
-  const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
-  const sleepColor =
-    sleepVal == null ? 'hsl(215,30%,55%)'
-    : sleepVal >= 80 ? 'hsl(205,90%,62%)'
-    : sleepVal >= 65 ? 'hsl(210,85%,55%)'
-    : 'hsl(222,60%,52%)';
-  const sleepWord =
-    sleepVal == null ? 'Sem dado'
-    : sleepVal >= 80 ? 'Ótimo'
-    : sleepVal >= 65 ? 'Bom'
-    : sleepVal >= 50 ? 'Regular'
-    : 'Baixo';
-  const sleepCaptionColor =
-    sleepVal == null ? 'text-muted-foreground'
-    : sleepVal >= 80 ? 'text-sky-400'
-    : sleepVal >= 65 ? 'text-blue-400'
-    : 'text-blue-500';
-
-  const strainColor = strainVsTarget.ring;
-  const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
-
-  return (
-    <motion.div
-      key={phase + '-card'}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn('relative overflow-hidden rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
-    >
-      {/* Scenic hero — fundo atmosférico com starfield + domain bloom (estilo Noop) */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 36%, hsl(220 25% 11%), hsl(220 20% 4%) 85%)' }} />
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 260" preserveAspectRatio="xMidYMin slice">
-          {[[23,18],[87,44],[141,12],[195,62],[263,28],[311,52],[349,8],[42,91],[108,72],[172,106],[238,85],[302,118],[67,142],[153,131],[217,155],[289,139],[31,38],[127,58],[201,22],[267,78]].map(([x,y],i) => (
-            <circle key={i} cx={x} cy={y} r={i%7===0?1.2:0.55} fill="white" opacity={i%4===0?0.32:0.14} />
-          ))}
-        </svg>
-        {!isCalibrating && (
-          <div
-            className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[140%] h-[100%] blur-2xl"
-            style={{ background: `radial-gradient(ellipse at center top, ${recoveryColor}, transparent 55%)`, opacity: 0.18 }}
-          />
-        )}
-        <div className="absolute inset-x-0 bottom-0 h-2/5" style={{ background: 'linear-gradient(to bottom, transparent, hsl(220 18% 7% / 0.8))' }} />
-      </div>
-      <div className="relative z-10 space-y-4">
-        {/* Decisão de hoje */}
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-               Decisão de hoje
-            </span>
-                        <h2 className="text-xl font-black mt-1 leading-tight">
-              {isCalibrating ? 'Calibrando seu baseline' : dailyVerdict.headline}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {isCalibrating
-                ? (calibratingNightsLeft > 0
-                    ? `Faltam ${calibratingNightsLeft} ${calibratingNightsLeft === 1 ? 'noite' : 'noites'} de HRV para o Recovery ficar confiável. Continue registrando — não vou inventar um número antes disso.`
-                    : 'Quase lá — mais uma leitura e o Recovery abre.')
-                : (heroDynamicContext?.heroLine || dailyVerdict.subheadline)}
-            </p>
-
-            {!isCalibrating && (
-              <span
-                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                  baselineTier === 'solido'
-                    ? 'bg-emerald-500/10 text-emerald-400/90'
-                    : 'bg-amber-500/10 text-amber-400/90'
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    baselineTier === 'solido' ? 'bg-emerald-400' : 'bg-amber-400'
-                  }`}
-                />
-                {baselineTier === 'solido'
-                  ? 'Baseline sólido'
-                  : `Baseline construindo · ${priorHrvNights}/14 noites`}
-              </span>
-            )}
-
-          </div>
-
-                      <span
-            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              isCalibrating
-                ? 'bg-muted text-muted-foreground'
-                : displayedScore >= 70
-                ? 'bg-emerald-500/15 text-emerald-400'
-                : displayedScore >= 42
-                ? 'bg-yellow-500/15 text-yellow-400'
-                : 'bg-red-500/15 text-red-400'
-            }`}
-          >
-            {isCalibrating ? 'Calibrando' : readinessFaixa}
-          </span>
-
-        </div>
-
-        {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
-        <div className="flex flex-col items-center pt-1">
-          <MiniRing
-            value={isCalibrating ? null : displayedScore}
-            max={100}
-            color={recoveryColor}
-            label="Recovery"
-            caption={isCalibrating ? 'Calibrando' : readinessFaixa}
-            captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
-            trend={isCalibrating ? [] : ringTrends.recovery}
-            size={150}
-            zoneTicks={[0.42, 0.70]}
-            baselineMark={isCalibrating ? null : recoveryBaseline}
-            animateCount
-          />
-
-          <div className="flex justify-center gap-10 mt-3">
-            <MiniRing
-              value={sleepVal}
-              max={100}
-              color={sleepColor}
-              label="Sono"
-              caption={sleepWord}
-              captionColor={sleepCaptionColor}
-              trend={[]}
-              size={82}
-            />
-            <MiniRing
-              value={cappedStrain}
-              displayValue={cappedStrain}
-              max={21}
-              color={strainColor}
-              label="Strain"
-              caption={strainCaption}
-              captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
-              trend={[]}
-              size={82}
-            />
-          </div>
-        </div>
-
-        {/* Entender os anéis (toque — funciona no iPhone) */}
-        <div className="flex justify-center -mt-1">
-          <button
-            type="button"
-            aria-expanded={showProntidaoHint}
-            onClick={() => setShowProntidaoHint((v) => !v)}
-            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Info className="w-3 h-3" />
-            Entender os anéis
-            <motion.span animate={{ rotate: showProntidaoHint ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown className="w-3 h-3" />
-            </motion.span>
-          </button>
-        </div>
-        <AnimatePresence initial={false}>
-          {showProntidaoHint && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
-                <p className="text-[11px] leading-relaxed">
-                  <span className="font-semibold text-foreground">Recovery</span>{' '}
-                  <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
-                </p>
-                <p className="text-[11px] leading-relaxed">
-                  <span className="font-semibold text-foreground">Sono</span>{' '}
-                  <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
-                </p>
-                <p className="text-[11px] leading-relaxed">
-                  <span className="font-semibold text-foreground">Strain</span>{' '}
-                  <span className="text-muted-foreground">— esforço acumulado hoje (0–21). É separado do recovery e comparado à meta sugerida para o dia.</span>
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {heroDynamicContext ? (
-          <div
-            className={cn(
-              'px-3 py-2.5 rounded-xl border text-xs leading-snug',
-              getHeroDynamicToneClass(heroDynamicContext.tone)
-            )}
-          >
-            <span className="font-semibold">
-              {heroDynamicContext.title}:
-            </span>{' '}
-            {heroDynamicContext.text}
-          </div>
-        ) : (
-          !todaySessions.length && !isRestMode && (
-            <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
-              <span className="font-semibold text-primary">Linha do dia:</span>{' '}
-              {isCalibrating
-                ? 'ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
-                : displayedScore >= 70
-                ? 'recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
-                : displayedScore >= 42
-                ? 'recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
-                : 'recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
-            </div>
-          )
-        )}
-
-        {!heroDynamicContext &&
-          phase !== 'RECOVERY_DAY' &&
-          phase !== 'OVERLOAD' &&
-          dailyVerdict.caution && (
-            <div className="px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/40 text-xs leading-snug">
-              <span className="font-semibold">O que pede controle hoje:</span> {dailyVerdict.caution}
-            </div>
-          )}
-
-        {/* LEITURA DE HOJE — estado do corpo + modo autonômico + orçamento + alavanca, num card só */}
-        {!isCalibrating && enrichedCheckin.current_body_state && (() => {
-          const bodyKey = enrichedCheckin.current_body_state;
-          const autoKey = enrichedCheckin.autonomic_state || 'balanced';
-          const si = enrichedCheckin.baevsky_si;
-          const cap = enrichedCheckin.remaining_capacity;
-
-          // Frase fundida estado + modo (cobre bom E ruim, nunca só elogio).
-          const bodyClause = {
-            Recovered: 'Corpo recuperado', Activated: 'Corpo ativado',
-            Balanced: 'Corpo equilibrado', Loaded: 'Corpo carregado',
-            Sympathetic_Load: 'Corpo sob carga simpática', Fatigued: 'Corpo fatigado',
-            Overreached: 'Corpo em sobrecarga',
-          }[bodyKey] || 'Corpo estável';
-          const autoClause = {
-            parasympathetic: 'sistema nervoso em recuperação',
-            balanced: 'sistema nervoso calmo',
-            sympathetic: 'sistema nervoso em alerta',
-          }[autoKey] || 'sistema nervoso estável';
-          const tail =
-            displayedScore >= 70 ? 'dá pra puxar hoje.' :
-            displayedScore >= 42 ? 'dá pra treinar com controle.' :
-            'hoje é segurar.';
-          const toneClass =
-            displayedScore >= 70 ? 'text-emerald-400' :
-            displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
-
-          // Escala ABSOLUTA de strain (0–21), alinhada ao anel.
-          // A meta do dia entra como MARCADOR, não como a largura total da barra.
-          const STRAIN_MAX = 21;
-          const currentStrainPct = Math.max(
-            0,
-            Math.min(100, (cappedStrain / STRAIN_MAX) * 100)
-          );
-          const targetStrainPct = Math.max(
-            0,
-            Math.min(100, (strainTarget / STRAIN_MAX) * 100)
-          );
-          const overTarget = cappedStrain > strainTarget;
-
-          // Alavanca pra amanhã: gargalo validado (raro) OU sono vs SEU normal (descritivo, sem causa).
-          const fmtH = (h) => { const H = Math.floor(h); const M = Math.round((h - H) * 60); return M ? `${H}h${String(M).padStart(2, '0')}` : `${H}h`; };
-          const bn = analysis?.personalBottleneck;
-          const sleepBase = (() => {
-            const xs = (sortedCheckins || [])
-              .filter((c) => c.date !== today && Number(c?.sleep_hours) > 0)
-              .map((c) => Number(c.sleep_hours)).slice(0, 14);
-            return xs.length >= 3 ? xs.reduce((a, v) => a + v, 0) / xs.length : null;
-          })();
-          const lastSleep = Number(enrichedCheckin.sleep_hours) > 0 ? Number(enrichedCheckin.sleep_hours) : null;
-          const dMin = (lastSleep != null && sleepBase != null) ? Math.round((lastSleep - sleepBase) * 60) : null;
-
-          let lever;
-          if (bn?.hasSignal && bn.bottleneck) {
-            const b = bn.bottleneck;
-            const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
-            lever = isSleepH ? (
-              <>
-                <b className="text-amber-300">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
-              </>
-            ) : (
-              <>
-                <b className="text-amber-300">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
-              </>
-            );
-          } else if (lastSleep != null && sleepBase != null && dMin < -20) {
-            lever = <>Sem gargalo provado hoje. O desvio do dia foi o sono: <b>{fmtH(lastSleep)}</b>, {Math.abs(dMin)}min abaixo do seu normal (~{fmtH(sleepBase)}). Vale mirar seu normal amanhã.</>;
-          } else if (lastSleep != null && sleepBase != null) {
-            lever = <>Sem gargalo provado, e seus controláveis estão no seu normal. Nada pra ajustar — siga assim.</>;
-          } else {
-            lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
-          }
-
-          return (
-            <div className="rounded-2xl border border-border/40 bg-secondary/40 px-4 py-4 space-y-4">
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400'
-                }`} />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
-              </div>
-
-              <p className="text-sm leading-snug">
-                <span className={toneClass}>{bodyClause}</span>, {autoClause} — {tail}
-              </p>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Quanto dá pra puxar
-                  </span>
-                  {cap && CAPACITY_PT[cap] ? (
-                    <span className="text-[11px] text-muted-foreground">
-                      sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b>
-                    </span>
-                  ) : null}
-                </div>
-
-                {/* barra absoluta 0–21; meta como marcador triangular + fill degradê */}
-                <div className="relative pt-5 mb-1">
-                  <div
-                    className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
-                    style={{ left: `${targetStrainPct}%` }}
-                  >
-                    <span className="text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap">
-                      META {strainTarget}
-                    </span>
-                    <span className="text-white/50 text-[7px] mt-px">▾</span>
-                  </div>
-                  <div className="relative h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-[width]"
-                      style={{
-                        width: `${currentStrainPct}%`,
-                        background: overTarget
-                          ? 'linear-gradient(90deg, hsl(35,80%,35%), hsl(25,95%,55%))'
-                          : 'linear-gradient(90deg, hsl(142,50%,25%), hsl(142,65%,48%))',
-                      }}
-                    />
-                    <div
-                      className="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/60 rounded-full"
-                      style={{ left: `${targetStrainPct}%` }}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-[9px] font-mono text-muted-foreground/40">0</span>
-                    <span className="text-[9px] font-mono text-muted-foreground/40">21</span>
-                  </div>
-                </div>
-
-                <p className="text-[12px] text-muted-foreground leading-snug">
-                  Você está em <b>{cappedStrain}</b>. Bom puxar até <b>~{strainTarget}</b> ({(targetZoneLabel || '').toLowerCase()}); acima começa a cavar a recuperação de amanhã.
-                </p>
-              </div>
-
-
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
-                <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
-              </div>
-
-              {si != null && (
-                <CollapsibleHint>
-                  Baevsky {si}/100 · {AUTONOMIC_PT[autoKey] || 'modo estável'}{cap && CAPACITY_PT[cap] ? ` · capacidade ${CAPACITY_PT[cap].toLowerCase()}` : ''}
-                </CollapsibleHint>
-              )}
-            </div>
-          );
-        })()}
-
-        {capacityContradictionNote && (
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            {capacityContradictionNote}
-          </p>
-        )}
-      </div>
-
-      {phaseCfg.showCta && (
-        <button
-          onClick={() => setShowAddModal(true)}
-          className={cn(
-            'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
-            phaseCfg.ctaClass
-          )}
-        >
-          <CtaIcon className="w-4 h-4" />
-          {phaseCfg.ctaLabel}
-        </button>
-      )}
-    </motion.div>
-  );
-}
 
 const prefs = user?.preferences || {};
 const missingSettings = [];
