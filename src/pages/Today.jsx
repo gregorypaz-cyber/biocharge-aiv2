@@ -260,7 +260,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
   const recoveryCaptionColor =
     displayedScore >= 70 ? 'text-zone-green'
     : displayedScore >= 42 ? 'text-zone-amber'
-    : 'text-red-400';
+    : 'text-zone-orange';
 
   const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
   const sleepColor =
@@ -357,7 +357,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                 ? 'bg-zone-green/15 text-zone-green'
                 : displayedScore >= 42
                 ? 'bg-zone-amber/15 text-zone-amber'
-                : 'bg-red-500/15 text-red-400'
+                : 'bg-zone-orange/15 text-zone-orange'
             }`}
           >
             {isCalibrating ? 'Calibrando' : readinessFaixa}
@@ -994,7 +994,7 @@ export default function Today() {
       return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta: ${targetLabelNum}` };
     }
     if (curZone.key === 'esgotamento') {
-      return { color: 'text-red-400', ring: 'hsl(0,84%,60%)', short: 'Esgotamento — recupere' };
+      return { color: 'text-zone-red', ring: 'hsl(0,84%,60%)', short: 'Esgotamento — recupere' };
     }
     if (targetZoneKey === 'recuperacao') {
       return curZone.key === 'leve'
@@ -1414,11 +1414,11 @@ function renderCard(desc) {
             key="recovery_demand"
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
+            className="rounded-2xl border border-zone-red/30 bg-zone-red/8 p-4 flex gap-3"
           >
-            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-zone-red shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-red-400">
+              <p className="text-sm font-semibold text-zone-red">
                 Carga acima da recuperação disponível
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
