@@ -480,14 +480,38 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             </div>
           )}
 
-        {/* LEITURA DE HOJE — estado do corpo + modo autonômico + orçamento + alavanca, num card só */}
-        {!isCalibrating && enrichedCheckin.current_body_state && (() => {
+        {capacityContradictionNote && (
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            {capacityContradictionNote}
+          </p>
+        )}
+      </div>
+
+      {phaseCfg.showCta && (
+        <button
+          onClick={() => setShowAddModal(true)}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
+            phaseCfg.ctaClass
+          )}
+        >
+          <CtaIcon className="w-4 h-4" />
+          {phaseCfg.ctaLabel}
+        </button>
+      )}
+    </motion.div>
+  );
+}
+
+function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strainTarget, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, analysis, sortedCheckins, today, isCalibrating }) {
+  const [open, setOpen] = useState(false);
+  if (isCalibrating || !enrichedCheckin?.current_body_state) return null;
+
           const bodyKey = enrichedCheckin.current_body_state;
           const autoKey = enrichedCheckin.autonomic_state || 'balanced';
           const si = enrichedCheckin.baevsky_si;
           const cap = enrichedCheckin.remaining_capacity;
 
-          // Frase fundida estado + modo (cobre bom E ruim, nunca só elogio).
           const bodyClause = {
             Recovered: 'Corpo recuperado', Activated: 'Corpo ativado',
             Balanced: 'Corpo equilibrado', Loaded: 'Corpo carregado',
@@ -507,20 +531,11 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             displayedScore >= 70 ? 'text-emerald-400' :
             displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
 
-          // Escala ABSOLUTA de strain (0–21), alinhada ao anel.
-          // A meta do dia entra como MARCADOR, não como a largura total da barra.
           const STRAIN_MAX = 21;
-          const currentStrainPct = Math.max(
-            0,
-            Math.min(100, (cappedStrain / STRAIN_MAX) * 100)
-          );
-          const targetStrainPct = Math.max(
-            0,
-            Math.min(100, (strainTarget / STRAIN_MAX) * 100)
-          );
+          const currentStrainPct = Math.max(0, Math.min(100, (cappedStrain / STRAIN_MAX) * 100));
+          const targetStrainPct = Math.max(0, Math.min(100, (strainTarget / STRAIN_MAX) * 100));
           const overTarget = cappedStrain > strainTarget;
 
-          // Alavanca pra amanhã: gargalo validado (raro) OU sono vs SEU normal (descritivo, sem causa).
           const fmtH = (h) => { const H = Math.floor(h); const M = Math.round((h - H) * 60); return M ? `${H}h${String(M).padStart(2, '0')}` : `${H}h`; };
           const bn = analysis?.personalBottleneck;
           const sleepBase = (() => {
@@ -553,15 +568,37 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
           }
 
-          return (
-            <div className="rounded-2xl border border-border/40 bg-secondary/40 px-4 py-4 space-y-4">
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400'
-                }`} />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Leitura de hoje</p>
-              </div>
+  const dotColor = displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400';
 
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Leitura de hoje</span>
+          {!open && (
+            <span className={`text-xs truncate ${toneClass}`}>{bodyClause}</span>
+          )}
+        </span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0 text-muted-foreground">
+          <ChevronDown className="w-4 h-4" />
+        </motion.span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-4">
               <p className="text-sm leading-snug">
                 <span className={toneClass}>{bodyClause}</span>, {autoClause} — {tail}
               </p>
@@ -578,7 +615,6 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                   ) : null}
                 </div>
 
-                {/* barra absoluta 0–21; meta como marcador triangular + fill degradê */}
                 <div className="relative pt-5 mb-1">
                   <div
                     className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
@@ -616,7 +652,6 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                 </p>
               </div>
 
-
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
                 <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
@@ -628,29 +663,10 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                 </CollapsibleHint>
               )}
             </div>
-          );
-        })()}
-
-        {capacityContradictionNote && (
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
-            {capacityContradictionNote}
-          </p>
+          </motion.div>
         )}
-      </div>
-
-      {phaseCfg.showCta && (
-        <button
-          onClick={() => setShowAddModal(true)}
-          className={cn(
-            'w-full flex items-center justify-center gap-2 h-12 rounded-2xl font-semibold text-sm transition-all',
-            phaseCfg.ctaClass
-          )}
-        >
-          <CtaIcon className="w-4 h-4" />
-          {phaseCfg.ctaLabel}
-        </button>
-      )}
-    </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -1195,6 +1211,7 @@ function renderCard(desc) {
     switch (desc.id) {
       case 'execution':
         return (
+          <>
           <ExecutionCard
             key="execution"
             displayedScore={displayedScore} enrichedCheckin={enrichedCheckin}
@@ -1210,6 +1227,15 @@ function renderCard(desc) {
             capacityContradictionNote={capacityContradictionNote}
             setShowAddModal={setShowAddModal} CtaIcon={CtaIcon}
           />
+          <TodayReadingCard
+            displayedScore={displayedScore} enrichedCheckin={enrichedCheckin}
+            cappedStrain={cappedStrain} strainTarget={strainTarget}
+            targetZoneLabel={targetZoneLabel} CAPACITY_PT={CAPACITY_PT}
+            AUTONOMIC_PT={AUTONOMIC_PT} analysis={analysis}
+            sortedCheckins={sortedCheckins} today={today}
+            isCalibrating={isCalibrating}
+          />
+          </>
         );
 
       case 'workout': {
