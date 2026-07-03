@@ -188,8 +188,23 @@ function dimHsl(hsl) {
   return `hsl(${m[1]},${Math.max(10, parseFloat(m[2]) * 0.5).toFixed(0)}%,${Math.max(8, parseFloat(m[3]) * 0.38).toFixed(0)}%)`;
 }
 
-function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [], zoneTicks = null, baselineMark = null }) {
+function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [], zoneTicks = null, baselineMark = null, animateCount = false }) {
   const stroke = size >= 130 ? 11 : size <= 90 ? 6 : 8;
+  const [countVal, setCountVal] = useState(animateCount ? 0 : null);
+  useEffect(() => {
+    if (!animateCount) return;
+    const target = displayValue != null ? displayValue : value;
+    if (typeof target !== 'number') { setCountVal(null); return; }
+    let raf; const dur = 1000; const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCountVal(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [animateCount, value, displayValue]);
   const R = (size - stroke) / 2 - 2;
   const c = size / 2;
   const C = 2 * Math.PI * R;
@@ -267,7 +282,7 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
             className="font-black font-mono leading-none tracking-tight"
             style={{ color: hasValue ? color : 'hsl(215,15%,55%)', fontSize: size >= 130 ? '2.9rem' : size <= 90 ? '1.4rem' : '1.875rem' }}
           >
-            {hasValue ? (displayValue != null ? displayValue : value) : '—'}
+            {hasValue ? (animateCount && countVal != null ? countVal : (displayValue != null ? displayValue : value)) : '—'}
           </span>
         </div>
       </div>
@@ -1442,6 +1457,7 @@ function ExecutionCard() {
             size={150}
             zoneTicks={[0.42, 0.70]}
             baselineMark={isCalibrating ? null : recoveryBaseline}
+            animateCount
           />
 
           <div className="flex justify-center gap-10 mt-3">
