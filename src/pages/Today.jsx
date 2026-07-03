@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, Flame } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import {
@@ -1068,7 +1068,8 @@ const AUTONOMIC_PT = {
       accentBorder: 'border-blue-500/20',
       accentBg: 'bg-card',
       bannerClass: 'border-orange-500/30 bg-orange-500/5 text-orange-400',
-      bannerText: '⚡ Sua carga já chegou num ponto em que mais treino tende a render menos recuperação amanhã.',
+      bannerText: 'Sua carga já chegou num ponto em que mais treino tende a render menos recuperação amanhã.',
+      bannerIcon: Zap,
     },
     RECOVERY_DAY: {
       headerTitle: 'Hoje',
@@ -1080,7 +1081,8 @@ const AUTONOMIC_PT = {
       accentBorder: 'border-blue-500/15',
       accentBg: 'bg-card',
       bannerClass: 'border-blue-500/25 bg-blue-500/5 text-blue-300',
-      bannerText: '🌙 Hoje o melhor retorno vem de reduzir estresse, recuperar energia e dormir bem.',
+      bannerText: 'Hoje o melhor retorno vem de reduzir estresse, recuperar energia e dormir bem.',
+      bannerIcon: Moon,
     },
   };
 
@@ -1296,7 +1298,7 @@ function renderCard(desc) {
 
           const resume = [
             yWorkout.sport,
-            yWorkout.strain_score != null ? `⚡${yWorkout.strain_score}` : null,
+            yWorkout.strain_score != null ? `Strain ${yWorkout.strain_score}` : null,
             yWorkout.heart_rate_avg ? `FC ${Math.round(yWorkout.heart_rate_avg)}` : null,
             yWorkout.training_effect_aerobic ? `Efeito ${yWorkout.training_effect_aerobic}` : null,
           ]
@@ -1414,7 +1416,7 @@ function renderCard(desc) {
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-2xl border border-red-500/30 bg-red-500/8 p-4 flex gap-3"
           >
-            <span className="text-xl">🚨</span>
+            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-red-400">
                 Carga acima da recuperação disponível
@@ -1447,7 +1449,7 @@ if (hasPostWorkout) {
       className="flex items-center justify-between p-4 rounded-2xl border border-primary/25 bg-primary/5 hover:bg-primary/10 transition-colors"
     >
       <div className="flex items-center gap-3">
-        <span className="text-lg">🏁</span>
+        <Flag className="w-5 h-5 text-primary shrink-0" />
 
         <div>
           <p className="text-sm font-semibold">
@@ -1460,7 +1462,7 @@ if (hasPostWorkout) {
         </div>
       </div>
 
-      <span className="text-primary text-sm font-bold">→</span>
+      <ChevronRight className="w-4 h-4 text-primary shrink-0" />
     </Link>
   );
 }
@@ -1577,7 +1579,7 @@ if (isLoading) {
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
             title={`${streak} dias seguidos`}
           >
-            <span className="text-sm leading-none">🔥</span>
+            <Flame className="w-3.5 h-3.5 text-orange-400" />
             <span className="text-xs font-bold text-orange-400">{streak}</span>
           </Link>
         )}
@@ -1588,9 +1590,10 @@ if (isLoading) {
           key={advisoryPhase + (userRest ? '-rest' : '-adv')}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
-          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium', bannerCfg.bannerClass)}
+          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium flex items-start gap-2', bannerCfg.bannerClass)}
         >
-          {bannerCfg.bannerText}
+          {bannerCfg.bannerIcon && <bannerCfg.bannerIcon className="w-4 h-4 shrink-0 mt-px" />}
+          <span>{bannerCfg.bannerText}</span>
         </motion.div>
       )}
 
