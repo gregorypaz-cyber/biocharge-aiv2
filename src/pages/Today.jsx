@@ -72,7 +72,7 @@ function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions,
 
 function getHeroDynamicToneClass(tone) {
   if (tone === 'warning') {
-    return 'bg-yellow-500/8 border-yellow-500/20 text-yellow-100';
+    return 'bg-zone-amber/8 border-zone-amber/20 text-zone-amber';
   }
 
   if (tone === 'positive') {
@@ -259,7 +259,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'hsl(0,72%,55%)';
   const recoveryCaptionColor =
     displayedScore >= 70 ? 'text-zone-green'
-    : displayedScore >= 42 ? 'text-yellow-400'
+    : displayedScore >= 42 ? 'text-zone-amber'
     : 'text-red-400';
 
   const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
@@ -356,7 +356,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                 : displayedScore >= 70
                 ? 'bg-zone-green/15 text-zone-green'
                 : displayedScore >= 42
-                ? 'bg-yellow-500/15 text-yellow-400'
+                ? 'bg-zone-amber/15 text-zone-amber'
                 : 'bg-red-500/15 text-red-400'
             }`}
           >
@@ -533,7 +533,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             'hoje é segurar.';
           const toneClass =
             displayedScore >= 70 ? 'text-zone-green' :
-            displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
+            displayedScore >= 42 ? 'text-zone-amber' : 'text-orange-400';
 
           const STRAIN_MAX = 21;
           const currentStrainPct = Math.max(0, Math.min(100, (cappedStrain / STRAIN_MAX) * 100));
@@ -572,7 +572,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
           }
 
-  const dotColor = displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400';
+  const dotColor = displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-amber' : 'bg-orange-400';
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
@@ -1328,7 +1328,7 @@ function renderCard(desc) {
                     <p
                       className={cn(
                         'text-base font-black font-mono leading-none mt-1',
-                        p.good ? 'text-zone-green' : 'text-yellow-400'
+                        p.good ? 'text-zone-green' : 'text-zone-amber'
                       )}
                     >
                       {p.v}
@@ -1644,7 +1644,7 @@ if (isLoading) {
       </SecondaryMetrics>
 
       {analysisError && (
-        <p className="text-[11px] text-yellow-400/80 px-1">
+        <p className="text-[11px] text-zone-amber/80 px-1">
           Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
         </p>
       )}
