@@ -93,8 +93,23 @@ function dimHsl(hsl) {
   return `hsl(${m[1]},${Math.max(10, parseFloat(m[2]) * 0.5).toFixed(0)}%,${Math.max(8, parseFloat(m[3]) * 0.38).toFixed(0)}%)`;
 }
 
-function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [] }) {
-  const stroke = 8;
+function MiniRing({ value, displayValue, max = 100, color, label, caption, captionColor, size = 104, trend = [], zoneTicks = null, baselineMark = null, animateCount = false }) {
+  const stroke = size >= 130 ? 11 : size <= 90 ? 6 : 8;
+  const [countVal, setCountVal] = useState(animateCount ? 0 : null);
+  useEffect(() => {
+    if (!animateCount) return;
+    const target = displayValue != null ? displayValue : value;
+    if (typeof target !== 'number') { setCountVal(null); return; }
+    let raf; const dur = 1000; const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setCountVal(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [animateCount, value, displayValue]);
   const R = (size - stroke) / 2 - 2;
   const c = size / 2;
   const C = 2 * Math.PI * R;
@@ -149,15 +164,30 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
                   transition={{ delay: 0.85, duration: 0.3 }}
                 />
               )}
+              {/* Ticks de zona + marcador de baseline (só o herói passa essas props) */}
+              {zoneTicks && zoneTicks.map((f, i) => {
+                const a = f * 2 * Math.PI;
+                const ix = c + (R - 5) * Math.cos(a), iy = c + (R - 5) * Math.sin(a);
+                const ox = c + (R + 5) * Math.cos(a), oy = c + (R + 5) * Math.sin(a);
+                return <line key={`zt${i}`} x1={ix} y1={iy} x2={ox} y2={oy} stroke="hsl(215,16%,42%)" strokeWidth="2" strokeLinecap="round" />;
+              })}
+              {baselineMark != null && (() => {
+                const a = (baselineMark / max) * 2 * Math.PI;
+                const dd = 0.09;
+                const apx = c + (R - 1) * Math.cos(a), apy = c + (R - 1) * Math.sin(a);
+                const b1x = c + (R + 6) * Math.cos(a + dd), b1y = c + (R + 6) * Math.sin(a + dd);
+                const b2x = c + (R + 6) * Math.cos(a - dd), b2y = c + (R + 6) * Math.sin(a - dd);
+                return <polygon points={`${apx},${apy} ${b1x},${b1y} ${b2x},${b2y}`} fill="hsl(210,14%,86%)" />;
+              })()}
             </>
           )}
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="text-3xl font-black font-mono leading-none tracking-tight"
-            style={{ color: hasValue ? color : 'hsl(215,15%,55%)' }}
+            className="font-black font-mono leading-none tracking-tight"
+            style={{ color: hasValue ? color : 'hsl(215,15%,55%)', fontSize: size >= 130 ? '2.9rem' : size <= 90 ? '1.4rem' : '1.875rem' }}
           >
-            {hasValue ? (displayValue != null ? displayValue : value) : '—'}
+            {hasValue ? (animateCount && countVal != null ? countVal : (displayValue != null ? displayValue : value)) : '—'}
           </span>
         </div>
       </div>
@@ -327,6 +357,12 @@ export default function Today() {
 
   const last7Checkins = sortedCheckins.filter((c) => c.date !== today).slice(0, 7);
 
+  // baseline de recovery (média 7d, exclui hoje) — alimenta o marcador ▲ do anel herói
+  const recoveryBaseline = (() => {
+    const vals = last7Checkins.map((c) => c.recovery_score).filter((v) => v != null);
+    return vals.length >= 3 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+  })();
+
   const ringTrends = useMemo(() => {
     const chrono = [...last7Checkins].reverse(); // mais antigo → mais recente
     return {
@@ -387,7 +423,7 @@ export default function Today() {
       !!rawCheckin.rest_day || enrichedCheckin?.decision_mode === 'recover';
     if (isRecoveryDay) return null;
 
-    const bio = rawCheckin.biocharge_morning ?? 0;
+    const bio = rawCheckin.recovery_score ?? 0; // recovery v3, não o composto Zepp (biocharge_morning)
     const cap = enrichedCheckin?.remaining_capacity;
     const sleep = rawCheckin.sleep_quality ?? rawCheckin.sleep_score ?? 100;
 
@@ -1095,9 +1131,9 @@ function ExecutionCard() {
 
         </div>
 
-        {/* TRIO DE ANÉIS — Recovery / Sono / Strain */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
-                      <MiniRing
+        {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
+        <div className="flex flex-col items-center pt-1">
+          <MiniRing
             value={isCalibrating ? null : displayedScore}
             max={100}
             color={recoveryColor}
@@ -1105,27 +1141,35 @@ function ExecutionCard() {
             caption={isCalibrating ? 'Calibrando' : readinessFaixa}
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
             trend={isCalibrating ? [] : ringTrends.recovery}
+            size={150}
+            zoneTicks={[0.42, 0.70]}
+            baselineMark={isCalibrating ? null : recoveryBaseline}
+            animateCount
           />
 
-          <MiniRing
-            value={sleepVal}
-            max={100}
-            color={sleepColor}
-            label="Sono"
-            caption={sleepWord}
-            captionColor={sleepCaptionColor}
-            trend={ringTrends.sono}
-          />
-          <MiniRing
-            value={cappedStrain}
-            displayValue={cappedStrain}
-            max={21}
-            color={strainColor}
-            label="Strain"
-            caption={strainCaption}
-            captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
-            trend={ringTrends.strain}
-          />
+          <div className="flex justify-center gap-10 mt-3">
+            <MiniRing
+              value={sleepVal}
+              max={100}
+              color={sleepColor}
+              label="Sono"
+              caption={sleepWord}
+              captionColor={sleepCaptionColor}
+              trend={[]}
+              size={82}
+            />
+            <MiniRing
+              value={cappedStrain}
+              displayValue={cappedStrain}
+              max={21}
+              color={strainColor}
+              label="Strain"
+              caption={strainCaption}
+              captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
+              trend={[]}
+              size={82}
+            />
+          </div>
         </div>
 
         {/* Entender os anéis (toque — funciona no iPhone) */}

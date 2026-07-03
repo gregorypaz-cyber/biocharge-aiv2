@@ -881,11 +881,11 @@ export function normalizeDailySignals(checkinLike, recentCheckins = []) {
   const recoveryHighThreshold = getPersonalHighRecovery(recentCheckins);
   const masterSignal = getDailyMasterSignal(checkinLike, recoveryHighThreshold);
 
-  const zone =
-    masterSignal === 'train_high' ? 'green' :
-    masterSignal === 'train_moderate' ? 'yellow' :
-    masterSignal === 'train_light' ? 'yellow' :
-    'red';
+  // zone = ESTADO de recuperação (getZone do recovery_score), NÃO a dose de treino.
+  // Antes derivava de masterSignal → um dia com recovery 73 (verde ≥70) mas abaixo do
+  // seu limiar-alto pessoal virava train_moderate e era salvo como 'yellow'. getZone é
+  // null-safe (score null → 'red' via clamp, mesmo comportamento de calibração de antes).
+  const zone = getZone(checkinLike?.recovery_score);
 
   return {
     ...checkinLike,

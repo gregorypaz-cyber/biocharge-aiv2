@@ -10,7 +10,7 @@ import { QUERY_KEYS } from '@/lib/query-keys';
 export function useUserCheckins(limit = 60) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: QUERY_KEYS.checkins(user?.email),
+    queryKey: QUERY_KEYS.checkins(user?.email, limit),
     queryFn: () => base44.entities.DailyCheckin.filter({ created_by: user.email }, '-date', limit),
     enabled: !!user?.email,
   });
@@ -19,7 +19,7 @@ export function useUserCheckins(limit = 60) {
 export function useUserTrainingSessions(limit = 200) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: QUERY_KEYS.trainingSessions(user?.email),
+    queryKey: QUERY_KEYS.trainingSessions(user?.email, limit),
     queryFn: () => base44.entities.TrainingSession.filter({ created_by: user.email }, '-date', limit),
     enabled: !!user?.email,
   });

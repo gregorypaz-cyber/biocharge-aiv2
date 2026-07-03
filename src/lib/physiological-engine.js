@@ -312,8 +312,8 @@ export function getPhysiologicalState(today, baseline, trainingLoad, sleepDebt) 
   const hrv = today.hrv;
   const rhr = today.resting_hr;
   const stress = today.stress || 3;
-  const recovery = today.recovery_score || 50;
-  const fatigueScore = today.fatigue_score || 50;
+  const recovery = today.recovery_score ?? 50;   // ?? (não ||): um recovery legítimo de 0 não pode virar 50
+  const fatigueScore = today.fatigue_score ?? 50;
   const baseHrv = baseline?.hrv?.d14 || baseline?.hrv?.d7;
   const baseRhr = baseline?.rhr?.d14 || baseline?.rhr?.d7;
 
@@ -1766,6 +1766,15 @@ export function detectLongTermTrends(checkins) {
     String(a.date).localeCompare(String(b.date))
   );
 
+  // Série RMSSDmean 7d: para cada posição i, média dos últimos RMSSD_MEAN_WINDOW dias
+  const rmssdMean7d = chrono.map((_, i) => {
+    const win = chrono
+      .slice(Math.max(0, i - C.RMSSD_MEAN_WINDOW + 1), i + 1)
+      .map((c) => c.hrv)
+      .filter((v) => v != null && v > 0);
+    return win.length >= C.RMSSD_MEAN_WINDOW ? win.reduce((a, b) => a + b, 0) / win.length : null;
+  });
+
   // higherIsBetter define o sentimento da direção
   // IMPORTANTE: usamos apenas DADOS CRUS do Zepp, cuja definição nunca mudou.
   // O recovery_score foi recalibrado (mudança de fórmula) ao longo do histórico,
@@ -1776,11 +1785,14 @@ export function detectLongTermTrends(checkins) {
     { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
     { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', higherIsBetter: true, icon: '😴' },
     { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', higherIsBetter: true, icon: '🌙' },
+    { key: '_rmssd7', label: 'Tendência do HRV (7 dias)', unit: 'ms', higherIsBetter: true, icon: '📈' },
   ];
   const results = [];
 
   for (const m of metrics) {
-    const series = chrono.map((c) => c[m.key]);
+    const series = m.key === '_rmssd7'
+      ? rmssdMean7d
+      : chrono.map((c) => c[m.key]);
     const t = _linearTrend(series);
     if (!t.ready) continue;
 
