@@ -533,7 +533,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             'hoje é segurar.';
           const toneClass =
             displayedScore >= 70 ? 'text-zone-green' :
-            displayedScore >= 42 ? 'text-zone-amber' : 'text-orange-400';
+            displayedScore >= 42 ? 'text-zone-amber' : 'text-zone-orange';
 
           const STRAIN_MAX = 21;
           const currentStrainPct = Math.max(0, Math.min(100, (cappedStrain / STRAIN_MAX) * 100));
@@ -572,7 +572,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
           }
 
-  const dotColor = displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-amber' : 'bg-orange-400';
+  const dotColor = displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-amber' : 'bg-zone-orange';
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
@@ -999,12 +999,12 @@ export default function Today() {
     if (targetZoneKey === 'recuperacao') {
       return curZone.key === 'leve'
         ? { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
-        : { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
+        : { color: 'text-zone-orange', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
     if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} → ${strainTarget}` };
     if (diff === 0) return { color: 'text-zone-green', ring: 'hsl(142,70%,50%)', short: `Na zona · meta ${strainTarget}` };
-    return { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} → ${strainTarget}` };
+    return { color: 'text-zone-orange', ring: 'hsl(25,95%,58%)', short: `${curZone.label} → ${strainTarget}` };
   })();
 
   const dayMetrics = enrichedCheckin
@@ -1067,7 +1067,7 @@ const AUTONOMIC_PT = {
       showCta: false,
       accentBorder: 'border-blue-500/20',
       accentBg: 'bg-card',
-      bannerClass: 'border-orange-500/30 bg-orange-500/5 text-orange-400',
+      bannerClass: 'border-zone-orange/30 bg-zone-orange/5 text-zone-orange',
       bannerText: 'Sua carga já chegou num ponto em que mais treino tende a render menos recuperação amanhã.',
       bannerIcon: Zap,
     },
@@ -1576,11 +1576,11 @@ if (isLoading) {
         {hasCheckedInToday && streak >= 3 && (
           <Link
             to="/insights"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zone-orange/10 border border-zone-orange/20 hover:bg-zone-orange/15 transition-colors shrink-0"
             title={`${streak} dias seguidos`}
           >
-            <Flame className="w-3.5 h-3.5 text-orange-400" />
-            <span className="text-xs font-bold text-orange-400">{streak}</span>
+            <Flame className="w-3.5 h-3.5 text-zone-orange" />
+            <span className="text-xs font-bold text-zone-orange">{streak}</span>
           </Link>
         )}
       </div>
