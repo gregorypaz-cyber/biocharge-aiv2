@@ -276,7 +276,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'Baixo';
   const sleepCaptionColor =
     sleepVal == null ? 'text-muted-foreground'
-    : sleepVal >= 80 ? 'text-sky-400'
+    : sleepVal >= 80 ? 'text-zone-blue'
     : sleepVal >= 65 ? 'text-blue-400'
     : 'text-blue-500';
 
@@ -998,11 +998,11 @@ export default function Today() {
     }
     if (targetZoneKey === 'recuperacao') {
       return curZone.key === 'leve'
-        ? { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
+        ? { color: 'text-zone-blue', ring: 'hsl(199,89%,60%)', short: 'Leve · dia de recuperação' }
         : { color: 'text-zone-orange', ring: 'hsl(25,95%,58%)', short: `${curZone.label} · era recuperação` };
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
-    if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} → ${strainTarget}` };
+    if (diff < 0) return { color: 'text-zone-blue', ring: 'hsl(199,89%,60%)', short: `${curZone.label} → ${strainTarget}` };
     if (diff === 0) return { color: 'text-zone-green', ring: 'hsl(142,70%,50%)', short: `Na zona · meta ${strainTarget}` };
     return { color: 'text-zone-orange', ring: 'hsl(25,95%,58%)', short: `${curZone.label} → ${strainTarget}` };
   })();
