@@ -288,7 +288,11 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
       key={phase + '-card'}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('relative overflow-hidden rounded-3xl border p-5 space-y-4', phaseCfg.accentBorder, phaseCfg.accentBg)}
+      className={cn(
+  'relative overflow-hidden rounded-3xl border px-5 pt-5 pb-4',
+  phaseCfg.accentBorder,
+  phaseCfg.accentBg
+)}
     >
       {/* Scenic hero — fundo atmosférico com starfield + domain bloom (estilo Noop) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
@@ -306,7 +310,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
         )}
         <div className="absolute inset-x-0 bottom-0 h-2/5" style={{ background: 'linear-gradient(to bottom, transparent, hsl(220 18% 7% / 0.8))' }} />
       </div>
-      <div className="relative z-10 space-y-4">
+      <div className="relative z-10 flex flex-col gap-3.5">
         {/* Decisão de hoje */}
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -362,7 +366,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
         </div>
 
         {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
-        <div className="flex flex-col items-center pt-1">
+        <div className="flex flex-col items-center pt-0">
           <MiniRing
             value={isCalibrating ? null : displayedScore}
             max={100}
@@ -371,13 +375,13 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             caption={isCalibrating ? 'Calibrando' : readinessFaixa}
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
             trend={isCalibrating ? [] : ringTrends.recovery}
-            size={150}
+            size={138}
             zoneTicks={[0.42, 0.70]}
             baselineMark={isCalibrating ? null : recoveryBaseline}
             animateCount
           />
 
-          <div className="flex justify-center gap-10 mt-3">
+          <div className="flex justify-center gap-8 mt-2.5">
             <MiniRing
               value={sleepVal}
               max={100}
@@ -386,7 +390,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               caption={sleepWord}
               captionColor={sleepCaptionColor}
               trend={[]}
-              size={82}
+              size={76}
             />
             <MiniRing
               value={cappedStrain}
@@ -397,13 +401,13 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               caption={strainCaption}
               captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
               trend={[]}
-              size={82}
+              size={76}
             />
           </div>
         </div>
 
         {/* Entender os anéis (toque — funciona no iPhone) */}
-        <div className="flex justify-center -mt-1">
+        <div className="flex justify-center -mt-1.5">
           <button
             type="button"
             aria-expanded={showProntidaoHint}
@@ -458,7 +462,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           </div>
         ) : (
           !todaySessions.length && !isRestMode && (
-            <div className="px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
+            <div className="mt-0.5 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
               <span className="font-semibold text-primary">Linha do dia:</span>{' '}
               {isCalibrating
                 ? 'ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
