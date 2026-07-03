@@ -76,7 +76,7 @@ function getHeroDynamicToneClass(tone) {
   }
 
   if (tone === 'positive') {
-    return 'bg-emerald-500/8 border-emerald-500/20 text-emerald-100';
+    return 'bg-zone-green/8 border-zone-green/20 text-zone-green';
   }
 
   if (tone === 'info') {
@@ -258,7 +258,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     ? 'hsl(45,93%,58%)'
     : 'hsl(0,72%,55%)';
   const recoveryCaptionColor =
-    displayedScore >= 70 ? 'text-emerald-400'
+    displayedScore >= 70 ? 'text-zone-green'
     : displayedScore >= 42 ? 'text-yellow-400'
     : 'text-red-400';
 
@@ -332,13 +332,13 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               <span
                 className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
                   baselineTier === 'solido'
-                    ? 'bg-emerald-500/10 text-emerald-400/90'
+                    ? 'bg-zone-green/10 text-zone-green/90'
                     : 'bg-amber-500/10 text-amber-400/90'
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    baselineTier === 'solido' ? 'bg-emerald-400' : 'bg-amber-400'
+                    baselineTier === 'solido' ? 'bg-zone-green' : 'bg-amber-400'
                   }`}
                 />
                 {baselineTier === 'solido'
@@ -354,7 +354,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               isCalibrating
                 ? 'bg-muted text-muted-foreground'
                 : displayedScore >= 70
-                ? 'bg-emerald-500/15 text-emerald-400'
+                ? 'bg-zone-green/15 text-zone-green'
                 : displayedScore >= 42
                 ? 'bg-yellow-500/15 text-yellow-400'
                 : 'bg-red-500/15 text-red-400'
@@ -532,7 +532,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             displayedScore >= 42 ? 'dá pra treinar com controle.' :
             'hoje é segurar.';
           const toneClass =
-            displayedScore >= 70 ? 'text-emerald-400' :
+            displayedScore >= 70 ? 'text-zone-green' :
             displayedScore >= 42 ? 'text-yellow-400' : 'text-orange-400';
 
           const STRAIN_MAX = 21;
@@ -572,7 +572,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
           }
 
-  const dotColor = displayedScore >= 70 ? 'bg-emerald-400' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400';
+  const dotColor = displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-yellow-400' : 'bg-orange-400';
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
@@ -1003,7 +1003,7 @@ export default function Today() {
     }
     const diff = zoneIdx(curZone.key) - zoneIdx(targetZoneKey);
     if (diff < 0) return { color: 'text-sky-400', ring: 'hsl(199,89%,60%)', short: `${curZone.label} → ${strainTarget}` };
-    if (diff === 0) return { color: 'text-emerald-400', ring: 'hsl(142,70%,50%)', short: `Na zona · meta ${strainTarget}` };
+    if (diff === 0) return { color: 'text-zone-green', ring: 'hsl(142,70%,50%)', short: `Na zona · meta ${strainTarget}` };
     return { color: 'text-orange-400', ring: 'hsl(25,95%,58%)', short: `${curZone.label} → ${strainTarget}` };
   })();
 
@@ -1252,7 +1252,7 @@ function renderCard(desc) {
         if (todaySessions.length > 0) {
           return (
             <section key="workout-wrapper" className="space-y-2">
-              <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+              <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-zone-green">
                 Treino → resposta do corpo
               </p>
               <WorkoutLoggedState
@@ -1328,7 +1328,7 @@ function renderCard(desc) {
                     <p
                       className={cn(
                         'text-base font-black font-mono leading-none mt-1',
-                        p.good ? 'text-emerald-400' : 'text-yellow-400'
+                        p.good ? 'text-zone-green' : 'text-yellow-400'
                       )}
                     >
                       {p.v}
