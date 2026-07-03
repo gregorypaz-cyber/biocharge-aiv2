@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight } from 'lucide-react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import {
@@ -22,7 +21,6 @@ import { useDayContext } from '@/lib/dayContext';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
-import CurrentStateCard from '@/components/today/CurrentStateCard';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutLoggedState from '@/components/today/WorkoutLoggedState';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
@@ -30,7 +28,6 @@ import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardi
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
-import ProtectionInsightCard from '@/components/today/ProtectionInsightCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { useStreak } from '@/hooks/useStreak';
@@ -88,98 +85,6 @@ function getHeroDynamicToneClass(tone) {
 
   return 'bg-secondary/60 border-border/40 text-foreground';
 }
-
-function getTomorrowHook({ checkin, analysis, todaySessions, isRestMode }) {
-  const delayedFatigue = checkin?.delayed_fatigue_alert || null;
-  const forecast = checkin?.next_day_forecast || null;
-  const sleepNeed = checkin?.sleep_need_tonight ?? null;
-  const ratio = analysis?.trainingLoad?.ratio ?? null;
-
-  if (delayedFatigue) {
-    return {
-      tone: 'warning',
-      title: 'Sinal para amanhã',
-      text: delayedFatigue,
-      footer: 'Vale voltar amanhã cedo para confirmar como seu corpo respondeu.',
-    };
-  }
-
-  if (forecast) {
-    return {
-      tone: 'info',
-      title: 'Prévia de amanhã',
-      text: forecast,
-      footer: 'Abra o app amanhã cedo para verificar se a leitura se confirmou.',
-    };
-  }
-
-  if (todaySessions.length > 0 && ratio != null && ratio > 1.25) {
-    return {
-      tone: 'warning',
-      title: 'Atenção para amanhã',
-      text: 'Sua carga de hoje já foi relevante. O dia seguinte pode pedir mais controle do que parece agora.',
-      footer: 'Volte amanhã para ver se sua margem realmente abriu ou fechou.',
-    };
-  }
-
-  if (isRestMode && sleepNeed != null) {
-    return {
-      tone: 'positive',
-      title: 'Recuperação em construção',
-      text: `Se você proteger o sono hoje, há boa chance de melhorar a leitura de amanhã. Meta de sono sugerida: ${sleepNeed}h.`,
-      footer: 'Amanhã cedo você confirma se seu corpo respondeu como esperado.',
-    };
-  }
-
-  return {
-    tone: 'neutral',
-    title: 'O dia não termina aqui',
-    text: 'A leitura de amanhã depende do que você fizer hoje: carga, sono e estresse ainda podem mudar bastante sua margem.',
-    footer: 'Volte amanhã cedo para ver a resposta real do seu corpo.',
-  };
-}
-
-function TomorrowHookCard({ hook }) {
-  if (!hook) return null;
-
-  const toneClass =
-    hook.tone === 'warning'
-      ? 'border-yellow-500/25 bg-yellow-500/8'
-      : hook.tone === 'positive'
-      ? 'border-emerald-500/25 bg-emerald-500/8'
-      : hook.tone === 'info'
-      ? 'border-primary/20 bg-primary/5'
-      : 'border-border/40 bg-card';
-
-  const titleClass =
-    hook.tone === 'warning'
-      ? 'text-yellow-300'
-      : hook.tone === 'positive'
-      ? 'text-emerald-300'
-      : hook.tone === 'info'
-      ? 'text-primary'
-      : 'text-foreground';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn('rounded-2xl border px-4 py-3 space-y-2', toneClass)}
-    >
-      <div>
-        <p className={cn('text-[10px] font-bold uppercase tracking-widest', titleClass)}>
-          {hook.title}
-        </p>
-        <p className="text-sm leading-relaxed mt-1">{hook.text}</p>
-      </div>
-
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
-        {hook.footer}
-      </p>
-    </motion.div>
-  );
-}
-
 
 // ── dim: versão escura da cor HSL (início do degradê do anel) ──
 function dimHsl(hsl) {
@@ -334,21 +239,6 @@ export default function Today() {
 
   const todaySessions = sortedSessions.filter((s) => s.date === today);
 
-  const weekSessions = useMemo(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + mondayOffset);
-
-    const yyyy = monday.getFullYear();
-    const mm = String(monday.getMonth() + 1).padStart(2, '0');
-    const dd = String(monday.getDate()).padStart(2, '0');
-    const mondayStr = `${yyyy}-${mm}-${dd}`;
-
-    return sortedSessions.filter((s) => s.date >= mondayStr);
-  }, [sortedSessions]);
-
   const engineScores = rawCheckin
     ? computeCheckinScores(rawCheckin, sortedCheckins.slice(1), todaySessions)
     : null;
@@ -475,57 +365,10 @@ export default function Today() {
 
   const ringTrends = useMemo(() => {
     const chrono = [...last7Checkins].reverse(); // mais antigo → mais recente
-    const strainByDate = {};
-    for (const s of sortedSessions) {
-      if (s?.date) strainByDate[s.date] = (strainByDate[s.date] || 0) + (s.strain_score ?? 0);
-    }
     return {
-      recovery: chrono.map((c) => c.recovery_score ?? null).filter((v) => v != null),
-      sono: chrono.map((c) => c.sleep_quality ?? c.sleep_score).filter((v) => v != null),
-      strain: chrono.map((c) => Math.min(21, strainByDate[c.date] || 0)),
+      recovery: chrono.map((c) => c.recovery_score ?? c.biocharge_morning ?? c.readiness_score).filter((v) => v != null),
     };
-  }, [last7Checkins, sortedSessions]); // eslint-disable-line
-
-  const biochargeTrend = useMemo(() => {
-    const values = last7Checkins.map((c) => c.biocharge_morning).filter((v) => v != null);
-    if (values.length < 2 || rawCheckin?.biocharge_morning == null) return null;
-
-    const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-    const diff = Math.round(rawCheckin.biocharge_morning - avg);
-
-    if (diff > 5) return { text: `↑ +${diff} pts acima da sua média da semana`, color: 'text-emerald-400' };
-    if (diff < -5) return { text: `↓ ${diff} pts abaixo da sua média da semana`, color: 'text-red-400' };
-    return { text: '→ Dentro da sua média da semana', color: 'text-muted-foreground' };
-  }, [last7Checkins, rawCheckin?.biocharge_morning]); // eslint-disable-line
-
-const hrvTrend = useMemo(() => {
-    const currentHrv = rawCheckin?.hrv_manual ?? rawCheckin?.hrv ?? null;
-    const avg7d = enrichedCheckin?.hrv_7d_avg ?? null;
-    const trend = enrichedCheckin?.hrv_trend ?? null;
-
-    if (currentHrv == null || avg7d == null || !trend) return null;
-
-    const pctDiff = Math.round(((currentHrv - avg7d) / avg7d) * 100);
-
-    if (trend === 'above_avg') {
-      return {
-        text: `RMSSD ${Math.abs(pctDiff)}% acima da sua média (7d)`,
-        color: 'text-emerald-400',
-      };
-    }
-
-    if (trend === 'below_avg') {
-      return {
-        text: `RMSSD ${Math.abs(pctDiff)}% abaixo da sua média (7d)`,
-        color: 'text-red-400',
-      };
-    }
-
-    return {
-      text: 'RMSSD em linha com sua média (7d)',
-      color: 'text-yellow-400',
-    };
-  }, [rawCheckin?.hrv, rawCheckin?.hrv_manual, enrichedCheckin?.hrv_7d_avg, enrichedCheckin?.hrv_trend]);
+  }, [last7Checkins]);
 
   const isSilentMode = ['Overreached', 'Fatigued'].includes(analysis?.physioState?.state);
 
@@ -717,99 +560,10 @@ const hrvTrend = useMemo(() => {
   const { intent, locked, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
   const { streak, hasCheckedInToday } = useStreak(sortedCheckins);
 
-  const BODY_STATE_PT = {
-    Recovered: 'Recuperado',
-    Activated: 'Ativado',
-    Balanced: 'Equilibrado',
-    Loaded: 'Carregado',
-    Sympathetic_Load: 'Carga simpática',
-    Fatigued: 'Fatigado',
-    Overreached: 'Sobrecarga',
-  };
-
-  const BODY_STATE_HINT = {
-    Recovered: 'Bom momento para estímulo alto, desde que o resto do contexto acompanhe.',
-    Activated: 'Corpo responsivo — confirme no aquecimento.',
-    Balanced: 'Ritmo sustentável hoje.',
-    Loaded: 'Monitore a intensidade e evite empilhar carga.',
-    Sympathetic_Load: 'Sistema nervoso sobrecarregado — prefira leveza.',
-    Fatigued: 'Evite alta intensidade; priorize recuperação.',
-    Overreached: 'Descanso obrigatório — mais carga agrava o quadro.',
-  };
-
-const BODY_STATE_META = {
-  Recovered: {
-    emoji: '🟢',
-    tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-    short: 'Sistema pronto para render',
-  },
-  Activated: {
-    emoji: '⚡',
-    tone: 'bg-sky-500/10 border-sky-500/20 text-sky-300',
-    short: 'Boa responsividade hoje',
-  },
-  Balanced: {
-    emoji: '⚖️',
-    tone: 'bg-secondary/50 border-border text-foreground',
-    short: 'Estado estável e sustentável',
-  },
-  Loaded: {
-    emoji: '🟠',
-    tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
-    short: 'Margem menor — recuperação parcial',
-  },
-  Sympathetic_Load: {
-    emoji: '🌩️',
-    tone: 'bg-orange-500/10 border-orange-500/20 text-orange-300',
-    short: 'Sistema sob carga nervosa',
-  },
-  Fatigued: {
-    emoji: '🔴',
-    tone: 'bg-red-500/10 border-red-500/20 text-red-300',
-    short: 'Fadiga acima do ideal',
-  },
-  Overreached: {
-    emoji: '🚨',
-    tone: 'bg-red-500/10 border-red-500/20 text-red-300',
-    short: 'Sobrecarga clara',
-  },
-};
-
 const AUTONOMIC_PT = {
     parasympathetic: 'Modo recuperação',
     balanced: 'Equilibrado',
     sympathetic: 'Modo alerta',
-  };
-
-  const AUTONOMIC_META = {
-    parasympathetic: {
-      emoji: '🟢',
-      tone: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-      short: 'Sistema nervoso relaxado e em recuperação.',
-      action: 'Boa janela para treinar com qualidade, se a recuperação acompanhar.',
-      detail: 'Predomínio parassimpático (recuperação). Índice Baevsky mais baixo = corpo mais relaxado.',
-    },
-    balanced: {
-      emoji: '🟡',
-      tone: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-300',
-      short: 'Ativação e recuperação em equilíbrio.',
-      action: 'Sem sinal de estresse autonômico — siga a leitura de recuperação do dia.',
-      detail: 'Equilíbrio entre ativação (simpático) e recuperação (parassimpático) do sistema nervoso.',
-    },
-    sympathetic: {
-      emoji: '🔴',
-      tone: 'bg-red-500/10 border-red-500/20 text-red-300',
-      short: 'Sistema nervoso mais ativado (alerta) que o ideal.',
-      action: 'Pesa a favor de manter leve hoje e priorizar sono, respiração e relaxamento — evitar intensidade alta.',
-      detail: 'Predomínio simpático (alerta) — carga acumulada, estresse ou sono insuficiente. Índice Baevsky mais alto = mais ativação.',
-    },
-  };
-
-  const baevskyContext = (si, key) => {
-    if (si == null) return '';
-    if (key === 'sympathetic') return si < 70 ? 'logo acima do limiar de alerta (60)' : si < 85 ? 'alerta moderado' : 'alerta alto';
-    if (key === 'parasympathetic') return si < 15 ? 'bem relaxado' : 'relaxado';
-    return 'na faixa de equilíbrio';
   };
 
   const CAPACITY_PT = {
@@ -922,26 +676,6 @@ const heroDynamicContext = useMemo(() => {
 
 const scheduledSport = todaySessions[0]?.sport ?? undefined;
 
-const tomorrowHook = useMemo(() => {
-    return getTomorrowHook({
-      checkin: enrichedCheckin,
-      analysis,
-      todaySessions,
-      isRestMode,
-    });
-  }, [enrichedCheckin, analysis, todaySessions, isRestMode]);
-
-  const shouldHideTomorrowHook = useMemo(() => {
-    if (!heroDynamicContext) return false;
-
-    return (
-      heroDynamicContext.title === 'Sinal para amanhã' ||
-      heroDynamicContext.title === 'Prévia de amanhã' ||
-      heroDynamicContext.title === 'Atenção para amanhã' ||
-      heroDynamicContext.title === 'Janela de recuperação'
-    );
-  }, [heroDynamicContext]);
-
   const { primary: primaryCards, secondary: secondaryCards } = useMemo(() => {
     if (!enrichedCheckin) return { primary: [], secondary: [] };
 
@@ -1002,44 +736,6 @@ const tomorrowHook = useMemo(() => {
       return pa - pb;
     });
   }, [primaryCards]);
-
-  const weeklyContextMsg = useMemo(() => {
-    if (!enrichedCheckin) return null;
-
-    const sessionsCount = weekSessions.length;
-    const fatigue = enrichedCheckin.fatigue_score ?? enrichedCheckin.fatigue ?? 0;
-    const readiness = prescriptionScore;
-
-    const recentCheckins = sortedCheckins.filter((c) => c.date !== today).slice(0, 5);
-    let trend = '';
-
-    if (recentCheckins.length >= 3) {
-      const scores = recentCheckins
-        .slice(0, 3)
-        .map((c) => c.recovery_score ?? c.readiness_score ?? 0);
-
-      if (scores[0] > scores[2] + 3) trend = ' · tendência positiva';
-      else if (scores[0] < scores[2] - 3) trend = ' · atenção à recuperação';
-    }
-
-    if (fatigue > 60 || sessionsCount >= 4) {
-      return `Carga alta na semana — hoje vale dose controlada.${trend}`;
-    }
-
-    if (readiness >= 85 && sessionsCount <= 1) {
-      return `Boa prontidão com volume baixo — há margem para progredir.${trend}`;
-    }
-
-    if (sessionsCount === 0) {
-      return `Primeiro treino da semana — bom momento para começar com controle.${trend}`;
-    }
-
-    if (sessionsCount >= 3) {
-      return `Volume semanal já está bem encaminhado.${trend}`;
-    }
-
-    return `${sessionsCount} ${sessionsCount === 1 ? 'treino' : 'treinos'} registrados esta semana.${trend}`;
-  }, [weekSessions, enrichedCheckin, sortedCheckins, prescriptionScore, today]);
 
 function renderCard(desc) {
     if (!desc || desc.action === 'exclude') return null;
@@ -1214,15 +910,6 @@ function renderCard(desc) {
             recoveryScore={displayedScore}
           />
         ) : null;
-
-      case 'current_state':
-        return (
-          <CurrentStateCard
-            key="current_state"
-            checkin={enrichedCheckin}
-            totalStrain={totalStrain}
-          />
-        );
 
       case 'hrv_anomaly':
         return (
