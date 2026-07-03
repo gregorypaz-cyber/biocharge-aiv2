@@ -333,12 +333,12 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                 className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
                   baselineTier === 'solido'
                     ? 'bg-zone-green/10 text-zone-green/90'
-                    : 'bg-amber-500/10 text-amber-400/90'
+                    : 'bg-zone-amber/10 text-zone-amber/90'
                 }`}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${
-                    baselineTier === 'solido' ? 'bg-zone-green' : 'bg-amber-400'
+                    baselineTier === 'solido' ? 'bg-zone-green' : 'bg-zone-amber'
                   }`}
                 />
                 {baselineTier === 'solido'
@@ -557,11 +557,11 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             const isSleepH = b.key === 'sleep_hours' && lastSleep != null && sleepBase != null;
             lever = isSleepH ? (
               <>
-                <b className="text-amber-300">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
+                <b className="text-zone-amber">Validado:</b> seu <b>{b.label.toLowerCase()}</b> acompanha seu HRV do dia seguinte. Ontem {fmtH(lastSleep)}, {dMin < 0 ? `${Math.abs(dMin)}min abaixo` : 'no'} do seu normal (~{fmtH(sleepBase)}). Amanhã, mire seu normal.
               </>
             ) : (
               <>
-                <b className="text-amber-300">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
+                <b className="text-zone-amber">Validado:</b> noites com mais <b>{b.label.toLowerCase()}</b> vêm com HRV {b.direction === 'positive' ? 'melhor' : 'pior'} no dia seguinte. {b.direction === 'positive' ? 'Quanto mais, melhor seu amanhã.' : 'Quanto menos, melhor seu amanhã.'}
               </>
             );
           } else if (lastSleep != null && sleepBase != null && dMin < -20) {
@@ -656,9 +656,9 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
                 </p>
               </div>
 
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/90 mb-0.5">↗ Alavanca pra amanhã</p>
-                <p className="text-[12px] text-amber-100/90 leading-snug">{lever}</p>
+              <div className="rounded-xl border border-zone-amber/20 bg-zone-amber/5 px-3.5 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zone-amber/90 mb-0.5">↗ Alavanca pra amanhã</p>
+                <p className="text-[12px] text-foreground/90 leading-snug">{lever}</p>
               </div>
 
               {si != null && (
@@ -1481,19 +1481,19 @@ if (!prefs.height_cm) missingSettings.push('altura');
 const settingsBanner = missingSettings.length > 0 ? (
   <Link
     to="/settings"
-    className="block rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 hover:bg-amber-500/15 transition-all"
+    className="block rounded-2xl border border-zone-amber/30 bg-zone-amber/10 p-4 hover:bg-zone-amber/15 transition-all"
   >
     <div className="flex items-start gap-3">
-      <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-        <Settings className="w-4 h-4 text-amber-400" />
+      <div className="w-9 h-9 rounded-xl bg-zone-amber/20 flex items-center justify-center shrink-0">
+        <Settings className="w-4 h-4 text-zone-amber" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-amber-200">Complete suas configurações</p>
+        <p className="text-sm font-semibold text-foreground/90">Complete suas configurações</p>
         <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
           Falta informar {missingSettings.join(', ')}. Necessário para idade de condicionamento, VO₂max e leituras honestas — toque para ajustar.
         </p>
       </div>
-      <ChevronRight className="w-4 h-4 text-amber-400/70 shrink-0 mt-1" />
+      <ChevronRight className="w-4 h-4 text-zone-amber/70 shrink-0 mt-1" />
     </div>
   </Link>
 ) : null;
