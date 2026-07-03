@@ -54,6 +54,13 @@ module.exports = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			},
+  			zone: {
+  				green: 'hsl(var(--bio-green))',
+  				amber: 'hsl(var(--bio-yellow))',
+  				orange: 'hsl(var(--bio-orange))',
+  				red: 'hsl(var(--bio-red))',
+  				blue: 'hsl(var(--bio-blue))'
+  			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',
