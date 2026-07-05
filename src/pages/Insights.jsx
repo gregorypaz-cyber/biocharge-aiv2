@@ -17,6 +17,13 @@ import {
   Clock3,
   Target,
   Minus,
+  BedDouble,
+  Microscope,
+  Droplet,
+  Clock,
+  Zap,
+  Dumbbell,
+  Footprints,
 } from 'lucide-react';
 import { computeCheckinScores, getSmartMessage } from '@/lib/biocharge-utils';
 import {
@@ -147,7 +154,7 @@ function BottleneckInsight({ bottleneck }) {
             Seu gargalo pessoal
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-lg leading-none">{b.icon}</span>
+            <InsightIcon icon={b.icon} size={18} />
             <h3 className="text-base font-black tracking-tight">{b.label}</h3>
           </div>
 
@@ -265,7 +272,7 @@ function LongTermTrendsCard({ trends }) {
               className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-secondary/40 border border-border/30"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="text-base leading-none shrink-0">{m.icon}</span>
+                <InsightIcon icon={m.icon} className="text-muted-foreground shrink-0" />
                 <span className="text-[13px] font-medium truncate">{m.label}</span>
               </div>
               <div className={`flex items-center gap-1.5 shrink-0 ${s.color}`}>
@@ -325,6 +332,18 @@ const DOMAIN_CARD = {
 };
 const DOMAIN_DEFAULT = 'border-emerald-500/20 bg-emerald-500/5'; // recovery (verde)
 
+// Camada de render: emoji (chave de cor via DOMAIN_OF) → ícone Lucide equivalente.
+const EMOJI_ICON = {
+  '🌙': Moon, '💤': BedDouble, '🔬': Microscope, '😰': Brain, '📉': TrendingDown,
+  '💧': Droplet, '⏰': Clock, '⚡': Zap, '💪': Dumbbell, '🏃': Footprints,
+};
+
+function InsightIcon({ icon, className = 'text-muted-foreground', size = 16 }) {
+  const Cmp = typeof icon === 'string' ? (EMOJI_ICON[icon] || Sparkles)
+            : (icon || Sparkles);
+  return <Cmp size={size} strokeWidth={1.5} className={className} />;
+}
+
 function DiscoveryCard({ item }) {
   const domainCls = DOMAIN_CARD[DOMAIN_OF[item.icon]] || DOMAIN_DEFAULT;
 
@@ -336,7 +355,7 @@ function DiscoveryCard({ item }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <span className="text-lg leading-none mt-0.5">{item.icon}</span>
+          <InsightIcon icon={item.icon} className="text-muted-foreground mt-0.5" size={18} />
           <div>
             <p className="text-sm font-semibold leading-snug">{item.title}</p>
             <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">
@@ -417,7 +436,7 @@ function PrimaryInsightCard({ item }) {
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-2xl bg-background/30 border border-border/30 flex items-center justify-center shrink-0">
             {iconIsText ? (
-              <span className="text-lg leading-none">{item.icon}</span>
+              <InsightIcon icon={item.icon} size={18} />
             ) : (
               <IconComponent className={cn('w-4 h-4', iconClass)} />
             )}
