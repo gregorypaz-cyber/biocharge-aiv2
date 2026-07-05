@@ -22,6 +22,7 @@ import {
   Moon,
   Scale,
   Footprints,
+  BarChart3,
 } from 'lucide-react';
 import LongevityTrendCard from '@/components/intelligence/LongevityTrendCard';
 
@@ -244,7 +245,7 @@ Responda APENAS em JSON:
     >
 
 <div className="flex items-start gap-2.5">
-        <Sparkles className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+        <Sparkles className="w-4.5 h-4.5 text-muted-foreground mt-0.5 shrink-0" />
         <div>
           <h3 className="text-sm font-semibold tracking-tight">Prever amanhã</h3>
           <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
@@ -479,7 +480,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
         className="rounded-xl border border-border/60 bg-card p-4"
       >
         <div className="flex items-start gap-3">
-          <Gauge className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <Gauge className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold">Balance de carga e recuperação</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -670,7 +671,7 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
     return (
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4">
         <div className="flex items-start gap-3">
-          <Footprints className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <Footprints className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold">Volume de corrida (semanal)</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -757,7 +758,7 @@ function WeightTrendCard({ checkins = [] }) {
         className="rounded-xl border border-border/60 bg-card p-4"
       >
         <div className="flex items-start gap-3">
-          <Scale className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <Scale className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold">Peso — tendência lenta</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -798,7 +799,7 @@ function WeightTrendCard({ checkins = [] }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <Scale className="w-4.5 h-4.5 text-primary mt-0.5 shrink-0" />
+          <Scale className="w-4.5 h-4.5 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Peso — tendência lenta</h3>
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
@@ -986,7 +987,7 @@ export default function Trends() {
 {/* Empty state */}
       {filtered.length < 5 && (
         <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6">
-          <span className="text-4xl mb-4">📊</span>
+          <BarChart3 className="w-10 h-10 mb-4 text-muted-foreground" strokeWidth={1.5} />
           <p className="font-semibold mb-1">Dados insuficientes</p>
           <p className="text-sm text-muted-foreground">
             Continue fazendo check-ins diários. Os gráficos aparecem após{' '}

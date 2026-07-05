@@ -20,6 +20,13 @@ import {
   SkipForward,
   ChevronDown,
   ChevronUp,
+  Flame,
+  PencilLine,
+  Dumbbell,
+  Smile,
+  HeartPulse,
+  CheckCircle2,
+  ArrowUp,
 } from 'lucide-react';
 import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
@@ -447,7 +454,7 @@ ${JSON.stringify(summary, null, 2)}`,
     if (navigator.vibrate) navigator.vibrate(40);
 
     if (editData?.id) {
-      toast.success('✅ Check-in atualizado!');
+      toast.success('Check-in atualizado!');
       navigate('/history');
     } else {
       setSavedCheckin(result);
@@ -515,7 +522,7 @@ const savePostMutation = useMutation({
 
     if (navigator.vibrate) navigator.vibrate(40);
 
-    toast.success('✅ Resposta pós-treino salva — a leitura de amanhã ficou mais precisa.')
+    toast.success('Resposta pós-treino salva — a leitura de amanhã ficou mais precisa.')
     navigate('/today');
   },
 });
@@ -652,8 +659,8 @@ if (isPostMode) {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
               Strain hoje
             </p>
-            <p className="text-sm font-mono font-bold text-primary">
-              ⚡ {totalStrain}
+            <p className="text-sm font-mono font-bold">
+              <Zap size={13} className="inline -mt-0.5" /> {totalStrain}
             </p>
           </div>
 
@@ -669,7 +676,7 @@ if (isPostMode) {
       </div>
 
       {/* RPE */}
-      <CheckinStep title="Esforço percebido" emoji="🔥" delay={0.05}>
+      <CheckinStep title="Esforço percebido" icon={Flame} delay={0.05}>
         <SliderField
           label="Quão pesado foi o treino?"
           hint="RPE 1–10 · se você já registrou o treino, vem preenchido — confirme ou ajuste"
@@ -684,7 +691,7 @@ if (isPostMode) {
       </CheckinStep>
 
       {/* Sensations */}
-      <CheckinStep title="Resposta do corpo" emoji="🧠" delay={0.1}>
+      <CheckinStep title="Resposta do corpo" icon={Activity} delay={0.1}>
         <EmojiSelector
           label="Energia agora"
           type="energy"
@@ -703,7 +710,7 @@ if (isPostMode) {
     
 
       {/* Notes */}
-      <CheckinStep title="Observação pós-treino" emoji="📝" delay={0.2}>
+      <CheckinStep title="Observação pós-treino" icon={PencilLine} delay={0.2}>
         <Textarea
           value={postForm.notes}
           onChange={(event) => updatePost('notes', event.target.value)}
@@ -783,7 +790,7 @@ if (isPostMode) {
 {editingExisting && (
   <div className="rounded-2xl border border-primary/25 bg-primary/5 p-3 mx-1">
     <p className="text-[12px] text-foreground font-medium">
-      ✏️ Você já fez o check-in de hoje
+      <CheckCircle2 size={14} className="inline mr-1 text-primary" />Você já fez o check-in de hoje
     </p>
     <p className="text-[11px] text-muted-foreground mt-0.5">
       Estes são os dados que você salvou. Ao salvar de novo, eles serão atualizados — não duplicados.
@@ -860,7 +867,7 @@ if (isPostMode) {
 </div>
 
         {/* Quick Check-in */}
-        <CheckinStep title="Check-in rápido" emoji="⚡" delay={0.05}>
+        <CheckinStep title="Check-in rápido" icon={Zap} delay={0.05}>
           {!isApple && (
           <SliderField
   label="Como você acordou? (0–100)"
@@ -1004,7 +1011,7 @@ if (isPostMode) {
         {/* Advanced fields */}
         {advancedOpen && (
           <>
-            <CheckinStep title="Sono — contexto avançado" emoji="🌙" delay={0.1}>
+            <CheckinStep title="Sono — contexto avançado" icon={Moon} delay={0.1}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <SliderField
   label="Sono Profundo"
@@ -1129,7 +1136,7 @@ if (isPostMode) {
             </CheckinStep>
 
             {!isRestDay && (
-              <CheckinStep title="Performance" emoji="🏋️" delay={0.15}>
+              <CheckinStep title="Performance" icon={Dumbbell} delay={0.15}>
                 
 <SliderField
   label="Fadiga"
@@ -1144,7 +1151,7 @@ if (isPostMode) {
               </CheckinStep>
             )}
 
-            <CheckinStep title="Bem-estar" emoji="🧠" delay={0.2}>
+            <CheckinStep title="Bem-estar" icon={Smile} delay={0.2}>
               <EmojiSelector
                 label="Disposição (humor + energia)"
                 type="energy"
@@ -1171,7 +1178,7 @@ if (isPostMode) {
               />
             </CheckinStep>
 
-            <CheckinStep title="Biometria" emoji="📊" delay={0.25}>
+            <CheckinStep title="Biometria" icon={HeartPulse} delay={0.25}>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground flex items-center gap-1">
@@ -1195,7 +1202,7 @@ if (isPostMode) {
               </div>
             </CheckinStep>
 
-            <CheckinStep title="Observações" emoji="📝" delay={0.3}>
+            <CheckinStep title="Observações" icon={PencilLine} delay={0.3}>
               <p className="text-xs text-muted-foreground -mt-1 mb-2">
                 Contexto útil para interpretar a noite anterior
               </p>
@@ -1235,7 +1242,7 @@ if (isPostMode) {
           <div className="space-y-2 pt-1">
             {!morningReady && (
               <p className="text-[11px] text-amber-400/80 px-1 text-center">
-                ⬆️ Informe o HRV e as horas de sono para salvar
+                <ArrowUp size={12} className="inline mr-1" />Informe o HRV e as horas de sono para salvar
               </p>
             )}
             <Button

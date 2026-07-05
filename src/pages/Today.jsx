@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, Flame } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, Flame, ArrowUpRight } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import {
@@ -657,7 +657,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
               </div>
 
               <div className="rounded-xl border border-zone-amber/20 bg-zone-amber/5 px-3.5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zone-amber/90 mb-0.5">↗ Alavanca pra amanhã</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zone-amber/90 mb-0.5"><ArrowUpRight size={11} className="inline" /> Alavanca pra amanhã</p>
                 <p className="text-[12px] text-foreground/90 leading-snug">{lever}</p>
               </div>
 
@@ -1308,7 +1308,7 @@ function renderCard(desc) {
           return (
             <div className="rounded-2xl border border-border/50 bg-card p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary shrink-0" />
+                <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div>
                   <p className="text-sm font-bold leading-tight">Impacto de ontem</p>
                   <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">

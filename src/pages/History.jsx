@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, Pencil } from 'lucide-react';
+import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, Pencil, Zap, BedDouble } from 'lucide-react';
 import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
@@ -113,7 +113,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
                     )}
                   </div>
                   <span className={`text-xs font-bold ${(s.strain_score || 0) >= 18 ? 'text-red-400' : (s.strain_score || 0) >= 14 ? 'text-orange-400' : (s.strain_score || 0) >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                    ⚡ strain {s.strain_score || 0}
+                    <Zap size={12} className="inline" /> strain {s.strain_score || 0}
                   </span>
                 </div>
               ))}
@@ -219,7 +219,7 @@ export default function History() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold">avg {weekAvg}</span>
                   {weekStrain > 0 && (
-                    <span className="text-xs text-muted-foreground">⚡ {Math.round(weekStrain)} strain</span>
+                    <span className="text-xs text-muted-foreground"><Zap size={12} className="inline" /> {Math.round(weekStrain)} strain</span>
                   )}
                   <span className="text-xs text-muted-foreground">{items.length}d</span>
                   {trend !== null && (
@@ -295,7 +295,7 @@ export default function History() {
                                   {c.current_body_state ? (
                                     <BodyStateBadge state={c.current_body_state} size="sm" />
                                   ) : c.rest_day ? (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">🛌 Descanso</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20"><BedDouble size={11} className="inline" /> Descanso</span>
                                   ) : null}
                                 </div>
                                 <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
@@ -308,7 +308,7 @@ export default function History() {
                                 const displayStrain = Math.min(21, c.daily_strain_accumulated);
                                 return (
                                 <span className={`${displayStrain >= 18 ? 'text-red-400' : displayStrain >= 14 ? 'text-orange-400' : displayStrain >= 10 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                                ⚡ strain {displayStrain}
+                                <Zap size={12} className="inline" /> strain {displayStrain}
                                 </span>
                                 );
                                 })()}

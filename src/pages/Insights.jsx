@@ -251,7 +251,7 @@ function LongTermTrendsCard({ trends }) {
       className="rounded-2xl border border-border/60 bg-card tint-recovery p-5"
     >
       <div className="flex items-center gap-2 mb-1">
-        <BarChart3 className="w-4 h-4 text-primary" />
+        <BarChart3 className="w-4 h-4 text-muted-foreground" />
         <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
           Sua evolução
         </p>
@@ -387,7 +387,7 @@ function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
       ? 'text-red-400'
       : tone === 'positive'
       ? 'text-emerald-400'
-      : 'text-primary';
+      : 'text-muted-foreground';
 
   return (
     <div className={`rounded-xl border px-4 py-3 ${cls}`}>
@@ -421,7 +421,7 @@ function PrimaryInsightCard({ item }) {
       ? 'text-emerald-400'
       : item.tone === 'warning'
       ? 'text-yellow-400'
-      : 'text-primary';
+      : 'text-muted-foreground';
 
   const iconIsText = typeof item.icon === 'string';
   const IconComponent = !iconIsText && item.icon ? item.icon : Sparkles;
@@ -1308,7 +1308,7 @@ Regras:
       >
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
+            <Sparkles className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold">Leitura completa</h2>
           </div>
 
@@ -1380,7 +1380,7 @@ Regras:
         className="rounded-xl border border-border/60 bg-card overflow-hidden"
       >
         <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
-          <Brain className="w-4 h-4 text-primary" />
+          <Brain className="w-4 h-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold">Pergunte ao Coach</h2>
         </div>
 
