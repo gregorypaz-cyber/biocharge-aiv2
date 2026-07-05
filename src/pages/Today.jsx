@@ -294,14 +294,9 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
   phaseCfg.accentBg
 )}
     >
-      {/* Scenic hero — fundo atmosférico com starfield + domain bloom (estilo Noop) */}
+      {/* Scenic hero — fundo atmosférico com domain bloom (estilo Noop) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 36%, hsl(220 25% 11%), hsl(220 20% 4%) 85%)' }} />
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 260" preserveAspectRatio="xMidYMin slice">
-          {[[23,18],[87,44],[141,12],[195,62],[263,28],[311,52],[349,8],[42,91],[108,72],[172,106],[238,85],[302,118],[67,142],[153,131],[217,155],[289,139],[31,38],[127,58],[201,22],[267,78]].map(([x,y],i) => (
-            <circle key={i} cx={x} cy={y} r={i%7===0?1.2:0.55} fill="white" opacity={i%4===0?0.32:0.14} />
-          ))}
-        </svg>
         {!isCalibrating && (
           <div
             className="absolute -top-1/4 left-1/2 -translate-x-1/2 w-[140%] h-[100%] blur-2xl"
