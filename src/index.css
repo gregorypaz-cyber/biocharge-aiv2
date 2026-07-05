@@ -127,3 +127,12 @@
 .transition-bio {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ─── Premium pass · numeral tabular (Guia §1.2, regra nº1) ──────────────
+   Aplicar em TODO número que atualiza (score, ms, bpm, %) pra não "tremer"
+   de largura ao mudar. A aplicação por-tela vem nas Fases 3–4.
+   Não afeta nada até uma classe .num ser adicionada num elemento. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
