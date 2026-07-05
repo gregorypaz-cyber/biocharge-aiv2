@@ -646,7 +646,7 @@ if (isPostMode) {
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-1">
-          <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
+          <div className="rounded-xl bg-secondary border border-border/30 px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
               Recovery manhã
             </p>
@@ -655,7 +655,7 @@ if (isPostMode) {
             </p>
           </div>
 
-          <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
+          <div className="rounded-xl bg-secondary border border-border/30 px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
               Strain hoje
             </p>
@@ -664,7 +664,7 @@ if (isPostMode) {
             </p>
           </div>
 
-          <div className="rounded-xl bg-background/30 border border-border/30 px-3 py-2.5">
+          <div className="rounded-xl bg-secondary border border-border/30 px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
               Sono alvo
             </p>
