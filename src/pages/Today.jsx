@@ -262,6 +262,28 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : displayedScore >= 42 ? 'text-zone-amber'
     : 'text-zone-orange';
 
+  // Chip de confiança do baseline. O frescor (stale-after-gap) tem PRIORIDADE sobre
+  // o tier: baseline defasado por lacuna de dias não é "sólido" mesmo com noites suficientes.
+  const bf = analysis?.baselineFreshness;
+  let baselineChip;
+  if (bf?.status === 'stale' || bf?.status === 'aging') {
+    const amber = bf.status === 'aging';
+    const label = bf.reason === 'baseline_gap'
+      ? `Baseline recalibrando · pausa de ${bf.gapBeforeLatest} ${bf.gapBeforeLatest === 1 ? 'dia' : 'dias'}`
+      : `Leitura de ${bf.daysSinceLastReading} ${bf.daysSinceLastReading === 1 ? 'dia' : 'dias'} atrás`;
+    baselineChip = {
+      wrap: amber ? 'bg-zone-amber/10 text-zone-amber/90' : 'bg-zone-orange/10 text-zone-orange/90',
+      dot: amber ? 'bg-zone-amber' : 'bg-zone-orange',
+      label,
+    };
+  } else {
+    baselineChip = {
+      wrap: baselineTier === 'solido' ? 'bg-zone-green/10 text-zone-green/90' : 'bg-zone-amber/10 text-zone-amber/90',
+      dot: baselineTier === 'solido' ? 'bg-zone-green' : 'bg-zone-amber',
+      label: baselineTier === 'solido' ? 'Baseline sólido' : `Baseline construindo · ${priorHrvNights}/14 noites`,
+    };
+  }
+
   const sleepVal = enrichedCheckin?.sleep_quality ?? enrichedCheckin?.sleep_score ?? null;
   const sleepColor =
     sleepVal == null ? 'hsl(215,30%,55%)'
@@ -325,20 +347,10 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
 
             {!isCalibrating && (
               <span
-                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                  baselineTier === 'solido'
-                    ? 'bg-zone-green/10 text-zone-green/90'
-                    : 'bg-zone-amber/10 text-zone-amber/90'
-                }`}
+                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
               >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    baselineTier === 'solido' ? 'bg-zone-green' : 'bg-zone-amber'
-                  }`}
-                />
-                {baselineTier === 'solido'
-                  ? 'Baseline sólido'
-                  : `Baseline construindo · ${priorHrvNights}/14 noites`}
+                <span className={`w-1.5 h-1.5 rounded-full ${baselineChip.dot}`} />
+                {baselineChip.label}
               </span>
             )}
 
