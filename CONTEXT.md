@@ -96,6 +96,12 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 ---
 
+## 7.1 Frescor de baseline (adicionado em 08/07/2026)
+
+`assessBaselineFreshness(checkins, now)` em `src/lib/physiological-engine.js` — anotação de confiança stale-after-gap: sinaliza quando o baseline pessoal ficou defasado por lacuna de dias (`fresh`/`aging`/`stale`, via idade da leitura e/ou gap antes da última). Eixo ORTOGONAL ao `calibrating` do recovery — não altera Recovery/Sono/Strain. Wired em `analysis.baselineFreshness` (`runPhysiologicalAnalysis`). Constantes `BL_FRESH_MAX_DAYS`/`BL_STALE_MIN_DAYS` em `physio-constants.js`. Consumo na UI (herói da Today) é patch manual posterior — fora deste escopo.
+
+---
+
 ## 8. Backlog (em ordem de prioridade)
 
 1. **Camada de normalização de fonte** (`source-normalize.js`, arquivo novo) — mapeia nomes de campo de cada marca de relógio → formato canônico. É a tese de portabilidade no nível do código.
