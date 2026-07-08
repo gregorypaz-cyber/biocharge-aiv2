@@ -184,7 +184,7 @@ function MiniRing({ value, displayValue, max = 100, color, label, caption, capti
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <span
-            className="font-black font-mono leading-none tracking-tight"
+            className="font-semibold font-mono leading-none tracking-tight"
             style={{ color: hasValue ? color : 'hsl(215,15%,55%)', fontSize: size >= 130 ? '2.9rem' : size <= 90 ? '1.4rem' : '1.875rem' }}
           >
             {hasValue ? (animateCount && countVal != null ? countVal : (displayValue != null ? displayValue : value)) : '—'}
@@ -631,10 +631,10 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
                     className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
                     style={{ left: `${targetStrainPct}%` }}
                   >
-                    <span className="text-[9px] font-bold tracking-wider text-white/80 whitespace-nowrap">
+                    <span className="text-[10px] font-bold tracking-wider text-white/80 whitespace-nowrap">
                       META {strainTarget}
                     </span>
-                    <span className="text-white/50 text-[7px] mt-px">▾</span>
+                    <span className="text-white/50 text-[10px] mt-px">▾</span>
                   </div>
                   <div className="relative h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
                     <div
@@ -653,8 +653,8 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
                     />
                   </div>
                   <div className="flex justify-between mt-1">
-                    <span className="text-[9px] font-mono text-muted-foreground/40">0</span>
-                    <span className="text-[9px] font-mono text-muted-foreground/40">21</span>
+                    <span className="text-[11px] font-mono text-muted-foreground/40">0</span>
+                    <span className="text-[11px] font-mono text-muted-foreground/40">21</span>
                   </div>
                 </div>
 
@@ -1329,7 +1329,7 @@ function renderCard(desc) {
                     key={p.k}
                     className="rounded-xl bg-secondary/50 border border-border/40 px-2 py-2 text-center"
                   >
-                    <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
                       {p.k}
                     </p>
                     <p
