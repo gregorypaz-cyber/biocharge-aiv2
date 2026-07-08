@@ -70,6 +70,8 @@ const HRV_ANOMALY_ZSCORE_THRESHOLD             = C.HRV_ANOMALY_ZSCORE_THRESHOLD 
 const HRV_ANOMALY_RHR_ELEVATED_PCT             = C.HRV_ANOMALY_RHR_ELEVATED_PCT             ?? 1.07;
 const HEALTH_MIN_BASELINE_NIGHTS               = C.HEALTH_MIN_BASELINE_NIGHTS               ?? 7;
 const HEALTH_FLAG_GATE                         = C.HEALTH_FLAG_GATE                         ?? 2;
+const BL_FRESH_MAX_DAYS                        = C.BL_FRESH_MAX_DAYS                        ?? 2;
+const BL_STALE_MIN_DAYS                        = C.BL_STALE_MIN_DAYS                        ?? 7;
 const SLEEP_CONSISTENCY_MIN_ENTRIES            = C.SLEEP_CONSISTENCY_MIN_ENTRIES            ?? 5;
 const SLEEP_CONSISTENCY_GOOD_STDDEV            = C.SLEEP_CONSISTENCY_GOOD_STDDEV            ?? 20;
 const SLEEP_CONSISTENCY_BAD_STDDEV             = C.SLEEP_CONSISTENCY_BAD_STDDEV             ?? 60;
@@ -1046,6 +1048,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
   const cardiacDrift = detectCardiacDrift(sessions);
   const hrvAnomaly = detectHRVAnomaly(checkins, baseline);
   const healthSignals = assessHealthSignals(checkins, baseline);
+  const baselineFreshness = assessBaselineFreshness(checkins);
   const personalBottleneck = detectPersonalBottleneck(checkins);
   const longTermTrends = detectLongTermTrends(checkins);
 
@@ -1064,6 +1067,7 @@ export function runPhysiologicalAnalysis(checkins, sessions = []) {
     cardiacDrift,
     hrvAnomaly,
     healthSignals,
+    baselineFreshness,
     personalBottleneck,
     longTermTrends,
   };
@@ -1503,6 +1507,71 @@ function _buildHealthFlagsList(today, hrvResult, rhrRaised, baseHrv, baseRhr) {
     { id: 'spo2',        label: 'SpO2',                today: null, baseline: null, deltaPct: null, direction: 'neutral', raised: false, status: 'pending' },
     { id: 'respiratory', label: 'Respiração',          today: null, baseline: null, deltaPct: null, direction: 'neutral', raised: false, status: 'pending' },
   ];
+}
+
+// Diferença em dias entre duas datas 'YYYY-MM-DD' (UTC midnight, evita drift de fuso).
+function _dayDiff(aKey, bKey) {
+  const a = Date.parse(aKey + 'T00:00:00Z');
+  const b = Date.parse(bKey + 'T00:00:00Z');
+  if (Number.isNaN(a) || Number.isNaN(b)) return null;
+  return Math.round((a - b) / 86400000);
+}
+
+// Bucket de frescor: 0 = fresh, 1 = aging, 2 = stale.
+function _freshnessBucket(days) {
+  if (days == null) return 0;
+  if (days <= BL_FRESH_MAX_DAYS) return 0;
+  if (days >= BL_STALE_MIN_DAYS) return 2;
+  return 1;
+}
+
+/**
+ * assessBaselineFreshness(checkins, now = new Date())
+ *
+ * Sinaliza quando o baseline pessoal está defasado por lacuna de dias.
+ * NÃO altera Recovery / Sono / Strain — é uma anotação de confiança.
+ *
+ * Eixo ORTOGONAL ao 'calibrating' do recovery: o score continua sendo calculado;
+ * isto só qualifica a confiança dele.
+ *
+ * @param {Array}  checkins - ordenado do mais novo p/ o mais antigo, já filtrado por usuário
+ * @param {Date}   now      - injetável p/ testes; default = agora
+ * @returns {{
+ *   status: 'fresh'|'aging'|'stale',
+ *   daysSinceLastReading: number,       // hoje - data do check-in mais recente (≥0)
+ *   gapBeforeLatest: number|null,       // data[0] - data[1] (null se < 2 check-ins)
+ *   reason: 'reading_age'|'baseline_gap'|null  // o que puxou p/ não-fresh
+ * } | null}   // null se < 1 check-in ou datas inválidas
+ */
+export function assessBaselineFreshness(checkins, now = new Date()) {
+  checkins = _ensure(checkins);
+  if (!checkins || checkins.length === 0) return null;
+
+  const latestKey = toDateKey(checkins[0]?.date);
+  if (!latestKey) return null;
+
+  const nowKey = toDateKey(now);
+  // idade da leitura: hoje - data do check-in mais recente (nunca negativa)
+  const rawAge = nowKey ? _dayDiff(nowKey, latestKey) : 0;
+  const daysSinceLastReading = rawAge == null ? 0 : Math.max(0, rawAge);
+
+  // gap antes da última: data[0] - data[1] (só se houver 2+ check-ins com data válida)
+  let gapBeforeLatest = null;
+  const prevKey = checkins.length > 1 ? toDateKey(checkins[1]?.date) : null;
+  if (prevKey) {
+    const g = _dayDiff(latestKey, prevKey);
+    if (g != null) gapBeforeLatest = Math.max(0, g);
+  }
+
+  const bAge = _freshnessBucket(daysSinceLastReading);
+  const bGap = _freshnessBucket(gapBeforeLatest);
+  const worst = Math.max(bAge, bGap);
+
+  const status = worst === 0 ? 'fresh' : worst === 1 ? 'aging' : 'stale';
+  let reason = null;
+  if (worst > 0) reason = bAge >= bGap ? 'reading_age' : 'baseline_gap';
+
+  return { status, daysSinceLastReading, gapBeforeLatest, reason };
 }
 
 // ─── Async Analysis Wrapper ───────────────────────────────────────────────────

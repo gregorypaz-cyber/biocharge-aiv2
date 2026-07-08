@@ -234,3 +234,8 @@ export const BL_WINDOW_NIGHTS = 90;
 // ── HRV Variabilidade (Esco 2026 — médias semanais) ───────────────────────────
 /** Janela de dias para a média móvel do HRV (RMSSDmean) */
 export const RMSSD_MEAN_WINDOW = 7;
+
+// ── Frescor de baseline (stale-after-gap) ─────────────────────────────────────
+// Anota a confiança do baseline quando há lacuna de dias. NÃO altera o recovery.
+export const BL_FRESH_MAX_DAYS = 2;  // gap ≤ isto → 'fresh'
+export const BL_STALE_MIN_DAYS = 7;  // gap ≥ isto → 'stale' (entre os dois = 'aging')
