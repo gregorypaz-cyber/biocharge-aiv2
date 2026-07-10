@@ -177,10 +177,11 @@ export default function RecoveryField({
   }, [animate, period, size, c.h, c.s, c.l]);
 
   // cores derivadas
-  const core0 = css({ h: c.h, s: Math.min(c.s + 8, 95), l: Math.min(c.l + 22, 86) }, 0.9);
-  const core1 = css({ h: c.h, s: c.s, l: c.l }, 0.62);
-  const core2 = css({ h: c.h, s: Math.max(c.s - 8, 10), l: Math.max(c.l - 12, 14) }, 0.4);
-  const glowCol = css({ h: c.h, s: c.s, l: c.l }, 0.5);
+  const mute = live ? 1 : 0.72;
+  const core0 = css({ h: c.h, s: Math.min(c.s + 8, 95), l: Math.min(c.l + 22, 86) }, 0.9 * mute);
+  const core1 = css({ h: c.h, s: c.s, l: c.l }, 0.62 * mute);
+  const core2 = css({ h: c.h, s: Math.max(c.s - 8, 10), l: Math.max(c.l - 12, 14) }, 0.4 * mute);
+  const glowCol = css({ h: c.h, s: c.s, l: c.l }, 0.5 * mute);
   const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 72), l: 82 });
   const gid = React.useId ? React.useId().replace(/:/g, '') : Math.random().toString(36).slice(2);
 

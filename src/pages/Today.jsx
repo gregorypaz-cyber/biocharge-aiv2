@@ -357,21 +357,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
 
           </div>
 
-                      <span
-            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              isCalibrating
-                ? 'bg-muted text-muted-foreground'
-                : displayedScore >= 70
-                ? 'bg-zone-green/15 text-zone-green'
-                : displayedScore >= 42
-                ? 'bg-zone-amber/15 text-zone-amber'
-                : 'bg-zone-orange/15 text-zone-orange'
-            }`}
-          >
-            {isCalibrating ? 'Calibrando' : readinessFaixa}
-          </span>
-
-        </div>
+                      </div>
 
         {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
         <div className="flex flex-col items-center pt-0">
@@ -995,7 +981,7 @@ export default function Today() {
     // Alvo SEMPRE com o número (não só o nome da zona), pra "moderado" virar "moderado · 12".
     const targetLabelNum = `${targetZoneLabel} · ${strainTarget}`;
     if (cappedStrain <= 0) {
-      return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta: ${targetLabelNum}` };
+      return { color: 'text-muted-foreground', ring: 'hsl(215,20%,45%)', short: `meta ${strainTarget}` };
     }
     if (curZone.key === 'esgotamento') {
       return { color: 'text-zone-red', ring: 'hsl(0,84%,60%)', short: 'Esgotamento — recupere' };
