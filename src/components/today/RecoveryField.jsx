@@ -1,16 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 /*
- * RecoveryField — "Ponto de Equilíbrio": campo de luz orgânico e vivo que substitui
- * o anel do herói. AGNÓSTICO DE COR por design: renderiza o campo na cor que recebe
- * (`color`), então a semântica de cor continua vivendo no Today (recovery = zona,
- * sono = azul do sono, strain = vs-meta). Nunca reinterpreta o significado da cor.
+ * RecoveryField v2 — "Ponto de Equilíbrio" com física de luz de gema de vidro.
+ * Camadas (trás → frente): halo difuso · corpo com núcleo luminoso deslocado e
+ * borda escura · specular nítido · rim light na base · faíscas internas (clipadas).
+ * AGNÓSTICO DE COR: renderiza na cor recebida (`color`) — a semântica de cor
+ * (zona/sono/vs-meta) continua vivendo no Today.
  *
- * Honestidade:
- *  - value == null  → estado "Calibrando": campo neutro slate, respiração lenta, "—".
- *    Nenhuma cor nem número fabricado.
- *  - Reduce-motion / live=false → campo posado estático (sem respiração/morfismo/poeira).
- *    Só o herói (live) anima; satélites entram estáticos (Fase 2).
+ * Honestidade: value == null → "Calibrando" (slate neutro, respiração lenta, "—").
+ * live=false → satélite posado (sem respiração/morfismo/poeira) e com luz atenuada,
+ * pra nunca competir com o herói. Reduce-motion congela tudo.
  */
 
 // hsl(142,70%,50%) OU hsl(142 70% 50%) → {h,s,l}
@@ -25,7 +24,7 @@ const css = ({ h, s, l }, a) => `hsl(${h} ${s}% ${l}%${a != null ? ` / ${a}` : '
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // blob orgânico: catmull-rom fechado sobre K âncoras moduladas por senos lentos
-const K = 8, CX = 200, CY = 200, R = 132;
+const K = 8, CX = 200, CY = 200, R = 146;
 
 function makeAnchors() {
   return Array.from({ length: K }, (_, i) => ({
@@ -34,9 +33,21 @@ function makeAnchors() {
     w1: 0.42 + Math.random() * 0.2, w2: 0.7 + Math.random() * 0.3,
   }));
 }
+function makeSparks() {
+  // aglomerado de faíscas no quadrante inferior-direito da gema (como na referência)
+  return Array.from({ length: 16 }, () => {
+    const a = Math.random() * Math.PI * 2, d = Math.random() * 74;
+    return {
+      x: 248 + Math.cos(a) * d * 0.9,
+      y: 244 + Math.sin(a) * d * 0.62,
+      r: 0.5 + Math.random() * 1.4,
+      o: 0.12 + Math.random() * 0.45,
+    };
+  });
+}
 function pointsAt(anchors, t, breath) {
   return anchors.map((an) => {
-    const r = R * (1 + 0.055 * Math.sin(an.w1 * t + an.ph1) + 0.03 * Math.sin(an.w2 * t + an.ph2)) * breath;
+    const r = R * (1 + 0.07 * Math.sin(an.w1 * t + an.ph1) + 0.035 * Math.sin(an.w2 * t + an.ph2)) * breath;
     return [CX + r * Math.cos(an.a), CY + r * Math.sin(an.a)];
   });
 }
@@ -72,12 +83,14 @@ export default function RecoveryField({
   // respiração mais lenta em score baixo
   const period = isCalibrating ? 5.2 : (4.4 - frac * 1.1);
 
-  const svgRef = useRef(null);
-  const blobRef = useRef(null);
+  const bodyRef = useRef(null);
   const glowRef = useRef(null);
   const hiRef = useRef(null);
+  const rimRef = useRef(null);
+  const clipRef = useRef(null);
   const cvRef = useRef(null);
   const anchorsRef = useRef(makeAnchors());
+  const sparksRef = useRef(makeSparks());
   const [display, setDisplay] = useState(isCalibrating ? null : Math.round(value));
 
   // reduce-motion (media query + mudança em runtime)
@@ -113,15 +126,16 @@ export default function RecoveryField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, isCalibrating, animateCount, reduce]);
 
-  // loop do campo (morfismo + respiração) + poeira
+  // loop do campo (morfismo + respiração) + poeira externa
   useEffect(() => {
     const anchors = anchorsRef.current;
     const setPath = (d) => {
-      blobRef.current?.setAttribute('d', d);
+      bodyRef.current?.setAttribute('d', d);
       glowRef.current?.setAttribute('d', d);
       hiRef.current?.setAttribute('d', d);
+      rimRef.current?.setAttribute('d', d);
+      clipRef.current?.setAttribute('d', d);
     };
-    // poeira estelar (só quando anima)
     const cv = cvRef.current;
     const ctx = cv?.getContext?.('2d');
     let parts = [];
@@ -176,17 +190,25 @@ export default function RecoveryField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animate, period, size, c.h, c.s, c.l]);
 
-  // cores derivadas
+  // ── física de luz da gema ──
   const mute = live ? 1 : 0.72;
-  const core0 = css({ h: c.h, s: Math.min(c.s + 8, 95), l: Math.min(c.l + 22, 86) }, 0.9 * mute);
-  const core1 = css({ h: c.h, s: c.s, l: c.l }, 0.62 * mute);
-  const core2 = css({ h: c.h, s: Math.max(c.s - 8, 10), l: Math.max(c.l - 12, 14) }, 0.4 * mute);
-  const glowCol = css({ h: c.h, s: c.s, l: c.l }, 0.5 * mute);
-  const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 72), l: 82 });
+  // corpo: núcleo luminoso deslocado (44%/33%) → borda escura e saturada
+  const body0 = css({ h: c.h, s: Math.min(c.s + 4, 95), l: Math.min(c.l + 20, 84) }, 0.96 * mute);
+  const body1 = css({ h: c.h, s: c.s, l: c.l }, 0.96 * mute);
+  const body2 = css({ h: c.h, s: Math.min(c.s + 8, 95), l: Math.max(c.l - 16, 10) }, 0.97 * mute);
+  const body3 = css({ h: c.h, s: Math.min(c.s + 10, 95), l: Math.max(c.l - 28, 6) }, 0.98 * mute);
+  // halo ambiente
+  const glowCol = css({ h: c.h, s: c.s, l: c.l }, 0.4 * mute);
+  // rim light da base
+  const rimA = css({ h: c.h, s: c.s, l: Math.min(c.l + 24, 88) }, 0.35 * mute);
+  const rimB = css({ h: c.h, s: c.s, l: Math.min(c.l + 30, 92) }, 0.65 * mute);
+
+  const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 70), l: 85 });
   const gid = React.useId ? React.useId().replace(/:/g, '') : Math.random().toString(36).slice(2);
 
   const numSize = Math.round(size * 0.30);
   const shown = isCalibrating ? '—' : (display ?? Math.round(value));
+  const showSparks = size >= 140;
 
   return (
     <div className="flex flex-col items-center" style={{ width: size, maxWidth: '100%' }}>
@@ -200,7 +222,6 @@ export default function RecoveryField({
           />
         )}
         <svg
-          ref={svgRef}
           viewBox="0 0 400 400"
           preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0"
@@ -208,22 +229,59 @@ export default function RecoveryField({
           aria-hidden="true"
         >
           <defs>
-            <radialGradient id={`core-${gid}`} cx="42%" cy="36%" r="72%">
-              <stop offset="0%" stopColor={core0} />
-              <stop offset="46%" stopColor={core1} />
-              <stop offset="100%" stopColor={core2} />
+            <radialGradient id={`body-${gid}`} cx="44%" cy="33%" r="80%">
+              <stop offset="0%" stopColor={body0} />
+              <stop offset="40%" stopColor={body1} />
+              <stop offset="75%" stopColor={body2} />
+              <stop offset="100%" stopColor={body3} />
             </radialGradient>
-            <radialGradient id={`spec-${gid}`} cx="40%" cy="32%" r="40%">
-              <stop offset="0%" stopColor="#fff" stopOpacity="0.32" />
+            <radialGradient id={`spec-${gid}`} cx="35%" cy="24%" r="20%">
+              <stop offset="0%" stopColor="#fff" stopOpacity={0.55 * mute} />
+              <stop offset="60%" stopColor="#fff" stopOpacity={0.16 * mute} />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
+            <linearGradient id={`rim-${gid}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+              <stop offset="55%" stopColor="#fff" stopOpacity="0" />
+              <stop offset="82%" stopColor={rimA} />
+              <stop offset="100%" stopColor={rimB} />
+            </linearGradient>
             <filter id={`soft-${gid}`} x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="17" />
+              <feGaussianBlur stdDeviation="22" />
             </filter>
+            <filter id={`fine-${gid}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.4" />
+            </filter>
+            <clipPath id={`clip-${gid}`}>
+              <path ref={clipRef} d="" />
+            </clipPath>
           </defs>
+
           <path ref={glowRef} d="" fill={glowCol} filter={`url(#soft-${gid})`} />
-          <path ref={blobRef} d="" fill={`url(#core-${gid})`} />
+          <path ref={bodyRef} d="" fill={`url(#body-${gid})`} />
           <path ref={hiRef} d="" fill={`url(#spec-${gid})`} />
+          <path
+            ref={rimRef}
+            d=""
+            fill="none"
+            stroke={`url(#rim-${gid})`}
+            strokeWidth="3"
+            filter={`url(#fine-${gid})`}
+          />
+          {showSparks && (
+            <g clipPath={`url(#clip-${gid})`}>
+              {sparksRef.current.map((p, i) => (
+                <circle
+                  key={i}
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.r}
+                  fill="#fff"
+                  opacity={(p.o * mute).toFixed(2)}
+                />
+              ))}
+            </g>
+          )}
         </svg>
 
         <div className="absolute inset-0 flex items-center justify-center">
@@ -234,8 +292,10 @@ export default function RecoveryField({
               lineHeight: 0.9,
               letterSpacing: '-0.03em',
               color: textCol,
+              opacity: 0.96,
+              mixBlendMode: isCalibrating ? 'normal' : 'screen',
               fontVariantNumeric: 'tabular-nums',
-              textShadow: isCalibrating ? 'none' : `0 0 34px ${css(c, '.28')}`,
+              textShadow: isCalibrating ? 'none' : `0 0 32px ${css(c, '.4')}`,
               transition: 'font-weight .5s ease, color .6s ease, text-shadow .6s ease',
             }}
           >
