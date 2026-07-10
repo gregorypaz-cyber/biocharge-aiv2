@@ -370,6 +370,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
             size={288}
             animateCount
+            onClick={() => setShowProntidaoHint((v) => !v)}
           />
 
           <div className="flex justify-center gap-10 mt-2.5">
