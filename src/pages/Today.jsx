@@ -261,7 +261,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
   const recoveryCaptionColor =
     displayedScore >= 70 ? 'text-zone-green'
     : displayedScore >= 42 ? 'text-zone-amber'
-    : 'text-zone-orange';
+    : 'text-zone-red';
 
   // Chip de confiança do baseline. O frescor (stale-after-gap) tem PRIORIDADE sobre
   // o tier: baseline defasado por lacuna de dias não é "sólido" mesmo com noites suficientes.
