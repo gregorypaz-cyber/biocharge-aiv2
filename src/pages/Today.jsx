@@ -28,6 +28,7 @@ import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardi
 import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
+import RecoveryField from '@/components/today/RecoveryField';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { useStreak } from '@/hooks/useStreak';
@@ -374,17 +375,14 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
 
         {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
         <div className="flex flex-col items-center pt-0">
-          <MiniRing
+          <RecoveryField
             value={isCalibrating ? null : displayedScore}
             max={100}
             color={recoveryColor}
             label="Recovery"
             caption={isCalibrating ? 'Calibrando' : readinessFaixa}
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
-            trend={isCalibrating ? [] : ringTrends.recovery}
-            size={138}
-            zoneTicks={[0.42, 0.70]}
-            baselineMark={isCalibrating ? null : recoveryBaseline}
+            size={288}
             animateCount
           />
 
