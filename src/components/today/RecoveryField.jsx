@@ -24,7 +24,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // blob orgânico: catmull-rom fechado; K=10 e amplitudes menores = forma suave,
 // sem harmônicos de "losango"
-const K = 10, CX = 200, CY = 200, R = 146;
+const K = 10, CX = 200, CY = 206, R = 146;
 
 function makeAnchors() {
   return Array.from({ length: K }, (_, i) => ({
@@ -87,6 +87,7 @@ export default function RecoveryField({
   const glowRef = useRef(null);
   const vigRef = useRef(null);
   const sheenRef = useRef(null);
+  const depthRef = useRef(null);
   const hiRef = useRef(null);
   const rimRef = useRef(null);
   const clipRef = useRef(null);
@@ -132,7 +133,7 @@ export default function RecoveryField({
   useEffect(() => {
     const anchors = anchorsRef.current;
     const setPath = (d) => {
-      for (const r of [bodyRef, glowRef, vigRef, sheenRef, hiRef, rimRef, clipRef]) {
+      for (const r of [bodyRef, glowRef, vigRef, depthRef, sheenRef, hiRef, rimRef, clipRef]) {
         r.current?.setAttribute('d', d);
       }
     };
@@ -191,10 +192,10 @@ export default function RecoveryField({
   }, [animate, period, size, c.h, c.s, c.l]);
 
   // ── física de luz do vidro ──
-  const mute = live ? 1 : 0.72;
+  const mute = live ? 1 : 0.66;
   // corpo translúcido: núcleo luminoso pequeno → corpo rico → borda escura saturada
   const body0 = css({ h: c.h, s: Math.min(c.s + 2, 95), l: Math.min(c.l + 24, 86) }, 0.98 * mute);
-  const body1 = css({ h: c.h, s: c.s, l: c.l }, 0.97 * mute);
+  const body1 = css({ h: c.h, s: c.s, l: Math.max(c.l - 3, 8) }, 0.97 * mute);
   const body2 = css({ h: c.h, s: Math.min(c.s + 8, 95), l: Math.max(c.l - 14, 9) }, 0.97 * mute);
   const body3 = css({ h: c.h, s: Math.min(c.s + 10, 95), l: Math.max(c.l - 26, 7) }, 0.98 * mute);
   const body4 = css({ h: c.h, s: Math.min(c.s + 12, 95), l: Math.max(c.l - 32, 5) }, 0.98 * mute);
@@ -205,7 +206,7 @@ export default function RecoveryField({
   const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 70), l: 86 });
   const gid = React.useId ? React.useId().replace(/:/g, '') : Math.random().toString(36).slice(2);
 
-  const numSize = Math.round(size * 0.30);
+  const numSize = Math.round(size * 0.29);
   const shown = isCalibrating ? '—' : (display ?? Math.round(value));
   const showSparks = size >= 140;
   const tappable = typeof onClick === 'function';
@@ -256,14 +257,18 @@ export default function RecoveryField({
             <radialGradient id={`vig-${gid}`} cx="50%" cy="50%" r="52%">
               <stop offset="0%" stopColor="#000" stopOpacity="0" />
               <stop offset="68%" stopColor="#000" stopOpacity="0" />
-              <stop offset="100%" stopColor="#000" stopOpacity="0.38" />
+              <stop offset="100%" stopColor="#000" stopOpacity="0.42" />
+            </radialGradient>
+            <radialGradient id={`depth-${gid}`} cx="62%" cy="74%" r="55%">
+              <stop offset="0%" stopColor="#000" stopOpacity="0.26" />
+              <stop offset="100%" stopColor="#000" stopOpacity="0" />
             </radialGradient>
             <radialGradient id={`sheen-${gid}`} cx="48%" cy="16%" r="45%">
               <stop offset="0%" stopColor="#fff" stopOpacity={0.13 * mute} />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
-            <radialGradient id={`spec-${gid}`} cx="34%" cy="22%" r="14%">
-              <stop offset="0%" stopColor="#fff" stopOpacity={0.6 * mute} />
+            <radialGradient id={`spec-${gid}`} cx="34%" cy="22%" r="11%">
+              <stop offset="0%" stopColor="#fff" stopOpacity={0.78 * mute} />
               <stop offset="55%" stopColor="#fff" stopOpacity={0.18 * mute} />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
@@ -287,6 +292,7 @@ export default function RecoveryField({
           <path ref={glowRef} d="" fill={glowCol} filter={`url(#soft-${gid})`} />
           <path ref={bodyRef} d="" fill={`url(#body-${gid})`} />
           <path ref={vigRef} d="" fill={`url(#vig-${gid})`} />
+          <path ref={depthRef} d="" fill={`url(#depth-${gid})`} />
           <path ref={sheenRef} d="" fill={`url(#sheen-${gid})`} />
           <path ref={hiRef} d="" fill={`url(#spec-${gid})`} />
           <path
@@ -332,10 +338,10 @@ export default function RecoveryField({
               lineHeight: 0.9,
               letterSpacing: '-0.03em',
               color: textCol,
-              opacity: 0.96,
+              opacity: 0.94,
               mixBlendMode: isCalibrating ? 'normal' : 'screen',
               fontVariantNumeric: 'tabular-nums',
-              textShadow: isCalibrating ? 'none' : `0 0 32px ${css(c, '.4')}`,
+              textShadow: isCalibrating ? 'none' : `0 0 22px ${css(c, '.32')}`,
               transition:
                 'font-weight .5s ease, font-variation-settings .5s ease, color .6s ease, text-shadow .6s ease',
             }}
@@ -345,7 +351,7 @@ export default function RecoveryField({
         </div>
       </div>
 
-      <p className="text-[11px] font-bold uppercase tracking-wider text-foreground mt-2">{label}</p>
+      <p className={`text-[11px] font-bold uppercase tracking-wider text-foreground ${size >= 140 ? '-mt-2' : 'mt-1'}`}>{label}</p>
       {caption ? (
         <p className={`text-[10px] mt-0.5 text-center leading-tight ${captionColor}`}>{caption}</p>
       ) : null}
