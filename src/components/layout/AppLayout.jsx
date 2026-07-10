@@ -207,12 +207,29 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/today" className="flex items-center gap-2">
-            <svg viewBox="0 0 120 120" className="w-7 h-7" role="img" aria-label="Reck">
-              <circle cx="60" cy="60" r="42" fill="none" stroke="hsl(142 70% 50%)" strokeWidth="13" />
-              <g fill="none" stroke="hsl(210 40% 96%)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M51 41 V79" />
-                <path d="M51 41 H62 a10.5 10.5 0 0 1 0 21 H51" />
-                <path d="M56 62 L70 79" />
+            <svg viewBox="0 0 96 96" className="w-7 h-7" role="img" aria-label="Reck">
+              <defs>
+                <radialGradient id="reckGem" cx="34%" cy="22%" r="88%">
+                  <stop offset="0%" stopColor="hsl(142 62% 74%)" />
+                  <stop offset="30%" stopColor="hsl(142 70% 46%)" />
+                  <stop offset="74%" stopColor="hsl(146 78% 26%)" />
+                  <stop offset="100%" stopColor="hsl(150 80% 15%)" />
+                </radialGradient>
+                <radialGradient id="reckSpec" cx="30%" cy="18%" r="13%">
+                  <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                </radialGradient>
+                <filter id="reckHalo" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="2.8" />
+                </filter>
+              </defs>
+              <path d="M48 6 C68 5 90 20 90 46 C90 72 72 91 47 90 C23 89 6 73 6 48 C6 22 27 7 48 6 Z" fill="url(#reckGem)" />
+              <path d="M48 6 C68 5 90 20 90 46 C90 72 72 91 47 90 C23 89 6 73 6 48 C6 22 27 7 48 6 Z" fill="url(#reckSpec)" />
+              <g transform="translate(32.55 64) scale(0.02344 -0.02344)" filter="url(#reckHalo)">
+                <path d="M180 0L180 1490L690 1490Q864 1490 976.5 1430.5Q1089 1371 1143.5 1267Q1198 1163 1198 1030Q1198 897 1143.5 795Q1089 693 977 635.5Q865 578 691 578L286 578L286 682L680 682Q810 682 897.5 726Q985 770 1027.5 848Q1070 926 1070 1030Q1070 1134 1027 1215Q984 1296 895.5 1341Q807 1386 676 1386L286 1386L286 0L180 0ZM888 674L1256 0L1132 0L766 674L888 674Z" fill="hsl(152 80% 12%)" opacity="0.85" transform="translate(0 -94)" />
+              </g>
+              <g transform="translate(32.55 64) scale(0.02344 -0.02344)">
+                <path d="M180 0L180 1490L690 1490Q864 1490 976.5 1430.5Q1089 1371 1143.5 1267Q1198 1163 1198 1030Q1198 897 1143.5 795Q1089 693 977 635.5Q865 578 691 578L286 578L286 682L680 682Q810 682 897.5 726Q985 770 1027.5 848Q1070 926 1070 1030Q1070 1134 1027 1215Q984 1296 895.5 1341Q807 1386 676 1386L286 1386L286 0L180 0ZM888 674L1256 0L1132 0L766 674L888 674Z" fill="#f2fff7" />
               </g>
             </svg>
             <span className="font-black text-foreground tracking-tight text-sm">Reck</span>
@@ -235,7 +252,7 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/75 backdrop-blur-xl">
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
@@ -258,20 +275,36 @@ export default function AppLayout() {
                   />
                 )}
                 {item.primary ? (
-                  <div className="w-12 h-12 -mt-5 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40 ring-4 ring-background relative">
-                    <item.icon className="w-6 h-6 text-primary-foreground" />
+                  <div
+                    className="w-14 h-14 -mt-6 relative flex items-center justify-center"
+                    style={{ filter: 'drop-shadow(0 4px 14px hsl(142 70% 50% / 0.35))' }}
+                  >
+                    <svg viewBox="0 0 96 96" className="absolute inset-0 w-full h-full" aria-hidden="true">
+                      <defs>
+                        <radialGradient id="fabGem" cx="42%" cy="30%" r="85%">
+                          <stop offset="0%" stopColor="hsl(142 60% 70%)" />
+                          <stop offset="36%" stopColor="hsl(142 70% 44%)" />
+                          <stop offset="80%" stopColor="hsl(148 80% 22%)" />
+                          <stop offset="100%" stopColor="hsl(152 82% 14%)" />
+                        </radialGradient>
+                        <radialGradient id="fabSpec" cx="34%" cy="22%" r="16%">
+                          <stop offset="0%" stopColor="#fff" stopOpacity="0.75" />
+                          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                        </radialGradient>
+                      </defs>
+                      <path d="M48 7 C67 6 89 21 89 46 C89 71 71 90 47 89 C24 88 7 72 7 48 C7 23 27 8 48 7 Z" fill="url(#fabGem)" />
+                      <path d="M48 7 C67 6 89 21 89 46 C89 71 71 90 47 89 C24 88 7 72 7 48 C7 23 27 8 48 7 Z" fill="url(#fabSpec)" />
+                    </svg>
+                    <item.icon className="w-6 h-6 relative" strokeWidth={2.5} style={{ color: '#eafff2' }} />
                   </div>
                 ) : (
                   <item.icon className="w-5 h-5 relative" />
                 )}
-                <span
-                  className={cn(
-                    'text-[10px] font-semibold relative whitespace-nowrap',
-                    item.primary ? 'text-muted-foreground' : ''
-                  )}
-                >
-                  {item.label}
-                </span>
+                {!item.primary && (
+                  <span className="text-[10px] font-semibold relative whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
               </Link>
             );
           })}
