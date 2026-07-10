@@ -386,32 +386,31 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             animateCount
           />
 
-          <div className="flex justify-center gap-8 mt-2.5">
-            <MiniRing
+          <div className="flex justify-center gap-10 mt-2.5">
+            <RecoveryField
               value={sleepVal}
               max={100}
               color={sleepColor}
               label="Sono"
               caption={sleepWord}
               captionColor={sleepCaptionColor}
-              trend={[]}
-              size={76}
+              size={96}
+              live={false}
             />
-            <MiniRing
+            <RecoveryField
               value={cappedStrain}
-              displayValue={cappedStrain}
               max={21}
               color={strainColor}
               label="Strain"
               caption={strainCaption}
               captionColor={cappedStrain <= 0 ? 'text-muted-foreground' : strainVsTarget.color}
-              trend={[]}
-              size={76}
+              size={96}
+              live={false}
             />
           </div>
         </div>
 
-        {/* Entender os anéis (toque — funciona no iPhone) */}
+        {/* Entender os scores (toque — funciona no iPhone) */}
         <div className="flex justify-center -mt-1.5">
           <button
             type="button"
@@ -420,7 +419,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
           >
             <Info className="w-3 h-3" />
-            Entender os anéis
+            Entender os scores
             <motion.span animate={{ rotate: showProntidaoHint ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="w-3 h-3" />
             </motion.span>
