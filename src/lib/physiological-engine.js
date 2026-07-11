@@ -1850,11 +1850,13 @@ export function detectLongTermTrends(checkins) {
   // então sua "tendência" misturaria duas réguas diferentes — seria um artefato,
   // não uma mudança fisiológica real. Por isso ele fica de fora.
   const metrics = [
-    { key: 'hrv', label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
+    // HRV FUNDIDO (2026-07-11): o veredito de tendência do HRV vem da série
+    // suavizada de 7 dias (rmssdMean7d) — mais robusta ao ruído diário. A
+    // linha crua e a suavizada diziam a mesma coisa duas vezes na UI.
+    { key: '_rmssd7', label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
     { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
     { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', higherIsBetter: true, icon: '😴' },
     { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', higherIsBetter: true, icon: '🌙' },
-    { key: '_rmssd7', label: 'Tendência do HRV (7 dias)', unit: 'ms', higherIsBetter: true, icon: '📈' },
   ];
   const results = [];
 
@@ -1871,6 +1873,10 @@ export function detectLongTermTrends(checkins) {
       sentiment = improving ? 'positive' : 'negative';
     }
 
+    // Última leitura válida da série — a UI mostra o valor vivo nas métricas
+    // estáveis e o delta do período nas que têm tendência.
+    const lastValid = [...series].reverse().find((v) => v != null && !isNaN(v));
+
     results.push({
       key: m.key,
       label: m.label,
@@ -1880,6 +1886,7 @@ export function detectLongTermTrends(checkins) {
       hasTrend: t.hasTrend,
       direction: t.direction,
       totalChange: t.totalChange,
+      current: lastValid != null ? Math.round(lastValid * 10) / 10 : null,
       r: t.r,
       sentiment,
     });

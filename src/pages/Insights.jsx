@@ -24,6 +24,9 @@ import {
   Zap,
   Dumbbell,
   Footprints,
+  HeartPulse,
+  Heart,
+  Info,
 } from 'lucide-react';
 import { computeCheckinScores, getSmartMessage } from '@/lib/biocharge-utils';
 import {
@@ -195,6 +198,8 @@ function BottleneckInsight({ bottleneck }) {
 }
 
 function LongTermTrendsCard({ trends }) {
+  const [showInfo, setShowInfo] = useState(false);
+
   if (!trends) return null;
 
   // Ainda sem dados suficientes em nenhuma métrica
@@ -220,64 +225,102 @@ function LongTermTrendsCard({ trends }) {
 
   const statusOf = (m) => {
     if (!m.hasTrend) {
-      return { label: 'estável', Icon: Minus, color: 'text-muted-foreground', bg: 'bg-secondary/60' };
+      return { label: 'estável', Icon: Minus, tone: 'neutral' };
     }
     if (m.sentiment === 'positive') {
-      return {
-        label: m.direction === 'up' ? 'melhorando' : 'melhorando',
-        Icon: m.direction === 'up' ? TrendingUp : TrendingDown,
-        color: 'text-emerald-400',
-        bg: 'bg-emerald-500/10',
-      };
+      return { label: 'melhorando', Icon: m.direction === 'up' ? TrendingUp : TrendingDown, tone: 'good' };
     }
-    return {
-      label: 'piorando',
-      Icon: m.direction === 'up' ? TrendingUp : TrendingDown,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10',
-    };
+    return { label: 'piorando', Icon: m.direction === 'up' ? TrendingUp : TrendingDown, tone: 'bad' };
   };
 
-  const formatChange = (m) => {
-    if (!m.hasTrend) return null;
-    const sign = m.totalChange > 0 ? '+' : '';
-    return `${sign}${m.totalChange}${m.unit}`;
+  // Gramática de cor travada: âmbar = desvio de tendência (nunca vermelho —
+  // vermelho é reservado pro alerta agudo do Monitor e pra zona <42).
+  // Verde = melhora real. Linha inteira tingida quando há tendência.
+  const TONE = {
+    neutral: {
+      row: 'bg-secondary/35 border-border/25',
+      icon: 'text-muted-foreground',
+      val: 'text-foreground',
+      pill: 'bg-secondary/70 text-muted-foreground border border-border/40',
+    },
+    good: {
+      row: 'bg-gradient-to-r from-emerald-500/10 to-emerald-500/[0.03] border-emerald-500/20',
+      icon: 'text-emerald-400',
+      val: 'text-emerald-400',
+      pill: 'bg-emerald-500/15 text-emerald-400',
+    },
+    bad: {
+      row: 'bg-gradient-to-r from-amber-500/[0.13] to-amber-500/5 border-amber-500/25',
+      icon: 'text-amber-400',
+      val: 'text-amber-400',
+      pill: 'bg-amber-500/15 text-amber-400',
+    },
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card tint-recovery p-5"
+      className="rounded-2xl border border-border/50 bg-card tint-recovery p-5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]"
     >
-      <div className="flex items-center gap-2 mb-1">
-        <BarChart3 className="w-4 h-4 text-muted-foreground" />
-        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-          Sua evolução
-        </p>
+      <div className="flex items-start justify-between mb-0.5">
+        <h2 className="text-[17px] font-semibold tracking-tight">Sua evolução</h2>
+        <button
+          type="button"
+          onClick={() => setShowInfo((v) => !v)}
+          aria-label="Como a tendência é calculada"
+          className="w-6 h-6 rounded-full bg-secondary/70 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Info className="w-3.5 h-3.5" />
+        </button>
       </div>
-      <p className="text-[12px] text-muted-foreground leading-relaxed mb-4">
-        Tendência das suas métricas ao longo de {trends.metrics[0]?.days || 0} dias.
-        O app só chama de tendência o que é estatisticamente claro — o resto é
-        normal oscilar.
+      <p className="text-[12px] text-muted-foreground mb-4">
+        Últimos {trends.metrics[0]?.days || 0} dias
       </p>
 
-      <div className="space-y-2">
+      <AnimatePresence>
+        {showInfo && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-[11px] text-muted-foreground/80 leading-relaxed mb-4 overflow-hidden"
+          >
+            O app só chama de tendência o que é estatisticamente claro na janela —
+            o resto é oscilação normal em torno da sua base. O HRV usa a média
+            móvel de 7 dias, mais robusta ao ruído do dia a dia. Nas métricas com
+            tendência, o número é a variação no período; nas estáveis, o valor atual.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      <div className="space-y-1.5">
         {trends.metrics.map((m) => {
           const s = statusOf(m);
-          const change = formatChange(m);
+          const t = TONE[s.tone];
+          const showDelta = m.hasTrend && m.totalChange != null;
+          const value = showDelta
+            ? `${m.totalChange > 0 ? '+' : ''}${m.totalChange}`
+            : m.current != null
+            ? `${m.current}`
+            : null;
           return (
             <div
               key={m.key}
-              className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-secondary/40 border border-border/30"
+              className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl border ${t.row}`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <InsightIcon icon={m.icon} className="text-muted-foreground shrink-0" />
-                <span className="text-[13px] font-medium truncate">{m.label}</span>
+                <InsightIcon icon={m.icon} size={18} className={`${t.icon} shrink-0`} />
+                <span className="text-[14px] font-medium truncate">{m.label}</span>
               </div>
-              <div className={`flex items-center gap-1.5 shrink-0 ${s.color}`}>
-                {change && <span className="text-[11px] font-mono">{change}</span>}
-                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${s.bg}`}>
+              <div className="flex items-baseline gap-2 shrink-0">
+                {value != null && (
+                  <span className={`text-base font-semibold num ${t.val}`}>
+                    {value}
+                    <span className="text-[11px] font-medium text-muted-foreground ml-0.5">{m.unit}</span>
+                  </span>
+                )}
+                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${t.pill}`}>
                   <s.Icon className="w-3 h-3" />
                   {s.label}
                 </span>
@@ -336,6 +379,7 @@ const DOMAIN_DEFAULT = 'border-emerald-500/20 bg-emerald-500/5'; // recovery (ve
 const EMOJI_ICON = {
   '🌙': Moon, '💤': BedDouble, '🔬': Microscope, '😰': Brain, '📉': TrendingDown,
   '💧': Droplet, '⏰': Clock, '⚡': Zap, '💪': Dumbbell, '🏃': Footprints,
+  '💓': HeartPulse, '❤️': Heart, '😴': BedDouble, '📈': TrendingUp,
 };
 
 function InsightIcon({ icon, className = 'text-muted-foreground', size = 16 }) {
