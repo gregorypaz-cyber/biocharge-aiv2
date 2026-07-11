@@ -203,7 +203,8 @@ export default function RecoveryField({
   const rimA = css({ h: c.h, s: c.s, l: Math.min(c.l + 24, 88) }, 0.35 * mute);
   const rimB = css({ h: c.h, s: c.s, l: Math.min(c.l + 30, 92) }, 0.65 * mute);
 
-  const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 70), l: 86 });
+  const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 55), l: 93 });
+  const textHalo = css({ h: c.h, s: Math.min(c.s + 8, 90), l: 12 });
   const gid = React.useId ? React.useId().replace(/:/g, '') : Math.random().toString(36).slice(2);
 
   const numSize = Math.round(size * 0.29);
@@ -338,10 +339,10 @@ export default function RecoveryField({
               lineHeight: 0.9,
               letterSpacing: '-0.03em',
               color: textCol,
-              opacity: 0.94,
-              mixBlendMode: isCalibrating ? 'normal' : 'screen',
               fontVariantNumeric: 'tabular-nums',
-              textShadow: isCalibrating ? 'none' : `0 0 22px ${css(c, '.32')}`,
+              textShadow: isCalibrating
+                ? 'none'
+                : `0 1px 3px ${css({ h: c.h, s: Math.min(c.s + 8, 90), l: 12 }, '.45')}, 0 3px 20px ${textHalo}`,
               transition:
                 'font-weight .5s ease, font-variation-settings .5s ease, color .6s ease, text-shadow .6s ease',
             }}
