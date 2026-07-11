@@ -208,6 +208,14 @@ export const BL_SEED_NIGHTS  = 4;     // < isto: calibrando (sem score)
 export const BL_TRUST_NIGHTS = 14;    // ≥ isto: baseline confiável
 export const BL_WINSOR_K        = 3.0; // dobra só dentro de ±3σ
 export const BL_HARD_OUTLIER_K  = 5.0; // > 5σ: noite vista, NÃO dobrada
+// Anti-ancoragem early-life: baseline jovem (0 < n < BL_EARLY_N) adapta rápido +
+// winsor largo + sem hard-gate, pra um seed atípico (troca de aparelho/anel) não
+// grudar por semanas. Inerte após madurar. Validado nos dados reais: Δ≈0 na
+// baseline madura; corrige ~14ms de ancoragem no cenário de re-seed do anel.
+export const BL_EARLY_N          = 8;   // < isto: regime early-life
+export const BL_EARLY_HALFLIFE_B = 4;   // meia-vida do centro (vs 14 maduro)
+export const BL_EARLY_HALFLIFE_S = 6;   // meia-vida do spread (vs 21)
+export const BL_EARLY_WINSOR_K   = 6.0; // banda winsor larga (vs 3.0)
 export const BL_SIGMA_FROM_SPREAD = 1.253; // σ ≈ 1.253 × spread (EWMA abs-dev → Gaussiana)
 
 // Composto de recovery (z ponderado) + logística

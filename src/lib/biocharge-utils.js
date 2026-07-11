@@ -288,17 +288,23 @@ function _blLambda(hl) { return 1 - Math.pow(0.5, 1 / hl); }
 // outlier duro (>5σ, já semeado) é visto mas NÃO dobra o centro; Winsor clamp
 // (±3σ) impede uma noite de puxar o baseline; spread = EWMA do desvio absoluto.
 function _blUpdate(state, value, cfg) {
-  const lb = _blLambda(cfg.halfLifeB);
-  const ls = _blLambda(cfg.halfLifeS);
+  // Anti-ancoragem early-life: enquanto a baseline e jovem (0 < n < BL_EARLY_N),
+  // adapta rapido (halfLife curto) + winsor largo + sem hard-gate, pra um seed
+  // atipico (troca de aparelho/anel) NAO grudar por semanas. Inerte apos madurar
+  // (n >= BL_EARLY_N volta ao regime normal); nao afeta baseline ja estabelecida.
+  const early = state != null && state.n > 0 && state.n < RC.BL_EARLY_N;
+  const lb = _blLambda(early ? RC.BL_EARLY_HALFLIFE_B : cfg.halfLifeB);
+  const ls = _blLambda(early ? RC.BL_EARLY_HALFLIFE_S : cfg.halfLifeS);
+  const winsorK = early ? RC.BL_EARLY_WINSOR_K : RC.BL_WINSOR_K;
   if (state == null) {
     if (value != null && value >= cfg.min && value <= cfg.max) return { b: value, s: cfg.floorSpread, n: 1 };
     return { b: (cfg.min + cfg.max) / 2, s: cfg.floorSpread, n: 0 };
   }
   if (value == null || value < cfg.min || value > cfg.max) return state;
-  if (state.n >= RC.BL_SEED_NIGHTS && Math.abs(value - state.b) > RC.BL_HARD_OUTLIER_K * state.s) return state;
+  if (!early && state.n >= RC.BL_SEED_NIGHTS && Math.abs(value - state.b) > RC.BL_HARD_OUTLIER_K * state.s) return state;
   if (state.n === 0) return { b: value, s: cfg.floorSpread, n: 1 };
-  const lo = state.b - RC.BL_WINSOR_K * state.s;
-  const hi = state.b + RC.BL_WINSOR_K * state.s;
+  const lo = state.b - winsorK * state.s;
+  const hi = state.b + winsorK * state.s;
   const clamped = Math.max(lo, Math.min(hi, value));
   const nb = lb * clamped + (1 - lb) * state.b;
   const ns = Math.max(cfg.floorSpread, ls * Math.abs(value - nb) + (1 - ls) * state.s);
