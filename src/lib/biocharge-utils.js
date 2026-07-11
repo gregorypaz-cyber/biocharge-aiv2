@@ -329,6 +329,28 @@ function _sleepZ(todayScore, recentCheckins) {
   return Math.max(-2.5, Math.min(2.5, z));
 }
 
+// Miolo do Recovery v3: z's -> composto ponderado (renormaliza) -> logistica
+// ancorada -> teto autonomico -> piso subjetivo. FONTE UNICA da matematica do
+// score: calculateRecoveryScore E explainRecoveryV3 chamam esta funcao, entao os
+// drivers nunca descrevem um modelo diferente do que gerou o numero.
+function _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor = false) {
+  const terms = [[zHrv, RC.REC_W_HRV]];
+  if (zRhr != null) terms.push([zRhr, RC.REC_W_RHR]);
+  if (zSono != null) terms.push([zSono, RC.REC_W_SONO]);
+  const wSum = terms.reduce((a, t) => a + t[1], 0);
+  const zComposite = terms.reduce((a, t) => a + t[0] * t[1], 0) / wSum;
+
+  let score = clamp(Math.round(100 / (1 + Math.exp(-RC.REC_LOGISTIC_K * (zComposite - RC.REC_LOGISTIC_Z0)))));
+
+  const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
+  const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
+  if (autonZ <= RC.REC_CAP_HARD_AUTON) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
+  else if (autonZ <= RC.REC_CAP_NOGREEN_AUTON) score = Math.min(score, RC.REC_CAP_NOGREEN_CEIL);
+
+  if (subjectiveFloor) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
+  return score;
+}
+
 export function calculateRecoveryScore(checkin, recentCheckins = []) {
   // Baselines pessoais (excluem o dia atual; recentCheckins é descendente).
   // Janela de baseline FIXA: usa no máx. BL_WINDOW_NIGHTS dias mais recentes,
@@ -352,32 +374,75 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
     : null;
   const zSono = _sleepZ(calculateSleepScore(checkin), recentCheckins);
 
-  // Composto ponderado (renormaliza se faltar termo).
-  const terms = [[zHrv, RC.REC_W_HRV]];
-  if (zRhr != null) terms.push([zRhr, RC.REC_W_RHR]);
-  if (zSono != null) terms.push([zSono, RC.REC_W_SONO]);
-  const wSum = terms.reduce((a, t) => a + t[1], 0);
-  const zComposite = terms.reduce((a, t) => a + t[0] * t[1], 0) / wSum;
-
-  // Logística ancorada: z=0 (seu normal) → 64.
-  let score = clamp(Math.round(100 / (1 + Math.exp(-RC.REC_LOGISTIC_K * (zComposite - RC.REC_LOGISTIC_Z0)))));
-
-  // Teto autonômico: sono bom NÃO resgata dia autonomicamente ruim.
-  const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
-  const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
-  if (autonZ <= RC.REC_CAP_HARD_AUTON) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
-  else if (autonZ <= RC.REC_CAP_NOGREEN_AUTON) score = Math.min(score, RC.REC_CAP_NOGREEN_CEIL);
-
   // Override só-pra-baixo ("estou muito mal"): combinação subjetiva extrema só
   // PUXA pra baixo, nunca levanta. Inerte no seu histórico (raramente dispara).
   const energy = resolveCheckinField(checkin, 'energy');
   const stress = resolveCheckinField(checkin, 'stress');
   const soreness = resolveCheckinField(checkin, 'muscle_soreness');
-  if (energy != null && energy <= 1 && ((stress != null && stress >= 4) || (soreness != null && soreness >= 4))) {
-    score = Math.min(score, RC.REC_CAP_HARD_CEIL);
-  }
+  const subjectiveFloor =
+    energy != null && energy <= 1 && ((stress != null && stress >= 4) || (soreness != null && soreness >= 4));
 
-  return score;
+  // Miolo unico (mesmo caminho do explainRecoveryV3).
+  return _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor);
+}
+
+// --- RecoveryDrivers: "o que moldou" o score -------------------------------
+// Decompoe o Recovery v3 em contribuicao ASSINADA por termo, recalculada da MESMA
+// funcao (_recoveryFromZ). Honesto por construcao: termo ausente = nenhuma linha
+// (nunca uma linha-zero fabricada). deltaPoints = score - score(com o termo
+// neutralizado ao seu normal, z=0) = "quanto esse sinal puxou vs seu baseline".
+// NAO somam ao score (logistica+tetos sao nao-lineares): sao efeitos marginais.
+export function explainRecoveryV3(checkin, recentCheckins = []) {
+  if (!checkin) return null;
+  const blWindow = (recentCheckins || []).slice(0, RC.BL_WINDOW_NIGHTS);
+  const hrvDesc = blWindow.map((c) => resolveHrvValue(c)).filter((v) => v != null && v > 0);
+  const rhrDesc = blWindow.map((c) => resolveCheckinField(c, 'resting_hr')).filter((v) => v != null && v > 0);
+  const hrvBl = _blFoldDesc(hrvDesc, RC.BL_HRV);
+  const rhrBl = _blFoldDesc(rhrDesc, RC.BL_RHR);
+
+  const hrv = resolveHrvValue(checkin);
+  const rhr = resolveCheckinField(checkin, 'resting_hr');
+
+  // Mesmo cold-start do score: sem baseline de HRV utilizavel -> sem drivers.
+  if (!(_blUsable(hrvBl) && hrv != null && hrv > 0)) return null;
+
+  const zHrv = _robustZ(hrv, hrvBl);
+  const zRhr = (_blUsable(rhrBl) && rhr != null && rhr > 0)
+    ? (rhrBl.b - rhr) / Math.max(RC.BL_SIGMA_FROM_SPREAD * rhrBl.s, 1e-9)
+    : null;
+  const sonoToday = calculateSleepScore(checkin);
+  const zSono = _sleepZ(sonoToday, recentCheckins);
+
+  const energy = resolveCheckinField(checkin, 'energy');
+  const stress = resolveCheckinField(checkin, 'stress');
+  const soreness = resolveCheckinField(checkin, 'muscle_soreness');
+  const subjectiveFloor =
+    energy != null && energy <= 1 && ((stress != null && stress >= 4) || (soreness != null && soreness >= 4));
+
+  const score = _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor);
+
+  const priorSono = (recentCheckins || []).map((c) => calculateSleepScore(c)).filter((v) => v != null).slice(0, 14);
+  const sonoBase = priorSono.length >= 4 ? Math.round(priorSono.reduce((a, b) => a + b, 0) / priorSono.length) : null;
+
+  const zAll = { zHrv, zRhr, zSono };
+  const marginal = (key) => {
+    const n = { ...zAll, [key]: 0 };
+    return score - _recoveryFromZ(n.zHrv, n.zRhr, n.zSono, subjectiveFloor);
+  };
+  const mk = (id, label, weight, zKey, z, value, baseline, unit) => {
+    const dp = marginal(zKey);
+    return { id, label, weight, z: +z.toFixed(2), value, baseline, unit, deltaPoints: dp, direction: dp >= 0 ? 'positive' : 'negative' };
+  };
+
+  const drivers = [mk('hrv', 'HRV', RC.REC_W_HRV, 'zHrv', zHrv, Math.round(hrv), Math.round(hrvBl.b), 'ms')];
+  if (zRhr != null) drivers.push(mk('rhr', 'FC de repouso', RC.REC_W_RHR, 'zRhr', zRhr, Math.round(rhr), Math.round(rhrBl.b), 'bpm'));
+  if (zSono != null) drivers.push(mk('sono', 'Sono', RC.REC_W_SONO, 'zSono', zSono, sonoToday != null ? Math.round(sonoToday) : null, sonoBase, 'pts'));
+  drivers.sort((a, b) => Math.abs(b.deltaPoints) - Math.abs(a.deltaPoints));
+
+  const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
+  const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
+
+  return { score, drivers, autonomicCapped: autonZ <= RC.REC_CAP_NOGREEN_AUTON, subjectiveFloor };
 }
 
 export function calculateSleepScore(checkin) {

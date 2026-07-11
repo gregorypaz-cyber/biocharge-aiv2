@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, Flame, ArrowUpRight } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
-import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
+import { computeCheckinScores, getDayScore, explainRecoveryV3 } from '@/lib/biocharge-utils';
 import {
   calculateBodyState,
   calculateRemainingCapacity,
@@ -249,7 +249,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
   );
 }
 
-function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
+function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, recoveryDrivers, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
 
   const recoveryColor =
@@ -426,6 +426,26 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                   <span className="font-semibold text-foreground">Recovery</span>{' '}
                   <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
                 </p>
+                {recoveryDrivers?.drivers?.length ? (
+                  <div className="mt-1.5 pt-1.5 border-t border-border/30 space-y-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">O que moldou hoje · vs seu normal</p>
+                    {recoveryDrivers.drivers.map((d) => {
+                      const up = d.direction === 'positive';
+                      return (
+                        <div key={d.id} className="flex items-center justify-between gap-2 text-[11px]">
+                          <span className="text-muted-foreground">
+                            {d.label}
+                            <span className="text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
+                          </span>
+                          <span className={cn('font-semibold tabular-nums', d.deltaPoints === 0 ? 'text-muted-foreground' : up ? 'text-zone-green' : 'text-zone-red')}>
+                            {d.deltaPoints === 0 ? '±0' : `${d.deltaPoints > 0 ? '+' : ''}${d.deltaPoints}`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <p className="text-[9.5px] leading-snug text-muted-foreground/60 pt-0.5">Efeito de cada sinal vs seu baseline. Não somam ao score (a curva e os tetos não são lineares).</p>
+                  </div>
+                ) : null}
                 <p className="text-[11px] leading-relaxed">
                   <span className="font-semibold text-foreground">Sono</span>{' '}
                   <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
@@ -693,6 +713,12 @@ export default function Today() {
   const engineScores = rawCheckin
     ? computeCheckinScores(rawCheckin, sortedCheckins.slice(1), todaySessions)
     : null;
+
+  // RecoveryDrivers: MESMA janela que gerou o score (rawCheckin + slice(1)) -> reproduz.
+  const recoveryDrivers = useMemo(
+    () => (rawCheckin ? explainRecoveryV3(rawCheckin, sortedCheckins.slice(1)) : null),
+    [rawCheckin, sortedCheckins]
+  );
 
   const checkin = rawCheckin
     ? (() => {
@@ -1220,6 +1246,7 @@ function renderCard(desc) {
             recoveryBaseline={recoveryBaseline} cappedStrain={cappedStrain}
             todaySessions={todaySessions} strainTarget={strainTarget} analysis={analysis}
             sortedCheckins={sortedCheckins} today={today} targetZoneLabel={targetZoneLabel}
+            recoveryDrivers={recoveryDrivers}
             CAPACITY_PT={CAPACITY_PT} AUTONOMIC_PT={AUTONOMIC_PT}
             capacityContradictionNote={capacityContradictionNote}
             setShowAddModal={setShowAddModal} CtaIcon={CtaIcon}
