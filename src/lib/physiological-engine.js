@@ -1853,7 +1853,9 @@ export function detectLongTermTrends(checkins) {
     // HRV FUNDIDO (2026-07-11): o veredito de tendência do HRV vem da série
     // suavizada de 7 dias (rmssdMean7d) — mais robusta ao ruído diário. A
     // linha crua e a suavizada diziam a mesma coisa duas vezes na UI.
-    { key: '_rmssd7', label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
+    // A chave continua 'hrv' (é o mesmo sinal; só muda a série que o mede),
+    // preservando o contrato com consumidores e testes.
+    { key: 'hrv', smoothed: true, label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
     { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
     { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', higherIsBetter: true, icon: '😴' },
     { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', higherIsBetter: true, icon: '🌙' },
@@ -1861,7 +1863,7 @@ export function detectLongTermTrends(checkins) {
   const results = [];
 
   for (const m of metrics) {
-    const series = m.key === '_rmssd7'
+    const series = m.smoothed
       ? rmssdMean7d
       : chrono.map((c) => c[m.key]);
     const t = _linearTrend(series);
