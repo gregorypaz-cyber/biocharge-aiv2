@@ -339,21 +339,40 @@ function _sleepZ(todayScore, recentCheckins) {
 // ancorada -> teto autonomico -> piso subjetivo. FONTE UNICA da matematica do
 // score: calculateRecoveryScore E explainRecoveryV3 chamam esta funcao, entao os
 // drivers nunca descrevem um modelo diferente do que gerou o numero.
-function _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor = false) {
-  const terms = [[zHrv, RC.REC_W_HRV]];
+// Peso dinâmico: sono curto desloca peso HRV → Sono (t=0 em FULL_H, t=1 em
+// CATASTROPHIC_H). O HRV fica pouco confiável após noite curta; o sono passa a
+// carregar o veredito. Teto autonômico segue em pesos FIXOS (semântica estável).
+function _dynSleepWeights(sleepHours) {
+  let wHrv = RC.REC_W_HRV, wSono = RC.REC_W_SONO;
+  if (sleepHours != null && sleepHours < RC.SLEEP_DYN_FULL_H) {
+    const t = Math.min(1, Math.max(0, (RC.SLEEP_DYN_FULL_H - sleepHours) / (RC.SLEEP_DYN_FULL_H - RC.SLEEP_CATASTROPHIC_H)));
+    const shift = RC.SLEEP_DYN_MAX_SHIFT * t;
+    wHrv = RC.REC_W_HRV - shift;
+    wSono = RC.REC_W_SONO + shift;
+  }
+  return { wHrv, wSono };
+}
+
+function _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor = false, sleepHours = null) {
+  const { wHrv, wSono } = _dynSleepWeights(sleepHours);
+  const terms = [[zHrv, wHrv]];
   if (zRhr != null) terms.push([zRhr, RC.REC_W_RHR]);
-  if (zSono != null) terms.push([zSono, RC.REC_W_SONO]);
+  if (zSono != null) terms.push([zSono, wSono]);
   const wSum = terms.reduce((a, t) => a + t[1], 0);
   const zComposite = terms.reduce((a, t) => a + t[0] * t[1], 0) / wSum;
 
   let score = clamp(Math.round(100 / (1 + Math.exp(-RC.REC_LOGISTIC_K * (zComposite - RC.REC_LOGISTIC_Z0)))));
 
+  // Teto autonômico em pesos FIXOS (não depende do shift de sono).
   const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
   const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
   if (autonZ <= RC.REC_CAP_HARD_AUTON) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
   else if (autonZ <= RC.REC_CAP_NOGREEN_AUTON) score = Math.min(score, RC.REC_CAP_NOGREEN_CEIL);
 
   if (subjectiveFloor) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
+
+  // Piso por sono: <3h → HRV não é interpretável, tampa o score.
+  if (sleepHours != null && sleepHours < RC.SLEEP_CATASTROPHIC_H) score = Math.min(score, RC.SLEEP_CATASTROPHIC_CEIL);
   return score;
 }
 
@@ -389,7 +408,7 @@ export function calculateRecoveryScore(checkin, recentCheckins = []) {
     energy != null && energy <= 1 && ((stress != null && stress >= 4) || (soreness != null && soreness >= 4));
 
   // Miolo unico (mesmo caminho do explainRecoveryV3).
-  return _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor);
+  return _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor, checkin?.sleep_hours ?? null);
 }
 
 // --- RecoveryDrivers: "o que moldou" o score -------------------------------

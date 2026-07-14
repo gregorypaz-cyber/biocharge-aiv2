@@ -247,3 +247,14 @@ export const RMSSD_MEAN_WINDOW = 7;
 // Anota a confiança do baseline quando há lacuna de dias. NÃO altera o recovery.
 export const BL_FRESH_MAX_DAYS = 2;  // gap ≤ isto → 'fresh'
 export const BL_STALE_MIN_DAYS = 7;  // gap ≥ isto → 'stale' (entre os dois = 'aging')
+
+// ── Piso por sono + peso dinâmico (reavaliação 2026-07-13) ────────────────────
+// Quanto pior a noite, mais o recovery olha o sono e se desapega do HRV (que
+// fica pouco confiável após noite curta — pode ler ALTO por artefato autonômico,
+// ex.: noites de recém-nascido). Sono catastrófico (<3h) tampa o score: o HRV
+// não é interpretável. Validado nos DailyCheckin reais: muda só noites <6h; toda
+// noite normal fica bit-idêntica (comparabilidade preservada).
+export const SLEEP_CATASTROPHIC_H    = 3.0;  // < isto: HRV não interpretável
+export const SLEEP_CATASTROPHIC_CEIL = 30;   // teto do recovery em noite catastrófica
+export const SLEEP_DYN_FULL_H        = 6.0;  // ≥ isto: sem deslocamento de peso
+export const SLEEP_DYN_MAX_SHIFT     = 0.25; // peso máx. movido HRV → Sono (atingido em 3h)
