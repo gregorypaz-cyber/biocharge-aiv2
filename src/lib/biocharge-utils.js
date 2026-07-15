@@ -353,9 +353,26 @@ function _dynSleepWeights(sleepHours) {
   return { wHrv, wSono };
 }
 
+// Confianca do HRV por duracao de sono. Em noite curta o rMSSD noturno deixa de
+// medir recuperacao: validado nos dados reais (jul/2026) — nas 4 noites do bebe o
+// HRV do relogio ficou SIGNIFICATIVAMENTE ACIMA do normal (58.8 vs 51.5 ms;
+// Mann-Whitney p=0.019) enquanto a sensacao estava no piso (1/5). Mesmo fenomeno
+// ja registrado nas noites de gripe. Regra ONE-WAY: HRV positivo e descontado
+// (fade linear de SLEEP_DYN_FULL_H ate SLEEP_HRV_TRUST_H, zero abaixo disso);
+// HRV negativo passa inteiro. Nunca fabrica noticia ruim — so se recusa a aceitar
+// noticia boa de um sinal que, nesse regime, nao e confiavel.
+function _hrvTrustFactor(sleepHours) {
+  if (sleepHours == null || sleepHours >= RC.SLEEP_DYN_FULL_H) return 1;
+  const span = RC.SLEEP_DYN_FULL_H - RC.SLEEP_HRV_TRUST_H;
+  const t = span > 0 ? Math.min(1, Math.max(0, (RC.SLEEP_DYN_FULL_H - sleepHours) / span)) : 1;
+  return 1 - t;
+}
+
 function _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor = false, sleepHours = null) {
   const { wHrv, wSono } = _dynSleepWeights(sleepHours);
-  const terms = [[zHrv, wHrv]];
+  // HRV positivo perde forca conforme a noite encurta (one-way; negativo intacto).
+  const zHrvEff = zHrv > 0 ? zHrv * _hrvTrustFactor(sleepHours) : zHrv;
+  const terms = [[zHrvEff, wHrv]];
   if (zRhr != null) terms.push([zRhr, RC.REC_W_RHR]);
   if (zSono != null) terms.push([zSono, wSono]);
   const wSum = terms.reduce((a, t) => a + t[1], 0);
@@ -363,7 +380,10 @@ function _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor = false, sleepHours =
 
   let score = clamp(Math.round(100 / (1 + Math.exp(-RC.REC_LOGISTIC_K * (zComposite - RC.REC_LOGISTIC_Z0)))));
 
-  // Teto autonômico em pesos FIXOS (não depende do shift de sono).
+  // Teto autonômico em pesos e z CRUS (não depende do shift nem da confiança de
+  // sono). Semântica estável: verificado nos 40 dias reais — usar z efetivo aqui
+  // não muda nenhum score, então fica no cru para o teto significar sempre a mesma
+  // coisa. O teto é anti-verde; a confiança de HRV já cuida do anti-falso-alto.
   const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
   const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
   if (autonZ <= RC.REC_CAP_HARD_AUTON) score = Math.min(score, RC.REC_CAP_HARD_CEIL);
@@ -444,7 +464,12 @@ export function explainRecoveryV3(checkin, recentCheckins = []) {
   const subjectiveFloor =
     energy != null && energy <= 1 && ((stress != null && stress >= 4) || (soreness != null && soreness >= 4));
 
-  const score = _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor);
+  // MESMO caminho do score: sleepHours entra aqui tambem, senao os drivers
+  // descrevem um modelo sem piso/peso-dinamico — a divergencia que esta funcao
+  // existe para eliminar.
+  const sleepHours = checkin?.sleep_hours ?? null;
+  const score = _recoveryFromZ(zHrv, zRhr, zSono, subjectiveFloor, sleepHours);
+  const { wHrv, wSono } = _dynSleepWeights(sleepHours);
 
   const priorSono = (recentCheckins || []).map((c) => calculateSleepScore(c)).filter((v) => v != null).slice(0, 14);
   const sonoBase = priorSono.length >= 4 ? Math.round(priorSono.reduce((a, b) => a + b, 0) / priorSono.length) : null;
@@ -452,22 +477,29 @@ export function explainRecoveryV3(checkin, recentCheckins = []) {
   const zAll = { zHrv, zRhr, zSono };
   const marginal = (key) => {
     const n = { ...zAll, [key]: 0 };
-    return score - _recoveryFromZ(n.zHrv, n.zRhr, n.zSono, subjectiveFloor);
+    return score - _recoveryFromZ(n.zHrv, n.zRhr, n.zSono, subjectiveFloor, sleepHours);
   };
   const mk = (id, label, weight, zKey, z, value, baseline, unit) => {
     const dp = marginal(zKey);
     return { id, label, weight, z: +z.toFixed(2), value, baseline, unit, deltaPoints: dp, direction: dp >= 0 ? 'positive' : 'negative' };
   };
 
-  const drivers = [mk('hrv', 'HRV', RC.REC_W_HRV, 'zHrv', zHrv, Math.round(hrv), Math.round(hrvBl.b), 'ms')];
+  const drivers = [mk('hrv', 'HRV', wHrv, 'zHrv', zHrv, Math.round(hrv), Math.round(hrvBl.b), 'ms')];
   if (zRhr != null) drivers.push(mk('rhr', 'FC de repouso', RC.REC_W_RHR, 'zRhr', zRhr, Math.round(rhr), Math.round(rhrBl.b), 'bpm'));
-  if (zSono != null) drivers.push(mk('sono', 'Sono', RC.REC_W_SONO, 'zSono', zSono, sonoToday != null ? Math.round(sonoToday) : null, sonoBase, 'pts'));
+  if (zSono != null) drivers.push(mk('sono', 'Sono', wSono, 'zSono', zSono, sonoToday != null ? Math.round(sonoToday) : null, sonoBase, 'pts'));
   drivers.sort((a, b) => Math.abs(b.deltaPoints) - Math.abs(a.deltaPoints));
 
   const awSum = RC.REC_W_HRV + (zRhr != null ? RC.REC_W_RHR : 0);
   const autonZ = (RC.REC_W_HRV * zHrv + (zRhr != null ? RC.REC_W_RHR * zRhr : 0)) / awSum;
 
-  return { score, drivers, autonomicCapped: autonZ <= RC.REC_CAP_NOGREEN_AUTON, subjectiveFloor };
+  return {
+    score,
+    drivers,
+    autonomicCapped: autonZ <= RC.REC_CAP_NOGREEN_AUTON,
+    subjectiveFloor,
+    sleepFloored: sleepHours != null && sleepHours < RC.SLEEP_CATASTROPHIC_H,
+    hrvTrust: _hrvTrustFactor(sleepHours),
+  };
 }
 
 export function calculateSleepScore(checkin) {

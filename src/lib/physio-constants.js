@@ -258,3 +258,4 @@ export const SLEEP_CATASTROPHIC_H    = 3.0;  // < isto: HRV não interpretável
 export const SLEEP_CATASTROPHIC_CEIL = 30;   // teto do recovery em noite catastrófica
 export const SLEEP_DYN_FULL_H        = 6.0;  // ≥ isto: sem deslocamento de peso
 export const SLEEP_DYN_MAX_SHIFT     = 0.25; // peso máx. movido HRV → Sono (atingido em 3h)
+export const SLEEP_HRV_TRUST_H       = 5.0;  // < isto: HRV positivo não conta (fade a partir de SLEEP_DYN_FULL_H)
