@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, Pencil, Zap, BedDouble } from 'lucide-react';
-import { computeCheckinScores, getDayScore } from '@/lib/biocharge-utils';
+import { computeCheckinScores, getDayScore, getZone, getZoneClasses } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
 import WeeklyRetrospectCard from '@/components/history/WeeklyRetrospectCard';
@@ -71,7 +71,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className={`text-2xl font-black font-mono ${score >= 70 ? 'text-emerald-400' : score >= 42 ? 'text-yellow-400' : 'text-orange-400'}`}>{score}</p>
+                <p className={`text-2xl font-black font-mono ${getZoneClasses(getZone(score)).text}`}>{score}</p>
                 <p className="text-[10px] text-muted-foreground">prontidão</p>
               </div>
               <button
@@ -282,8 +282,8 @@ export default function History() {
                               <div
                                 className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
                                 style={{
-                                  background: !hasScore ? 'rgba(148,163,184,0.12)' : isAlert ? 'rgba(220,38,38,0.15)' : score >= 70 ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
-                                  color: !hasScore ? '#94a3b8' : isAlert ? '#ef4444' : score >= 70 ? '#22c55e' : '#eab308'
+                                  background: !hasScore ? 'hsl(215 15% 50% / 0.12)' : isAlert ? 'hsl(var(--bio-red) / 0.15)' : `hsl(var(--bio-${getZone(score) === 'green' ? 'green' : 'yellow'}) / 0.15)`,
+                                  color: !hasScore ? 'hsl(215 15% 50%)' : isAlert ? 'hsl(var(--bio-red))' : `hsl(var(--bio-${getZone(score) === 'green' ? 'green' : 'yellow'}))`
                                 }}
                               >
                                 {hasScore ? score : '—'}

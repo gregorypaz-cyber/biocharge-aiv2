@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, Flame, ArrowUpRight } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
-import { computeCheckinScores, getDayScore, explainRecoveryV3 } from '@/lib/biocharge-utils';
+import { computeCheckinScores, getDayScore, explainRecoveryV3, getZone, getZoneColor, getZoneClasses } from '@/lib/biocharge-utils';
 import {
   calculateBodyState,
   calculateRemainingCapacity,
@@ -252,16 +252,11 @@ function CollapsibleHint({ children, label = 'Entender' }) {
 function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, recoveryDrivers, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
 
-  const recoveryColor =
-    displayedScore >= 70
-    ? 'hsl(142,70%,50%)'
-    : displayedScore >= 42
-    ? 'hsl(45,93%,58%)'
-    : 'hsl(0,72%,55%)';
-  const recoveryCaptionColor =
-    displayedScore >= 70 ? 'text-zone-green'
-    : displayedScore >= 42 ? 'text-zone-amber'
-    : 'text-zone-red';
+  // Zona = fonte única (getZone → ZONE_GREEN_MIN/ZONE_YELLOW_MIN). Gema e legenda
+  // derivam da MESMA zona, então não há como uma dizer verde e a outra amarelo.
+  const recoveryZone = getZone(displayedScore);
+  const recoveryColor = getZoneColor(recoveryZone);
+  const recoveryCaptionColor = getZoneClasses(recoveryZone).text;
 
   // Chip de confiança do baseline. O frescor (stale-after-gap) tem PRIORIDADE sobre
   // o tier: baseline defasado por lacuna de dias não é "sólido" mesmo com noites suficientes.
@@ -542,9 +537,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             displayedScore >= 70 ? 'dá pra puxar hoje.' :
             displayedScore >= 42 ? 'dá pra treinar com controle.' :
             'hoje é segurar.';
-          const toneClass =
-            displayedScore >= 70 ? 'text-zone-green' :
-            displayedScore >= 42 ? 'text-zone-amber' : 'text-zone-orange';
+          const toneClass = getZoneClasses(getZone(displayedScore)).text;
 
           const STRAIN_MAX = 21;
           const currentStrainPct = Math.max(0, Math.min(100, (cappedStrain / STRAIN_MAX) * 100));
@@ -583,7 +576,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
             lever = <>Sem gargalo provado hoje. Seus sinais estão dentro do seu normal.</>;
           }
 
-  const dotColor = displayedScore >= 70 ? 'bg-zone-green' : displayedScore >= 42 ? 'bg-zone-amber' : 'bg-zone-orange';
+  const dotColor = getZoneClasses(getZone(displayedScore)).bg;
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">

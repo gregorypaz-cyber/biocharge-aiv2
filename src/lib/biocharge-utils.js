@@ -671,6 +671,19 @@ export function getZoneColor(zone) {
   return colors[zone] || colors.yellow;
 }
 
+// Classes Tailwind por zona. Vive AQUI, ao lado de getZoneColor, pra que cor-SVG
+// e cor-de-classe nunca divirjam: as duas saem da MESMA zona (getZone).
+// Regra travada em 10/07/2026: zona <42 é VERMELHA (a gema e a palavra falam a
+// mesma cor). 'orange' não é zona de recovery — some daqui de propósito.
+export function getZoneClasses(zone) {
+  const map = {
+    green:  { text: 'text-zone-green', bg: 'bg-zone-green', tint: 'bg-zone-green/10' },
+    yellow: { text: 'text-zone-amber', bg: 'bg-zone-amber', tint: 'bg-zone-amber/10' },
+    red:    { text: 'text-zone-red',   bg: 'bg-zone-red',   tint: 'bg-zone-red/10'   },
+  };
+  return map[zone] || map.yellow;
+}
+
 export function getZoneLabel(zone) {
   const labels = {
     green: 'Recovery alto',
