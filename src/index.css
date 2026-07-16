@@ -166,6 +166,27 @@
   .glass-bar-strong { border-bottom-color: hsl(var(--border)); }
 }
 
+/* ─── Dissolve de borda inferior ─────────────────────────────────────────
+   O conteúdo derrete no fundo antes de encostar na nav, em vez de ser
+   cortado seco na borda da barra. Fixo no viewport de propósito: aqui quem
+   rola é o DOCUMENTO (o container é min-h-screen, então o overflow-y-auto
+   do <main> nunca engata) — um mask no <main> rolaria junto e falharia.
+   z-40: acima do conteúdo, abaixo do header/nav (z-50). */
+.scroll-edge-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 4rem;          /* altura da nav (h-16) */
+  height: 3rem;
+  z-index: 40;
+  pointer-events: none;  /* nunca rouba toque do conteúdo */
+  background: linear-gradient(
+    to top,
+    hsl(var(--background)) 0%,
+    hsl(var(--background) / 0) 100%
+  );
+}
+
 /* ─── Premium pass · numeral tabular (Guia §1.2, regra nº1) ──────────────
    Aplicar em TODO número que atualiza (score, ms, bpm, %) pra não "tremer"
    de largura ao mudar. A aplicação por-tela vem nas Fases 3–4.

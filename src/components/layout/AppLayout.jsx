@@ -251,6 +251,9 @@ export default function AppLayout() {
         <Outlet />
       </main>
 
+      {/* Dissolve de borda: o conteúdo derrete no fundo antes de encostar na nav */}
+      <div className="scroll-edge-bottom" aria-hidden="true" />
+
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 glass-bar">
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
