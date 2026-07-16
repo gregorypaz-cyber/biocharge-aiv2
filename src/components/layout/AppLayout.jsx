@@ -204,7 +204,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/40 glass-bar-strong">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/today" className="flex items-center gap-2">
             <svg viewBox="0 0 96 96" className="w-7 h-7" role="img" aria-label="Reck">
@@ -252,7 +252,7 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 bg-background/75 backdrop-blur-xl">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 glass-bar">
         <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
