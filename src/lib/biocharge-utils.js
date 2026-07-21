@@ -1532,3 +1532,160 @@ export function calculateStreak(checkins) {
 
   return streak;
 }
+
+// ─── FatLossEngine v1 ──────────────────────────────────────────────────────
+// Meta: 16% → 12% de gordura preservando músculo. Matemática determinística;
+// a IA só narra o objeto retornado por flSummary. Validado nos dados reais de
+// 06/05→19/07/2026 (trend ≈76,29 · taxa14d ≈ -0,33 kg/sem · ETA ≈ 13 sem).
+
+export const FL = {
+  ALPHA: 0.10,                 // suavização EWMA por dia
+  OUTLIER_PCT: 0.04,           // rejeita pesagem >4% longe do trend (pega 60/70kg)
+  RATE_WINDOW_D: 14,           // janela principal da taxa
+  RATE_CONFIRM_D: 28,          // janela de confirmação
+  SLEEP_GATE_H: 6,             // sono médio 7d abaixo disso => fase Proteção
+  BAND_CUT: [-0.50, -0.30],    // kg/sem alvo na fase Corte
+  BAND_PROTECT: [-0.20, 0.20], // fase Proteção: segurar o peso
+  FAST_LOSS: -0.60,            // mais rápido que isso = red
+  PLATEAU_WEEKS: 3,            // semanas sem queda na fase Corte => platô
+  // Âncora de composição — atualizar a CADA bioimpedância:
+  FFM_KG: 63.3,                // massa livre de gordura (Fitdays 20/07/2026)
+  ANCHOR_WEIGHT: 75.35,
+  ANCHOR_DATE: '2026-07-20',
+  TARGET_BF_PCT: 12,
+};
+
+/** EWMA ciente de lacunas + gate de outlier. Aceita checkins em qualquer ordem.
+ *  Retorna [{date, weight, trend}] só dos dias com pesagem aceita. */
+export function flTrendSeries(checkins) {
+  const pts = (checkins || [])
+    .filter((c) => c && c.date && Number.isFinite(Number(c.body_weight)) && Number(c.body_weight) > 0)
+    .map((c) => ({ date: String(c.date).slice(0, 10), weight: Number(c.body_weight) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const out = [];
+  let trend = null;
+  let lastDate = null;
+  for (const p of pts) {
+    if (trend === null) {
+      trend = p.weight;
+    } else {
+      if (Math.abs(p.weight - trend) / trend > FL.OUTLIER_PCT) continue; // outlier
+      const gapDays = Math.max(
+        1,
+        Math.round((new Date(p.date + 'T12:00:00') - new Date(lastDate + 'T12:00:00')) / 86400000)
+      );
+      const aEf = 1 - Math.pow(1 - FL.ALPHA, gapDays); // corrige dias sem pesagem
+      trend = trend + aEf * (p.weight - trend);
+    }
+    lastDate = p.date;
+    out.push({ date: p.date, weight: p.weight, trend: +trend.toFixed(2) });
+  }
+  return out;
+}
+
+/** Taxa em kg/semana: trend de hoje vs trend de ~windowDays atrás. */
+export function flRate(series, windowDays) {
+  if (!series || series.length < 2) return null;
+  const last = series[series.length - 1];
+  const cutoffMs = new Date(last.date + 'T12:00:00').getTime() - windowDays * 86400000;
+  const cutoff = new Date(cutoffMs).toISOString().slice(0, 10);
+  const past = [...series].reverse().find((s) => s.date <= cutoff);
+  if (!past) return null;
+  const days = Math.round(
+    (new Date(last.date + 'T12:00:00') - new Date(past.date + 'T12:00:00')) / 86400000
+  );
+  if (days < windowDays * 0.6) return null; // dados de menos na janela
+  return +(((last.trend - past.trend) / days) * 7).toFixed(2);
+}
+
+/** Sono médio dos últimos 7 registros com sleep_hours. */
+export function flSleepAvg7(checkins) {
+  const s = (checkins || [])
+    .filter((c) => c && Number.isFinite(Number(c.sleep_hours)))
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    .slice(0, 7)
+    .map((c) => Number(c.sleep_hours));
+  if (!s.length) return null;
+  return +(s.reduce((a, b) => a + b, 0) / s.length).toFixed(2);
+}
+
+/** Fase do engine: 'protect' (sono ruim → segurar peso) ou 'cut'. */
+export function flPhase(sleepAvg7) {
+  if (sleepAvg7 === null) return 'cut';
+  return sleepAvg7 < FL.SLEEP_GATE_H ? 'protect' : 'cut';
+}
+
+/** Zona vs banda-alvo da fase: green | yellow | red | gray. */
+export function flZone(rate, phase) {
+  if (rate === null) return 'gray';
+  const [lo, hi] = phase === 'protect' ? FL.BAND_PROTECT : FL.BAND_CUT;
+  if (rate < FL.FAST_LOSS) return 'red'; // rápido demais, sempre
+  if (rate >= lo && rate <= hi) return 'green';
+  if (rate < lo) return 'yellow'; // um pouco rápido
+  return phase === 'cut' ? 'yellow' : 'green'; // lento/subindo só preocupa no corte
+}
+
+/** Alerta de perda de músculo: perda rápida COM sono ruim. */
+export function flMuscleAlert(rate, sleepAvg7) {
+  return (
+    rate !== null && sleepAvg7 !== null && rate < FL.FAST_LOSS && sleepAvg7 < FL.SLEEP_GATE_H
+  );
+}
+
+/** Peso-alvo derivado da âncora de bioimpedância (recalcula sozinho). */
+export function flTargetWeight() {
+  return +(FL.FFM_KG / (1 - FL.TARGET_BF_PCT / 100)).toFixed(1);
+}
+
+/** %BF estimado hoje assumindo FFM constante desde a âncora. Estimativa. */
+export function flBodyFatEstimate(trendNow) {
+  if (!Number.isFinite(trendNow) || trendNow <= FL.FFM_KG) return null;
+  return +(((trendNow - FL.FFM_KG) / trendNow) * 100).toFixed(1);
+}
+
+/** ETA em semanas até o alvo (null se não está perdendo de fato). */
+export function flEtaWeeks(trendNow, rate) {
+  const target = flTargetWeight();
+  if (!Number.isFinite(trendNow) || rate === null || rate >= -0.05) return null;
+  if (trendNow <= target) return 0;
+  return +((target - trendNow) / rate).toFixed(1);
+}
+
+/** Platô: fase cut + taxa fraca por PLATEAU_WEEKS janelas retroativas. */
+export function flPlateau(series, phase) {
+  if (phase !== 'cut' || !series || series.length < 21) return false;
+  for (let w = 0; w < FL.PLATEAU_WEEKS; w++) {
+    const sub = series.slice(0, series.length - w * 7);
+    const r = flRate(sub, FL.RATE_WINDOW_D);
+    if (r === null || r <= -0.1) return false;
+  }
+  return true;
+}
+
+/** Orquestrador: recebe DailyCheckin[] e devolve o objeto do card "Corte". */
+export function flSummary(checkins) {
+  const series = flTrendSeries(checkins);
+  if (!series.length) return null;
+  const trendNow = series[series.length - 1].trend;
+  const rate = flRate(series, FL.RATE_WINDOW_D);
+  const rate28 = flRate(series, FL.RATE_CONFIRM_D);
+  const sleepAvg7 = flSleepAvg7(checkins);
+  const phase = flPhase(sleepAvg7);
+  return {
+    trendNow,
+    lastWeighIn: series[series.length - 1].weight,
+    lastWeighInDate: series[series.length - 1].date,
+    rate,
+    rate28,
+    sleepAvg7,
+    phase, // 'protect' | 'cut'
+    zone: flZone(rate, phase), // green | yellow | red | gray
+    muscleAlert: flMuscleAlert(rate, sleepAvg7),
+    plateau: flPlateau(series, phase),
+    targetWeight: flTargetWeight(),
+    bfEstimate: flBodyFatEstimate(trendNow),
+    etaWeeks: flEtaWeeks(trendNow, rate),
+    series, // p/ sparkline: trend + pesagens cruas
+  };
+}
+// ─── fim FatLossEngine v1 ──────────────────────────────────────────────────
