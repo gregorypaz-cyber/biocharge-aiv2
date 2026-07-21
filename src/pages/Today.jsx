@@ -29,6 +29,7 @@ import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
 import RecoveryField from '@/components/today/RecoveryField';
+import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { useStreak } from '@/hooks/useStreak';
@@ -1631,6 +1632,8 @@ if (isLoading) {
       <LongevityOnboardingCard />
       
       {orderedPrimaryCards.map((desc) => renderCard(desc))}
+
+      <FatLossCard checkins={sortedCheckins} />
 
            {/* (Removido) TomorrowHookCard: previsão templated + fadiga-retardada causal +
           gancho "volte amanhã". A meta de sono real fica no SleepForecastCard. */}
