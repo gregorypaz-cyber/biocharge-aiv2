@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
 import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import {
-  AreaChart, Area, BarChart, Bar, ScatterChart, Scatter, Line, ComposedChart,
+  AreaChart, Area, BarChart, Bar, Scatter, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
