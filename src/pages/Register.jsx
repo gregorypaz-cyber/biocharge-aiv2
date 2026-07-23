@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Zap, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Register() {
@@ -55,9 +55,21 @@ export default function Register() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-8 h-8 text-primary" />
-          </div>
+          <svg viewBox="0 0 100 100" className="w-16 h-16 mx-auto mb-4" role="img" aria-label="Reck">
+            <defs>
+              <linearGradient id="reckTile" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stopColor="#3BE785" />
+                <stop offset="0.52" stopColor="#26D968" />
+                <stop offset="1" stopColor="#0C8B4C" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="23" fill="url(#reckTile)" />
+            <g transform="translate(15.5 15.5) scale(0.69)" fill="none" stroke="#fff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M30 22 V78" />
+              <path d="M30 22 H53 A14 14 0 0 1 53 50 H30" />
+              <path d="M44 50 L58 78 L70 55" />
+            </g>
+          </svg>
           <h1 className="text-2xl font-bold">Criar Conta</h1>
           <p className="text-sm text-muted-foreground mt-1">{step === 'otp' ? 'Verifique seu email' : 'Comece a otimizar sua performance'}</p>
         </div>

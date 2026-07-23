@@ -41,12 +41,19 @@ export default function Login() {
       >
         {/* Logo */}
         <div className="text-center">
-          <svg viewBox="0 0 120 120" className="w-16 h-16 mx-auto mb-4" role="img" aria-label="Reck">
-            <circle cx="60" cy="60" r="42" fill="none" stroke="hsl(142 70% 50%)" strokeWidth="13" />
-            <g fill="none" stroke="hsl(210 40% 96%)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M51 41 V79" />
-              <path d="M51 41 H62 a10.5 10.5 0 0 1 0 21 H51" />
-              <path d="M56 62 L70 79" />
+          <svg viewBox="0 0 100 100" className="w-16 h-16 mx-auto mb-4" role="img" aria-label="Reck">
+            <defs>
+              <linearGradient id="reckTile" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" stopColor="#3BE785" />
+                <stop offset="0.52" stopColor="#26D968" />
+                <stop offset="1" stopColor="#0C8B4C" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="23" fill="url(#reckTile)" />
+            <g transform="translate(15.5 15.5) scale(0.69)" fill="none" stroke="#fff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M30 22 V78" />
+              <path d="M30 22 H53 A14 14 0 0 1 53 50 H30" />
+              <path d="M44 50 L58 78 L70 55" />
             </g>
           </svg>
           <h1 className="text-2xl font-bold">Reck</h1>

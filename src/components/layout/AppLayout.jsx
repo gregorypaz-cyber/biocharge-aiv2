@@ -207,29 +207,19 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-border/40 glass-bar-strong">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/today" className="flex items-center gap-2">
-            <svg viewBox="0 0 96 96" className="w-7 h-7" role="img" aria-label="Reck">
+            <svg viewBox="0 0 100 100" className="w-7 h-7" role="img" aria-label="Reck">
               <defs>
-                <radialGradient id="reckGem" cx="34%" cy="22%" r="88%">
-                  <stop offset="0%" stopColor="hsl(142 62% 74%)" />
-                  <stop offset="30%" stopColor="hsl(142 70% 46%)" />
-                  <stop offset="74%" stopColor="hsl(146 78% 26%)" />
-                  <stop offset="100%" stopColor="hsl(150 80% 15%)" />
-                </radialGradient>
-                <radialGradient id="reckSpec" cx="30%" cy="18%" r="13%">
-                  <stop offset="0%" stopColor="#fff" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-                </radialGradient>
-                <filter id="reckHalo" x="-40%" y="-40%" width="180%" height="180%">
-                  <feGaussianBlur stdDeviation="2.8" />
-                </filter>
+                <linearGradient id="reckTile" x1="0" y1="0" x2="0.35" y2="1">
+                  <stop offset="0" stopColor="#3BE785" />
+                  <stop offset="0.52" stopColor="#26D968" />
+                  <stop offset="1" stopColor="#0C8B4C" />
+                </linearGradient>
               </defs>
-              <path d="M48 6 C68 5 90 20 90 46 C90 72 72 91 47 90 C23 89 6 73 6 48 C6 22 27 7 48 6 Z" fill="url(#reckGem)" />
-              <path d="M48 6 C68 5 90 20 90 46 C90 72 72 91 47 90 C23 89 6 73 6 48 C6 22 27 7 48 6 Z" fill="url(#reckSpec)" />
-              <g transform="translate(32.55 64) scale(0.02344 -0.02344)" filter="url(#reckHalo)">
-                <path d="M180 0L180 1490L690 1490Q864 1490 976.5 1430.5Q1089 1371 1143.5 1267Q1198 1163 1198 1030Q1198 897 1143.5 795Q1089 693 977 635.5Q865 578 691 578L286 578L286 682L680 682Q810 682 897.5 726Q985 770 1027.5 848Q1070 926 1070 1030Q1070 1134 1027 1215Q984 1296 895.5 1341Q807 1386 676 1386L286 1386L286 0L180 0ZM888 674L1256 0L1132 0L766 674L888 674Z" fill="hsl(152 80% 12%)" opacity="0.85" transform="translate(0 -94)" />
-              </g>
-              <g transform="translate(32.55 64) scale(0.02344 -0.02344)">
-                <path d="M180 0L180 1490L690 1490Q864 1490 976.5 1430.5Q1089 1371 1143.5 1267Q1198 1163 1198 1030Q1198 897 1143.5 795Q1089 693 977 635.5Q865 578 691 578L286 578L286 682L680 682Q810 682 897.5 726Q985 770 1027.5 848Q1070 926 1070 1030Q1070 1134 1027 1215Q984 1296 895.5 1341Q807 1386 676 1386L286 1386L286 0L180 0ZM888 674L1256 0L1132 0L766 674L888 674Z" fill="#f2fff7" />
+              <rect width="100" height="100" rx="23" fill="url(#reckTile)" />
+              <g transform="translate(15.5 15.5) scale(0.69)" fill="none" stroke="#fff" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M30 22 V78" />
+                <path d="M30 22 H53 A14 14 0 0 1 53 50 H30" />
+                <path d="M44 50 L58 78 L70 55" />
               </g>
             </svg>
             <span className="font-black text-foreground tracking-tight text-sm">Reck</span>
