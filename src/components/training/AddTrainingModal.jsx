@@ -664,6 +664,6 @@ export default function AddTrainingModal({
           </form>
         )}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
