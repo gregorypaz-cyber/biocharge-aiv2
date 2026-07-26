@@ -42,27 +42,40 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center p-4"
+      transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end justify-center p-3"
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: 60 }}
-        animate={{ y: 0 }}
-        exit={{ y: 60 }}
-        className="bg-card border border-border rounded-3xl w-full max-w-md"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Detalhes de ${formatDateShort(checkin.date)}`}
+        initial={{ y: '5%', opacity: 0.7 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '5%', opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }}
+        className="sheet-surface bg-card border border-border rounded-3xl w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
+        <div className="pt-2.5 pb-1 flex justify-center shrink-0">
+          <span className="sheet-grabber" aria-hidden="true" />
+        </div>
         <div
-          className="overflow-y-auto p-5"
-          style={{ maxHeight: '80vh', overscrollBehavior: 'contain', paddingBottom: '80px' }}
+          className="sheet-scroll overflow-y-auto px-5 pt-1"
+          style={{ overscrollBehavior: 'contain', paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))' }}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
