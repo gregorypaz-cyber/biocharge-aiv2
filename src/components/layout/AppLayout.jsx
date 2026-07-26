@@ -222,7 +222,7 @@ export default function AppLayout() {
                 <path d="M44 50 L58 78 L70 55" />
               </g>
             </svg>
-            <span className="font-black text-foreground tracking-tight text-sm">Reck</span>
+            <span className="text-[15px] font-bold text-foreground tracking-[-0.02em]">Reck</span>
           </Link>
           <Link
             to="/settings"
