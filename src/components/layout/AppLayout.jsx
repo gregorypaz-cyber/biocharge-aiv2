@@ -124,7 +124,7 @@ function OnboardingWizard({ user, onComplete }) {
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                 <Watch className="w-6 h-6 text-primary" />
               </div>
-              <h1 className="text-2xl font-black text-foreground tracking-tight mb-3">Seu wearable</h1>
+              <h1 className="text-[28px] leading-[1.15] font-semibold text-foreground tracking-[-0.025em] mb-3">Seu wearable</h1>
               <p className="text-sm text-muted-foreground leading-relaxed mb-5">
                 Define os rótulos e os campos do check-in. O app guarda só sinais crus, então a fórmula não muda — muda o que você vê e preenche.
               </p>
