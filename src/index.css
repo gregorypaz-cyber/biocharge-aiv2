@@ -208,13 +208,19 @@
 /* ─── Escala tipográfica fechada · 6 degraus ─────────────────────────────
    Piso de 11px (mínimo do HIG). 10px fica reservado a rótulo de tab bar.
    Hierarquia por TAMANHO + TRACKING negativo, não por peso 900.
-   Migração é incremental: nada muda até uma classe .t-* ser aplicada. */
-.t-display { font-size: 2.5rem;    line-height: 1.0;  letter-spacing: -0.035em; font-weight: 600; }
-.t-title   { font-size: 1.3125rem; line-height: 1.25; letter-spacing: -0.022em; font-weight: 600; }
-.t-section { font-size: 1.0625rem; line-height: 1.3;  letter-spacing: -0.015em; font-weight: 600; }
-.t-body    { font-size: 0.9375rem; line-height: 1.5;  letter-spacing: -0.005em; }
-.t-caption { font-size: 0.8125rem; line-height: 1.4; }
-.t-micro   { font-size: 0.6875rem; line-height: 1.35; letter-spacing: 0; }
+
+   CASCATA (por que estas regras são magras de propósito): este bloco é CSS
+   puro DEPOIS de @tailwind utilities, então ele VENCE utilitário de mesma
+   especificidade. Tudo que ele declarar tira do dev o direito de ajustar
+   pela classe. Por isso: peso é sempre do Tailwind (font-*); tracking e
+   leading dos degraus pequenos também. Os degraus grandes (display/title/
+   section) mantêm leading+tracking porque são poucos e aplicados à mão. */
+.t-display { font-size: 2.5rem;    line-height: 1.0;  letter-spacing: -0.035em; }
+.t-title   { font-size: 1.3125rem; line-height: 1.25; letter-spacing: -0.022em; }
+.t-section { font-size: 1.0625rem; line-height: 1.3;  letter-spacing: -0.015em; }
+.t-body    { font-size: 0.9375rem; line-height: 1.5; }
+.t-caption { font-size: 0.8125rem; }
+.t-micro   { font-size: 0.6875rem; }
 
 /* ─── Folha modal · padrão iOS ───────────────────────────────────────────
    Sheet precisa de elevação MAIOR que card, senão lê como card flutuando.
