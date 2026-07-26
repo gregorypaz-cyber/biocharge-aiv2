@@ -84,7 +84,7 @@ function HighlightBlock({ icon: Icon, label, color, bg, border, items, maxItems 
     <div className={`rounded-xl border px-3 py-3 space-y-2 ${bg} ${border}`}>
       <div className="flex items-center gap-1.5">
         <Icon className={`w-3.5 h-3.5 shrink-0 ${color}`} />
-        <p className={`text-[10px] font-bold uppercase tracking-widest ${color}`}>
+        <p className={`t-micro font-bold uppercase tracking-widest ${color}`}>
           {label}
         </p>
       </div>
@@ -122,10 +122,10 @@ export default function AnalysisHighlights({ analysisText }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+          <p className="t-micro font-semibold uppercase tracking-widest text-primary">
             Resumo da análise
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="t-micro text-muted-foreground mt-0.5">
             O que mais importa antes de abrir o relatório completo.
           </p>
         </div>

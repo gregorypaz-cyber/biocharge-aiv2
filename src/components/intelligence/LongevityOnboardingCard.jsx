@@ -66,7 +66,7 @@ export default function LongevityOnboardingCard() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ano de nascimento</p>
+          <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">Ano de nascimento</p>
           <input
             type="number" inputMode="numeric" placeholder="1992"
             value={form.birth_year}
@@ -75,7 +75,7 @@ export default function LongevityOnboardingCard() {
           />
         </div>
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Sexo</p>
+          <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">Sexo</p>
           <div className="flex gap-2">
             {[{ v: 'male', l: 'M' }, { v: 'female', l: 'F' }].map((s) => (
               <button
@@ -95,7 +95,7 @@ export default function LongevityOnboardingCard() {
       </div>
 
       <div className="space-y-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
           VO₂max do relógio (opcional)
         </p>
         <input

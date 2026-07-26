@@ -22,7 +22,7 @@ export default function SliderField({
           <div className="min-w-0">
             <span className="text-sm font-medium text-foreground">{label}</span>
             {hint && (
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+              <p className="t-micro text-muted-foreground leading-tight mt-0.5">
                 {hint}
               </p>
             )}
@@ -55,7 +55,7 @@ export default function SliderField({
         />
       </div>
 
-      <div className="grid grid-cols-3 text-[10px] text-muted-foreground">
+      <div className="grid grid-cols-3 t-micro text-muted-foreground">
         <span className="text-left">{lowLabel || `${min}${unit}`}</span>
         <span className="text-center">{midLabel || ''}</span>
         <span className="text-right">{highLabel || `${max}${unit}`}</span>

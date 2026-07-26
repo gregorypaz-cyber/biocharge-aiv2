@@ -60,11 +60,11 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
         </div>
 
         <div className="text-right shrink-0">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          <p className="t-micro text-muted-foreground uppercase tracking-wider">
             Strain hoje
           </p>
           <p
-            className={`text-xl font-black font-mono ${
+            className={`text-xl font-semibold font-mono ${
               strain >= 16 ? 'text-red-400' :
               strain >= 12 ? 'text-yellow-400' :
               'text-emerald-400'
@@ -72,7 +72,7 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
           >
             {strain}
           </p>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="t-micro text-muted-foreground">
             acumulado
           </span>
         </div>

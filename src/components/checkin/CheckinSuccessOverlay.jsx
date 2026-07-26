@@ -159,7 +159,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
               Check-in salvo
             </p>
 
-            <h1 className="text-2xl font-black leading-snug tracking-tight mt-2">
+            <h1 className="text-2xl font-semibold leading-snug tracking-tight mt-2">
               Plano do dia calculado
             </h1>
 
@@ -173,15 +173,15 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
         <div className="rounded-2xl border border-border/50 bg-card px-4 py-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+              <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
                 Score do dia
               </p>
 
-              <p className="text-4xl font-black font-mono leading-none">
+              <p className="text-4xl font-semibold font-mono leading-none">
                 {readiness}
               </p>
 
-              <p className="text-[11px] text-muted-foreground mt-1">
+              <p className="t-micro text-muted-foreground mt-1">
                 Recovery base {recovery}
               </p>
             </div>
@@ -193,7 +193,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
                 {zoneCfg.label}
               </span>
 
-              <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
+              <p className="t-micro text-muted-foreground mt-2 uppercase tracking-wider">
                 Dose do dia
               </p>
 
@@ -207,7 +207,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
             <div className="flex items-start gap-2">
               <Target className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
                   Missão de hoje
                 </p>
 
@@ -223,7 +223,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
               <div className="flex items-start gap-2">
                 <Zap className="w-3.5 h-3.5 text-yellow-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                  <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
                     Linha do dia
                   </p>
 
@@ -240,7 +240,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
               <Moon className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
 
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
                   Hoje à noite
                 </p>
 
@@ -248,7 +248,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
                   {sleepNeed != null ? `Meta de sono: ${sleepNeed}h.` : 'Feche o dia protegendo a recuperação.'}
                 </p>
 
-                <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
+                <p className="t-micro text-muted-foreground leading-relaxed mt-1">
                   {tomorrowReason}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
 
         {/* Auto redirect */}
         <div className="space-y-2">
-          <p className="text-[11px] text-muted-foreground text-center">
+          <p className="t-micro text-muted-foreground text-center">
             Indo automaticamente para <span className="font-semibold">Hoje</span> em {secondsLeft}s
           </p>
 

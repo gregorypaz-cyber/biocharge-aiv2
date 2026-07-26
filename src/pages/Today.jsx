@@ -98,7 +98,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
+        className="flex items-center gap-1 t-micro font-semibold uppercase tracking-wider opacity-60 hover:opacity-90 transition-opacity"
       >
         {label}
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
@@ -114,7 +114,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <p className="text-[11px] leading-relaxed opacity-80 pt-1.5">{children}</p>
+            <p className="t-micro leading-relaxed opacity-80 pt-1.5">{children}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -203,7 +203,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                Decisão de hoje
             </span>
-                        <h2 className="text-xl font-black mt-1 leading-tight">
+                        <h2 className="text-xl font-semibold mt-1 leading-tight">
               {isCalibrating ? 'Calibrando seu baseline' : dailyVerdict.headline}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -216,7 +216,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
 
             {!isCalibrating && (
               <span
-                className={`mt-2 inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
+                className={`mt-2 inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${baselineChip.dot}`} />
                 {baselineChip.label}
@@ -271,7 +271,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             type="button"
             aria-expanded={showProntidaoHint}
             onClick={() => setShowProntidaoHint((v) => !v)}
-            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 t-micro font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
           >
             <Info className="w-3 h-3" />
             Entender os scores
@@ -290,17 +290,17 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               className="overflow-hidden"
             >
               <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
-                <p className="text-[11px] leading-relaxed">
+                <p className="t-micro leading-relaxed">
                   <span className="font-semibold text-foreground">Recovery</span>{' '}
                   <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
                 </p>
                 {recoveryDrivers?.drivers?.length ? (
                   <div className="mt-1.5 pt-1.5 border-t border-border/30 space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">O que moldou hoje · vs seu normal</p>
+                    <p className="t-micro uppercase tracking-wider text-muted-foreground/80">O que moldou hoje · vs seu normal</p>
                     {recoveryDrivers.drivers.map((d) => {
                       const up = d.direction === 'positive';
                       return (
-                        <div key={d.id} className="flex items-center justify-between gap-2 text-[11px]">
+                        <div key={d.id} className="flex items-center justify-between gap-2 t-micro">
                           <span className="text-muted-foreground">
                             {d.label}
                             <span className="text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
@@ -311,14 +311,14 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                         </div>
                       );
                     })}
-                    <p className="text-[9.5px] leading-snug text-muted-foreground/60 pt-0.5">Efeito de cada sinal vs seu baseline. Não somam ao score (a curva e os tetos não são lineares).</p>
+                    <p className="t-micro leading-snug text-muted-foreground/60 pt-0.5">Efeito de cada sinal vs seu baseline. Não somam ao score (a curva e os tetos não são lineares).</p>
                   </div>
                 ) : null}
-                <p className="text-[11px] leading-relaxed">
+                <p className="t-micro leading-relaxed">
                   <span className="font-semibold text-foreground">Sono</span>{' '}
                   <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
                 </p>
-                <p className="text-[11px] leading-relaxed">
+                <p className="t-micro leading-relaxed">
                   <span className="font-semibold text-foreground">Strain</span>{' '}
                   <span className="text-muted-foreground">— esforço acumulado hoje (0–21). É separado do recovery e comparado à meta sugerida para o dia.</span>
                 </p>
@@ -364,7 +364,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           )}
 
         {capacityContradictionNote && (
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <p className="t-micro text-muted-foreground leading-relaxed">
             {capacityContradictionNote}
           </p>
         )}
@@ -461,7 +461,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Leitura de hoje</span>
+          <span className="t-micro font-bold uppercase tracking-widest text-muted-foreground shrink-0">Leitura de hoje</span>
           {!open && (
             <span className={`text-xs truncate ${toneClass}`}>{bodyClause}</span>
           )}
@@ -486,11 +486,11 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
                     Quanto dá pra puxar
                   </span>
                   {cap && CAPACITY_PT[cap] ? (
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="t-micro text-muted-foreground">
                       sobra <b>{CAPACITY_PT[cap].toLowerCase()}</b>
                     </span>
                   ) : null}
@@ -501,10 +501,10 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
                     className="absolute top-0 -translate-x-1/2 flex flex-col items-center leading-none"
                     style={{ left: `${targetStrainPct}%` }}
                   >
-                    <span className="text-[10px] font-bold tracking-wider text-white/80 whitespace-nowrap">
+                    <span className="t-micro font-bold tracking-wider text-white/80 whitespace-nowrap">
                       META {strainTarget}
                     </span>
-                    <span className="text-white/50 text-[10px] mt-px">▾</span>
+                    <span className="text-white/50 t-micro mt-px">▾</span>
                   </div>
                   <div className="relative h-2.5 rounded-full bg-white/[0.07] overflow-hidden">
                     <div
@@ -523,19 +523,19 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
                     />
                   </div>
                   <div className="flex justify-between mt-1">
-                    <span className="text-[11px] font-mono text-muted-foreground/40">0</span>
-                    <span className="text-[11px] font-mono text-muted-foreground/40">21</span>
+                    <span className="t-micro font-mono text-muted-foreground/40">0</span>
+                    <span className="t-micro font-mono text-muted-foreground/40">21</span>
                   </div>
                 </div>
 
-                <p className="text-[12px] text-muted-foreground leading-snug">
+                <p className="text-xs text-muted-foreground leading-snug">
                   Você está em <b>{cappedStrain}</b>. Bom puxar até <b>~{strainTarget}</b> ({(targetZoneLabel || '').toLowerCase()}); acima começa a cavar a recuperação de amanhã.
                 </p>
               </div>
 
               <div className="rounded-xl border border-zone-amber/20 bg-zone-amber/5 px-3.5 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zone-amber/90 mb-0.5"><ArrowUpRight size={11} className="inline" /> Alavanca pra amanhã</p>
-                <p className="text-[12px] text-foreground/90 leading-snug">{lever}</p>
+                <p className="t-micro font-bold uppercase tracking-wider text-zone-amber/90 mb-0.5"><ArrowUpRight size={11} className="inline" /> Alavanca pra amanhã</p>
+                <p className="text-xs text-foreground/90 leading-snug">{lever}</p>
               </div>
 
               {si != null && (
@@ -1136,7 +1136,7 @@ function renderCard(desc) {
         if (todaySessions.length > 0) {
           return (
             <section key="workout-wrapper" className="space-y-2">
-              <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-zone-green">
+              <p className="px-1 t-micro font-bold uppercase tracking-widest text-zone-green">
                 Treino → resposta do corpo
               </p>
               <WorkoutLoggedState
@@ -1195,7 +1195,7 @@ function renderCard(desc) {
                 <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div>
                   <p className="text-sm font-bold leading-tight">Impacto de ontem</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                  <p className="t-micro text-muted-foreground leading-tight mt-0.5">
                     {resume}
                   </p>
                 </div>
@@ -1206,12 +1206,12 @@ function renderCard(desc) {
                     key={p.k}
                     className="rounded-xl bg-secondary/50 border border-border/40 px-2 py-2 text-center"
                   >
-                    <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="t-micro uppercase tracking-wider text-muted-foreground font-semibold">
                       {p.k}
                     </p>
                     <p
                       className={cn(
-                        'text-base font-black font-mono leading-none mt-1',
+                        'text-base font-semibold font-mono leading-none mt-1',
                         p.good ? 'text-zone-green' : 'text-zone-amber'
                       )}
                     >
@@ -1220,7 +1220,7 @@ function renderCard(desc) {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+              <p className="t-micro text-muted-foreground/70 leading-relaxed">
                 Como seu corpo respondeu hoje ao treino de ontem (vs. o dia anterior).
               </p>
             </div>
@@ -1231,7 +1231,7 @@ function renderCard(desc) {
 
         return (
           <section key="workout-wrapper" className="space-y-2">
-            <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+            <p className="px-1 t-micro font-bold uppercase tracking-widest text-primary">
               Treino → resposta do corpo
             </p>
             {impactoOntem}
@@ -1373,7 +1373,7 @@ const settingsBanner = missingSettings.length > 0 ? (
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground/90">Complete suas configurações</p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+        <p className="t-micro text-muted-foreground leading-relaxed mt-0.5">
           Falta informar {missingSettings.join(', ')}. Necessário para idade de condicionamento, VO₂max e leituras honestas — toque para ajustar.
         </p>
       </div>
@@ -1410,7 +1410,7 @@ if (isLoading) {
         <div className="w-20 h-20 rounded-3xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-5">
           <Zap className="w-10 h-10 text-primary" />
         </div>
-        <h2 className="text-xl font-black mb-2">Sem check-in hoje</h2>
+        <h2 className="text-xl font-semibold mb-2">Sem check-in hoje</h2>
         <p className="text-muted-foreground mb-6 text-sm">
           Faça seu check-in para calcular seu recovery e decidir melhor o treino do dia.
         </p>
@@ -1436,14 +1436,14 @@ if (isLoading) {
       {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
+          <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
-          <h1 className="text-2xl font-black tracking-tight">Hoje</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Hoje</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (
-            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1">
+            <p className="t-micro text-muted-foreground flex items-center gap-1 mt-1">
               <span>Check-in às</span>
               <span className="font-medium text-foreground/60">
                 {new Date(checkin.created_at).toLocaleTimeString('pt-BR', {
@@ -1453,7 +1453,7 @@ if (isLoading) {
               </span>
             </p>
           ) : checkin?.date ? (
-            <p className="text-[10px] text-muted-foreground mt-1">Check-in de hoje registrado</p>
+            <p className="t-micro text-muted-foreground mt-1">Check-in de hoje registrado</p>
           ) : null}
         </div>
 
@@ -1530,7 +1530,7 @@ if (isLoading) {
       </SecondaryMetrics>
 
       {analysisError && (
-        <p className="text-[11px] text-zone-amber/80 px-1">
+        <p className="t-micro text-zone-amber/80 px-1">
           Alguns insights avançados não foram carregados agora. Você ainda pode usar a recomendação principal do dia.
         </p>
       )}

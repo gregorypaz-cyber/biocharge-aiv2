@@ -248,7 +248,7 @@ Responda APENAS em JSON:
         <Sparkles className="w-4.5 h-4.5 text-muted-foreground mt-0.5 shrink-0" />
         <div>
           <h3 className="text-sm font-semibold tracking-tight">Prever amanhã</h3>
-          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+          <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
             Simule como sono planejado e carga prevista podem influenciar sua recuperação.
           </p>
         </div>
@@ -267,7 +267,7 @@ Responda APENAS em JSON:
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <p className="t-micro uppercase tracking-wider text-muted-foreground">
                   Sono planejado
                 </p>
                 <p className="text-sm font-mono font-bold">{plannedSleep}h</p>
@@ -283,7 +283,7 @@ Responda APENAS em JSON:
                 className="w-full accent-primary"
               />
 
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between t-micro text-muted-foreground">
                 <span>4h</span>
                 <span>10h</span>
               </div>
@@ -291,7 +291,7 @@ Responda APENAS em JSON:
 
             <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <p className="t-micro uppercase tracking-wider text-muted-foreground">
                   Strain planejado
                 </p>
                 <p className="text-sm font-mono font-bold">{plannedStrain}/21</p>
@@ -307,7 +307,7 @@ Responda APENAS em JSON:
                 className="w-full accent-primary"
               />
 
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between t-micro text-muted-foreground">
                 <span>Leve</span>
                 <span>Alto</span>
               </div>
@@ -344,11 +344,11 @@ Responda APENAS em JSON:
               <div className={`rounded-xl border px-4 py-3.5 ${zone.bg} ${zone.border}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                    <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
                       Recovery previsto
                     </p>
                     <div className="flex items-end gap-2">
-                      <span className={`text-4xl font-black font-mono ${zone.color}`}>
+                      <span className={`text-4xl font-semibold font-mono ${zone.color}`}>
                         {result.predicted_score}
                       </span>
                       <span className={`text-sm font-semibold mb-1 ${zone.color}`}>
@@ -358,7 +358,7 @@ Responda APENAS em JSON:
                   </div>
 
                   <span
-                    className={`text-[10px] font-bold px-2 py-1 rounded-full border ${confidenceTone(result.confidence)}`}
+                    className={`t-micro font-bold px-2 py-1 rounded-full border ${confidenceTone(result.confidence)}`}
                   >
                     {result.confidence === 'high'
                       ? 'Confiança alta'
@@ -371,7 +371,7 @@ Responda APENAS em JSON:
 
               {result.key_factors?.length > 0 && (
                 <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                  <p className="t-micro uppercase tracking-wider text-muted-foreground mb-2">
                     Fatores-chave
                   </p>
                   <ul className="space-y-1.5">
@@ -386,7 +386,7 @@ Responda APENAS em JSON:
               )}
 
               <div className="rounded-xl border border-border/40 bg-secondary/20 px-4 py-3">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
                   Recomendação
                 </p>
                 <p className="text-sm text-foreground/85 leading-relaxed">
@@ -394,7 +394,7 @@ Responda APENAS em JSON:
                 </p>
               </div>
 
-              <p className="text-[10px] text-muted-foreground">
+              <p className="t-micro text-muted-foreground">
                 Esta previsão é uma tendência gerada a partir do seu estado atual e do plano informado — não é garantia.
               </p>
             </div>
@@ -509,14 +509,14 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
           <Gauge className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Balance de carga e recuperação</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Carga aguda (7 dias) vs crônica — razão ACWR.
             </p>
           </div>
         </div>
 
         <span
-          className={`text-[10px] font-bold px-2 py-1 rounded-full border ${classification.bg} ${classification.border} ${classification.color}`}
+          className={`t-micro font-bold px-2 py-1 rounded-full border ${classification.bg} ${classification.border} ${classification.color}`}
         >
           {classification.label}
         </span>
@@ -524,28 +524,28 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Carga aguda (7d)
           </p>
-          <p className="text-xl font-mono font-black text-foreground">
+          <p className="text-xl font-mono font-semibold text-foreground">
             {load?.acute != null ? load.acute : '—'}
           </p>
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Carga crônica
           </p>
-          <p className="text-xl font-mono font-black text-foreground">
+          <p className="text-xl font-mono font-semibold text-foreground">
             {load?.chronic != null ? load.chronic : '—'}
           </p>
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             ACWR
           </p>
-          <p className={`text-xl font-mono font-black ${classification.color}`}>
+          <p className={`text-xl font-mono font-semibold ${classification.color}`}>
             {acwr != null ? acwr.toFixed(2) : '—'}
           </p>
         </div>
@@ -569,7 +569,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
           </div>
         </div>
 
-        <div className="flex justify-between text-[10px] text-muted-foreground">
+        <div className="flex justify-between t-micro text-muted-foreground">
           <span>Subcarga</span>
           <span>Ideal</span>
           <span>Elevada</span>
@@ -591,7 +591,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
         </div>
       </div>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="t-micro text-muted-foreground">
         {load?.lowConfidence
           ? `ACWR com histórico curto (${last7.length} check-ins) — baixa confiança; fica mais preciso com mais semanas.`
           : 'Razão entre a carga dos últimos 7 dias e a sua média recente — a mesma leitura de carga usada no Hoje e no Insights.'}
@@ -611,12 +611,12 @@ function RunningEconomyCard({ sessions = [] }) {
           <Gauge className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Economia de corrida</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Eficiência: frequência cardíaca para a mesma velocidade
             </p>
           </div>
         </div>
-        <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0', positive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-orange-500/15 text-orange-400')}>
+        <span className={cn('t-micro font-semibold px-2 py-0.5 rounded-full shrink-0', positive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-orange-500/15 text-orange-400')}>
           {positive ? 'Melhorando' : 'Atenção'}
         </span>
       </div>
@@ -629,9 +629,9 @@ function RunningEconomyCard({ sessions = [] }) {
         <span className="text-xs text-muted-foreground">{positive ? 'mais eficiente' : 'menos eficiente'}</span>
       </div>
 
-      <p className="text-[13px] text-foreground/80 leading-relaxed">{eco.discovery.text}</p>
+      <p className="t-caption text-foreground/80 leading-relaxed">{eco.discovery.text}</p>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="t-micro text-muted-foreground">
         Baseado em {eco.sessionsAnalyzed} corridas com pace · confiança {eco.discovery.confidence}
       </p>
     </motion.div>
@@ -705,22 +705,22 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
           <Footprints className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Volume de corrida (semanal)</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Soma de km por semana (segunda a domingo). Só corridas com distância informada.
             </p>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-lg font-black font-mono leading-none">
+          <p className="text-lg font-semibold font-mono leading-none">
             {curKm.toFixed(1)}<span className="text-xs font-semibold text-muted-foreground"> km</span>
           </p>
           <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
             <DirIcon className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-mono">
+            <span className="t-micro font-mono">
               {deltaKm > 0 ? '+' : ''}{deltaKm} km{pct != null ? ` (${pct > 0 ? '+' : ''}${pct}%)` : ''}
             </span>
           </div>
-          <p className="text-[9px] text-muted-foreground/70 mt-0.5">semana atual vs anterior</p>
+          <p className="t-micro text-muted-foreground/70 mt-0.5">semana atual vs anterior</p>
         </div>
       </div>
 
@@ -736,7 +736,7 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-[10px] text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
+      <p className="t-micro text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
         Subidas bruscas de volume semana a semana aumentam o risco de lesão — use para progredir aos poucos. Não entra no recovery; é leitura de carga de corrida.
       </p>
     </motion.div>
@@ -802,19 +802,19 @@ function WeightTrendCard({ checkins = [] }) {
           <Scale className="w-4.5 h-4.5 text-muted-foreground mt-0.5 shrink-0" />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Peso — tendência lenta</h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Média de 7 pesagens. O dia-a-dia oscila por água e comida; o que importa é a direção.
             </p>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-lg font-black font-mono leading-none">
+          <p className="text-lg font-semibold font-mono leading-none">
             {lastMa.toFixed(1)}
             <span className="text-xs font-semibold text-muted-foreground"> kg</span>
           </p>
           <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
             <DirIcon className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-mono">
+            <span className="t-micro font-mono">
               {deltaKg > 0 ? '+' : ''}{deltaKg} kg / ~{spanDays}d
             </span>
           </div>
@@ -839,7 +839,7 @@ function WeightTrendCard({ checkins = [] }) {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-[10px] text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
+      <p className="t-micro text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
         Baseado em {points.length} pesagens. O peso <span className="text-foreground/80">não entra</span> no seu recovery nem em correlações diárias — variação de 1 dia é quase só água. Aqui ele é só direção de médio prazo.
       </p>
     </motion.div>
@@ -904,7 +904,7 @@ export default function Trends() {
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
 <div>
-        <h1 className="text-2xl font-black tracking-tight">Tendências</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Tendências</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Evolução dos seus sinais fisiológicos ao longo do tempo.
         </p>
@@ -937,7 +937,7 @@ export default function Trends() {
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all border',
+                'px-2.5 py-1 rounded-lg t-micro font-semibold transition-all border',
                 selectedMetric === m.key
                   ? 'border-primary/40 bg-primary/10 text-foreground'
                   : 'border-border/40 bg-card text-muted-foreground hover:text-foreground'
@@ -964,19 +964,19 @@ export default function Trends() {
             transition={{ delay: i * 0.05 }}
             className="rounded-xl border border-border/60 bg-card px-3 py-3 text-center"
           >
-            <span className="text-[10px] text-muted-foreground block mb-1 leading-tight">
+            <span className="t-micro text-muted-foreground block mb-1 leading-tight">
               {s.label}
             </span>
 
             {s.isChange ? (
               <div className="flex items-center justify-center gap-1">
                 <TrendIcon className={cn('w-3.5 h-3.5', trendColor)} />
-                <span className={cn('text-lg font-black font-mono', trendColor)}>
+                <span className={cn('text-lg font-semibold font-mono', trendColor)}>
                   {trend !== null ? (trend > 0 ? `+${trend}` : trend) : '—'}
                 </span>
               </div>
             ) : (
-              <p className="text-xl font-black font-mono" style={{ color: metricConfig?.color }}>
+              <p className="text-xl font-semibold font-mono" style={{ color: metricConfig?.color }}>
                 {s.val ?? '—'}
               </p>
             )}
@@ -1006,10 +1006,10 @@ export default function Trends() {
           <div className="flex items-baseline gap-2 mb-0.5">
             <h3 className="text-sm font-semibold tracking-tight">{metricConfig?.label}</h3>
             {(selectedMetric === 'fatigue_score' || selectedMetric === 'stress_score') && (
-              <span className="text-[10px] text-muted-foreground">(quanto menor, melhor)</span>
+              <span className="t-micro text-muted-foreground">(quanto menor, melhor)</span>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground mb-3">Área + média móvel 3 dias</p>
+          <p className="t-micro text-muted-foreground mb-3">Área + média móvel 3 dias</p>
           <div role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={movingAvg}>
@@ -1063,7 +1063,7 @@ export default function Trends() {
           className="rounded-xl border border-border/60 bg-card p-4"
         >
           <h3 className="text-sm font-semibold mb-0.5 tracking-tight">Recovery vs Fadiga</h3>
-          <p className="text-[11px] text-muted-foreground mb-3">Equilíbrio carga-recuperação diário</p>
+          <p className="t-micro text-muted-foreground mb-3">Equilíbrio carga-recuperação diário</p>
           <div role="img" aria-label="Gráfico de barras comparando Recovery e Fadiga diários" className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} barGap={2}>
@@ -1156,7 +1156,7 @@ export default function Trends() {
               Sono × Recovery do dia seguinte
 
             </h3>
-            <p className="text-[11px] text-muted-foreground mb-3">
+            <p className="t-micro text-muted-foreground mb-3">
               Cada ponto representa um dia com dados válidos
             </p>
 
@@ -1233,7 +1233,7 @@ export default function Trends() {
               </ResponsiveContainer>
             </div>
 
-                        <p className="text-[11px] text-muted-foreground mt-2">
+                        <p className="t-micro text-muted-foreground mt-2">
               {significant
                 ? `Linha = tendência estatística (r=${r.toFixed(2)}, p=${pVal.toFixed(3)}, n=${scatterPoints.length}). Pontos à direita = mais sono.`
                 : `Sem associação significativa nos seus dados (r=${r.toFixed(2)}, n=${scatterPoints.length}) — por isso não traçamos linha. Pontos à direita = mais sono.`}
@@ -1246,10 +1246,10 @@ export default function Trends() {
       {/* ── Leitura avançada / fora do recovery (movido pro fim) ── */}
       <div className="space-y-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground">
             Leitura avançada
           </p>
-          <p className="text-[11px] text-muted-foreground mt-1">
+          <p className="t-micro text-muted-foreground mt-1">
             Equilíbrio semanal de carga — razão ACWR (aguda vs crônica).
           </p>
         </div>

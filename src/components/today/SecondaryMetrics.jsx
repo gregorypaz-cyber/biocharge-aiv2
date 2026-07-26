@@ -33,12 +33,12 @@ export default function SecondaryMetrics({ children, count = 0 }) {
                 Seu dia completo
               </span>
 
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-border text-muted-foreground">
+              <span className="t-micro font-bold px-1.5 py-0.5 rounded-full bg-border text-muted-foreground">
                 {count}
               </span>
             </div>
 
-            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+            <p className="t-micro text-muted-foreground mt-1 leading-relaxed">
               Sono, treino e sinais da manhã.
             </p>
           </div>

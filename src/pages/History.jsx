@@ -79,13 +79,13 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-lg font-black">{formatDateShort(checkin.date)}</p>
+              <p className="text-lg font-semibold">{formatDateShort(checkin.date)}</p>
               {checkin.current_body_state && <BodyStateBadge state={checkin.current_body_state} size="sm" />}
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className={`text-2xl font-black font-mono ${getZoneClasses(getZone(score)).text}`}>{score}</p>
-                <p className="text-[10px] text-muted-foreground">prontidão</p>
+                <p className={`text-2xl font-semibold font-mono ${getZoneClasses(getZone(score)).text}`}>{score}</p>
+                <p className="t-micro text-muted-foreground">prontidão</p>
               </div>
               <button
                 onClick={onEdit}
@@ -106,7 +106,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
               { label: 'Humor', val: checkin.mood ?? '—' },
             ].map(m => (
               <div key={m.label} className="rounded-xl bg-secondary p-2.5 text-center">
-                <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                <p className="t-micro text-muted-foreground">{m.label}</p>
                 <p className="text-sm font-bold mt-0.5">{m.val}</p>
               </div>
             ))}
@@ -191,10 +191,10 @@ export default function History() {
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
+        <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
         </p>
-        <h1 className="text-2xl font-black tracking-tight">Histórico</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Histórico</h1>
         <p className="text-sm text-muted-foreground mt-1">Linha do tempo dia a dia dos seus check-ins.</p>
         <p className="text-sm text-muted-foreground mt-1">{computed.length} registros · agrupados por semana</p>
       </div>
@@ -308,7 +308,7 @@ export default function History() {
                                   {c.current_body_state ? (
                                     <BodyStateBadge state={c.current_body_state} size="sm" />
                                   ) : c.rest_day ? (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20"><BedDouble size={11} className="inline" /> Descanso</span>
+                                    <span className="t-micro px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20"><BedDouble size={11} className="inline" /> Descanso</span>
                                   ) : null}
                                 </div>
                                 <div className="flex gap-2 mt-0.5 text-xs text-muted-foreground">
@@ -327,7 +327,7 @@ export default function History() {
                                 })()}
                                 </div>
                                 {c.notes && (
-                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[160px] italic">
+                                  <p className="t-micro text-muted-foreground mt-0.5 truncate max-w-[160px] italic">
                                     "{c.notes.slice(0, 40)}{c.notes.length > 40 ? '...' : ''}"
                                   </p>
                                 )}

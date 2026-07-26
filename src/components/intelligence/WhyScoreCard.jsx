@@ -65,7 +65,7 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
             <div className="px-5 pb-4 space-y-4">
               {negatives.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-red-400">
+                  <p className="t-micro font-bold uppercase tracking-wider text-red-400">
                     Pesaram contra seu recovery hoje
                   </p>
 
@@ -89,7 +89,7 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
 
               {positives.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                  <p className="t-micro font-bold uppercase tracking-wider text-emerald-400">
                     Sustentaram seu recovery hoje
                   </p>
 

@@ -74,7 +74,7 @@ export default function EmojiSelector({ label, type, value, onChange }) {
         <span className="text-sm font-medium text-foreground">{label}</span>
 
         {selectedLabel && (
-          <span className="text-[11px] text-primary font-semibold">
+          <span className="t-micro text-primary font-semibold">
             {selectedLabel}
           </span>
         )}
@@ -100,7 +100,7 @@ export default function EmojiSelector({ label, type, value, onChange }) {
               )}
             >
               <span className="leading-none">{emoji}</span>
-              <span className="text-[9px] text-muted-foreground leading-tight text-center px-1">
+              <span className="t-micro text-muted-foreground leading-tight text-center px-1">
                 {labels[i]}
               </span>
             </button>
@@ -116,7 +116,7 @@ export default function EmojiSelector({ label, type, value, onChange }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="text-[11px] text-muted-foreground mt-1 pl-0.5"
+            className="t-micro text-muted-foreground mt-1 pl-0.5"
           >
             {selectedInterpretation}
           </motion.p>

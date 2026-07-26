@@ -67,7 +67,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
       <div className={`rounded-xl border px-4 py-3 ${risk.bg} ${risk.border}`}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
               Interpretação atual
             </p>
             <p className={`text-sm font-semibold ${risk.color}`}>
@@ -76,7 +76,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
           </div>
 
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
               Ratio A:C
             </p>
             <p className={`text-lg font-mono font-bold ${risk.color}`}>
@@ -93,25 +93,25 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
       {/* Metrics */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-secondary/40 border border-border/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Últimos 7 dias
           </p>
           <p className="text-lg font-mono font-bold">
             {trainingLoad.acute ?? '—'}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="t-micro text-muted-foreground mt-1">
             carga aguda
           </p>
         </div>
 
         <div className="rounded-xl bg-secondary/40 border border-border/40 p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Últimas 6 semanas
           </p>
           <p className="text-lg font-mono font-bold">
             {trainingLoad.chronic ?? '—'}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="t-micro text-muted-foreground mt-1">
             carga crônica
           </p>
         </div>
@@ -119,14 +119,14 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
         <div className="rounded-xl bg-secondary/40 border border-border/40 p-3">
           <div className="flex items-center gap-1 mb-1">
             <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            <p className="t-micro uppercase tracking-wider text-muted-foreground">
               Status
             </p>
           </div>
           <p className={`text-sm font-semibold ${risk.color}`}>
             {risk.label}
           </p>
-          <p className="text-[10px] text-muted-foreground mt-1">
+          <p className="t-micro text-muted-foreground mt-1">
             do momento
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
           <div className="flex items-start gap-2">
             <Moon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+              <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
                 Relação com o sono
               </p>
               <p className="text-xs text-foreground/85 leading-relaxed">

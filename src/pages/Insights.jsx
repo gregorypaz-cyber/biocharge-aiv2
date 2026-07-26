@@ -110,7 +110,7 @@ function BottleneckInsight({ bottleneck }) {
           </div>
           <div>
             <p className="text-sm font-semibold">Descobrindo seu gargalo pessoal</p>
-            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+            <p className="text-xs text-muted-foreground leading-relaxed mt-1">
               Faltam cerca de {faltam} dias de registro para identificar com confiança
               qual fator mais move sua recuperação.
             </p>
@@ -129,7 +129,7 @@ function BottleneckInsight({ bottleneck }) {
           </div>
           <div>
             <p className="text-sm font-semibold">Sem um gargalo dominante</p>
-            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+            <p className="text-xs text-muted-foreground leading-relaxed mt-1">
               Por enquanto nenhum fator isolado domina sua recuperação — seus dados
               estão equilibrados. Isso costuma ser um bom sinal.
             </p>
@@ -153,15 +153,15 @@ function BottleneckInsight({ bottleneck }) {
           <Target className="w-4 h-4 text-primary" />
         </div>
         <div className="flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          <p className="t-micro font-bold uppercase tracking-widest text-primary">
             Seu gargalo pessoal
           </p>
           <div className="flex items-center gap-2 mt-1">
             <InsightIcon icon={b.icon} size={18} />
-            <h3 className="text-base font-black tracking-tight">{b.label}</h3>
+            <h3 className="text-base font-semibold tracking-tight">{b.label}</h3>
           </div>
 
-          <p className="text-[13px] text-muted-foreground leading-relaxed mt-2">
+          <p className="t-caption text-muted-foreground leading-relaxed mt-2">
             De tudo que você registra,{' '}
             <span className="text-foreground font-semibold">{b.label.toLowerCase()}</span> é
             o fator com a{' '}
@@ -177,17 +177,17 @@ function BottleneckInsight({ bottleneck }) {
           <div className="flex items-center gap-2 mt-3">
             <span
               className={cn(
-                'inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md',
+                'inline-flex items-center gap-1 t-micro font-semibold px-2 py-1 rounded-md',
                 isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
               )}
             >
               {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               correlação {b.correlation > 0 ? '+' : ''}{b.correlation}
             </span>
-            <span className="text-[10px] text-muted-foreground">baseado em {b.samples} dias</span>
+            <span className="t-micro text-muted-foreground">baseado em {b.samples} dias</span>
           </div>
 
-          <p className="text-[10px] text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-2">
+          <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-2">
             Associação observada nos seus dados, não relação de causa garantida. Use como
             pista de onde focar, não como regra fixa.
           </p>
@@ -212,7 +212,7 @@ function LongTermTrendsCard({ trends }) {
           </div>
           <div>
             <p className="text-sm font-semibold">Acompanhando sua evolução</p>
-            <p className="text-[12px] text-muted-foreground leading-relaxed mt-1">
+            <p className="text-xs text-muted-foreground leading-relaxed mt-1">
               Em cerca de {trends.daysNeeded} dias de registro o app começa a
               mostrar se suas métricas estão melhorando, estáveis ou em queda ao
               longo das semanas.
@@ -264,7 +264,7 @@ function LongTermTrendsCard({ trends }) {
       className="rounded-2xl border border-border/50 bg-card tint-recovery p-5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]"
     >
       <div className="flex items-start justify-between mb-0.5">
-        <h2 className="text-[17px] font-semibold tracking-tight">Sua evolução</h2>
+        <h2 className="t-section font-semibold tracking-tight">Sua evolução</h2>
         <button
           type="button"
           onClick={() => setShowInfo((v) => !v)}
@@ -274,7 +274,7 @@ function LongTermTrendsCard({ trends }) {
           <Info className="w-3.5 h-3.5" />
         </button>
       </div>
-      <p className="text-[12px] text-muted-foreground mb-4">
+      <p className="text-xs text-muted-foreground mb-4">
         Últimos {trends.metrics[0]?.days || 0} dias
       </p>
 
@@ -284,7 +284,7 @@ function LongTermTrendsCard({ trends }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="text-[11px] text-muted-foreground/80 leading-relaxed mb-4 overflow-hidden"
+            className="t-micro text-muted-foreground/80 leading-relaxed mb-4 overflow-hidden"
           >
             O app só chama de tendência o que é estatisticamente claro na janela —
             o resto é oscilação normal em torno da sua base. O HRV usa a média
@@ -311,16 +311,16 @@ function LongTermTrendsCard({ trends }) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <InsightIcon icon={m.icon} size={18} className={`${t.icon} shrink-0`} />
-                <span className="text-[14px] font-medium truncate">{m.label}</span>
+                <span className="text-sm font-medium truncate">{m.label}</span>
               </div>
               <div className="flex items-baseline gap-2 shrink-0">
                 {value != null && (
                   <span className={`text-base font-semibold num ${t.val}`}>
                     {value}
-                    <span className="text-[11px] font-medium text-muted-foreground ml-0.5">{m.unit}</span>
+                    <span className="t-micro font-medium text-muted-foreground ml-0.5">{m.unit}</span>
                   </span>
                 )}
-                <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${t.pill}`}>
+                <span className={`inline-flex items-center gap-1 t-micro font-semibold px-2.5 py-1 rounded-full ${t.pill}`}>
                   <s.Icon className="w-3 h-3" />
                   {s.label}
                 </span>
@@ -331,7 +331,7 @@ function LongTermTrendsCard({ trends }) {
       </div>
 
       {!trends.hasAnyTrend && (
-        <p className="text-[11px] text-muted-foreground/80 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
+        <p className="t-micro text-muted-foreground/80 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
           Tudo estável no período — suas métricas estão oscilando em torno da sua
           base, sem uma direção clara. Para evolução de longo prazo, isso é um
           sinal saudável de consistência.
@@ -346,7 +346,7 @@ function SectionHeader({ title, subtitle }) {
     <div className="space-y-0.5">
       <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
       {subtitle ? (
-        <p className="text-[11px] text-muted-foreground leading-relaxed">{subtitle}</p>
+        <p className="t-micro text-muted-foreground leading-relaxed">{subtitle}</p>
       ) : null}
     </div>
   );
@@ -361,7 +361,7 @@ function InsightChip({ confidence }) {
       : 'bg-zinc-500/15 text-zinc-400';
 
   return (
-    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cls}`}>
+    <span className={`t-micro font-bold px-2 py-0.5 rounded-full ${cls}`}>
       {confidence}
     </span>
   );
@@ -402,7 +402,7 @@ function DiscoveryCard({ item }) {
           <InsightIcon icon={item.icon} className="text-muted-foreground mt-0.5" size={18} />
           <div>
             <p className="text-sm font-semibold leading-snug">{item.title}</p>
-            <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">
+            <p className="t-caption text-muted-foreground leading-relaxed mt-1">
               {item.text}
             </p>
           </div>
@@ -411,7 +411,7 @@ function DiscoveryCard({ item }) {
         <InsightChip confidence={item.confidence} />
       </div>
 
-      <p className="text-[10px] text-muted-foreground">
+      <p className="t-micro text-muted-foreground">
         Baseado em {item.days} {item.days === 1 ? 'registro' : 'registros'} úteis.
       </p>
     </motion.div>
@@ -439,7 +439,7 @@ function SmallInsightCard({ icon: Icon, title, text, tone = 'neutral' }) {
         <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconCls}`} />
         <div>
           <p className="text-sm font-semibold leading-snug">{title}</p>
-          <p className="text-[13px] text-muted-foreground leading-relaxed mt-1">{text}</p>
+          <p className="t-caption text-muted-foreground leading-relaxed mt-1">{text}</p>
         </div>
       </div>
     </div>
@@ -487,11 +487,11 @@ function PrimaryInsightCard({ item }) {
           </div>
 
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <p className="t-micro font-semibold uppercase tracking-widest text-muted-foreground">
               {item.eyebrow || 'Leitura principal'}
             </p>
 
-            <h2 className="text-lg font-black tracking-tight leading-tight mt-1">
+            <h2 className="text-lg font-semibold tracking-tight leading-tight mt-1">
               {item.title}
             </h2>
 
@@ -502,14 +502,14 @@ function PrimaryInsightCard({ item }) {
         </div>
 
         {item.badge ? (
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-background/40 border border-border/40 text-muted-foreground shrink-0">
+          <span className="t-micro font-bold px-2 py-1 rounded-full bg-background/40 border border-border/40 text-muted-foreground shrink-0">
             {item.badge}
           </span>
         ) : null}
       </div>
 
       {item.meta ? (
-        <p className="text-[11px] text-muted-foreground border-t border-border/25 pt-2">
+        <p className="t-micro text-muted-foreground border-t border-border/25 pt-2">
           {item.meta}
         </p>
       ) : null}
@@ -529,7 +529,7 @@ function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
         <div>
           <p className="text-sm font-semibold leading-snug">{title}</p>
           {subtitle ? (
-            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
+            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
           ) : null}
         </div>
 
@@ -1263,7 +1263,7 @@ Regras:
     <div className="space-y-4 max-w-2xl mx-auto">
       {/* Header */}
 <div>
-  <h1 className="text-2xl font-black tracking-tight">Padrões</h1>
+  <h1 className="text-2xl font-semibold tracking-tight">Padrões</h1>
   <p className="text-sm text-muted-foreground mt-1">
     O que está mudando no seu corpo — recovery, sono e carga.
   </p>
@@ -1369,7 +1369,7 @@ Regras:
         </div>
 
         <div className="p-4">
-          <p className="text-[10px] text-muted-foreground mb-3">
+          <p className="t-micro text-muted-foreground mb-3">
             Uma leitura mais detalhada dos padrões recentes de recovery, sono, carga e comportamento.
           </p>
 
@@ -1395,7 +1395,7 @@ Regras:
                 onExpand={() => setAnalysisExpanded(true)}
               />
               {analysisGeneratedAt && (
-                <p className="text-[10px] text-muted-foreground mt-3 text-right">
+                <p className="t-micro text-muted-foreground mt-3 text-right">
                   Gerado em{' '}
                   {analysisGeneratedAt.toLocaleDateString('pt-BR', {
                     day: '2-digit',
@@ -1435,7 +1435,7 @@ Regras:
 
           {coachResponse ? (
             <>
-              <p className="text-[10px] text-muted-foreground mb-2">
+              <p className="t-micro text-muted-foreground mb-2">
                 Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
               </p>
 
@@ -1487,7 +1487,7 @@ Regras:
             </Button>
           </div>
 
-          <p className="text-[10px] text-muted-foreground">
+          <p className="t-micro text-muted-foreground">
             As respostas são geradas por IA com base nos seus dados e não substituem orientação médica.
           </p>
         </div>

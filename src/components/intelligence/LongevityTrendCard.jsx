@@ -61,7 +61,7 @@ export default function LongevityTrendCard() {
       <Wrap>
         <div>
           <p className="text-sm font-semibold tracking-tight">Vitalidade ao longo do tempo</p>
-          <p className="text-[11px] text-muted-foreground mt-1">{msg}</p>
+          <p className="t-micro text-muted-foreground mt-1">{msg}</p>
         </div>
       </Wrap>
     );
@@ -76,11 +76,11 @@ export default function LongevityTrendCard() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-semibold tracking-tight">Vitalidade ao longo do tempo</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Recalculada por semana a partir do seu histórico.</p>
+          <p className="t-micro text-muted-foreground mt-0.5">Recalculada por semana a partir do seu histórico.</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold text-foreground">{trend.current.vitality}</p>
-          <p className={`text-[11px] ${deltaColor}`}>
+          <p className={`t-micro ${deltaColor}`}>
             {delta === 0 ? 'estável' : `${up ? '+' : ''}${delta} no período`}
           </p>
         </div>
@@ -109,7 +109,7 @@ export default function LongevityTrendCard() {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="t-micro text-muted-foreground">
         Mesma engine do card de Vitalidade, aplicada a janelas móveis de 3 semanas. Tendência importa
         mais que o ponto isolado. Se o VO₂max do Zepp não mudar, a curva reflete sobretudo sono, regularidade,
         FC de repouso e atividade.
