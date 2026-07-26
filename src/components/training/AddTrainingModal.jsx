@@ -293,27 +293,56 @@ export default function AddTrainingModal({
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Folha modal padrão iOS: trava o scroll de fundo e fecha no Escape.
+  // Espelha o DayDetailSheet do Histórico — as duas folhas do app se comportam igual.
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        className="bg-card border border-border rounded-3xl w-full max-w-md flex flex-col"
-        style={{ maxHeight: '85vh' }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-training-title"
+        initial={{ y: '5%', opacity: 0.7 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: '5%', opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 38, mass: 0.9 }}
+        className="sheet-surface sheet-scroll bg-card border border-border rounded-3xl w-full max-w-md flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
+        <div className="pt-2.5 pb-1 flex justify-center shrink-0">
+          <span className="sheet-grabber" aria-hidden="true" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-5 pb-4 pt-1 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <Dumbbell className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-base">Registrar Treino</h2>
+            <h2 id="add-training-title" className="t-section font-semibold">Registrar Treino</h2>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-secondary"
+            aria-label="Fechar"
+            className="w-11 h-11 -mr-2.5 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
