@@ -294,7 +294,7 @@ export default function AppLayout() {
                   <item.icon className="w-5 h-5 relative" />
                 )}
                 {!item.primary && (
-                  <span className="text-[10px] font-semibold relative whitespace-nowrap">
+                  <span className="text-[10px] font-medium relative whitespace-nowrap tracking-[0.01em]">
                     {item.label}
                   </span>
                 )}
