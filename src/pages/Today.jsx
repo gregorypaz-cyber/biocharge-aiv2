@@ -1535,18 +1535,20 @@ if (isLoading) {
         </p>
       )}
 
-      {showAddModal && (
-        <AddTrainingModal
-          checkin={enrichedCheckin}
-          existingSessions={todaySessions}
-          onClose={() => setShowAddModal(false)}
-          onAdded={() => {
-            setShowAddModal(false);
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showAddModal && (
+          <AddTrainingModal
+            checkin={enrichedCheckin}
+            existingSessions={todaySessions}
+            onClose={() => setShowAddModal(false)}
+            onAdded={() => {
+              setShowAddModal(false);
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
