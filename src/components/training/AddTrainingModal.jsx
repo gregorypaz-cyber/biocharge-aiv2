@@ -352,7 +352,7 @@ export default function AddTrainingModal({
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 overflow-y-auto p-5"
+              className="flex-1 overflow-y-auto overscroll-contain p-5"
             >
               <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
                 <p className="text-xs font-semibold text-primary mb-1">
