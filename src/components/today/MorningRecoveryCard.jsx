@@ -72,7 +72,7 @@ function Qualifier({ ctx }) {
     ctx.tone === 'good' ? 'text-emerald-400' :
     ctx.tone === 'low' ? 'text-amber-400' :
     'text-muted-foreground';
-  return <p className={`text-[10px] mt-0.5 leading-tight ${cls}`}>{ctx.text}</p>;
+  return <p className={`t-micro mt-0.5 leading-tight ${cls}`}>{ctx.text}</p>;
 }
 
 // ─── Marcadores estilo Noop: sparkline 14d + chip de delta vs baseline ──────
@@ -94,11 +94,11 @@ function MiniSpark({ data = [], color = 'hsl(215,20%,55%)' }) {
 function DeltaChip({ delta, goodUp = true, unit = '' }) {
   if (delta == null || Number.isNaN(delta)) return null;
   const r = Math.round(delta);
-  if (Math.abs(r) <= 1) return <p className="text-[10px] mt-0.5 text-muted-foreground">no seu normal</p>;
+  if (Math.abs(r) <= 1) return <p className="t-micro mt-0.5 text-muted-foreground">no seu normal</p>;
   const good = goodUp ? r > 0 : r < 0;
   const cls = good ? 'text-emerald-400' : 'text-amber-400';
   return (
-    <p className={`text-[10px] mt-0.5 font-medium ${cls}`}>
+    <p className={`t-micro mt-0.5 font-medium ${cls}`}>
       {r > 0 ? '+' : ''}{r}{unit} vs base
     </p>
   );
@@ -124,7 +124,7 @@ function SleepStages({ sleepHours, deepPct, remPct }) {
   ];
   return (
     <div className="space-y-2.5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground">
         Estágios do sono
       </p>
       <div className="flex h-3 rounded-full overflow-hidden gap-[2px]">
@@ -144,10 +144,10 @@ function SleepStages({ sleepHours, deepPct, remPct }) {
           <div key={s.label} className="text-center">
             <div className="flex items-center justify-center gap-1.5 mb-0.5">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-              <span className="text-[10px] text-muted-foreground">{s.label}</span>
+              <span className="t-micro text-muted-foreground">{s.label}</span>
             </div>
             <p className="text-sm font-mono font-semibold">{s.pct}%</p>
-            <p className="text-[10px] text-muted-foreground">{fmtH(s.pct)}</p>
+            <p className="t-micro text-muted-foreground">{fmtH(s.pct)}</p>
           </div>
         ))}
       </div>
@@ -216,7 +216,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
           Resumo da manhã
         </span>
 
-        <span className="ml-auto text-[10px] text-muted-foreground flex items-center gap-1">
+        <span className="ml-auto t-micro text-muted-foreground flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {formatDateFull(checkin.date)}
         </span>
@@ -225,7 +225,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
       {/* Main block */}
       <div className="flex items-center gap-4">
         <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center font-mono font-black text-xl shrink-0"
+          className="w-14 h-14 rounded-2xl flex items-center justify-center font-mono font-semibold text-xl shrink-0"
           style={{ backgroundColor: toHSLA(color, 0.2), color }}
         >
           {isCalibrating ? '—' : score}
@@ -238,13 +238,13 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
           </p>
 
           {deltaText && (
-            <p className={`text-[11px] mt-1 font-medium ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <p className={`t-micro mt-1 font-medium ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {deltaText}
             </p>
           )}
 
           {checkin?.delayed_fatigue_alert && (
-            <p className="text-[11px] text-amber-400 mt-1 leading-relaxed">
+            <p className="t-micro text-amber-400 mt-1 leading-relaxed">
               ⚠️ {checkin.delayed_fatigue_alert}
             </p>
           )}
@@ -256,10 +256,10 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
           <div className="flex items-center gap-1.5 mb-1">
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">RMSSD</span>
+            <span className="t-micro uppercase tracking-wider text-muted-foreground">RMSSD</span>
           </div>
           <p className="text-sm font-semibold">
-            {hrvVal != null ? <>{hrvVal}<span className="text-[10px] font-normal text-muted-foreground"> ms</span></> : '—'}
+            {hrvVal != null ? <>{hrvVal}<span className="t-micro font-normal text-muted-foreground"> ms</span></> : '—'}
           </p>
           <DeltaChip delta={hrvDelta} goodUp unit=" ms" />
           <MiniSpark data={sparkHrv} color="hsl(199,89%,60%)" />
@@ -268,10 +268,10 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
           <div className="flex items-center gap-1.5 mb-1">
             <HeartPulse className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">RHR</span>
+            <span className="t-micro uppercase tracking-wider text-muted-foreground">RHR</span>
           </div>
           <p className="text-sm font-semibold">
-            {rhrVal != null ? <>{rhrVal}<span className="text-[10px] font-normal text-muted-foreground"> bpm</span></> : '—'}
+            {rhrVal != null ? <>{rhrVal}<span className="t-micro font-normal text-muted-foreground"> bpm</span></> : '—'}
           </p>
           <DeltaChip delta={rhrDelta} goodUp={false} unit=" bpm" />
           <MiniSpark data={sparkRhr} color="hsl(215,20%,55%)" />
@@ -280,7 +280,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
           <div className="flex items-center gap-1.5 mb-1">
             <BedDouble className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Sono</span>
+            <span className="t-micro uppercase tracking-wider text-muted-foreground">Sono</span>
           </div>
           <p className="text-sm font-semibold">
             {sleepVal != null ? `${sleepVal}h` : '—'}

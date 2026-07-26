@@ -50,7 +50,7 @@ function directionArrow(direction) {
 
 function SectionHeader({ children }) {
   return (
-    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1 mb-2">
+    <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground px-1 mb-2">
       {children}
     </p>
   );
@@ -59,10 +59,10 @@ function SectionHeader({ children }) {
 function VerdictSection({ state, today }) {
   return (
     <div className={`rounded-2xl border p-4 ${stateBorderBg(state)}`}>
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">
+      <p className="t-micro text-muted-foreground uppercase tracking-wider font-semibold mb-1">
         Hoje · {fmtDate(today)}
       </p>
-      <p className={`text-2xl font-black ${stateColor(state)}`}>
+      <p className={`text-2xl font-semibold ${stateColor(state)}`}>
         {stateLabel(state)}
       </p>
       {state === 'normal' && (
@@ -111,7 +111,7 @@ function VitalsPanel({ flags }) {
                 <p className="text-sm font-medium leading-tight">
                   {f.label}
                   {isPending && (
-                    <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">
+                    <span className="ml-1.5 t-micro text-muted-foreground font-normal">
                       em breve (anel)
                     </span>
                   )}
@@ -128,7 +128,7 @@ function VitalsPanel({ flags }) {
                       {f.today ?? '—'}
                     </p>
                     {f.baseline != null && (
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="t-micro text-muted-foreground">
                         base {f.baseline}
                       </p>
                     )}
@@ -160,7 +160,7 @@ function ActiveFlagsSection({ flags }) {
     <div className="rounded-2xl border border-red-500/25 bg-red-500/5 p-4 space-y-2">
       <p className="text-sm font-semibold text-red-400">Flags ativas</p>
       <p className="text-sm text-muted-foreground">{parts.join(' · ')}</p>
-      <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+      <p className="t-micro text-muted-foreground/70 leading-relaxed">
         Preciso de 2+ sinais juntos pra alertar — 1 sinal isolado é ruído.
       </p>
     </div>
@@ -223,7 +223,7 @@ function HistorySection({ history }) {
 function HonestyFooter() {
   return (
     <div className="rounded-2xl border border-border/30 bg-secondary/20 px-4 py-4">
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
+      <p className="t-micro text-muted-foreground leading-relaxed">
         Isto não é diagnóstico médico. O monitor compara teus sinais ao teu próprio padrão e só fala quando 2 ou mais desviam juntos — o silêncio é intencional. Em caso de sintomas, procure um profissional de saúde.
       </p>
     </div>
@@ -284,7 +284,7 @@ export default function Health() {
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
-          <h1 className="text-lg font-black tracking-tight">Monitor de Saúde</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Monitor de Saúde</h1>
         </div>
 
         {/* A · Veredito */}

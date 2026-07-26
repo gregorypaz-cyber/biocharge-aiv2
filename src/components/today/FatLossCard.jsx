@@ -91,7 +91,7 @@ export default function FatLossCard({ checkins }) {
           <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wide">Corte</span>
         </div>
         <span
-          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+          className={`inline-flex items-center gap-1 t-micro font-bold px-2 py-0.5 rounded-full border ${
             isProtect
               ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
               : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
@@ -106,17 +106,17 @@ export default function FatLossCard({ checkins }) {
       <div className="flex items-end justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black font-mono">{fmtKg(s.trendNow)}</span>
+            <span className="text-3xl font-semibold font-mono">{fmtKg(s.trendNow)}</span>
             <span className="text-sm text-muted-foreground">kg</span>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <p className="t-micro text-muted-foreground mt-0.5">
             tendência real · última pesagem: {fmtKg(s.lastWeighIn)} kg
           </p>
         </div>
         <div className="text-right">
           <p className={`text-xs font-semibold ${zone.text}`}>{rateLabel(s.rate, s.phase)}</p>
           {s.bfEstimate != null && (
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="t-micro text-muted-foreground mt-0.5">
               ~{String(s.bfEstimate).replace('.', ',')}% gordura (estim.) · alvo {fmtKg(s.targetWeight)} kg
             </p>
           )}

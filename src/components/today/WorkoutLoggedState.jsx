@@ -139,14 +139,14 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           </span>
         </div>
 
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 ${verdict.color}`}>
+        <span className={`t-micro font-bold px-2 py-0.5 rounded-full bg-white/5 ${verdict.color}`}>
           {verdict.badge}
         </span>
       </div>
 
       {/* Main verdict */}
       <div className="space-y-1">
-        <h3 className="text-base font-black leading-tight">
+        <h3 className="text-base font-semibold leading-tight">
           {verdict.title}
         </h3>
 
@@ -166,13 +166,13 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
                 Pós-treino registrado
               </p>
 
-              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+              <p className="t-micro text-muted-foreground leading-tight mt-0.5">
                 Sua resposta ao treino já entrou na leitura de amanhã.
               </p>
             </div>
           </div>
 
-          <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+          <span className="t-micro font-bold px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
             Salvo
           </span>
         </div>
@@ -189,7 +189,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
                 Registrar pós-treino
               </p>
 
-              <p className="text-[11px] opacity-85 leading-tight mt-0.5">
+              <p className="t-micro opacity-85 leading-tight mt-0.5">
                 RPE, energia e dor muscular · melhora a leitura de amanhã
               </p>
             </div>
@@ -201,7 +201,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
       {/* Session summary */}
       <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-3 space-y-2">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+        <p className="t-micro text-muted-foreground uppercase tracking-wider font-semibold">
           Sessão registrada
         </p>
 
@@ -234,7 +234,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
                 )}
 
                 {session.perceived_effort != null && (
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="t-micro text-muted-foreground">
                     RPE {session.perceived_effort}
                   </p>
                 )}
@@ -258,7 +258,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           <div className="flex items-center gap-2 mb-1">
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
 
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="t-micro text-muted-foreground uppercase tracking-wider">
               Recovery manhã
             </p>
           </div>
@@ -267,7 +267,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             {recoveryScore}
           </p>
 
-          <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+          <p className="t-micro text-muted-foreground mt-1 leading-snug">
             Como você começou o dia.
           </p>
         </div>
@@ -276,7 +276,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           <div className="flex items-center gap-2 mb-1">
             <Gauge className="w-3.5 h-3.5 text-muted-foreground" />
 
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="t-micro text-muted-foreground uppercase tracking-wider">
               ACWR
             </p>
           </div>
@@ -286,7 +286,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           </p>
 
           {acwrInterpretation && (
-            <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+            <p className="t-micro text-muted-foreground mt-1 leading-snug">
               {acwrInterpretation}
             </p>
           )}
@@ -296,7 +296,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           <div className="flex items-center gap-2 mb-1">
             <Moon className="w-3.5 h-3.5 text-muted-foreground" />
 
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <p className="t-micro text-muted-foreground uppercase tracking-wider">
               Sono hoje
             </p>
           </div>
@@ -305,7 +305,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             {sleepNeed != null ? `${sleepNeed}h` : 'Recuperar'}
           </p>
 
-          <p className="text-[10px] text-muted-foreground mt-1 leading-snug">
+          <p className="t-micro text-muted-foreground mt-1 leading-snug">
             {verdict.tonightFocus}
           </p>
         </div>
@@ -313,7 +313,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
       {/* Tomorrow projection */}
       <div className="rounded-xl bg-black/15 border border-white/5 px-3 py-2.5">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+        <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
           Amanhã cedo
         </p>
 
@@ -321,7 +321,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
           {verdict.tomorrow}
         </p>
 
-        <p className="text-[10px] text-muted-foreground mt-1">
+        <p className="t-micro text-muted-foreground mt-1">
           Tendência, não garantia — sono e stress ainda influenciam a leitura.
         </p>
       </div>

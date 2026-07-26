@@ -47,7 +47,7 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
             <div className="flex flex-wrap items-center gap-2 flex-1">
               <span className="text-foreground/85">{item.text}</span>
               {item.source === 'lagged' && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
+                <span className="t-micro px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
                   Amanhã
                 </span>
               )}

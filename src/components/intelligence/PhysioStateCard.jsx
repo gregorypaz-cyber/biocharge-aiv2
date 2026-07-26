@@ -80,7 +80,7 @@ export default function PhysioStateCard({ physioState }) {
 
         <div className="flex items-center gap-2 mt-1">
           <span className="text-lg">{cfg.emoji}</span>
-          <span className={`text-xl font-black ${cfg.color}`}>{cfg.label}</span>
+          <span className={`text-xl font-semibold ${cfg.color}`}>{cfg.label}</span>
         </div>
 
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
@@ -89,7 +89,7 @@ export default function PhysioStateCard({ physioState }) {
       </div>
 
       <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-2.5">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+        <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
           O que isso significa
         </p>
         <p className="text-xs text-foreground/85 leading-relaxed">
@@ -99,7 +99,7 @@ export default function PhysioStateCard({ physioState }) {
 
       {physioState.signals?.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground font-semibold">
             Sinais usados nesta leitura
           </p>
 

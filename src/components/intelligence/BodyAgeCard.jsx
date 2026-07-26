@@ -128,7 +128,7 @@ export default function BodyAgeCard() {
         <div className="text-right">
           <div className="text-xs text-muted-foreground">Idade corporal</div>
           <div className="text-2xl font-semibold text-foreground">{r.bodyAge}</div>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="t-micro text-muted-foreground">
             {deltaAbs === 0 ? 'igual à real' : younger ? `${deltaAbs} mais jovem` : `${deltaAbs} acima`} ({r.age})
           </div>
         </div>

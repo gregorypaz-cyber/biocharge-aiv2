@@ -352,9 +352,9 @@ export default function RecoveryField({
         </div>
       </div>
 
-      <p className={`text-[11px] font-bold uppercase tracking-wider text-foreground ${size >= 140 ? '-mt-2' : 'mt-1'}`}>{label}</p>
+      <p className={`t-micro font-bold uppercase tracking-wider text-foreground ${size >= 140 ? '-mt-2' : 'mt-1'}`}>{label}</p>
       {caption ? (
-        <p className={`text-[10px] mt-0.5 text-center leading-tight ${captionColor}`}>{caption}</p>
+        <p className={`t-micro mt-0.5 text-center leading-tight ${captionColor}`}>{caption}</p>
       ) : null}
     </div>
   );

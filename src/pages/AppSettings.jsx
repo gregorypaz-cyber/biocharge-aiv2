@@ -119,7 +119,7 @@ export default function AppSettings() {
   return (
     <div className="space-y-5 max-w-lg mx-auto">
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Configurações</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Configurações</h1>
         <p className="text-sm text-muted-foreground mt-1">Conta, perfil esportivo e preferências fisiológicas</p>
       </div>
 
@@ -157,7 +157,7 @@ export default function AppSettings() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
               Ano de nascimento
             </p>
             <Input
@@ -170,7 +170,7 @@ export default function AppSettings() {
             />
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
               Sexo
             </p>
             <div className="flex gap-2">
@@ -190,7 +190,7 @@ export default function AppSettings() {
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
               Altura (cm)
             </p>
             <Input
@@ -203,7 +203,7 @@ export default function AppSettings() {
             />
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
               Cintura (cm) — opcional
             </p>
             <Input
@@ -218,7 +218,7 @@ export default function AppSettings() {
         </div>
 
         <div className="space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
             VO₂max do relógio (opcional)
           </p>
           <Input
@@ -229,7 +229,7 @@ export default function AppSettings() {
             onChange={e => setPrefs(p => ({ ...p, vo2max_manual: e.target.value ? Number(e.target.value) : '' }))}
             className="bg-secondary border-border"
           />
-          <p className="text-[11px] text-muted-foreground">
+          <p className="t-micro text-muted-foreground">
             Pegue no app Zepp. Se preenchido, é usado direto no cálculo (mais preciso que a estimativa por FC).
           </p>
         </div>
@@ -330,7 +330,7 @@ export default function AppSettings() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
             Esporte principal
           </p>
           <div className="flex flex-wrap gap-2">
@@ -357,7 +357,7 @@ export default function AppSettings() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
             Nível
           </p>
           <div className="flex flex-wrap gap-2">
@@ -378,7 +378,7 @@ export default function AppSettings() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="t-micro font-semibold uppercase tracking-wider text-muted-foreground">
             Objetivo da leitura
           </p>
           <div className="space-y-2">
@@ -490,7 +490,7 @@ export default function AppSettings() {
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-amber-300/90 leading-relaxed">
+        <p className="t-micro text-amber-300/90 leading-relaxed">
           ⚠️ rMSSD e SDNN são métricas de HRV diferentes. Misturar wearables contamina seu baseline — ao trocar, considere recomeçar o histórico de HRV.
         </p>
       </motion.div>

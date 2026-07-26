@@ -40,13 +40,13 @@ function Section({ title, items }) {
   return (
     <div className="space-y-1.5">
       {title && (
-        <p className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
+        <p className="t-micro font-bold uppercase tracking-widest text-primary/80">
           {title}
         </p>
       )}
       <div className="space-y-1.5">
         {items.map((t, i) => (
-          <p key={i} className="text-[13px] text-foreground/80 leading-relaxed">
+          <p key={i} className="t-caption text-foreground/80 leading-relaxed">
             {t}
           </p>
         ))}
