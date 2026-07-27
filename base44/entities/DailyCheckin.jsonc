@@ -26,7 +26,7 @@
     },
     "sleep_score": {
       "type": "number",
-      "description": "Sleep score (0-100)"
+      "description": "Sleep score from Zepp (0-100). Calibration reference only - never enters recovery decision logic."
     },
     "fatigue": {
       "type": "number",
@@ -44,9 +44,13 @@
       "type": "number",
       "description": "Number of times woken during the night (from Zepp). Higher = more fragmented sleep."
     },
+    "awake_minutes": {
+      "type": "number",
+      "description": "Minutes spent awake while in bed (Zepp > Sono > Acordado; Fitbit > minutesAwake). Raw portable signal. Leave BLANK when not measured - never 0 as a placeholder. Enables sleep efficiency = asleep / (asleep + awake)."
+    },
     "sleep_regularity_pct": {
       "type": "number",
-      "description": "Sleep regularity percentage 0-100 (from Zepp). Higher = more consistent sleep/wake timing."
+      "description": "Sleep regularity percentage 0-100 (from Zepp SRI). Feeds calculateSleepScore with weight 0.25. WARNING: Zepp reports 0 when it could not compute the index (e.g. nights the watch was not worn). 0 means MISSING, not zero regularity - always leave BLANK in that case, or the sleep score is penalised by a phantom value."
     },
     "sleep_start_time": {
       "type": "string",
@@ -198,7 +202,7 @@
     },
     "sleep_quality": {
       "type": "number",
-      "description": "Calculated sleep quality score (0-100), derived from sleep score, duration and sleep stages"
+      "description": "Calculated sleep quality score (0-100). This is the app's own calculateSleepScore v2 output persisted - NOT the Zepp sleep score (that one is sleep_score)."
     },
     "energy_level": {
       "type": "number",
