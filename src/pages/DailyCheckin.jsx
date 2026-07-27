@@ -135,6 +135,7 @@ const DEFAULT_FORM = {
   deep_sleep_pct: null,
   rem_sleep_pct: null,
   sleep_awakenings: null,
+  awake_minutes: null,
   sleep_regularity_pct: null,
   sleep_heart_rate: null,
   rpe: 0,
@@ -1088,8 +1089,30 @@ if (isPostMode) {
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
-                  <p className="t-micro text-muted-foreground">Zepp → Sono</p>
+                                    <p className="t-micro text-muted-foreground">Zepp → Sono</p>
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    Tempo acordado
+                  </label>
+                  <Input
+                    type="number"
+                    step="1"
+                    min={0}
+                    max={600}
+                    placeholder="ex: 45"
+                    value={form.awake_minutes ?? ''}
+                    onChange={(e) => update('awake_minutes', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v)) update('awake_minutes', Math.min(600, Math.max(0, v)));
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                  <p className="t-micro text-muted-foreground">min — Zepp → Sono → Acordado</p>
+                </div>
+
 
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">
