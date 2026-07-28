@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Settings, Sparkles, ShieldCheck, Compass, Dumbbell, Watch, ChevronRight } from 'lucide-react';
 import MeniscusNav from '@/components/layout/MeniscusNav';
-import { NavZoneProvider } from '@/lib/NavZoneContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
@@ -198,7 +197,6 @@ export default function AppLayout() {
   }
 
   return (
-    <NavZoneProvider>
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/40 glass-bar-strong">
@@ -234,7 +232,7 @@ export default function AppLayout() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-36 overflow-y-auto">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto">
         <Outlet />
       </main>
 
@@ -244,6 +242,5 @@ export default function AppLayout() {
       {/* Mobile bottom nav */}
       <MeniscusNav />
     </div>
-    </NavZoneProvider>
   );
 }

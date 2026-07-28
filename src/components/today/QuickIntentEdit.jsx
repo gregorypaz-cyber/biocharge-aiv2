@@ -65,7 +65,7 @@ export default function QuickIntentEdit() {
             className="flex items-center gap-1.5 self-start px-3 py-1.5 rounded-xl border border-border/60 bg-secondary/60 text-muted-foreground text-xs font-medium hover:border-blue-500/40 hover:text-blue-300 hover:bg-blue-500/8 transition-all"
           >
             <Moon className="w-3.5 h-3.5" />
-            Hoje é dia de descanso
+            Marcar como dia de descanso
           </motion.button>
         )}
       </AnimatePresence>
