@@ -247,6 +247,3 @@ export default function AppLayout() {
     </NavZoneProvider>
   );
 }
-    </div>
-  );
-}

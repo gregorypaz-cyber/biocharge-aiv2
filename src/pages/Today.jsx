@@ -19,7 +19,6 @@ import {
 import { runPhysiologicalAnalysisAsync } from '@/lib/physiological-engine';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
-import { useSetNavZone } from '@/lib/NavZoneContext';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';

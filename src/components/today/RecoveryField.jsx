@@ -205,7 +205,7 @@ export default function RecoveryField({
 
   const textCol = isCalibrating ? 'hsl(215 12% 62%)' : css({ h: c.h, s: Math.min(c.s, 55), l: 93 });
   const textHalo = css({ h: c.h, s: Math.min(c.s + 8, 90), l: 12 });
-  const gid = React.useId ? React.useId().replace(/:/g, '') : Math.random().toString(36).slice(2);
+  const gid = React.useId().replace(/:/g, '');
 
   const numSize = Math.round(size * 0.29);
   const shown = isCalibrating ? '—' : (display ?? Math.round(value));
