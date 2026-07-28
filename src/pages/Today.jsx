@@ -1,3 +1,4 @@
+import { useSetNavZone } from '@/lib/NavZoneContext';
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
@@ -18,6 +19,7 @@ import {
 import { runPhysiologicalAnalysisAsync } from '@/lib/physiological-engine';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
+import { useSetNavZone } from '@/lib/NavZoneContext';
 
 import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
@@ -798,6 +800,10 @@ export default function Today() {
   const rawDayScore = getDayScore(checkin);
   const isCalibrating = !!checkin && rawDayScore == null;
   const displayedScore = rawDayScore ?? 0; // só p/ comparações de lógica; a UI usa isCalibrating
+
+  // A nav acende a partir do MESMO valor honesto que o herói usa: rawDayScore.
+  // null = sem check-in ou baseline jovem → menisco fica slate, sem leitura.
+  useSetNavZone(rawDayScore == null ? null : getZone(rawDayScore));
   // Noites de HRV já registradas antes de hoje (o baseline matura em 4 — BL_SEED_NIGHTS).
   const priorHrvNights = (sortedCheckins || []).filter(
     (c) => c.date !== today && Number(c?.hrv_manual ?? c?.hrv) > 0

@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Plus, Brain, Clock, Activity, Settings, TrendingUp, Sparkles, ShieldCheck, Compass, Dumbbell, Watch, ChevronRight } from 'lucide-react';
+import { Settings, Sparkles, ShieldCheck, Compass, Dumbbell, Watch, ChevronRight } from 'lucide-react';
+import MeniscusNav from '@/components/layout/MeniscusNav';
+import { NavZoneProvider } from '@/lib/NavZoneContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { WEARABLES } from '@/pages/AppSettings';
 
-const navItems = [
-  { path: '/today', icon: Activity, label: 'Hoje' },
-  { path: '/insights', icon: Brain, label: 'Padrões' },
-  { path: '/checkin', icon: Plus, label: 'Check-in', primary: true },
-  { path: '/trends', icon: TrendingUp, label: 'Tendências' },
-  { path: '/history', icon: Clock, label: 'Histórico' },
-];
+
 
 const ONBOARDING_STEPS = [
   {
@@ -202,6 +198,7 @@ export default function AppLayout() {
   }
 
   return (
+    <NavZoneProvider>
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/40 glass-bar-strong">
@@ -237,7 +234,7 @@ export default function AppLayout() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-32 overflow-y-auto">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-36 overflow-y-auto">
         <Outlet />
       </main>
 
@@ -245,64 +242,11 @@ export default function AppLayout() {
       <div className="scroll-edge-bottom" aria-hidden="true" />
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/40 glass-bar">
-        <div className="max-w-2xl mx-auto grid grid-cols-5 items-center h-16 px-1">
-          {navItems.map(item => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 py-1 h-full transition-all relative',
-                  item.primary
-                    ? ''
-                    : isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {isActive && !item.primary && (
-                  <motion.div
-                    layoutId="mobileActiveTab"
-                    className="absolute inset-1 bg-primary/8 rounded-xl"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
-                  />
-                )}
-                {item.primary ? (
-                  <div
-                    className="w-14 h-14 -mt-6 relative flex items-center justify-center"
-                    style={{ filter: 'drop-shadow(0 4px 14px hsl(142 70% 50% / 0.35))' }}
-                  >
-                    <svg viewBox="0 0 96 96" className="absolute inset-0 w-full h-full" aria-hidden="true">
-                      <defs>
-                        <radialGradient id="fabGem" cx="42%" cy="30%" r="85%">
-                          <stop offset="0%" stopColor="hsl(142 60% 70%)" />
-                          <stop offset="36%" stopColor="hsl(142 70% 44%)" />
-                          <stop offset="80%" stopColor="hsl(148 80% 22%)" />
-                          <stop offset="100%" stopColor="hsl(152 82% 14%)" />
-                        </radialGradient>
-                        <radialGradient id="fabSpec" cx="34%" cy="22%" r="16%">
-                          <stop offset="0%" stopColor="#fff" stopOpacity="0.75" />
-                          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-                        </radialGradient>
-                      </defs>
-                      <path d="M48 7 C67 6 89 21 89 46 C89 71 71 90 47 89 C24 88 7 72 7 48 C7 23 27 8 48 7 Z" fill="url(#fabGem)" />
-                      <path d="M48 7 C67 6 89 21 89 46 C89 71 71 90 47 89 C24 88 7 72 7 48 C7 23 27 8 48 7 Z" fill="url(#fabSpec)" />
-                    </svg>
-                    <item.icon className="w-6 h-6 relative" strokeWidth={2.5} style={{ color: '#eafff2' }} />
-                  </div>
-                ) : (
-                  <item.icon className="w-5 h-5 relative" />
-                )}
-                {!item.primary && (
-                  <span className="text-[10px] font-medium relative whitespace-nowrap tracking-[0.01em]">
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <MeniscusNav />
+    </div>
+    </NavZoneProvider>
+  );
+}
     </div>
   );
 }
