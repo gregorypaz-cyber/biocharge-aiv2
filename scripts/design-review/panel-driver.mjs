@@ -72,6 +72,8 @@ function domAuditFn() {
     monoOverweight: [],
     truncated: [],
     signalColorCounts: {},
+    emojiInChrome: [],
+    hexColors: [],
   };
   const seen = (el) => {
     const r = el.getBoundingClientRect();
@@ -82,12 +84,38 @@ function domAuditFn() {
     const t = (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ');
     return (el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ').slice(0, 2).join('.') : '') + ' :: ' + t).slice(0, 120);
   };
-  // Tap targets < 44px (interactive elements)
+  // --- R4/R6 helpers ---
+  const EMOJI = /\p{Extended_Pictographic}/u;
+  // R6 (per review decision): flag literal hex except PURE black/white neutrals.
+  const NEUTRAL = new Set(['#fff', '#ffffff', '#000', '#000000']);
+  // Emoji that is deliberate USER INPUT (mood/humor selector, DOMAIN_OF) is allowed
+  // by BRAND §5 — exclude form controls and mood-selector containers.
+  const isUserInput = (el) => !!el.closest('input,select,textarea,[contenteditable],[role="radio"],[class*="mood" i],[class*="humor" i],[class*="emoji" i],[class*="domain" i]');
+  // "chrome" per R4 = nav / header / rótulo (label, .t-micro, .t-caption) / badge/chip/pill.
+  const chromeContext = (el) => {
+    if (el.closest('nav')) return 'nav';
+    if (el.closest('header')) return 'header';
+    if (el.closest('[class*="badge" i],[class*="chip" i],[class*="pill" i]')) return 'badge';
+    if (el.tagName.toLowerCase() === 'label' || el.closest('label')) return 'rótulo';
+    if (el.matches('.t-micro,.t-caption') || el.closest('.t-micro,.t-caption')) return 'rótulo';
+    return null;
+  };
+  // Tap targets < 44px (interactive elements). A ::before hit area (the
+  // .tap-target utility) counts: it extends the touch zone to ≥44px without
+  // reflowing layout, so we credit it via the pseudo-element's min box.
+  const hitFromBefore = (el) => {
+    const b = getComputedStyle(el, '::before');
+    if (!b || b.content === 'none' || b.content === 'normal') return { w: 0, h: 0 };
+    const px = (v) => parseFloat(v) || 0;
+    return { w: Math.max(px(b.width), px(b.minWidth)), h: Math.max(px(b.height), px(b.minHeight)) };
+  };
   const interactive = document.querySelectorAll('a,button,[role=button],[role=tab],[onclick],input,select,summary');
   for (const el of interactive) {
     if (!seen(el)) continue;
     const r = el.getBoundingClientRect();
-    if (r.width < 44 || r.height < 44) out.smallTapTargets.push({ el: label(el), w: Math.round(r.width), h: Math.round(r.height) });
+    const hit = hitFromBefore(el);
+    const w = Math.max(r.width, hit.w), h = Math.max(r.height, hit.h);
+    if (w < 44 || h < 44) out.smallTapTargets.push({ el: label(el), w: Math.round(w), h: Math.round(h) });
   }
   // Text below 11px floor + font-mono above semibold + signal colors
   const SIGNAL = {
@@ -101,17 +129,42 @@ function domAuditFn() {
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (hasText) {
       const fs = parseFloat(s.fontSize);
-      if (fs && fs < 10.5) out.tinyText.push({ el: label(el), px: +fs.toFixed(1) });
+      // R2 floor is 11px; the nav tab bar is exempt by BRAND §3 — tag it (inTabBar)
+      // instead of dropping it, so the assert applies the exemption, not the collector.
+      if (fs && fs < 11) out.tinyText.push({ el: label(el), px: +fs.toFixed(1), inTabBar: el.closest('nav') != null, inChart: el.closest('svg') != null });
       const mono = /mono/i.test(s.fontFamily) || /JetBrains/i.test(s.fontFamily);
       const w = parseInt(s.fontWeight, 10);
       if (mono && w > 600) out.monoOverweight.push({ el: label(el), weight: w, family: s.fontFamily.split(',')[0] });
       // color usage tally
       const col = s.color;
       for (const [nameC, keys] of Object.entries(SIGNAL)) if (keys.some((k) => col.includes(k))) out.signalColorCounts[nameC] = (out.signalColorCounts[nameC] || 0) + 1;
+      // R4: emoji in a chrome element (not user-input mood/domain)
+      const ownText = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('');
+      if (EMOJI.test(ownText) && !isUserInput(el)) {
+        const ctx = chromeContext(el);
+        if (ctx) out.emojiInChrome.push({ el: label(el), emoji: (ownText.match(/\p{Extended_Pictographic}/gu) || []).join(''), context: ctx });
+      }
     }
     // truncation
     if ((s.textOverflow === 'ellipsis' || s.overflow === 'hidden') && el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0) {
       out.truncated.push({ el: label(el), clientW: el.clientWidth, scrollW: el.scrollWidth });
+    }
+  }
+  // R6: literal hex in inline styles / SVG presentation attributes — scan ALL
+  // elements (not gated by visibility; a hex in the DOM is a hex in the DOM).
+  const HEX_ATTRS = ['fill', 'stroke', 'stop-color', 'color', 'flood-color', 'lighting-color'];
+  for (const el of all) {
+    // The brand logo/tile SVG is exempt by review decision (BRAND §6 defines the
+    // icon in hex on purpose, for export/store contexts).
+    if (el.closest('svg[aria-label="Reck"]')) continue;
+    const vals = [];
+    const st = el.getAttribute('style');
+    if (st) vals.push(['style', st]);
+    for (const a of HEX_ATTRS) { const v = el.getAttribute(a); if (v) vals.push([a, v]); }
+    for (const [attr, val] of vals) {
+      const m = val.match(/#[0-9a-fA-F]{3,8}\b/g);
+      if (!m) continue;
+      for (const hx of m) if (!NEUTRAL.has(hx.toLowerCase())) out.hexColors.push({ el: label(el), attr, value: hx });
     }
   }
   const cap = (a, n) => a.slice(0, n);
@@ -119,6 +172,8 @@ function domAuditFn() {
   out.tinyText = cap(out.tinyText, 40);
   out.monoOverweight = cap(out.monoOverweight, 40);
   out.truncated = cap(out.truncated, 40);
+  out.emojiInChrome = cap(out.emojiInChrome, 40);
+  out.hexColors = cap(out.hexColors, 60);
   return out;
 }
 
@@ -201,17 +256,27 @@ async function slowScrollCapture(page, key) {
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 300)); });
   page.on('pageerror', (e) => consoleErrors.push('PAGEERR: ' + e.message.slice(0, 300)));
 
+  // Re-authenticate whenever a route falls through to the login gate. This
+  // matters because a protected screen (/checkin especially) intermittently
+  // shows the login page mid-run; without re-auth the audit would capture the
+  // login page (Google-logo hex, password-toggle tap target) instead of the app.
+  async function ensureAuthed() {
+    await page.waitForTimeout(500);
+    if (/login/i.test(page.url()) || (await page.locator('input[type=email]').count().catch(() => 0))) {
+      await page.fill('input[type=email]', EMAIL).catch(() => {});
+      await page.fill('input[type=password]', PASS).catch(() => {});
+      await page.click('button[type=submit]').catch(() => {});
+      await page.waitForTimeout(4000);
+      await settle(page);
+      await ctx.storageState({ path: STATE });
+      return true;
+    }
+    return false;
+  }
+
   // Login if needed
   await page.goto(`${BASE_URL}/today`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForTimeout(2000);
-  if (/login/i.test(page.url()) || (await page.locator('input[type=email]').count())) {
-    await page.fill('input[type=email]', EMAIL);
-    await page.fill('input[type=password]', PASS);
-    await page.click('button[type=submit]');
-    await page.waitForTimeout(4000);
-    await settle(page);
-    await ctx.storageState({ path: STATE });
-  }
+  await ensureAuthed();
   await dismissOnboardingIfPresent(page);
   console.log('Landed at:', page.url());
 
@@ -221,6 +286,11 @@ async function slowScrollCapture(page, key) {
     console.log(`\n=== ${s.name} (${s.route}) ===`);
     await page.goto(`${BASE_URL}${s.route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await settle(page);
+    // If the route bounced to login, re-auth and navigate back to the screen.
+    if (await ensureAuthed()) {
+      await page.goto(`${BASE_URL}${s.route}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await settle(page);
+    }
     await dismissOnboardingIfPresent(page);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(300);

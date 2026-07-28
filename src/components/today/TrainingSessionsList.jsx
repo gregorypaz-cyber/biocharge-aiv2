@@ -18,7 +18,7 @@ function StrainBadge({ strain }) {
 
   return (
     <div className="text-right">
-      <p className={`text-sm font-mono font-bold ${zone.color}`}>
+      <p className={`text-sm font-mono font-semibold ${zone.color}`}>
         ⚡ {value}
       </p>
 
@@ -91,7 +91,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
         <Button
           size="sm"
           variant="outline"
-          className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10"
+          className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10 tap-target"
           onClick={() => setShowModal(true)}
         >
           <Plus className="w-3 h-3" />
@@ -125,7 +125,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors tap-target"
             >
               <Plus className="w-3.5 h-3.5" />
               Adicionar treino
@@ -207,7 +207,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
                     </span>
                   </div>
 
-                  <p className={`text-lg font-mono font-bold ${getStrainZone(totalStrain).color}`}>
+                  <p className={`text-lg font-mono font-semibold ${getStrainZone(totalStrain).color}`}>
                     ⚡ {totalStrain}
                   </p>
                 </div>

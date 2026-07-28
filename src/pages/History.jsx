@@ -293,7 +293,7 @@ export default function History() {
 
                               {/* Score */}
                               <div
-                                className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-bold text-sm shrink-0"
+                                className="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-semibold text-sm shrink-0"
                                 style={{
                                   background: !hasScore ? 'hsl(215 15% 50% / 0.12)' : isAlert ? 'hsl(var(--bio-red) / 0.15)' : `hsl(var(--bio-${getZone(score) === 'green' ? 'green' : 'yellow'}) / 0.15)`,
                                   color: !hasScore ? 'hsl(215 15% 50%)' : isAlert ? 'hsl(var(--bio-red))' : `hsl(var(--bio-${getZone(score) === 'green' ? 'green' : 'yellow'}))`

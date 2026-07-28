@@ -250,7 +250,7 @@ export default function Health() {
           <div className="flex items-center gap-3 pt-1">
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm tap-target"
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar
@@ -279,7 +279,7 @@ export default function Health() {
         <div className="flex items-center gap-3 pt-1">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm tap-target"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar

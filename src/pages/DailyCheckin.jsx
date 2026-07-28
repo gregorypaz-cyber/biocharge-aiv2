@@ -79,7 +79,7 @@ function HRVField({ value, onChange, metric = 'rMSSD' }) {
           type="button"
           onClick={() => setShowTip(p => !p)}
           aria-label="Como medir HRV"
-          className="-m-2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="-m-2 p-2 text-muted-foreground hover:text-foreground transition-colors tap-target"
         >
           <Info className="w-3 h-3" />
         </button>
@@ -611,7 +611,7 @@ if (isPostMode) {
       <div className="flex items-center justify-between pt-1">
         <button
           onClick={() => navigate('/today')}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm tap-target"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar
@@ -651,7 +651,7 @@ if (isPostMode) {
             <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
               Recovery manhã
             </p>
-            <p className="text-sm font-mono font-bold">
+            <p className="text-sm font-mono font-semibold">
               {morningRecovery ?? '—'}
             </p>
           </div>
@@ -660,7 +660,7 @@ if (isPostMode) {
             <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
               Strain hoje
             </p>
-            <p className="text-sm font-mono font-bold">
+            <p className="text-sm font-mono font-semibold">
               <Zap size={13} className="inline -mt-0.5" /> {totalStrain}
             </p>
           </div>
@@ -669,7 +669,7 @@ if (isPostMode) {
             <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
               Sono alvo
             </p>
-            <p className="text-sm font-mono font-bold">
+            <p className="text-sm font-mono font-semibold">
               {sleepNeed != null ? `${sleepNeed}h` : '—'}
             </p>
           </div>
@@ -770,7 +770,7 @@ if (isPostMode) {
         <div className="flex items-center justify-between pt-1">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm tap-target"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
@@ -811,7 +811,7 @@ if (isPostMode) {
             <button
               type="button"
               onClick={() => setDayPlan('training')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium tap-target ${
                 selectedIntent === 'training'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground'
@@ -823,7 +823,7 @@ if (isPostMode) {
             <button
               type="button"
               onClick={() => setDayPlan('undecided')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium tap-target ${
                 selectedIntent === 'undecided'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground'
@@ -835,7 +835,7 @@ if (isPostMode) {
             <button
               type="button"
               onClick={() => setDayPlan('recovery')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium tap-target ${
                 selectedIntent === 'recovery'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground'

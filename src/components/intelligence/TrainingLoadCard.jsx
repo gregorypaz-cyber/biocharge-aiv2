@@ -79,7 +79,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
             <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
               Ratio A:C
             </p>
-            <p className={`text-lg font-mono font-bold ${risk.color}`}>
+            <p className={`text-lg font-mono font-semibold ${risk.color}`}>
               {formatRatio(trainingLoad.ratio)}
             </p>
           </div>
@@ -96,7 +96,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
           <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Últimos 7 dias
           </p>
-          <p className="text-lg font-mono font-bold">
+          <p className="text-lg font-mono font-semibold">
             {trainingLoad.acute ?? '—'}
           </p>
           <p className="t-micro text-muted-foreground mt-1">
@@ -108,7 +108,7 @@ export default function TrainingLoadCard({ trainingLoad, sleepDebt }) {
           <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Últimas 6 semanas
           </p>
-          <p className="text-lg font-mono font-bold">
+          <p className="text-lg font-mono font-semibold">
             {trainingLoad.chronic ?? '—'}
           </p>
           <p className="t-micro text-muted-foreground mt-1">

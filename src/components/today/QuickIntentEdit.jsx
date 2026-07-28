@@ -62,7 +62,7 @@ export default function QuickIntentEdit() {
             transition={{ duration: 0.18 }}
             onClick={handleActivate}
             aria-label="Declarar hoje como dia de descanso"
-            className="flex items-center gap-1.5 self-start px-3 py-1.5 rounded-xl border border-border/60 bg-secondary/60 text-muted-foreground text-xs font-medium hover:border-blue-500/40 hover:text-blue-300 hover:bg-blue-500/8 transition-all"
+            className="flex items-center gap-1.5 self-start px-3 py-1.5 rounded-xl border border-border/60 bg-secondary/60 text-muted-foreground text-xs font-medium hover:border-blue-500/40 hover:text-blue-300 hover:bg-blue-500/8 transition-all tap-target"
           >
             <Moon className="w-3.5 h-3.5" />
             Marcar como dia de descanso

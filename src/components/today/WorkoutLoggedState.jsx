@@ -228,7 +228,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
 
               <div className="text-right shrink-0">
                 {session.strain_score != null && (
-                  <span className="text-sm font-mono font-bold text-emerald-400">
+                  <span className="text-sm font-mono font-semibold text-emerald-400">
                     ⚡ {session.strain_score}
                   </span>
                 )}
@@ -246,7 +246,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
         <div className="flex justify-between pt-2 border-t border-border/30 text-xs text-muted-foreground">
           <span>Carga total de hoje</span>
 
-          <span className="font-mono font-bold text-emerald-400">
+          <span className="font-mono font-semibold text-emerald-400">
             ⚡ {totalStrain}
           </span>
         </div>
@@ -263,7 +263,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             </p>
           </div>
 
-          <p className="text-sm font-mono font-bold">
+          <p className="text-sm font-mono font-semibold">
             {recoveryScore}
           </p>
 
@@ -281,7 +281,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             </p>
           </div>
 
-          <p className="text-sm font-mono font-bold">
+          <p className="text-sm font-mono font-semibold">
             {acwr != null ? acwr.toFixed(2) : '—'}
           </p>
 
@@ -301,7 +301,7 @@ export default function WorkoutLoggedState({ sessions = [], checkin, analysis })
             </p>
           </div>
 
-          <p className="text-sm font-mono font-bold">
+          <p className="text-sm font-mono font-semibold">
             {sleepNeed != null ? `${sleepNeed}h` : 'Recuperar'}
           </p>
 

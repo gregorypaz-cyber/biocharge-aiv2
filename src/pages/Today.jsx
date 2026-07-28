@@ -271,7 +271,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             type="button"
             aria-expanded={showProntidaoHint}
             onClick={() => setShowProntidaoHint((v) => !v)}
-            className="flex items-center gap-1 t-micro font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1 t-micro font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors tap-target"
           >
             <Info className="w-3 h-3" />
             Entender os scores
@@ -1515,7 +1515,7 @@ if (isLoading) {
       {(analysis?.whyScore?.length > 0 || analysis?.narrative) && (
         <Link
           to="/insights"
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-1 tap-target"
         >
           Quer entender o que está guiando seu recovery?
           <span className="text-primary font-medium">→ Ver padrões</span>

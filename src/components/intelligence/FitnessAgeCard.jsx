@@ -144,10 +144,10 @@ export default function FitnessAgeCard() {
       )}
 
       <div className="mt-4 flex items-center gap-3 text-xs">
-        <button onClick={() => setShowInfo((s) => !s)} className="text-primary underline-offset-2 hover:underline">
+        <button onClick={() => setShowInfo((s) => !s)} className="text-primary underline-offset-2 hover:underline tap-target">
           Quão preciso é isso?
         </button>
-        <Link to="/settings" className="text-muted-foreground hover:text-foreground">
+        <Link to="/settings" className="text-muted-foreground hover:text-foreground tap-target">
           Editar meus dados
         </Link>
         <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 t-micro text-muted-foreground">
