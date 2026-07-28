@@ -375,8 +375,18 @@
 }
 
 /* O dissolve de borda passa a acompanhar a crista, senão o conteúdo é
-   cortado seco atrás dela. Sobrescreve a regra anterior de propósito. */
+   cortado seco atrás dela. Sobrescreve a regra anterior de propósito.
+   Altura maior (5rem) + parada intermediária no gradiente: o conteúdo
+   central DERRETE bem acima da crista/gema em vez de sumir num corte só —
+   o número-herói fica ilegível ANTES de encostar na bolinha da nav. */
 .scroll-edge-bottom {
   bottom: calc(4rem + 26px + env(safe-area-inset-bottom));
+  height: 5rem;
+  background: linear-gradient(
+    to top,
+    hsl(var(--background)) 0%,
+    hsl(var(--background) / 0.85) 42%,
+    hsl(var(--background) / 0) 100%
+  );
 }
 

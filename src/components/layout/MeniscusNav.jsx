@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Activity, Brain, Clock, Plus, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNavZone } from '@/lib/NavZoneContext';
+import { useTodayZone } from '@/hooks/useTodayZone';
 
 /* ═══ O MENISCO ═══════════════════════════════════════════════════════════
    A superfície da nav cede sob a gema, como líquido sob um corpo denso e
@@ -64,7 +64,7 @@ function maskImage(w, h) {
 
 export default function MeniscusNav() {
   const location = useLocation();
-  const zone = useNavZone();
+  const zone = useTodayZone();
   const ref = useRef(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
 

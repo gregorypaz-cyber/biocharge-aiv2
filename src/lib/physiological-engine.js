@@ -1857,7 +1857,9 @@ export function detectLongTermTrends(checkins) {
     // preservando o contrato com consumidores e testes.
     { key: 'hrv', smoothed: true, label: 'HRV', unit: 'ms', higherIsBetter: true, icon: '💓' },
     { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
-    { key: 'sleep_score', label: 'Qualidade do sono', unit: 'pts', higherIsBetter: true, icon: '😴' },
+    // 'Sono (score)' e não 'Qualidade do sono': cabe em 1 linha na tabela sem
+    // truncar, e o '(score)' o distingue de 'Sono profundo' (que é % de fase).
+    { key: 'sleep_score', label: 'Sono (score)', unit: 'pts', higherIsBetter: true, icon: '😴' },
     { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', higherIsBetter: true, icon: '🌙' },
   ];
   const results = [];

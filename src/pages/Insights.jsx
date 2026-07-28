@@ -311,7 +311,7 @@ function LongTermTrendsCard({ trends }) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <InsightIcon icon={m.icon} size={18} className={`${t.icon} shrink-0`} />
-                <span className="text-sm font-medium truncate">{m.label}</span>
+                <span className="text-sm font-medium leading-snug">{m.label}</span>
               </div>
               <div className="flex items-baseline gap-2 shrink-0">
                 {value != null && (
