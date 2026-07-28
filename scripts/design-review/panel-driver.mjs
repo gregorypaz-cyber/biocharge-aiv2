@@ -170,7 +170,21 @@ async function slowScrollCapture(page, key) {
 }
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: findChromium(), headless: true, args: ['--no-sandbox'] });
+  // Route the browser through the agent egress proxy when present, so it uses
+  // the same policy-enforced path curl does (direct connections are reset).
+  // The proxy's TLS-inspection layer resets Chromium's TLS 1.3 handshake (curl
+  // and openssl, which don't send the same ClientHello, get through fine), so
+  // cap the browser at TLS 1.2 to survive inspection. DoH is disabled so DNS
+  // resolves via the system resolver instead of a MITM'd dns.google.
+  const proxyServer = process.env.HTTPS_PROXY || process.env.https_proxy;
+  const args = ['--no-sandbox'];
+  if (proxyServer) {
+    args.push('--ssl-version-max=tls1.2', '--dns-over-https-mode=off',
+      '--disable-features=AsyncDns,DnsHttpsSvcb');
+  }
+  const launchOpts = { executablePath: findChromium(), headless: true, args };
+  if (proxyServer) launchOpts.proxy = { server: proxyServer };
+  const browser = await chromium.launch(launchOpts);
   const ctxOpts = {
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark',
     isMobile: true, hasTouch: true,
