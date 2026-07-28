@@ -183,7 +183,11 @@ async function slowScrollCapture(page, key) {
       '--disable-features=AsyncDns,DnsHttpsSvcb');
   }
   const launchOpts = { executablePath: findChromium(), headless: true, args };
-  if (proxyServer) launchOpts.proxy = { server: proxyServer };
+  // Bypass loopback so a local dev server (BASE_URL=http://localhost:5173) is
+  // reached directly — the proxy only accepts HTTPS CONNECT tunnels and 405s a
+  // plain-HTTP request to localhost. The app's own base44.com API calls still
+  // go through the proxy.
+  if (proxyServer) launchOpts.proxy = { server: proxyServer, bypass: 'localhost, 127.0.0.1, ::1' };
   const browser = await chromium.launch(launchOpts);
   const ctxOpts = {
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark',
