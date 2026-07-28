@@ -79,7 +79,7 @@ export default function WeeklyRetrospectCard({ weekStart, weekEnd, checkins, ses
     return (
       <button
         onClick={handleGenerate}
-        className="mx-4 mb-2 w-[calc(100%-2rem)] px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/5 flex items-center gap-2 text-left hover:bg-primary/10 transition-colors"
+        className="mx-4 mb-2 w-[calc(100%-2rem)] px-3 py-2.5 rounded-xl border border-primary/20 bg-primary/5 flex items-center gap-2 text-left hover:bg-primary/10 transition-colors tap-target"
       >
         <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
         <span className="t-micro text-muted-foreground">

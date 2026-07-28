@@ -270,7 +270,7 @@ Responda APENAS em JSON:
                 <p className="t-micro uppercase tracking-wider text-muted-foreground">
                   Sono planejado
                 </p>
-                <p className="text-sm font-mono font-bold">{plannedSleep}h</p>
+                <p className="text-sm font-mono font-semibold">{plannedSleep}h</p>
               </div>
 
               <input
@@ -294,7 +294,7 @@ Responda APENAS em JSON:
                 <p className="t-micro uppercase tracking-wider text-muted-foreground">
                   Strain planejado
                 </p>
-                <p className="text-sm font-mono font-bold">{plannedStrain}/21</p>
+                <p className="text-sm font-mono font-semibold">{plannedStrain}/21</p>
               </div>
 
               <input
@@ -623,7 +623,7 @@ function RunningEconomyCard({ sessions = [] }) {
 
       <div className="flex items-center gap-2">
         {positive ? <TrendingUp className="w-5 h-5 text-emerald-400" /> : <TrendingDown className="w-5 h-5 text-orange-400" />}
-        <span className={cn('text-2xl font-mono font-bold', positive ? 'text-emerald-400' : 'text-orange-400')}>
+        <span className={cn('text-2xl font-mono font-semibold', positive ? 'text-emerald-400' : 'text-orange-400')}>
           {Math.abs(eco.improvement)}%
         </span>
         <span className="text-xs text-muted-foreground">{positive ? 'mais eficiente' : 'menos eficiente'}</span>
@@ -920,7 +920,7 @@ export default function Trends() {
               key={f.days}
               onClick={() => setPeriod(f.days)}
               className={cn(
-                'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all tap-target',
                 period === f.days
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
@@ -937,7 +937,7 @@ export default function Trends() {
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
               className={cn(
-                'px-2.5 py-1 rounded-lg t-micro font-semibold transition-all border',
+                'px-2.5 py-1 rounded-lg t-micro font-semibold transition-all border tap-target',
                 selectedMetric === m.key
                   ? 'border-primary/40 bg-primary/10 text-foreground'
                   : 'border-border/40 bg-card text-muted-foreground hover:text-foreground'

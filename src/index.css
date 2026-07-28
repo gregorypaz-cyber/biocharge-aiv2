@@ -121,6 +121,23 @@
   .tint-recovery { --card-tint: hsl(142 65% 50% / 0.055); }
   .tint-sleep    { --card-tint: hsl(205 88% 58% / 0.06); }
   .tint-strain   { --card-tint: hsl(35 90% 55% / 0.055); }
+
+  /* Touch-area helper — extends the hit zone to ≥44px WITHOUT reflowing layout.
+     A centered ::before overlays the control; clicks on it fall through to the
+     element. Use on small links/buttons/icon-buttons whose visible box must stay
+     small. NOT for <input> (replaced elements have no ::before) — size those. */
+  .tap-target { position: relative; }
+  .tap-target::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* Smooth transitions */

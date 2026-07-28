@@ -269,7 +269,7 @@ function LongTermTrendsCard({ trends }) {
           type="button"
           onClick={() => setShowInfo((v) => !v)}
           aria-label="Como a tendência é calculada"
-          className="w-6 h-6 rounded-full bg-secondary/70 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          className="w-6 h-6 rounded-full bg-secondary/70 border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors tap-target"
         >
           <Info className="w-3.5 h-3.5" />
         </button>
@@ -1361,7 +1361,7 @@ Regras:
               onClick={generateInsights}
               disabled={isGenerating || computed.length < 5}
               size="sm"
-              className="bg-primary text-primary-foreground h-8 px-4 text-xs"
+              className="bg-primary text-primary-foreground h-8 px-4 text-xs tap-target"
             >
               {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar análise'}
             </Button>
@@ -1464,7 +1464,7 @@ Regras:
       key={q}
       type="button"
       onClick={() => setCoachInput(q)}
-      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors tap-target"
     >
       {q}
     </button>
@@ -1474,7 +1474,7 @@ Regras:
             <Button
               onClick={askCoach}
               disabled={isCoachThinking || !coachInput.trim()}
-              className="w-full bg-primary text-primary-foreground h-9 text-xs rounded-xl"
+              className="w-full bg-primary text-primary-foreground h-9 text-xs rounded-xl tap-target"
             >
               {isCoachThinking ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

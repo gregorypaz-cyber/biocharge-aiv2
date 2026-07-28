@@ -251,7 +251,7 @@ export default function LivePreview({ preview, compact = false }) {
           <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
             Prontidão
           </p>
-          <p className="text-lg font-mono font-bold text-foreground">
+          <p className="text-lg font-mono font-semibold text-foreground">
             {readinessScore}
           </p>
         </div>
@@ -292,7 +292,7 @@ export default function LivePreview({ preview, compact = false }) {
           </p>
           <p
             className={cn(
-              'text-sm font-mono font-bold',
+              'text-sm font-mono font-semibold',
               preview.sleep_performance_pct >= 85
                 ? 'text-emerald-400'
                 : preview.sleep_performance_pct >= 70
@@ -312,7 +312,7 @@ export default function LivePreview({ preview, compact = false }) {
           <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             RMSSD
           </p>
-          <p className="text-sm font-mono font-bold">
+          <p className="text-sm font-mono font-semibold">
             {preview.hrv_manual ?? preview.hrv ?? '—'}
           </p>
         </div>
@@ -321,7 +321,7 @@ export default function LivePreview({ preview, compact = false }) {
           <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
             Sono hoje
           </p>
-          <p className="text-sm font-mono font-bold">
+          <p className="text-sm font-mono font-semibold">
             {sleepNeed != null ? `${sleepNeed}h` : '—'}
           </p>
         </div>

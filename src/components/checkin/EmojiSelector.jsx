@@ -1,5 +1,16 @@
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
+
+// Emoji nunca em chrome (BRAND §5): as dicas traziam ⚠️/✅/🔴 no texto. Trocamos
+// o glifo por um ícone Lucide equivalente, sem mexer na copy nem na cor (muted).
+function toneOf(s) {
+  const m = s.match(/^([\p{Extended_Pictographic}️]+)\s*/u);
+  if (!m) return { Icon: null, text: s };
+  const g = m[1];
+  const Icon = g.includes('✅') ? CheckCircle2 : g.includes('🔴') ? AlertCircle : AlertTriangle;
+  return { Icon, text: s.slice(m[0].length) };
+}
 
 const MICRO_INTERPRETATIONS = {
   energy: {
@@ -109,18 +120,22 @@ export default function EmojiSelector({ label, type, value, onChange }) {
       </div>
 
       <AnimatePresence mode="wait">
-        {selectedInterpretation && (
-          <motion.p
-            key={`${type}-${value}`}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="t-micro text-muted-foreground mt-1 pl-0.5"
-          >
-            {selectedInterpretation}
-          </motion.p>
-        )}
+        {selectedInterpretation && (() => {
+          const { Icon, text } = toneOf(selectedInterpretation);
+          return (
+            <motion.p
+              key={`${type}-${value}`}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="t-micro text-muted-foreground mt-1 pl-0.5 flex items-center gap-1"
+            >
+              {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+              <span>{text}</span>
+            </motion.p>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

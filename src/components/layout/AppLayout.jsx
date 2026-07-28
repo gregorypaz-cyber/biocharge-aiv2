@@ -201,7 +201,7 @@ export default function AppLayout() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/40 glass-bar-strong">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/today" className="flex items-center gap-2">
+          <Link to="/today" className="flex items-center gap-2 tap-target">
             <svg viewBox="0 0 100 100" className="w-7 h-7" role="img" aria-label="Reck">
               <defs>
                 <linearGradient id="reckTile" x1="0" y1="0" x2="0.35" y2="1">
@@ -222,7 +222,7 @@ export default function AppLayout() {
           <Link
             to="/settings"
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-lg transition-colors tap-target',
               location.pathname === '/settings' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'
             )}
           >

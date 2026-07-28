@@ -199,7 +199,7 @@ export default function MeniscusNav() {
           </defs>
           <path d="M48 7 C67 6 89 21 89 46 C89 71 71 90 47 89 C24 88 7 72 7 48 C7 23 27 8 48 7 Z" fill="url(#mn-gem)" />
           <path d="M48 7 C67 6 89 21 89 46 C89 71 71 90 47 89 C24 88 7 72 7 48 C7 23 27 8 48 7 Z" fill="url(#mn-gem-spec)" />
-          <g transform="translate(48 48)" fill="none" stroke="#eafff2"
+          <g transform="translate(48 48)" fill="none" stroke="hsl(143 100% 96%)"
              strokeWidth="6" strokeLinecap="round">
             <path d="M0 -13 V13" />
             <path d="M-13 0 H13" />

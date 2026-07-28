@@ -150,10 +150,10 @@ export default function BodyAgeCard() {
       </div>
 
       <div className="mt-3 flex items-center gap-3 text-xs">
-        <button onClick={() => setShowInfo((s) => !s)} className="text-primary underline-offset-2 hover:underline">
+        <button onClick={() => setShowInfo((s) => !s)} className="text-primary underline-offset-2 hover:underline tap-target">
           Ver detalhamento
         </button>
-        <Link to="/settings" className="text-muted-foreground hover:text-foreground">Editar meus dados</Link>
+        <Link to="/settings" className="text-muted-foreground hover:text-foreground tap-target">Editar meus dados</Link>
       </div>
 
       {showInfo && (
