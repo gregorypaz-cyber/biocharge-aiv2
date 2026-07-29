@@ -170,7 +170,16 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : sleepVal >= 65 ? 'text-blue-400'
     : 'text-blue-500';
 
-  const strainColor = strainVsTarget.ring;
+  // Visão B (constelação, ART): satélites são micro-gemas em cor de DOMÍNIO.
+  // Sono já é campo azul (sleepColor). Strain vira campo LARANJA (BRAND §2:
+  // laranja é o domínio de carga), slate quando não há carga ("sinal sem dado
+  // é slate morto"). Exceção: esgotamento continua VERMELHO — é alerta real de
+  // segurança, e §2 reserva o vermelho pra isso. O resto do estado (na-zona,
+  // acima) segue vivo na legenda colorida abaixo, não no corpo da gema.
+  const strainColor =
+    cappedStrain <= 0 ? 'hsl(215,30%,55%)'
+    : strainVsTarget.color === 'text-zone-red' ? 'hsl(0,84%,60%)'
+    : 'hsl(25,90%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
   return (
