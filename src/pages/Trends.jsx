@@ -7,7 +7,7 @@ import {
   AreaChart, Area, BarChart, Bar, Scatter, Line, ComposedChart,
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
 } from 'recharts';
-import { computeCheckinScores } from '@/lib/biocharge-utils';
+import { computeCheckinScores, getZone, getZoneColor } from '@/lib/biocharge-utils';
 import { calculateTrainingLoad, calculateRunningEconomy, pearson, corrPValue } from '@/lib/physiological-engine';
 import { cn } from '@/lib/utils';
 import {
@@ -49,6 +49,26 @@ const tooltipStyle = {
   color: 'hsl(210,40%,96%)',
   padding: '8px 12px',
 };
+
+// Tooltip que respeita a gramática de zona: o valor de recovery sai de
+// getZone()/getZoneColor() (cortes 70/42), nunca da cor da série. As demais
+// métricas mantêm a cor de domínio (identidade), que não é cor de sinal.
+function ZoneTooltip({ active, payload, label, selectedMetric }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={tooltipStyle}>
+      {label != null && label !== '' && (
+        <div style={{ marginBottom: 4, color: 'hsl(215,15%,50%)' }}>{label}</div>
+      )}
+      {payload.map((p, i) => {
+        const isRecovery = p.dataKey === 'recovery_score'
+          || (p.dataKey === 'moving_avg' && selectedMetric === 'recovery_score');
+        const color = isRecovery && p.value != null ? getZoneColor(getZone(p.value)) : p.color;
+        return <div key={i} style={{ color }}>{p.name}: {p.value}</div>;
+      })}
+    </div>
+  );
+}
 
 function safeJsonFromText(text) {
   if (!text || typeof text !== 'string') return null;
@@ -976,7 +996,7 @@ export default function Trends() {
                 </span>
               </div>
             ) : (
-              <p className="text-xl font-semibold font-mono" style={{ color: metricConfig?.color }}>
+              <p className="text-xl font-semibold font-mono" style={{ color: selectedMetric === 'recovery_score' && s.val != null ? getZoneColor(getZone(s.val)) : metricConfig?.color }}>
                 {s.val ?? '—'}
               </p>
             )}
@@ -1022,7 +1042,7 @@ export default function Trends() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
                 <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip content={<ZoneTooltip selectedMetric={selectedMetric} />} />
                 {periodAvg && <ReferenceLine y={periodAvg} stroke={metricConfig?.color} strokeDasharray="4 4" strokeOpacity={0.4} />}
                 <Area
                   type="monotone"
@@ -1069,10 +1089,10 @@ export default function Trends() {
               <BarChart data={chartData} barGap={2}>
                 <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                 <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip content={<ZoneTooltip selectedMetric={selectedMetric} />} />
                 <Bar dataKey="recovery_score" radius={[3, 3, 0, 0]} opacity={0.85} name="Recovery">
                   {chartData.map((entry, index) => (
-                    <Cell key={index} fill={entry.rest_day ? 'hsl(220,15%,30%)' : 'hsl(142,70%,50%)'} />
+                    <Cell key={index} fill={entry.rest_day || entry.recovery_score == null ? 'hsl(220,15%,30%)' : getZoneColor(getZone(entry.recovery_score))} />
                   ))}
                 </Bar>
                 <Bar dataKey="fatigue_score" fill="hsl(0,72%,55%)" radius={[3, 3, 0, 0]} opacity={0.7} name="Fadiga" />

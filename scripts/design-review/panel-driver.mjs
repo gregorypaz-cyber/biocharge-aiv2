@@ -247,6 +247,16 @@ async function slowScrollCapture(page, key) {
   const ctxOpts = {
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark',
     isMobile: true, hasTouch: true,
+    // pt-BR + fuso de SP: o app é pt-BR e o dono está no Brasil. Isso corrige
+    // navigator.language, Accept-Language, Intl.DateTimeFormat e o timezone.
+    // NOTA: o formato exibido por <input type="date">/<input type="time"> é
+    // decidido pelo locale de UI do Chromium e, em headless, NÃO segue nem este
+    // `locale` nem a flag --lang — então esses controles nativos podem seguir
+    // aparecendo como MM/DD / AM/PM no screenshot. O valor gravado é sempre ISO
+    // (24h internamente), o app está correto, e num device pt-BR real o nativo
+    // renderiza DD/MM. Logo, "07/28/2026"/"09:09 PM" é artefato do browser de
+    // teste, não bug do app (inputs nativos mantidos — ver comentário DailyCheckin).
+    locale: 'pt-BR', timezoneId: 'America/Sao_Paulo',
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
   };
   if (fs.existsSync(STATE)) ctxOpts.storageState = STATE;
