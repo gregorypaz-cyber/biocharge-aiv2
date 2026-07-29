@@ -1455,11 +1455,26 @@ if (isLoading) {
   return (
     <div
       className={cn(
-        'space-y-4 max-w-2xl mx-auto transition-all duration-500',
+        'relative isolate space-y-4 max-w-2xl mx-auto transition-all duration-500',
         isSilentMode && 'opacity-90',
         isRestMode && 'saturate-[0.7]'
       )}
     >
+      {/* ART §3 — o sangramento de luz: a gema "ilumina a sala". Um bloom radial
+         na cor de zona do dia sobe do topo e dissolve no --background antes do
+         header. O app muda de temperatura conforme seu corpo, sem um card novo.
+         Rigorosamente honesto: o tint É a zona (getZone). Calibrando → sem zona
+         → sem tint (§8). No mobile o container é full-width, então é full-bleed. */}
+      {!isCalibrating && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-28 h-80 -z-10"
+          style={{
+            background: `radial-gradient(ellipse 92% 100% at 50% 0%, ${getZoneColor(getZone(displayedScore))}, transparent 70%)`,
+            opacity: 0.13,
+          }}
+        />
+      )}
       {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
