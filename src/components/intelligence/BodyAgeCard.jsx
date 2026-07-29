@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { computeBodyAge } from '@/utils/bodyAge';
+import RecoveryField from '@/components/today/RecoveryField';
 
 // Card "Vitalidade + Idade Corporal" (Fase 2) — SOMENTE LEITURA.
 // Reaproveita o perfil físico (Configurações) e os dados de sono/FC/treino.
@@ -110,21 +111,27 @@ export default function BodyAgeCard() {
   }
 
   const r = result;
-  const vitBand = r.vitality >= 70 ? 'text-emerald-400' : r.vitality >= 40 ? 'text-amber-400' : 'text-red-400';
+  const vitColor = r.vitality >= 70 ? 'hsl(142,70%,50%)' : r.vitality >= 40 ? 'hsl(45,93%,58%)' : 'hsl(0,72%,55%)';
+  const vitFaixa = r.vitality >= 70 ? 'Alta' : r.vitality >= 40 ? 'Média' : 'Baixa';
   const younger = r.deltaYears < 0;
   const deltaAbs = Math.abs(r.deltaYears);
   const fmtYears = (y) => `${y > 0 ? '+' : ''}${y.toFixed(1)} ${Math.abs(y) === 1 ? 'ano' : 'anos'}`;
 
   return (
     <Card>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Vitalidade</div>
-          <div className="mt-1 flex items-end gap-2">
-            <span className={`text-5xl font-semibold ${vitBand}`}>{r.vitality}</span>
-            <span className="mb-1 text-sm text-muted-foreground">/ 100</span>
-          </div>
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        {/* Vitalidade vira micro-gema (verde/âmbar/vermelha) — a constelação (ART)
+           se estende dos satélites da Today pra cá; o peso do glifo carrega a
+           magnitude, a cor carrega a faixa. */}
+        <RecoveryField
+          value={r.vitality}
+          max={100}
+          color={vitColor}
+          label="Vitalidade"
+          caption={vitFaixa}
+          size={104}
+          live={false}
+        />
         <div className="text-right">
           <div className="text-xs text-muted-foreground">Idade corporal</div>
           <div className="text-2xl font-semibold text-foreground">{r.bodyAge}</div>

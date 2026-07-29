@@ -40,6 +40,15 @@ function stateBorderBg(state) {
   return 'border-border/40 bg-secondary/20';
 }
 
+// Cor do campo de luz do veredito — o mesmo idioma de vidro da constelação (ART),
+// mas atrás de uma PALAVRA (o veredito não tem número, então não vira gema).
+function stateGlow(state) {
+  if (state === 'normal') return 'hsl(142,70%,50%)';
+  if (state === 'acute') return 'hsl(45,93%,58%)';
+  if (state === 'sustained') return 'hsl(0,72%,55%)';
+  return 'hsl(215,20%,50%)';
+}
+
 function directionArrow(direction) {
   if (direction === 'good') return { symbol: '↓', color: 'text-emerald-400' };
   if (direction === 'bad')  return { symbol: '↑', color: 'text-red-400' };
@@ -58,7 +67,13 @@ function SectionHeader({ children }) {
 
 function VerdictSection({ state, today }) {
   return (
-    <div className={`rounded-2xl border p-4 ${stateBorderBg(state)}`}>
+    <div className={`relative overflow-hidden rounded-2xl border p-4 ${stateBorderBg(state)}`}>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-12 -left-8 w-44 h-44 rounded-full"
+        style={{ background: `radial-gradient(circle, ${stateGlow(state)}, transparent 68%)`, opacity: 0.16 }}
+      />
+      <div className="relative">
       <p className="t-micro text-muted-foreground uppercase tracking-wider font-semibold mb-1">
         Hoje · {fmtDate(today)}
       </p>
@@ -80,6 +95,7 @@ function VerdictSection({ state, today }) {
           2 ou mais sinais fora do padrão por 2 dias consecutivos.
         </p>
       )}
+      </div>
     </div>
   );
 }
