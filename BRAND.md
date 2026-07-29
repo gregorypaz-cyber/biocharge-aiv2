@@ -97,7 +97,7 @@ do verde.
 | **Verde** | marca · CTA · herói · **zona de recovery ≥ 70** · delta positivo | logo, FAB, botão primário, gema quando ≥70 |
 | **Âmbar** | **zona 42–69** · desvio de tendência · linguagem investigativa | gema 42–69, Monitor em estado `acute`, banda ideal de ACWR |
 | **Vermelho** | **zona < 42** · alerta agudo sustentado | gema <42, Monitor em `sustained` |
-| **Laranja** | alerta que **não** é zona de recovery | streak, banner, faixa de strain |
+| **Laranja** | alerta que **não** é zona de recovery | banner, faixa de strain |
 | **Azul / roxo** | rótulo de domínio (sono, auxiliar) | satélites, gráficos |
 | **Cinza** | todo o chrome: label, ícone neutro, eixo | em toda parte |
 
@@ -105,6 +105,13 @@ do verde.
 `getZoneClasses()` (classe), em `src/lib/biocharge-utils.js`. Cortes em `ZONE_GREEN_MIN = 70` e
 `ZONE_YELLOW_MIN = 42` (`physio-constants.js`). **Nunca reescrever `>=70 / >=42` na tela** — foi
 assim que o app chegou a ter 4 definições diferentes das mesmas 3 zonas.
+
+> **Sangramento de zona na membrana (sancionado 29/07/2026).** A cor de zona pode tingir uma
+> superfície grande — o bloom no topo da Today que dá "temperatura" ao dia — *desde que*: (1) seja
+> a MESMA fonte única (`getZoneColor(getZone(...))`), nunca uma cor escolhida à mão; (2) opacidade
+> baixíssima (~0,13), dissolvendo no `--background`; (3) só quando há zona — calibrando = sem tint
+> (§8). Não é "verde gasto em decoração": o tint **é** a leitura do dia. Fora disso, a regra de
+> não espalhar cor de zona por chrome segue valendo.
 
 Estado de calibração **não tem cor**: slate neutro + `—`. Cor implica leitura; sem dado, não há
 leitura.
@@ -123,11 +130,19 @@ leitura.
 | Classe | Tamanho | Uso |
 |---|---|---|
 | `.t-display` | 40px | número-herói, marco isolado |
-| `.t-title` | 21px | título de página |
+| `.t-hero` | 30px | título grande de tela-índice (large title, estilo HIG) |
+| `.t-title` | 21px | título de seção grande / subtítulo de página |
 | `.t-section` | 17px | título de seção e de card |
 | `.t-body` | 15px | texto corrido |
 | `.t-caption` | 13px | apoio |
 | `.t-micro` | 11px | rótulo, unidade, legenda — **piso absoluto** |
+
+> **`.t-hero` (adicionado 29/07/2026).** Fecha o vão que a escala tinha entre o número-herói
+> (`t-display`, 40px, reservado à gema) e o título (`t-title`, 21px): não havia um degrau de
+> "large title de página", então os H1 das telas-índice ficavam subdimensionados (ou fugiam pra
+> `text-2xl` arbitrário). **Não é abrir a porta pra tamanho livre — é nomear UM degrau que
+> faltava.** Uso restrito ao H1 das quatro telas-índice (Hoje, Padrões, Tendências, Histórico),
+> em lockup editorial com o kicker de data em `t-micro` caps.
 
 Fora da escala só sobrevivem `text-sm` (14px) e `text-xs` (12px), que já são degraus legítimos
 do Tailwind. **Tamanho arbitrário (`text-[13px]`) é dívida** — não introduzir.

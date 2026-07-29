@@ -182,6 +182,21 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'hsl(25,90%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
+  // WHOOP §3: o decision_mode vira VERBO travado na cor de zona, em vez de uma
+  // frase enterrada num card. A cor já diz a faixa; o verbo diz a AÇÃO. (Fica em
+  // t-title 21px — "gigante" de verdade pediria o degrau t-hero, que desafia a
+  // escala fechada da §3 e depende de aprovação à parte.)
+  const DECISION_VERB = {
+    train_high: 'Treine forte',
+    train_moderate: 'Modere',
+    train_light: 'Treine leve',
+    recover: 'Recupere',
+  };
+  const decisionVerb = isRestMode
+    ? 'Recupere'
+    : (DECISION_VERB[dailyVerdict?.mode]
+        || (displayedScore >= 70 ? 'Treine' : displayedScore >= 42 ? 'Modere' : 'Recupere'));
+
   return (
     <motion.div
       key={phase + '-card'}
@@ -211,9 +226,13 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                Decisão de hoje
             </span>
-                        <h2 className="text-xl font-semibold mt-1 leading-tight">
-              {isCalibrating ? 'Calibrando seu baseline' : dailyVerdict.headline}
-            </h2>
+            {isCalibrating ? (
+              <h2 className="text-xl font-semibold mt-1 leading-tight">Calibrando seu baseline</h2>
+            ) : (
+              <p className="t-title font-bold uppercase mt-1" style={{ color: recoveryColor }}>
+                {decisionVerb}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground mt-1">
               {isCalibrating
                 ? (calibratingNightsLeft > 0
@@ -242,7 +261,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             max={100}
             color={recoveryColor}
             label="Recovery"
-            caption={isCalibrating ? 'Calibrando' : readinessFaixa}
+            caption={isCalibrating ? 'Calibrando' : ''}
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
             size={288}
             animateCount
@@ -309,11 +328,14 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                       const up = d.direction === 'positive';
                       return (
                         <div key={d.id} className="flex items-center justify-between gap-2 t-micro">
+                          {/* ART §2: a MEDIÇÃO em JetBrains Mono (leitura de instrumento);
+                             o nome do sinal (d.label) fica em Inter — mono = medido,
+                             Inter = veredito. Teto font-semibold (§3). */}
                           <span className="text-muted-foreground">
                             {d.label}
-                            <span className="text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
+                            <span className="font-mono text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
                           </span>
-                          <span className={cn('font-semibold tabular-nums', d.deltaPoints === 0 ? 'text-muted-foreground' : up ? 'text-zone-green' : 'text-zone-red')}>
+                          <span className={cn('font-mono font-semibold', d.deltaPoints === 0 ? 'text-muted-foreground' : up ? 'text-zone-green' : 'text-zone-red')}>
                             {d.deltaPoints === 0 ? '±0' : `${d.deltaPoints > 0 ? '+' : ''}${d.deltaPoints}`}
                           </span>
                         </div>
@@ -349,16 +371,16 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           </div>
         ) : (
           !todaySessions.length && !isRestMode && (
-            <div className="mt-0.5 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
-              <span className="font-semibold text-primary">Linha do dia:</span>{' '}
+            // APPLE §6: sem moldura — a frase-ação vive solta sob o herói, não num card.
+            <p className="px-3 text-center text-sm text-muted-foreground leading-snug">
               {isCalibrating
-                ? 'ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
+                ? 'Ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
                 : displayedScore >= 70
-                ? 'recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
+                ? 'Recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
                 : displayedScore >= 42
-                ? 'recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
-                : 'recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
-            </div>
+                ? 'Recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
+                : 'Recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
+            </p>
           )
         )}
 
@@ -1436,18 +1458,33 @@ if (isLoading) {
   return (
     <div
       className={cn(
-        'space-y-4 max-w-2xl mx-auto transition-all duration-500',
+        'relative isolate space-y-4 max-w-2xl mx-auto transition-all duration-500',
         isSilentMode && 'opacity-90',
         isRestMode && 'saturate-[0.7]'
       )}
     >
+      {/* ART §3 — o sangramento de luz: a gema "ilumina a sala". Um bloom radial
+         na cor de zona do dia sobe do topo e dissolve no --background antes do
+         header. O app muda de temperatura conforme seu corpo, sem um card novo.
+         Rigorosamente honesto: o tint É a zona (getZone). Calibrando → sem zona
+         → sem tint (§8). No mobile o container é full-width, então é full-bleed. */}
+      {!isCalibrating && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-28 h-80 -z-10"
+          style={{
+            background: `radial-gradient(ellipse 92% 100% at 50% 0%, ${getZoneColor(getZone(displayedScore))}, transparent 70%)`,
+            opacity: 0.13,
+          }}
+        />
+      )}
       {settingsBanner}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Hoje</h1>
+          <h1 className="t-hero font-bold">Hoje</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (

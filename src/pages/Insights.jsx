@@ -1262,7 +1262,7 @@ Regras:
     <div className="space-y-4 max-w-2xl mx-auto">
       {/* Header */}
 <div>
-  <h1 className="text-2xl font-semibold tracking-tight">Padrões</h1>
+  <h1 className="t-hero font-bold">Padrões</h1>
   <p className="text-sm text-muted-foreground mt-1">
     O que está mudando no seu corpo — recovery, sono e carga.
   </p>

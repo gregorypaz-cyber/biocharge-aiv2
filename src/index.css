@@ -233,6 +233,7 @@
    leading dos degraus pequenos também. Os degraus grandes (display/title/
    section) mantêm leading+tracking porque são poucos e aplicados à mão. */
 .t-display { font-size: 2.5rem;    line-height: 1.0;  letter-spacing: -0.035em; }
+.t-hero    { font-size: 1.875rem;  line-height: 1.05; letter-spacing: -0.028em; }
 .t-title   { font-size: 1.3125rem; line-height: 1.25; letter-spacing: -0.022em; }
 .t-section { font-size: 1.0625rem; line-height: 1.3;  letter-spacing: -0.015em; }
 .t-body    { font-size: 0.9375rem; line-height: 1.5; }

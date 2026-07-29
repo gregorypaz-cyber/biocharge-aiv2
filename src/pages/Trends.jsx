@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { formatDateChart, parseLocalDate } from '@/lib/date-utils';
 import {
   AreaChart, Area, BarChart, Bar, Scatter, Line, ComposedChart,
-  XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, ReferenceLine, Cell,
+  XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell,
 } from 'recharts';
 import { computeCheckinScores, getZone, getZoneColor } from '@/lib/biocharge-utils';
 import { calculateTrainingLoad, calculateRunningEconomy, pearson, corrPValue } from '@/lib/physiological-engine';
@@ -40,6 +40,28 @@ const metrics = [
   { key: 'hrv', label: 'HRV', color: 'hsl(45,93%,58%)' },
   { key: 'biocharge_morning', label: 'BioCharge', color: 'hsl(200,80%,65%)' },
 ];
+
+// ART §4: o ponto "hoje" na ponta da linha vira uma micro-gema pulsante (a
+// mesma física de luz da casa), não um dot chapado. Pulso desligado com
+// prefers-reduced-motion. Os demais pontos ficam discretos (ou somem).
+function GlowTodayDot({ cx, cy, index, color, lastIndex, showAll, reduce }) {
+  if (cx == null || cy == null) return <g />;
+  if (index === lastIndex) {
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={9} fill={color} opacity={0.18} />
+        <circle cx={cx} cy={cy} r={4.5} fill={color} stroke="hsl(220 20% 4%)" strokeWidth={1.5} />
+        {!reduce && (
+          <circle cx={cx} cy={cy} r={7} fill="none" stroke={color} strokeWidth={1} opacity={0.5}>
+            <animate attributeName="r" values="6;13;6" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" repeatCount="indefinite" />
+          </circle>
+        )}
+      </g>
+    );
+  }
+  return showAll ? <circle cx={cx} cy={cy} r={3} fill={color} /> : <g />;
+}
 
 const tooltipStyle = {
   background: 'hsl(220,18%,7%)',
@@ -920,6 +942,20 @@ export default function Trends() {
     return { ...point, moving_avg: vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null };
   });
 
+  // WHOOP §5: a "faixa do seu normal" como BANDA, não como legenda. Uma faixa
+  // slate translúcida (±spread do EWMA pessoal) atrás da linha — o ponto de hoje
+  // lê como dentro ou fora do seu normal sem uma palavra. Slate, sem cor nova (§2).
+  const bandVals = movingAvg.map(p => p[selectedMetric]).filter(v => v != null);
+  const bandMean = bandVals.length ? bandVals.reduce((s, v) => s + v, 0) / bandVals.length : 0;
+  const bandStd = bandVals.length > 1
+    ? Math.sqrt(bandVals.reduce((s, v) => s + (v - bandMean) ** 2, 0) / bandVals.length)
+    : 0;
+  const bandSpread = Math.max(4, Math.round(bandStd * 0.9)); // piso pra faixa não colapsar num dia calmo
+  const movingAvgBanded = movingAvg.map(p => ({
+    ...p,
+    normal_band: p.moving_avg != null ? [p.moving_avg - bandSpread, p.moving_avg + bandSpread] : null,
+  }));
+
   /* Um horizonte só. Antes eram três: últimos 7 REGISTROS (não dias), o
      período do seletor, e uma variação medida contra um número que nunca
      aparecia na tela. Agora tudo segue o seletor. */
@@ -939,7 +975,7 @@ export default function Trends() {
   return (
     <div className="space-y-4 max-w-3xl mx-auto">
 <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Tendências</h1>
+        <h1 className="t-hero font-bold">Tendências</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Evolução dos seus sinais fisiológicos ao longo do tempo.
         </p>
@@ -1047,7 +1083,7 @@ export default function Trends() {
           <p className="t-micro text-muted-foreground mb-3">Área + média móvel 3 dias</p>
           <div role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-52">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={movingAvg}>
+              <AreaChart data={movingAvgBanded}>
                 <defs>
                   <linearGradient id="metricGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={metricConfig?.color} stopOpacity={0.25} />
@@ -1055,17 +1091,38 @@ export default function Trends() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
-                <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
+                <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip content={<ZoneTooltip selectedMetric={selectedMetric} />} />
-                {periodAvg && <ReferenceLine y={periodAvg} stroke={metricConfig?.color} strokeDasharray="4 4" strokeOpacity={0.4} />}
+                {/* Banda do "seu normal" (WHOOP §5) — slate translúcido, atrás da linha */}
+                <Area
+                  type="monotone"
+                  dataKey="normal_band"
+                  stroke="none"
+                  fill="hsl(215,25%,58%)"
+                  fillOpacity={0.12}
+                  isAnimationActive={false}
+                  activeDot={false}
+                  name="Sua faixa normal"
+                />
                 <Area
                   type="monotone"
                   dataKey={selectedMetric}
                   stroke={metricConfig?.color}
                   fill="url(#metricGrad)"
-                  strokeWidth={2}
-                  dot={chartData.length <= 10 ? { fill: metricConfig?.color, r: 3 } : false}
+                  strokeWidth={2.2}
+                  style={{ filter: `drop-shadow(0 0 5px ${metricConfig?.color})` }}
+                  dot={({ cx, cy, index }) => (
+                    <GlowTodayDot
+                      cx={cx}
+                      cy={cy}
+                      index={index}
+                      color={metricConfig?.color}
+                      lastIndex={movingAvgBanded.length - 1}
+                      showAll={chartData.length <= 10}
+                      reduce={typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches}
+                    />
+                  )}
                   name={metricConfig?.label}
                 />
                 <Area

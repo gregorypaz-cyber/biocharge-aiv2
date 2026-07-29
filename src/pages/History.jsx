@@ -6,6 +6,7 @@ import { computeCheckinScores, getDayScore, getZone, getZoneClasses } from '@/li
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
 import WeeklyRetrospectCard from '@/components/history/WeeklyRetrospectCard';
+import YearHeatmap from '@/components/history/YearHeatmap';
 import { useNavigate } from 'react-router-dom';
 
 // Group checkins by week
@@ -194,10 +195,13 @@ export default function History() {
         <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">Histórico</h1>
+        <h1 className="t-hero font-bold">Histórico</h1>
         <p className="text-sm text-muted-foreground mt-1">Linha do tempo dia a dia dos seus check-ins.</p>
         <p className="text-sm text-muted-foreground mt-1">{computed.length} registros · agrupados por semana</p>
       </div>
+
+      {/* WHOOP §8: o mapa de calor do ano acima da lista — a narrativa, não só a semana. */}
+      {computed.length > 0 && <YearHeatmap checkins={computed} weeksBack={18} />}
 
       {weeks.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">Nenhum registro ainda.</div>

@@ -73,6 +73,20 @@ const emojiSets = {
   },
 };
 
+// ART §7: a opção escolhida acende como uma BRASA na cor do estado. Este é o
+// único ponto onde o app é input do humano, não output do sensor — então é o
+// único lugar quente num instrumento frio. A cor carrega a valência (§2): pra
+// disposição/energia/hidratação, alto = bom = verde; pra stress/dor, invertido.
+const GOOD_HIGH = new Set(['mood', 'energy', 'hydration']);
+function emberColor(type, level) {
+  const good = GOOD_HIGH.has(type) ? level : 6 - level; // normaliza: maior = melhor
+  if (good >= 4) return 'hsl(142,70%,50%)';
+  if (good === 3) return 'hsl(45,93%,58%)';
+  if (good === 2) return 'hsl(25,90%,55%)';
+  return 'hsl(0,72%,55%)';
+}
+const withA = (hsl, a) => hsl.replace('hsl(', 'hsla(').replace(')', `, ${a})`);
+
 export default function EmojiSelector({ label, type, value, onChange }) {
   const set = emojiSets[type] || emojiSets.mood;
   const { emojis, labels } = set;
@@ -85,7 +99,7 @@ export default function EmojiSelector({ label, type, value, onChange }) {
         <span className="text-sm font-medium text-foreground">{label}</span>
 
         {selectedLabel && (
-          <span className="t-micro text-primary font-semibold">
+          <span className="t-micro font-semibold" style={{ color: emberColor(type, value) }}>
             {selectedLabel}
           </span>
         )}
@@ -95,6 +109,7 @@ export default function EmojiSelector({ label, type, value, onChange }) {
         {emojis.map((emoji, i) => {
           const level = i + 1;
           const isSelected = value === level;
+          const ember = isSelected ? emberColor(type, level) : null;
 
           return (
             <button
@@ -105,13 +120,19 @@ export default function EmojiSelector({ label, type, value, onChange }) {
               onClick={() => onChange(level)}
               className={cn(
                 'min-h-[58px] flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-base transition-all border-2',
-                isSelected
-                  ? 'bg-primary/20 border-primary scale-[1.02]'
-                  : 'bg-secondary border-transparent hover:bg-secondary/80'
+                isSelected ? 'scale-[1.03]' : 'bg-secondary border-transparent hover:bg-secondary/80'
               )}
+              style={isSelected ? {
+                borderColor: ember,
+                background: `radial-gradient(circle at 50% 38%, ${withA(ember, 0.30)}, ${withA(ember, 0.06)})`,
+                boxShadow: `0 0 18px -3px ${withA(ember, 0.55)}, inset 0 0 14px -5px ${withA(ember, 0.7)}`,
+              } : undefined}
             >
               <span className="leading-none">{emoji}</span>
-              <span className="t-micro text-muted-foreground leading-tight text-center px-1">
+              <span
+                className={cn('t-micro leading-tight text-center px-1', !isSelected && 'text-muted-foreground')}
+                style={isSelected ? { color: withA(ember, 0.95) } : undefined}
+              >
                 {labels[i]}
               </span>
             </button>
