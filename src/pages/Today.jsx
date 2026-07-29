@@ -328,11 +328,14 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                       const up = d.direction === 'positive';
                       return (
                         <div key={d.id} className="flex items-center justify-between gap-2 t-micro">
+                          {/* ART §2: a MEDIÇÃO em JetBrains Mono (leitura de instrumento);
+                             o nome do sinal (d.label) fica em Inter — mono = medido,
+                             Inter = veredito. Teto font-semibold (§3). */}
                           <span className="text-muted-foreground">
                             {d.label}
-                            <span className="text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
+                            <span className="font-mono text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
                           </span>
-                          <span className={cn('font-semibold tabular-nums', d.deltaPoints === 0 ? 'text-muted-foreground' : up ? 'text-zone-green' : 'text-zone-red')}>
+                          <span className={cn('font-mono font-semibold', d.deltaPoints === 0 ? 'text-muted-foreground' : up ? 'text-zone-green' : 'text-zone-red')}>
                             {d.deltaPoints === 0 ? '±0' : `${d.deltaPoints > 0 ? '+' : ''}${d.deltaPoints}`}
                           </span>
                         </div>
