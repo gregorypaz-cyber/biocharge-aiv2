@@ -232,7 +232,7 @@ export default function AppLayout() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto overscroll-y-contain">
         <Outlet />
       </main>
 
