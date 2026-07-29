@@ -41,6 +41,28 @@ const metrics = [
   { key: 'biocharge_morning', label: 'BioCharge', color: 'hsl(200,80%,65%)' },
 ];
 
+// ART §4: o ponto "hoje" na ponta da linha vira uma micro-gema pulsante (a
+// mesma física de luz da casa), não um dot chapado. Pulso desligado com
+// prefers-reduced-motion. Os demais pontos ficam discretos (ou somem).
+function GlowTodayDot({ cx, cy, index, color, lastIndex, showAll, reduce }) {
+  if (cx == null || cy == null) return <g />;
+  if (index === lastIndex) {
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={9} fill={color} opacity={0.18} />
+        <circle cx={cx} cy={cy} r={4.5} fill={color} stroke="hsl(220 20% 4%)" strokeWidth={1.5} />
+        {!reduce && (
+          <circle cx={cx} cy={cy} r={7} fill="none" stroke={color} strokeWidth={1} opacity={0.5}>
+            <animate attributeName="r" values="6;13;6" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" repeatCount="indefinite" />
+          </circle>
+        )}
+      </g>
+    );
+  }
+  return showAll ? <circle cx={cx} cy={cy} r={3} fill={color} /> : <g />;
+}
+
 const tooltipStyle = {
   background: 'hsl(220,18%,7%)',
   border: '1px solid hsl(220,15%,14%)',
@@ -1069,8 +1091,8 @@ export default function Trends() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,10%)" />
-                <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
+                <XAxis dataKey="date" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip content={<ZoneTooltip selectedMetric={selectedMetric} />} />
                 {/* Banda do "seu normal" (WHOOP §5) — slate translúcido, atrás da linha */}
                 <Area
@@ -1088,8 +1110,19 @@ export default function Trends() {
                   dataKey={selectedMetric}
                   stroke={metricConfig?.color}
                   fill="url(#metricGrad)"
-                  strokeWidth={2}
-                  dot={chartData.length <= 10 ? { fill: metricConfig?.color, r: 3 } : false}
+                  strokeWidth={2.2}
+                  style={{ filter: `drop-shadow(0 0 5px ${metricConfig?.color})` }}
+                  dot={({ cx, cy, index }) => (
+                    <GlowTodayDot
+                      cx={cx}
+                      cy={cy}
+                      index={index}
+                      color={metricConfig?.color}
+                      lastIndex={movingAvgBanded.length - 1}
+                      showAll={chartData.length <= 10}
+                      reduce={typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches}
+                    />
+                  )}
                   name={metricConfig?.label}
                 />
                 <Area
