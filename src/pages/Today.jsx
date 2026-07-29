@@ -1461,7 +1461,7 @@ if (isLoading) {
         {hasCheckedInToday && streak >= 3 && (
           <Link
             to="/insights"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zone-orange/10 border border-zone-orange/20 hover:bg-zone-orange/15 transition-colors shrink-0"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zone-orange/10 border border-zone-orange/20 hover:bg-zone-orange/15 transition-colors shrink-0 tap-target"
             title={`${streak} dias seguidos`}
           >
             <Flame className="w-3.5 h-3.5 text-zone-orange" />
@@ -1504,7 +1504,9 @@ if (isLoading) {
 
       <LongevityOnboardingCard />
       
-      {orderedPrimaryCards.map((desc) => renderCard(desc))}
+      {orderedPrimaryCards.map((desc) => desc == null ? null : (
+        <React.Fragment key={desc.id}>{renderCard(desc)}</React.Fragment>
+      ))}
 
       <FatLossCard checkins={sortedCheckins} />
 
@@ -1526,7 +1528,9 @@ if (isLoading) {
         secondaryCards.filter((d) => d.action !== 'exclude').length +
         (analysis?.healthSignals?.state === 'normal' ? 1 : 0)
       }>
-        {secondaryCards.map((desc) => renderCard(desc))}
+        {secondaryCards.map((desc) => desc == null ? null : (
+          <React.Fragment key={desc.id}>{renderCard(desc)}</React.Fragment>
+        ))}
         <HealthStatusCard healthSignals={analysis?.healthSignals} variant="line" />
       </SecondaryMetrics>
 
