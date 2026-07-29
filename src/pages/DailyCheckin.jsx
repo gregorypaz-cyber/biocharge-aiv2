@@ -207,6 +207,16 @@ export default function DailyCheckin() {
 
 
   const [savedCheckin, setSavedCheckin] = useState(null);
+
+  // Dia anterior com Recovery real — origem do morph da gema no reveal (O SALTO).
+  // Sem ontem, o overlay faz a gema "nascer" slate em vez de morfar.
+  const prevCheckinForReveal = useMemo(() => {
+    if (!savedCheckin) return null;
+    return [...checkins]
+      .filter((c) => c.date < savedCheckin.date && (c.recovery_score ?? c.morning_recovery_score) != null)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))[0] || null;
+  }, [checkins, savedCheckin]);
+
   const [touched, setTouched] = useState({ sleep_hours: !!editData, hrv: !!editData });
   // Exige HRV + horas de sono — não biocharge_morning/sleep_score (Zepp). Esses
   // dois ficam só como referência de calibração (não entram em nenhuma fórmula);
@@ -761,6 +771,7 @@ if (isPostMode) {
       {savedCheckin && (
         <CheckinSuccessOverlay
           checkin={savedCheckin}
+          previousCheckin={prevCheckinForReveal}
           onContinue={() => navigate('/today')}
         />
       )}
