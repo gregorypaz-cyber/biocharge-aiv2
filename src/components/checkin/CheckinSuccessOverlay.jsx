@@ -1,6 +1,57 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Moon, Target, Zap } from 'lucide-react';
+import { ArrowRight, Moon, Target, Zap } from 'lucide-react';
+import RecoveryField from '@/components/today/RecoveryField';
+import { getZone, getZoneColor } from '@/lib/biocharge-utils';
+
+// slate desaturado do "nascimento" — quando não há ontem, a gema nasce cinza
+// e ganha cor (WHOOP), em vez de morfar de um dia anterior (ART).
+const BIRTH_COLOR = 'hsl(215, 14%, 42%)';
+const ZONE_FAIXA = { green: 'Alta', yellow: 'Moderada', red: 'Baixa' };
+
+function parseHslParts(str) {
+  const m = String(str).match(/hsl\(\s*([\d.]+)[,\s]+([\d.]+)%[,\s]+([\d.]+)%/i);
+  return m ? { h: +m[1], s: +m[2], l: +m[3] } : { h: 215, s: 14, l: 42 };
+}
+const lerp = (a, b, t) => a + (b - a) * t;
+// lerp linear no HSL — hue não dá volta, então red(0)→green(142) varre
+// exatamente o gradiente de zona (passa pelo âmbar), que é o significado certo.
+function lerpHsl(from, to, t) {
+  const a = parseHslParts(from), b = parseHslParts(to);
+  // quantiza pra não re-disparar os efeitos internos da gema a cada frame
+  const h = Math.round(lerp(a.h, b.h, t) / 3) * 3;
+  const s = Math.round(lerp(a.s, b.s, t) / 2) * 2;
+  const l = Math.round(lerp(a.l, b.l, t) / 2) * 2;
+  return `hsl(${h}, ${s}%, ${l}%)`;
+}
+
+// O SALTO — a gema se remorfa ao vivo do valor de ontem pro de hoje: uma única
+// animação orgânica (~760ms) depois de um respiro pra tela assentar. Valor conta,
+// cor migra pela zona, e o peso do glifo engrossa junto (movimento 1).
+function useGemMorph({ fromVal, toVal, fromColor, toColor, delay = 300, dur = 880 }) {
+  const [state, setState] = useState({ value: fromVal, color: fromColor });
+  useEffect(() => {
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { setState({ value: toVal, color: toColor }); return; }
+    let raf;
+    const t0 = performance.now() + delay;
+    const step = (now) => {
+      if (now < t0) { raf = requestAnimationFrame(step); return; }
+      const k = Math.max(0, Math.min(1, (now - t0) / dur));
+      if (k >= 1) { setState({ value: toVal, color: toColor }); return; } // pousa exato na cor da Today
+      // smoothstep (easeInOutCubic): pontas suaves, meio firme — deixa o âmbar
+      // ser atravessado num ritmo visível (o morph de cor é o gesto, ART).
+      const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      setState({ value: lerp(fromVal, toVal, e), color: lerpHsl(fromColor, toColor, e) });
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [fromVal, toVal, fromColor, toColor, delay, dur]);
+  return state;
+}
 
 const ZONE_CONFIG = {
   green: {
@@ -85,7 +136,7 @@ function getTomorrowReason(checkin) {
   return 'A leitura de amanhã ainda depende da carga, do stress e principalmente do sono de hoje.';
 }
 
-export default function CheckinSuccessOverlay({ checkin, onContinue }) {
+export default function CheckinSuccessOverlay({ checkin, previousCheckin, onContinue }) {
   const [progress, setProgress] = useState(0);
 
   const readiness =
@@ -97,6 +148,21 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
     checkin?.recovery_score ??
     checkin?.morning_recovery_score ??
     readiness;
+
+  // A gema é a de Recovery (a mesma da Today) — morfa do Recovery de ontem pro
+  // de hoje. Sem ontem: nasce slate num piso e floresce na cor/valor de hoje.
+  const todayRec = Math.round(recovery);
+  const todayColor = getZoneColor(getZone(todayRec));
+  const prevRec =
+    previousCheckin?.recovery_score ??
+    previousCheckin?.morning_recovery_score ??
+    null;
+  const hasPrev = prevRec != null;
+  const fromVal = hasPrev ? Math.round(prevRec) : Math.max(0, todayRec - 16);
+  const fromColor = hasPrev ? getZoneColor(getZone(Math.round(prevRec))) : BIRTH_COLOR;
+
+  const gem = useGemMorph({ fromVal, toVal: todayRec, fromColor, toColor: todayColor });
+  const gemZoneFaixa = ZONE_FAIXA[getZone(todayRec)] || 'Moderada';
 
   const zone = checkin?.zone ?? 'yellow';
   const zoneCfg = ZONE_CONFIG[zone] || ZONE_CONFIG.yellow;
@@ -148,18 +214,26 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
         transition={{ delay: 0.08, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-sm space-y-5"
       >
-        {/* Top */}
-        <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <CheckCircle2 className="w-7 h-7 text-primary" />
+        {/* Top — O SALTO: a gema se forma ao vivo do dia de ontem pro de hoje */}
+        <div className="flex flex-col items-center text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Check-in salvo
+          </p>
+
+          <div className="-mt-1">
+            <RecoveryField
+              value={gem.value}
+              max={100}
+              color={gem.color}
+              label="Recovery"
+              caption={gemZoneFaixa}
+              size={208}
+              live
+            />
           </div>
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Check-in salvo
-            </p>
-
-            <h1 className="text-2xl font-semibold leading-snug tracking-tight mt-2">
+          <div className="-mt-2">
+            <h1 className="text-2xl font-semibold leading-snug tracking-tight">
               Plano do dia calculado
             </h1>
 
@@ -174,19 +248,15 @@ export default function CheckinSuccessOverlay({ checkin, onContinue }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="t-micro text-muted-foreground uppercase tracking-wider mb-1">
-                Score do dia
+                Prontidão do dia
               </p>
-
-              <p className="text-4xl font-semibold font-mono leading-none">
-                {readiness}
-              </p>
-
-              <p className="t-micro text-muted-foreground mt-1">
-                Recovery base {recovery}
+              <p className="text-sm">
+                <span className="font-semibold text-foreground">Readiness {readiness}</span>
+                <span className="text-muted-foreground"> · Recovery base {recovery}</span>
               </p>
             </div>
 
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <span
                 className={`text-xs font-bold px-2.5 py-1 rounded-full border ${zoneCfg.bg} ${zoneCfg.color} ${zoneCfg.border}`}
               >

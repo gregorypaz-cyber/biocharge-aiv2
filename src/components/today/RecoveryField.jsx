@@ -79,8 +79,6 @@ export default function RecoveryField({
   const c = isCalibrating ? CALIB : (parseHsl(color) || CALIB);
   const frac = isCalibrating ? 0 : clamp(value / max, 0, 1);
 
-  // peso da fonte atrelado ao score (fino = frágil → robusto)
-  const weight = isCalibrating ? 220 : Math.round(200 + frac * 600);
   const period = isCalibrating ? 5.2 : (4.4 - frac * 1.1);
 
   const bodyRef = useRef(null);
@@ -94,7 +92,18 @@ export default function RecoveryField({
   const cvRef = useRef(null);
   const anchorsRef = useRef(makeAnchors());
   const sparksRef = useRef(makeSparks());
-  const [display, setDisplay] = useState(isCalibrating ? null : Math.round(value));
+  // Init num piso perceptual (valor − 12, não zero) quando o herói vai contar:
+  // a gema abre e o número CHEGA subindo até o valor real, engrossando junto.
+  // Sem count (satélite) ou reduce-motion → já nasce no valor final.
+  const [display, setDisplay] = useState(() => {
+    if (isCalibrating) return null;
+    const target = Math.round(value);
+    if (!animateCount) return target;
+    const prefersReduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    return prefersReduce ? target : Math.max(0, target - 12);
+  });
   const [pressed, setPressed] = useState(false);
 
   const [reduce, setReduce] = useState(
@@ -117,10 +126,12 @@ export default function RecoveryField({
     const target = Math.round(value);
     if (!animateCount || reduce) { setDisplay(target); return; }
     let raf; const from = typeof display === 'number' ? display : 0;
-    const t0 = performance.now(); const dur = 650;
+    if (from === target) { setDisplay(target); return; }
+    const t0 = performance.now(); const dur = 820;
     const step = (now) => {
       const k = clamp((now - t0) / dur, 0, 1);
-      const eased = 1 - Math.pow(1 - k, 3);
+      // ease-out quart (~cubic-bezier(.16,1,.3,1)): sobe visível e assenta longo
+      const eased = 1 - Math.pow(1 - k, 4);
       setDisplay(Math.round(from + (target - from) * eased));
       if (k < 1) raf = requestAnimationFrame(step);
     };
@@ -209,6 +220,15 @@ export default function RecoveryField({
 
   const numSize = Math.round(size * 0.29);
   const shown = isCalibrating ? '—' : (display ?? Math.round(value));
+  // Peso do glifo atrelado ao valor QUE APARECE — não ao final. Durante o
+  // count-up o número engrossa conforme sobe: fino/frágil embaixo, robusto no
+  // alto (§3, "a tipografia carrega significado, igual a cor"). Curva com gamma
+  // pra dramatizar a faixa real (~30–90) sem chegar ao "grito" do 900 — teto
+  // 760. Deriva de `display` (anima quadro a quadro), por isso a transição CSS
+  // de peso sai lá embaixo, senão o peso borra atrás da contagem.
+  const liveNum = typeof shown === 'number' ? shown : 0;
+  const liveFrac = isCalibrating ? 0 : clamp(liveNum / max, 0, 1);
+  const weight = isCalibrating ? 220 : Math.round(250 + Math.pow(liveFrac, 0.85) * 510);
   const showSparks = size >= 140;
   const tappable = typeof onClick === 'function';
 
@@ -343,8 +363,7 @@ export default function RecoveryField({
               textShadow: isCalibrating
                 ? 'none'
                 : `0 1px 3px ${css({ h: c.h, s: Math.min(c.s + 8, 90), l: 12 }, '.45')}, 0 3px 20px ${textHalo}`,
-              transition:
-                'font-weight .5s ease, font-variation-settings .5s ease, color .6s ease, text-shadow .6s ease',
+              transition: 'color .6s ease, text-shadow .6s ease',
             }}
           >
             {shown}
