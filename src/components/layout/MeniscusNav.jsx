@@ -87,9 +87,15 @@ export default function MeniscusNav() {
   const mask = useMemo(() => (w > 0 && h > 0 ? maskImage(w, h) : 'none'), [w, h]);
 
   const cx = w / 2;
-  const edgeStops = w > 0
-    ? [(cx - HALF) / w, (cx + HALF) / w]
-    : [0.35, 0.65];
+  /* Paradas da aresta especular, em fração da largura.
+     flank = ombros da crista, onde a luz da gema RASPA a superfície.
+     O ápice mergulha: é onde o próprio corpo luminoso oculta a
+     superfície. Era o pico no ápice que competia com o specular da
+     gema logo acima. */
+  const edge = w > 0
+    ? { start: (cx - HALF) / w, flankL: (cx - 44) / w,
+        flankR: (cx + 44) / w, end: (cx + HALF) / w }
+    : { start: 0.35, flankL: 0.44, flankR: 0.56, end: 0.65 };
 
   return (
     <nav
@@ -133,13 +139,19 @@ export default function MeniscusNav() {
               gradientUnits="userSpaceOnUse"
               x1="0" y1="0" x2={w} y2="0"
             >
-              <stop offset="0"            stopColor="#fff" stopOpacity="0.055" />
-              <stop offset={edgeStops[0]} stopColor="#fff" stopOpacity="0.06" />
+              <stop offset="0"           stopColor="#fff" stopOpacity="0.055" />
+              <stop offset={edge.start}  stopColor="#fff" stopOpacity="0.06" />
+              <stop offset={edge.flankL}
+                stopColor={lit ? `hsl(${L.h} ${L.s}% 64%)` : '#fff'}
+                stopOpacity={lit ? 0.3 : 0.1} />
               <stop offset="0.5"
-                stopColor={lit ? `hsl(${L.h} ${L.s}% 62%)` : '#fff'}
-                stopOpacity={lit ? 0.8 : 0.11} />
-              <stop offset={edgeStops[1]} stopColor="#fff" stopOpacity="0.06" />
-              <stop offset="1"            stopColor="#fff" stopOpacity="0.055" />
+                stopColor={lit ? `hsl(${L.h} ${L.s}% 64%)` : '#fff'}
+                stopOpacity={lit ? 0.09 : 0.045} />
+              <stop offset={edge.flankR}
+                stopColor={lit ? `hsl(${L.h} ${L.s}% 64%)` : '#fff'}
+                stopOpacity={lit ? 0.3 : 0.1} />
+              <stop offset={edge.end}    stopColor="#fff" stopOpacity="0.06" />
+              <stop offset="1"           stopColor="#fff" stopOpacity="0.055" />
             </linearGradient>
           </defs>
 
