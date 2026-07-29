@@ -123,11 +123,19 @@ leitura.
 | Classe | Tamanho | Uso |
 |---|---|---|
 | `.t-display` | 40px | número-herói, marco isolado |
-| `.t-title` | 21px | título de página |
+| `.t-hero` | 30px | título grande de tela-índice (large title, estilo HIG) |
+| `.t-title` | 21px | título de seção grande / subtítulo de página |
 | `.t-section` | 17px | título de seção e de card |
 | `.t-body` | 15px | texto corrido |
 | `.t-caption` | 13px | apoio |
 | `.t-micro` | 11px | rótulo, unidade, legenda — **piso absoluto** |
+
+> **`.t-hero` (adicionado 29/07/2026).** Fecha o vão que a escala tinha entre o número-herói
+> (`t-display`, 40px, reservado à gema) e o título (`t-title`, 21px): não havia um degrau de
+> "large title de página", então os H1 das telas-índice ficavam subdimensionados (ou fugiam pra
+> `text-2xl` arbitrário). **Não é abrir a porta pra tamanho livre — é nomear UM degrau que
+> faltava.** Uso restrito ao H1 das quatro telas-índice (Hoje, Padrões, Tendências, Histórico),
+> em lockup editorial com o kicker de data em `t-micro` caps.
 
 Fora da escala só sobrevivem `text-sm` (14px) e `text-xs` (12px), que já são degraus legítimos
 do Tailwind. **Tamanho arbitrário (`text-[13px]`) é dívida** — não introduzir.

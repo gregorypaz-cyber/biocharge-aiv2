@@ -1466,7 +1466,7 @@ if (isLoading) {
           <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground/70 mb-0.5">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Hoje</h1>
+          <h1 className="t-hero font-bold">Hoje</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (
