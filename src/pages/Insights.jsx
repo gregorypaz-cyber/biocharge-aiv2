@@ -44,7 +44,6 @@ import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 import AnalysisBody from '@/components/intelligence/AnalysisBody';
-import FitnessAgeCard from '@/components/intelligence/FitnessAgeCard';
 import BodyAgeCard from '@/components/intelligence/BodyAgeCard';
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -1291,10 +1290,12 @@ Regras:
         <LongTermTrendsCard trends={analysis.longTermTrends} />
       )}
 
-      {/* Idade de condicionamento (Fitness Age) */}
-      <FitnessAgeCard />
-
-       {/* Idade corporal (BodyAgeCard) */}
+      {/* Vitalidade + Idade corporal (BodyAgeCard).
+          "Idade de condicionamento" (FitnessAgeCard) foi aposentada: era troféu
+          de vaidade (VO₂max estimado → "X anos mais jovem que sua idade real"),
+          um número que não muda a ação de hoje — proibido pelo CONTEXT §2.1. O
+          VO₂max sobrevive como contexto de tendência na Vitalidade ao longo do
+          tempo (Tendências), não como troféu na abertura dos Insights. */}
       <BodyAgeCard />
 
       {/* 1. High-value discoveries — só aparece quando há descoberta real.

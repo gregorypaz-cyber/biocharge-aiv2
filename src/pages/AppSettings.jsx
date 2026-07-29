@@ -53,7 +53,7 @@ export default function AppSettings() {
     recovery_goal: 'health',
     max_hr: 185,
     wearable_profile: 'zepp',
-    // Perfil físico (usado na Idade de Condicionamento / VO2max)
+    // Perfil físico (usado na Vitalidade / tendência de longevidade / VO2max)
     birth_year: '',
     sex: '',
     height_cm: '',
@@ -152,7 +152,7 @@ export default function AppSettings() {
           <span className="font-semibold text-sm">Perfil físico</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Dados que mudam pouco. Usados para calcular sua Idade de Condicionamento e o VO₂max.
+          Dados que mudam pouco. Usados para estimar sua Vitalidade e a tendência de longevidade (VO₂max, FC de repouso, sono).
         </p>
 
         <div className="grid grid-cols-2 gap-3">

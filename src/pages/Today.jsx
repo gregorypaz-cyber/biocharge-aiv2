@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, Flame, ArrowUpRight } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore, explainRecoveryV3, getZone, getZoneColor, getZoneClasses } from '@/lib/biocharge-utils';
 import {
@@ -32,7 +32,6 @@ import RecoveryField from '@/components/today/RecoveryField';
 import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
-import { useStreak } from '@/hooks/useStreak';
 import { buildCardLayout } from '@/utils/priorityEngine';
 import { getDailyVerdict, getSleepDebtHours } from '@/lib/decision-engine';
 
@@ -171,7 +170,16 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : sleepVal >= 65 ? 'text-blue-400'
     : 'text-blue-500';
 
-  const strainColor = strainVsTarget.ring;
+  // Visão B (constelação, ART): satélites são micro-gemas em cor de DOMÍNIO.
+  // Sono já é campo azul (sleepColor). Strain vira campo LARANJA (BRAND §2:
+  // laranja é o domínio de carga), slate quando não há carga ("sinal sem dado
+  // é slate morto"). Exceção: esgotamento continua VERMELHO — é alerta real de
+  // segurança, e §2 reserva o vermelho pra isso. O resto do estado (na-zona,
+  // acima) segue vivo na legenda colorida abaixo, não no corpo da gema.
+  const strainColor =
+    cappedStrain <= 0 ? 'hsl(215,30%,55%)'
+    : strainVsTarget.color === 'text-zone-red' ? 'hsl(0,84%,60%)'
+    : 'hsl(25,90%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
   return (
@@ -902,7 +910,6 @@ export default function Today() {
     : null;
 
   const { intent, locked, dayPhase, DayPhase: Phase } = useDayContext(dayMetrics);
-  const { streak, hasCheckedInToday } = useStreak(sortedCheckins);
 
 const AUTONOMIC_PT = {
     parasympathetic: 'Modo recuperação',
@@ -1375,7 +1382,7 @@ const settingsBanner = missingSettings.length > 0 ? (
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-foreground/90">Complete suas configurações</p>
         <p className="t-micro text-muted-foreground leading-relaxed mt-0.5">
-          Falta informar {missingSettings.join(', ')}. Necessário para idade de condicionamento, VO₂max e leituras honestas — toque para ajustar.
+          Falta informar {missingSettings.join(', ')}. Necessário para Vitalidade, VO₂max e leituras honestas — toque para ajustar.
         </p>
       </div>
       <ChevronRight className="w-4 h-4 text-zone-amber/70 shrink-0 mt-1" />
@@ -1458,16 +1465,6 @@ if (isLoading) {
           ) : null}
         </div>
 
-        {hasCheckedInToday && streak >= 3 && (
-          <Link
-            to="/insights"
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-zone-orange/10 border border-zone-orange/20 hover:bg-zone-orange/15 transition-colors shrink-0 tap-target"
-            title={`${streak} dias seguidos`}
-          >
-            <Flame className="w-3.5 h-3.5 text-zone-orange" />
-            <span className="text-xs font-bold text-zone-orange">{streak}</span>
-          </Link>
-        )}
       </div>
 
       {bannerCfg.bannerText && (

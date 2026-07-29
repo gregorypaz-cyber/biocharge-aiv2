@@ -58,9 +58,9 @@ export default function LongevityOnboardingCard() {
   return (
     <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5 space-y-4">
       <div>
-        <p className="text-sm font-semibold tracking-tight">Descubra sua Idade de Condicionamento e Vitalidade</p>
+        <p className="text-sm font-semibold tracking-tight">Descubra sua Vitalidade e tendência de longevidade</p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          Dois números no estilo WHOOP/Oura a partir dos seus dados. Leva 15 segundos — preencha uma vez.
+          Uma leitura de longevidade a partir dos seus dados (VO₂max, FC de repouso, sono). Leva 15 segundos — preencha uma vez.
         </p>
       </div>
 
