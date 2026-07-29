@@ -391,14 +391,17 @@
   .meniscus-gem:active { transform: translate(-50%, -50%); }
 }
 
-/* O dissolve de borda passa a acompanhar a crista, senão o conteúdo é
-   cortado seco atrás dela. Sobrescreve a regra anterior de propósito.
-   Altura maior (5rem) + parada intermediária no gradiente: o conteúdo
-   central DERRETE bem acima da crista/gema em vez de sumir num corte só —
-   o número-herói fica ilegível ANTES de encostar na bolinha da nav. */
+/* O dissolve derrete o conteúdo bem acima da crista (topo em ~170px do fundo,
+   o número-herói fica ilegível ANTES de encostar na gema). Mas o BOTTOM tem
+   que descer até a aresta plana do vidro (4rem), não parar na crista (4rem+26px):
+   a crista só sobe 26px no CENTRO — nas laterais o vidro termina em 4rem, então
+   parar o dissolve em 4rem+26px deixava um vão de 26px sem vidro nem dissolve,
+   onde o conteúdo vazava cru e a banda do dissolve parecia uma barra solta.
+   Bottom em 4rem + altura maior (5rem+26px) mantém o mesmo topo e fecha o vão;
+   a crista/gema (nav, z-50) transborda por cima deste dissolve (z-40). */
 .scroll-edge-bottom {
-  bottom: calc(4rem + 26px + env(safe-area-inset-bottom));
-  height: 5rem;
+  bottom: calc(4rem + env(safe-area-inset-bottom));
+  height: calc(5rem + 26px);
   background: linear-gradient(
     to top,
     hsl(var(--background)) 0%,
