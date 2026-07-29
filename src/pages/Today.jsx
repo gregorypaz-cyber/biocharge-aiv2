@@ -182,6 +182,21 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'hsl(25,90%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
+  // WHOOP §3: o decision_mode vira VERBO travado na cor de zona, em vez de uma
+  // frase enterrada num card. A cor já diz a faixa; o verbo diz a AÇÃO. (Fica em
+  // t-title 21px — "gigante" de verdade pediria o degrau t-hero, que desafia a
+  // escala fechada da §3 e depende de aprovação à parte.)
+  const DECISION_VERB = {
+    train_high: 'Treine forte',
+    train_moderate: 'Modere',
+    train_light: 'Treine leve',
+    recover: 'Recupere',
+  };
+  const decisionVerb = isRestMode
+    ? 'Recupere'
+    : (DECISION_VERB[dailyVerdict?.mode]
+        || (displayedScore >= 70 ? 'Treine' : displayedScore >= 42 ? 'Modere' : 'Recupere'));
+
   return (
     <motion.div
       key={phase + '-card'}
@@ -211,9 +226,13 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                Decisão de hoje
             </span>
-                        <h2 className="text-xl font-semibold mt-1 leading-tight">
-              {isCalibrating ? 'Calibrando seu baseline' : dailyVerdict.headline}
-            </h2>
+            {isCalibrating ? (
+              <h2 className="text-xl font-semibold mt-1 leading-tight">Calibrando seu baseline</h2>
+            ) : (
+              <p className="t-title font-bold uppercase mt-1" style={{ color: recoveryColor }}>
+                {decisionVerb}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground mt-1">
               {isCalibrating
                 ? (calibratingNightsLeft > 0
@@ -242,7 +261,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             max={100}
             color={recoveryColor}
             label="Recovery"
-            caption={isCalibrating ? 'Calibrando' : readinessFaixa}
+            caption={isCalibrating ? 'Calibrando' : ''}
             captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
             size={288}
             animateCount
@@ -349,16 +368,16 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           </div>
         ) : (
           !todaySessions.length && !isRestMode && (
-            <div className="mt-0.5 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/10 text-xs leading-snug">
-              <span className="font-semibold text-primary">Linha do dia:</span>{' '}
+            // APPLE §6: sem moldura — a frase-ação vive solta sob o herói, não num card.
+            <p className="px-3 text-center text-sm text-muted-foreground leading-snug">
               {isCalibrating
-                ? 'ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
+                ? 'Ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
                 : displayedScore >= 70
-                ? 'recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
+                ? 'Recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
                 : displayedScore >= 42
-                ? 'recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
-                : 'recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
-            </div>
+                ? 'Recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
+                : 'Recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
+            </p>
           )
         )}
 
