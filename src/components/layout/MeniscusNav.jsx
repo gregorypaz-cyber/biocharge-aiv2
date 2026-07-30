@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Activity, Brain, Clock, Plus, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useTodayZone } from '@/hooks/useTodayZone';
+
+/* A gema é um Link com física: um corpo denso que CEDE pra dentro do menisco
+   quando pressionado e volta com mola. motion.create pra o whileTap valer no
+   próprio alvo de toque. O posicionamento mora no anchor (transform livre pra
+   a mola). reduce-motion desliga a mola sozinho via MotionConfig global. */
+const GemLink = motion.create(Link);
 
 /* ═══ O MENISCO ═══════════════════════════════════════════════════════════
    A superfície da nav cede sob a gema, como líquido sob um corpo denso e
@@ -182,14 +189,26 @@ export default function MeniscusNav() {
         })}
       </div>
 
-      {/* 4 · A gema. Fora do grid: transborda a crista e mantém alvo próprio. */}
-      <Link
+      {/* 4 · A gema. Fora do grid: transborda a crista e mantém alvo próprio.
+         O anchor só posiciona (transform de centragem). A gema em si é livre
+         pra a mola do toque escalar e AFUNDAR no menisco sem brigar com a
+         posição. Vivacidade segue o dado: acesa = corpo elástico que devolve
+         com overshoot; em calibração (slate) = massa pesada e inerte, mal
+         reponde — honestidade de ausência estendida ao peso. */}
+      <span
+        className="meniscus-gem-anchor"
+        style={{ width: GEM, height: GEM, top: GEM_CY }}
+      >
+      <GemLink
         to="/checkin"
         className={cn('meniscus-gem', lit && 'meniscus-gem-lit')}
         aria-label="Check-in"
         aria-current={location.pathname === '/checkin' ? 'page' : undefined}
+        whileTap={lit ? { scale: 0.84, y: 3 } : { scale: 0.92, y: 1.5 }}
+        transition={lit
+          ? { type: 'spring', stiffness: 520, damping: 15, mass: 0.85 }
+          : { type: 'spring', stiffness: 340, damping: 26, mass: 1.1 }}
         style={{
-          width: GEM, height: GEM, top: GEM_CY,
           filter: lit
             ? `drop-shadow(0 4px 16px hsl(${L.h} ${L.s}% ${L.l}% / 0.38))`
             : 'none',
@@ -217,7 +236,8 @@ export default function MeniscusNav() {
             <path d="M-13 0 H13" />
           </g>
         </svg>
-      </Link>
+      </GemLink>
+      </span>
     </nav>
   );
 }
