@@ -220,7 +220,13 @@ export default function CheckinSuccessOverlay({ checkin, previousCheckin, onCont
             Check-in salvo
           </p>
 
-          <div className="-mt-1">
+          {/* O SALTO: layoutId compartilhado com o herói da Today. Ao "Ir para
+             Hoje", esta gema VOA e cresce até virar o herói, sem cold mount. */}
+          <motion.div
+            layoutId="reck-hero"
+            transition={{ type: 'spring', stiffness: 230, damping: 28 }}
+            className="-mt-1"
+          >
             <RecoveryField
               value={gem.value}
               max={100}
@@ -230,7 +236,7 @@ export default function CheckinSuccessOverlay({ checkin, previousCheckin, onCont
               size={208}
               live
             />
-          </div>
+          </motion.div>
 
           <div className="-mt-2">
             <h1 className="text-2xl font-semibold leading-snug tracking-tight">

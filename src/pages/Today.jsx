@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight } from 'lucide-react';
@@ -123,6 +123,9 @@ function CollapsibleHint({ children, label = 'Entender' }) {
 
 function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, recoveryDrivers, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
+  // Chegou voando do reveal do check-in (O SALTO)? Então a gema já entra no valor
+  // final — nada de re-contar depois do voo (evita o "reveal duplo").
+  const fromCheckin = useLocation().state?.fromCheckin === true;
 
   // Zona = fonte única (getZone → ZONE_GREEN_MIN/ZONE_YELLOW_MIN). Gema e legenda
   // derivam da MESMA zona, então não há como uma dizer verde e a outra amarelo.
@@ -254,19 +257,22 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
 
                       </div>
 
-        {/* HERÓI — Recovery dominante + satélites Sono/Strain */}
+        {/* HERÓI — Recovery dominante + satélites Sono/Strain.
+           layoutId="reck-hero": recebe o voo da gema do reveal do check-in. */}
         <div className="flex flex-col items-center pt-0">
-          <RecoveryField
-            value={isCalibrating ? null : displayedScore}
-            max={100}
-            color={recoveryColor}
-            label="Recovery"
-            caption={isCalibrating ? 'Calibrando' : ''}
-            captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
-            size={288}
-            animateCount
-            onClick={() => setShowProntidaoHint((v) => !v)}
-          />
+          <motion.div layoutId="reck-hero" transition={{ type: 'spring', stiffness: 230, damping: 28 }}>
+            <RecoveryField
+              value={isCalibrating ? null : displayedScore}
+              max={100}
+              color={recoveryColor}
+              label="Recovery"
+              caption={isCalibrating ? 'Calibrando' : ''}
+              captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
+              size={288}
+              animateCount={!fromCheckin}
+              onClick={() => setShowProntidaoHint((v) => !v)}
+            />
+          </motion.div>
 
           <div className="flex justify-center gap-10 mt-2.5">
             <RecoveryField

@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Settings, Sparkles, ShieldCheck, Compass, Dumbbell, Watch, ChevronRight } from 'lucide-react';
 import MeniscusNav from '@/components/layout/MeniscusNav';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { WEARABLES } from '@/pages/AppSettings';
@@ -232,8 +232,13 @@ export default function AppLayout() {
       </header>
 
       {/* Content */}
+      {/* LayoutGroup persistente: a gema-herói (layoutId="reck-hero") sobrevive
+         à troca de rota, então o reveal do check-in VOA e vira o herói da Today
+         (O SALTO), em vez de sumir e a Today montar a frio. */}
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto overscroll-y-contain">
-        <Outlet />
+        <LayoutGroup>
+          <Outlet />
+        </LayoutGroup>
       </main>
 
       {/* Dissolve de borda: o conteúdo derrete no fundo antes de encostar na nav */}
