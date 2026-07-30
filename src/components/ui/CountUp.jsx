@@ -20,15 +20,16 @@ const prefersReduce = () =>
 
 export default function CountUp({ value, from = 0, duration = 900, decimals = 0, format, className }) {
   const isNum = typeof value === 'number' && Number.isFinite(value);
+  const safeFrom = Number.isFinite(from) ? from : 0;
   const ref = useRef(null);
-  const fromRef = useRef(from);
+  const fromRef = useRef(safeFrom);
   const startedRef = useRef(false);
-  const [disp, setDisp] = useState(() => (isNum && !prefersReduce() ? from : value));
+  const [disp, setDisp] = useState(() => (isNum && !prefersReduce() ? safeFrom : value));
 
   useEffect(() => {
     if (!isNum || prefersReduce()) { setDisp(value); fromRef.current = value; return; }
     const el = ref.current;
-    if (!el) { setDisp(value); return; }
+    if (!el) { setDisp(value); fromRef.current = value; return; }
 
     let raf = 0;
     let io = null;
@@ -68,6 +69,7 @@ export default function CountUp({ value, from = 0, duration = 900, decimals = 0,
   }, [value, isNum, duration]);
 
   if (!isNum) return <span ref={ref} className={className}>{value}</span>;
-  const text = format ? format(disp) : disp.toFixed(decimals);
+  const d = Number.isFinite(disp) ? disp : value;
+  const text = format ? format(d) : d.toFixed(decimals);
   return <span ref={ref} className={className}>{text}</span>;
 }
