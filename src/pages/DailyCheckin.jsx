@@ -772,7 +772,7 @@ if (isPostMode) {
         <CheckinSuccessOverlay
           checkin={savedCheckin}
           previousCheckin={prevCheckinForReveal}
-          onContinue={() => navigate('/today')}
+          onContinue={() => navigate('/today', { state: { fromCheckin: true } })}
         />
       )}
 

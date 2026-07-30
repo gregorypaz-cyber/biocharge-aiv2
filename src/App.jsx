@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { MotionConfig } from 'framer-motion';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -77,10 +78,15 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
+        {/* reducedMotion="user": o voo da gema (O SALTO) e demais animações de
+           layout degradam pra aparecer sem transform quando o SO pede menos
+           movimento. */}
+        <MotionConfig reducedMotion="user">
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </MotionConfig>
       </QueryClientProvider>
     </AuthProvider>
   )
