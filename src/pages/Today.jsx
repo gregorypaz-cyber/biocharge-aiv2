@@ -35,6 +35,22 @@ import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { buildCardLayout } from '@/utils/priorityEngine';
 import { getDailyVerdict, getSleepDebtHours } from '@/lib/decision-engine';
 
+/* ═══ O RITUAL DA MANHÃ ═══════════════════════════════════════════════════
+   Ao abrir o Hoje pela primeira vez na sessão, os elementos não aparecem de
+   uma vez: eles ACORDAM em sequência, de cima pra baixo — a data, o "Hoje",
+   o herói, e cada card subindo atrás do anterior. É o app despertando junto
+   com você. Só uma vez por sessão (não a cada troca de aba) e nunca quando o
+   check-in acabou de VOAR pra cá (aí o SALTO já é a entrada). reduce-motion:
+   o MotionConfig global mantém só o fade, sem o movimento. */
+const CASCADE_CONTAINER = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.075, delayChildren: 0.04 } },
+};
+const CASCADE_ITEM = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+};
+
 
 function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions, isRestMode }) {
   const delayedFatigue = checkin?.delayed_fatigue_alert || null;
@@ -600,6 +616,20 @@ export default function Today() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const today = getTodayLocal();
+  const fromCheckin = useLocation().state?.fromCheckin === true;
+
+  /* O ritual toca uma vez por sessão. Lê o flag no primeiro render (antes de
+     qualquer pintura) pra decidir; grava depois. Assim voltar pra cá numa
+     troca de aba não re-dispara a cascata. */
+  const [ritual] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try { return !sessionStorage.getItem('reck-morning-ritual'); } catch { return false; }
+  });
+  useEffect(() => {
+    if (!ritual) return;
+    try { sessionStorage.setItem('reck-morning-ritual', '1'); } catch { /* ignore */ }
+  }, [ritual]);
+  const cascade = ritual && !fromCheckin;
 
   const { data: checkins = [], isLoading: loadingCheckins } = useUserCheckins(90);
   const { data: allSessions = [], isLoading: loadingSessions } = useUserTrainingSessions(100);
@@ -1471,7 +1501,8 @@ if (isLoading) {
   }
 
   return (
-    <div
+    <motion.div
+      {...(cascade ? { variants: CASCADE_CONTAINER, initial: 'hidden', animate: 'show' } : {})}
       className={cn(
         'space-y-4 max-w-2xl mx-auto transition-all duration-500',
         isSilentMode && 'opacity-90',
@@ -1484,7 +1515,7 @@ if (isLoading) {
          backdrop-filter) durante o overscroll/rubber-band, fazendo a gema-herói
          "vazar" sobre a barra. Escopado ao topo, a gema/cards voltam ao fluxo
          normal (abaixo da nav) e o sangramento do ART §3 continua. */}
-      <div className="relative isolate space-y-4">
+      <motion.div {...(cascade ? { variants: CASCADE_ITEM } : {})} className="relative isolate space-y-4">
       {/* ART §3 — o sangramento de luz: a gema "ilumina a sala". Um bloom radial
          na cor de zona do dia sobe do topo e dissolve no --background antes do
          header. O app muda de temperatura conforme seu corpo, sem um card novo.
@@ -1525,13 +1556,14 @@ if (isLoading) {
         </div>
 
       </div>
-      </div>
+      </motion.div>
 
       {bannerCfg.bannerText && (
         <motion.div
           key={advisoryPhase + (userRest ? '-rest' : '-adv')}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...(cascade
+            ? { variants: CASCADE_ITEM }
+            : { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 } })}
           className={cn('rounded-2xl border px-4 py-3 text-xs font-medium flex items-start gap-2', bannerCfg.bannerClass)}
         >
           {bannerCfg.bannerIcon && <bannerCfg.bannerIcon className="w-4 h-4 shrink-0 mt-px" />}
@@ -1539,12 +1571,15 @@ if (isLoading) {
         </motion.div>
       )}
 
-      <QuickIntentEdit />
+      <motion.div {...(cascade ? { variants: CASCADE_ITEM } : {})}>
+        <QuickIntentEdit />
+      </motion.div>
 
       {deepSleepAlert && !deepSleepAlertDismissed && (
         <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...(cascade
+            ? { variants: CASCADE_ITEM }
+            : { initial: { opacity: 0, y: -4 }, animate: { opacity: 1, y: 0 } })}
           className="rounded-2xl border border-blue-500/25 bg-blue-500/8 px-4 py-3 flex items-start gap-3"
         >
           <Moon className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
@@ -1561,9 +1596,14 @@ if (isLoading) {
 
       <LongevityOnboardingCard />
       
-      {orderedPrimaryCards.map((desc) => desc == null ? null : (
-        <React.Fragment key={desc.id}>{renderCard(desc)}</React.Fragment>
-      ))}
+      {orderedPrimaryCards.map((desc) => {
+        if (desc == null) return null;
+        const el = renderCard(desc);
+        if (!el) return null;
+        return cascade
+          ? <motion.div key={desc.id} variants={CASCADE_ITEM}>{el}</motion.div>
+          : <React.Fragment key={desc.id}>{el}</React.Fragment>;
+      })}
 
       <FatLossCard checkins={sortedCheckins} />
 
@@ -1611,6 +1651,6 @@ if (isLoading) {
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

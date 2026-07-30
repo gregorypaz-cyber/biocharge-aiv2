@@ -25,6 +25,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import LongevityTrendCard from '@/components/intelligence/LongevityTrendCard';
+import { useDrawOnView } from '@/hooks/useDrawOnView';
 
 const timeFilters = [
   { label: '7D', days: 7 },
@@ -895,6 +896,11 @@ export default function Trends() {
   const { data: checkins = [] } = useUserCheckins(365);
   const { data: trainingSessions = [] } = useUserTrainingSessions(365);
 
+  // O traço-herói se desenha (caneta) quando o gráfico entra em vista e a cada
+  // troca de métrica/período. Escopo em .draw-line pra não solidificar a média
+  // móvel tracejada. reduce-motion nasce inteira (o hook cuida).
+  const drawRef = useDrawOnView([selectedMetric, period], { curve: '.draw-line .recharts-area-curve' });
+
   // Score é a FONTE ÚNICA gravada no check-in. Aqui os derivados ainda são calculados
   // ao vivo, mas recovery_score/zone exibidos vêm do SALVO (recompute só como fallback
   // para registros antigos sem score gravado) — assim Tendências = Histórico = Today.
@@ -1081,7 +1087,7 @@ export default function Trends() {
             )}
           </div>
           <p className="t-micro text-muted-foreground mb-3">Área + média móvel 3 dias</p>
-          <div role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-52">
+          <div ref={drawRef} role="img" aria-label="Gráfico de evolução da métrica selecionada ao longo do tempo" className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={movingAvgBanded}>
                 <defs>
@@ -1108,6 +1114,8 @@ export default function Trends() {
                 <Area
                   type="monotone"
                   dataKey={selectedMetric}
+                  className="draw-line"
+                  isAnimationActive={false}
                   stroke={metricConfig?.color}
                   fill="url(#metricGrad)"
                   strokeWidth={2.2}
@@ -1128,6 +1136,7 @@ export default function Trends() {
                 <Area
                   type="monotone"
                   dataKey="moving_avg"
+                  isAnimationActive={false}
                   stroke={metricConfig?.color}
                   fill="none"
                   strokeWidth={1.5}
