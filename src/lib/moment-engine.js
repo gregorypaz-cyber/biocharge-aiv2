@@ -24,11 +24,33 @@ const RANK_MIN_DEPTH = 12;     // só vira momento se o recorde tiver ≥12 dias
 const STREAK_MIN_RISES = 3;    // ≥3 altas consecutivas pra nomear a sequência
 const RECORD_MIN_HISTORY = 14; // "que já registrei" exige histórico com lastro
 const SLEEP_DEBT_LINE = 6;     // horas — o limiar cuja TRAVESSIA vira evento
+const ZONE_GREEN_STREAK = 6;   // verde é raro/troféu: só celebra sequência longa
+const ZONE_RED_STREAK = 2;     // vermelho sustentado importa cedo (espelha o Monitor §7)
+const AWAKE_MIN_HISTORY = 10;  // "incomum pra você" precisa de régua pessoal
+const AWAKE_MIN_ABS = 2;       // e de uma diferença absoluta mínima pra ser "muito"
 
 const day = (s) => Math.round(Date.parse(s) / 86400000); // 'YYYY-MM-DD' → índice de dia (UTC)
 const daysBetween = (a, b) => Math.abs(day(b) - day(a));
 const num = (v) => (v != null && Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
+const num0 = (v) => (v != null && Number.isFinite(Number(v)) ? Number(v) : null); // aceita 0 (ex.: despertares)
 const rhrOf = (c) => num(c?.resting_hr) ?? num(c?.resting_heart_rate);
+
+/* Zona a partir do que está gravado (fonte única), com fallback pelos MESMOS
+   cortes de getZone (green≥70, yellow≥42, red<42) quando só há o score cru. */
+function zoneOf(c) {
+  if (c?.zone === 'green' || c?.zone === 'yellow' || c?.zone === 'red') return c.zone;
+  const r = num(c?.recovery_score);
+  if (r == null) return null;
+  return r >= 70 ? 'green' : r >= 42 ? 'yellow' : 'red';
+}
+
+/* Média/desvio de um campo sobre o histórico (exclui hoje), para z pessoal. */
+function meanStd(values) {
+  if (values.length < 2) return null;
+  const m = values.reduce((a, b) => a + b, 0) / values.length;
+  const v = values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length;
+  return { mean: m, std: Math.sqrt(v) };
+}
 
 function sortedDesc(checkins) {
   return [...(checkins || [])]
@@ -175,12 +197,97 @@ function detectSleepDebtCrossing(desc) {
   };
 }
 
+function detectHrvFallingStreak(desc) {
+  const pts = desc.filter((c) => num(c.hrv) != null);
+  if (pts.length < STREAK_MIN_RISES + 1) return null;
+  let falls = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const newer = pts[i], older = pts[i + 1];
+    if (daysBetween(older.date, newer.date) === 1 && num(newer.hrv) < num(older.hrv)) falls++;
+    else break;
+  }
+  if (falls < STREAK_MIN_RISES) return null;
+  return {
+    id: 'hrv_falling',
+    priority: 82 + falls,
+    tone: 'caution',
+    text: `Teu HRV caiu ${falls} manhãs seguidas. Vale segurar a intensidade até estabilizar.`,
+    evidence: { label: 'HRV', value: `${Math.round(num(pts[0].hrv))}ms` },
+    signature: `hrv_falling:${falls}`,
+  };
+}
+
+function detectZoneStreak(desc) {
+  const z0 = zoneOf(desc[0]);
+  if (!z0 || z0 === 'yellow') return null; // amarelo é o meio-termo: não é evento
+  let streak = 1;
+  for (let i = 0; i < desc.length - 1; i++) {
+    if (daysBetween(desc[i + 1].date, desc[i].date) === 1 && zoneOf(desc[i + 1]) === z0) streak++;
+    else break;
+  }
+  if (z0 === 'green') {
+    if (streak < ZONE_GREEN_STREAK) return null;
+    return {
+      id: 'zone_streak', priority: 55 + Math.min(streak, 20), tone: 'positive',
+      text: `${streak} dias seguidos na faixa verde. Consistência virou tua vantagem.`,
+      evidence: { label: 'Verde', value: `${streak}d` },
+      signature: `zone_streak:green:${streak}`,
+    };
+  }
+  if (streak < ZONE_RED_STREAK) return null;
+  return {
+    id: 'zone_streak', priority: 85 + Math.min(streak, 12), tone: 'caution',
+    text: `${streak}º dia seguido no vermelho. O corpo está pedindo recuperação de verdade, não só um dia leve.`,
+    evidence: { label: 'Vermelho', value: `${streak}d` },
+    signature: `zone_streak:red:${streak}`,
+  };
+}
+
+function detectSleepDebtCleared(desc) {
+  if (desc.length < 8) return null;
+  const today = sleepDebt(desc);
+  const yesterday = sleepDebt(desc.slice(1));
+  if (today == null || yesterday == null) return null;
+  if (!(today <= SLEEP_DEBT_LINE && yesterday > SLEEP_DEBT_LINE)) return null;
+  return {
+    id: 'sleep_debt_cleared',
+    priority: 72,
+    tone: 'positive',
+    text: `Tua dívida de sono voltou pra baixo de ${SLEEP_DEBT_LINE}h — o descanso pegou. Dá pra voltar a construir.`,
+    evidence: { label: 'Dívida', value: `${Math.round(today * 10) / 10}h` },
+    signature: `sleep_debt_cleared:${Math.round(today)}`,
+  };
+}
+
+function detectUnusualAwakenings(desc) {
+  const today = num0(desc[0]?.sleep_awakenings);
+  if (today == null) return null;
+  const hist = desc.slice(1).map((c) => num0(c.sleep_awakenings)).filter((v) => v != null);
+  if (hist.length < AWAKE_MIN_HISTORY) return null;
+  const ms = meanStd(hist);
+  if (!ms || ms.std <= 0) return null;
+  const z = (today - ms.mean) / ms.std;
+  if (z < 1.5 || today - ms.mean < AWAKE_MIN_ABS) return null;
+  return {
+    id: 'unusual_awakenings',
+    priority: 70,
+    tone: 'caution',
+    text: `${today} despertares essa noite — pra você isso é muito. Tuas noites costumam ter ~${Math.round(ms.mean)}.`,
+    evidence: { label: 'Despertares', value: `${today}` },
+    signature: `unusual_awakenings:${today}`,
+  };
+}
+
 const DETECTORS = [
   detectRhrRecord,
   detectHrvLow,
   detectRecoveryHigh,
+  detectZoneStreak,
   detectHrvRisingStreak,
+  detectHrvFallingStreak,
   detectSleepDebtCrossing,
+  detectSleepDebtCleared,
+  detectUnusualAwakenings,
 ];
 
 /**
