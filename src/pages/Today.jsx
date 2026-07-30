@@ -1458,11 +1458,18 @@ if (isLoading) {
   return (
     <div
       className={cn(
-        'relative isolate space-y-4 max-w-2xl mx-auto transition-all duration-500',
+        'space-y-4 max-w-2xl mx-auto transition-all duration-500',
         isSilentMode && 'opacity-90',
         isRestMode && 'saturate-[0.7]'
       )}
     >
+      {/* O isolate fica escopado SÓ ao topo (bloom + header), nunca ao root
+         inteiro. Motivo: com o isolate no root, toda a coluna vira uma camada de
+         composição — e o iOS compõe mal essa camada por CIMA da nav (que tem
+         backdrop-filter) durante o overscroll/rubber-band, fazendo a gema-herói
+         "vazar" sobre a barra. Escopado ao topo, a gema/cards voltam ao fluxo
+         normal (abaixo da nav) e o sangramento do ART §3 continua. */}
+      <div className="relative isolate space-y-4">
       {/* ART §3 — o sangramento de luz: a gema "ilumina a sala". Um bloom radial
          na cor de zona do dia sobe do topo e dissolve no --background antes do
          header. O app muda de temperatura conforme seu corpo, sem um card novo.
@@ -1502,6 +1509,7 @@ if (isLoading) {
           ) : null}
         </div>
 
+      </div>
       </div>
 
       {bannerCfg.bannerText && (
