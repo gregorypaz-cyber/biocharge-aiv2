@@ -23,8 +23,10 @@ describe('moment-engine — portão de dado mínimo', () => {
     expect(pickMoment(cks)).toBeNull();
   });
 
-  it('um dia comum e estável não gera momento', () => {
-    const cks = series(20, '2026-07-30', flat());
+  it('um dia comum e estável (amarelo) não gera momento', () => {
+    // recovery 58 = amarelo (meio-termo): sem sequência de zona, sem recorde,
+    // sem travessia — nada cruza o portão.
+    const cks = series(20, '2026-07-30', flat({ recovery_score: 58 }));
     expect(detectMoments(cks)).toEqual([]);
   });
 });
@@ -107,6 +109,73 @@ describe('moment-engine — travessia da dívida de sono', () => {
     const m = detectMoments(cks).find((x) => x.id === 'sleep_debt_cross');
     expect(m).toBeTruthy();
     expect(m.text).toContain('passou de 6h');
+  });
+});
+
+describe('moment-engine — sequência de queda do HRV', () => {
+  it('nomeia N quedas consecutivas (cautela)', () => {
+    const cks = series(20, '2026-07-30', (i, n) => ({
+      hrv: i >= n - 5 ? 60 - (i - (n - 5)) * 2 : 55, // 60,58,56,54,52 → 4 quedas
+      resting_hr: 52, sleep_hours: 7.5, recovery_score: 60,
+    }));
+    const m = detectMoments(cks).find((x) => x.id === 'hrv_falling');
+    expect(m).toBeTruthy();
+    expect(m.tone).toBe('caution');
+    expect(m.text).toContain('4 manhãs seguidas');
+  });
+});
+
+describe('moment-engine — sequência de zona', () => {
+  it('celebra sequência longa de verde (≥6)', () => {
+    const cks = series(20, '2026-07-30', (i, n) => ({
+      hrv: 55, resting_hr: 52, sleep_hours: 7.5,
+      recovery_score: i >= n - 7 ? 78 : 55, // 7 dias verdes no fim
+    }));
+    const m = detectMoments(cks).find((x) => x.id === 'zone_streak');
+    expect(m).toBeTruthy();
+    expect(m.tone).toBe('positive');
+    expect(m.text).toContain('7 dias seguidos');
+  });
+
+  it('alerta cedo no vermelho (≥2)', () => {
+    const cks = series(20, '2026-07-30', (i, n) => ({
+      hrv: 45, resting_hr: 52, sleep_hours: 7.5,
+      recovery_score: i >= n - 3 ? 35 : 60, // 3 dias vermelhos no fim
+    }));
+    const m = detectMoments(cks).find((x) => x.id === 'zone_streak');
+    expect(m).toBeTruthy();
+    expect(m.tone).toBe('caution');
+    expect(m.text).toContain('3º dia seguido no vermelho');
+  });
+});
+
+describe('moment-engine — dívida de sono zerada', () => {
+  it('celebra quando a dívida volta pra baixo de 6h', () => {
+    // today-7 = noite péssima (na janela de ontem); hoje volta à meta
+    const cks = series(14, '2026-07-30', (i, n) => ({
+      hrv: 55, resting_hr: 52, recovery_score: 65,
+      sleep_hours: i === n - 8 ? 0.5 : 7.5,
+    }));
+    const m = detectMoments(cks).find((x) => x.id === 'sleep_debt_cleared');
+    expect(m).toBeTruthy();
+    expect(m.tone).toBe('positive');
+  });
+});
+
+describe('moment-engine — despertares incomuns', () => {
+  it('reconhece uma noite muito acima do teu padrão', () => {
+    const cks = series(14, '2026-07-30', (i, n) => ({
+      hrv: 55, resting_hr: 52, sleep_hours: 7.5, recovery_score: 60,
+      sleep_awakenings: i === n - 1 ? 4 : (i % 3 === 0 ? 2 : 1),
+    }));
+    const m = detectMoments(cks).find((x) => x.id === 'unusual_awakenings');
+    expect(m).toBeTruthy();
+    expect(m.text).toContain('4 despertares');
+  });
+
+  it('silêncio quando o wearable não registra despertares', () => {
+    const cks = series(14, '2026-07-30', flat({ recovery_score: 58 }));
+    expect(detectMoments(cks).find((x) => x.id === 'unusual_awakenings')).toBeUndefined();
   });
 });
 
