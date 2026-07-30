@@ -240,7 +240,19 @@ export default function AppLayout() {
         className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto overscroll-y-contain"
       >
         <LayoutGroup>
-          <Outlet />
+          {/* Transição de tela: cada rota ENTRA com fade + rise (a anterior sai
+             instantânea). Sem AnimatePresence de propósito — evita o vão em
+             branco do mode="wait" e é mais simples. A key por pathname remonta o
+             wrapper a cada navegação → replay do enter. Degrada sozinho (navega
+             igual se não animar); reduce-motion vem do MotionConfig global. */}
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Outlet />
+          </motion.div>
         </LayoutGroup>
       </motion.main>
 
