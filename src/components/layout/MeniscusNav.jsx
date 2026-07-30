@@ -185,7 +185,7 @@ export default function MeniscusNav() {
       {/* 4 · A gema. Fora do grid: transborda a crista e mantém alvo próprio. */}
       <Link
         to="/checkin"
-        className="meniscus-gem"
+        className={cn('meniscus-gem', lit && 'meniscus-gem-lit')}
         aria-label="Check-in"
         aria-current={location.pathname === '/checkin' ? 'page' : undefined}
         style={{

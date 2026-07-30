@@ -345,6 +345,20 @@
   transition: filter 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .meniscus-gem svg { width: 100%; height: 100%; display: block; }
+
+/* O heartbeat da gema da nav — o app tem um pulso vivo em toda tela (ART/WHOOP).
+   Anima o <svg> interno (não o <Link>, cujo transform é posição + toque). Só
+   quando há zona (meniscus-gem-lit) e só sob no-preference (respeita o SO). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes mn-gem-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+  .meniscus-gem-lit svg {
+    transform-origin: 50% 52%;
+    animation: mn-gem-breathe 3.6s ease-in-out infinite;
+  }
+}
 .meniscus-gem:active { transform: translate(-50%, -50%) scale(0.96); }
 
 /* Foco visível — a gema é o CTA principal e não pode perder o anel. */
