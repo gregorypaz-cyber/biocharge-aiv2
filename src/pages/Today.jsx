@@ -126,6 +126,15 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
   // Chegou voando do reveal do check-in (O SALTO)? Então a gema já entra no valor
   // final — nada de re-contar depois do voo (evita o "reveal duplo").
   const fromCheckin = useLocation().state?.fromCheckin === true;
+  // O layoutId só pode existir durante a JANELA do voo. Se ficar permanente, a
+  // projeção de layout do framer dentro do <main> rolável briga com o scroll e
+  // TRAVA a Today. Some depois de ~950ms → Today normal não tem projeção nenhuma.
+  const [flying, setFlying] = useState(fromCheckin);
+  useEffect(() => {
+    if (!fromCheckin) return;
+    const t = setTimeout(() => setFlying(false), 950);
+    return () => clearTimeout(t);
+  }, [fromCheckin]);
 
   // Zona = fonte única (getZone → ZONE_GREEN_MIN/ZONE_YELLOW_MIN). Gema e legenda
   // derivam da MESMA zona, então não há como uma dizer verde e a outra amarelo.
@@ -260,7 +269,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
         {/* HERÓI — Recovery dominante + satélites Sono/Strain.
            layoutId="reck-hero": recebe o voo da gema do reveal do check-in. */}
         <div className="flex flex-col items-center pt-0">
-          <motion.div layoutId="reck-hero" transition={{ type: 'spring', stiffness: 230, damping: 28 }}>
+          <motion.div layoutId={flying ? 'reck-hero' : undefined} transition={{ type: 'spring', stiffness: 230, damping: 28 }}>
             <RecoveryField
               value={isCalibrating ? null : displayedScore}
               max={100}
