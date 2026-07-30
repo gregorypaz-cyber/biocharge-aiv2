@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Battery, AlertTriangle } from 'lucide-react';
 import BodyStateBadge, { STATE_CONFIG } from '@/components/ui-bio/BodyStateBadge';
+import CountUp from '@/components/ui/CountUp';
 
 const CAPACITY_CONFIG = {
   High: { pct: 90, color: '#22c55e', label: 'Alta' },
@@ -64,13 +65,13 @@ export default function CurrentStateCard({ checkin, totalStrain }) {
             Strain hoje
           </p>
           <p
-            className={`text-xl font-semibold font-mono ${
+            className={`text-xl font-semibold font-mono num ${
               strain >= 16 ? 'text-red-400' :
               strain >= 12 ? 'text-yellow-400' :
               'text-emerald-400'
             }`}
           >
-            {strain}
+            <CountUp value={strain} />
           </p>
           <span className="t-micro text-muted-foreground">
             acumulado
