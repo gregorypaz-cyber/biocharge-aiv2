@@ -235,11 +235,14 @@ export default function AppLayout() {
       {/* LayoutGroup persistente: a gema-herói (layoutId="reck-hero") sobrevive
          à troca de rota, então o reveal do check-in VOA e vira o herói da Today
          (O SALTO), em vez de sumir e a Today montar a frio. */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto overscroll-y-contain">
+      <motion.main
+        layoutScroll
+        className="flex-1 max-w-2xl mx-auto w-full px-4 py-5 pb-44 overflow-y-auto overscroll-y-contain"
+      >
         <LayoutGroup>
           <Outlet />
         </LayoutGroup>
-      </main>
+      </motion.main>
 
       {/* Dissolve de borda: o conteúdo derrete no fundo antes de encostar na nav */}
       <div className="scroll-edge-bottom" aria-hidden="true" />
