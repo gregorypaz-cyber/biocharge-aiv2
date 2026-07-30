@@ -30,6 +30,7 @@ import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
 import RecoveryField from '@/components/today/RecoveryField';
 import ReckNotouCard from '@/components/today/ReckNotouCard';
+import RecoveryDriversCard from '@/components/today/RecoveryDriversCard';
 import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
@@ -138,7 +139,7 @@ function CollapsibleHint({ children, label = 'Entender' }) {
   );
 }
 
-function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, recoveryDrivers, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
+function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
   const [showProntidaoHint, setShowProntidaoHint] = useState(false);
   // Chegou voando do reveal do check-in (O SALTO)? Então a gema já entra no valor
   // final — nada de re-contar depois do voo (evita o "reveal duplo").
@@ -353,29 +354,6 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                   <span className="font-semibold text-foreground">Recovery</span>{' '}
                   <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
                 </p>
-                {recoveryDrivers?.drivers?.length ? (
-                  <div className="mt-1.5 pt-1.5 border-t border-border/30 space-y-1">
-                    <p className="t-micro uppercase tracking-wider text-muted-foreground/80">O que moldou hoje · vs seu normal</p>
-                    {recoveryDrivers.drivers.map((d) => {
-                      const up = d.direction === 'positive';
-                      return (
-                        <div key={d.id} className="flex items-center justify-between gap-2 t-micro">
-                          {/* ART §2: a MEDIÇÃO em JetBrains Mono (leitura de instrumento);
-                             o nome do sinal (d.label) fica em Inter — mono = medido,
-                             Inter = veredito. Teto font-semibold (§3). */}
-                          <span className="text-muted-foreground">
-                            {d.label}
-                            <span className="font-mono text-muted-foreground/60">{' '}{d.value}{d.unit === 'pts' ? '' : ` ${d.unit}`}{d.baseline != null ? ` · base ${d.baseline}` : ''}</span>
-                          </span>
-                          <span className={cn('font-mono font-semibold', d.deltaPoints === 0 ? 'text-muted-foreground' : up ? 'text-zone-green' : 'text-zone-red')}>
-                            {d.deltaPoints === 0 ? '±0' : `${d.deltaPoints > 0 ? '+' : ''}${d.deltaPoints}`}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    <p className="t-micro leading-snug text-muted-foreground/60 pt-0.5">Efeito de cada sinal vs seu baseline. Não somam ao score (a curva e os tetos não são lineares).</p>
-                  </div>
-                ) : null}
                 <p className="t-micro leading-relaxed">
                   <span className="font-semibold text-foreground">Sono</span>{' '}
                   <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
@@ -1188,7 +1166,6 @@ function renderCard(desc) {
             recoveryBaseline={recoveryBaseline} cappedStrain={cappedStrain}
             todaySessions={todaySessions} strainTarget={strainTarget} analysis={analysis}
             sortedCheckins={sortedCheckins} today={today} targetZoneLabel={targetZoneLabel}
-            recoveryDrivers={recoveryDrivers}
             CAPACITY_PT={CAPACITY_PT} AUTONOMIC_PT={AUTONOMIC_PT}
             capacityContradictionNote={capacityContradictionNote}
             setShowAddModal={setShowAddModal} CtaIcon={CtaIcon}
@@ -1605,6 +1582,11 @@ if (isLoading) {
           ? <motion.div key={desc.id} variants={CASCADE_ITEM}>{el}</motion.div>
           : <React.Fragment key={desc.id}>{el}</React.Fragment>;
       })}
+
+      {/* SEU NORMAL — a decomposição visual do score: onde cada sinal caiu hoje
+         na régua pessoal (±1σ) e quanto puxou. O "porquê" logo abaixo do herói.
+         Cala sozinho durante a calibração (sem baseline → sem "teu normal"). */}
+      <RecoveryDriversCard drivers={recoveryDrivers} />
 
       {/* O RECK NOTOU — a revelação determinística do dia (moment-engine). Logo
          abaixo do herói: o app deixa de só explicar/prescrever e PERCEBE. Cala
