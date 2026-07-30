@@ -206,13 +206,13 @@ export default function CheckinSuccessOverlay({ checkin, previousCheckin, onCont
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm px-6"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-background/95 backdrop-blur-sm"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-sm space-y-5"
+        className="w-full max-w-sm mx-auto space-y-5 min-h-full flex flex-col justify-center py-8 px-6"
       >
         {/* Top — O SALTO: a gema se forma ao vivo do dia de ontem pro de hoje */}
         <div className="flex flex-col items-center text-center">
