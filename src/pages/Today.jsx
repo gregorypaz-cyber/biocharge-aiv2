@@ -29,6 +29,7 @@ import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
 import RecoveryField from '@/components/today/RecoveryField';
+import ReckNotouCard from '@/components/today/ReckNotouCard';
 import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
@@ -1604,6 +1605,11 @@ if (isLoading) {
           ? <motion.div key={desc.id} variants={CASCADE_ITEM}>{el}</motion.div>
           : <React.Fragment key={desc.id}>{el}</React.Fragment>;
       })}
+
+      {/* O RECK NOTOU — a revelação determinística do dia (moment-engine). Logo
+         abaixo do herói: o app deixa de só explicar/prescrever e PERCEBE. Cala
+         sozinho quando nada cruza o portão (não é card fixo). */}
+      <ReckNotouCard checkins={sortedCheckins} today={today} />
 
       <FatLossCard checkins={sortedCheckins} />
 
