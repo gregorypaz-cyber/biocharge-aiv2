@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import LongevityTrendCard from '@/components/intelligence/LongevityTrendCard';
 import { useDrawOnView } from '@/hooks/useDrawOnView';
+import CountUp from '@/components/ui/CountUp';
+import { PRESS_CTRL } from '@/lib/motion-press';
 
 const timeFilters = [
   { label: '7D', days: 7 },
@@ -993,28 +995,30 @@ export default function Trends() {
       <div className="space-y-2.5">
         <div className="flex gap-1.5">
           {timeFilters.map(f => (
-            <button
+            <motion.button
               key={f.days}
               onClick={() => setPeriod(f.days)}
+              {...PRESS_CTRL}
               className={cn(
-                'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all tap-target',
+                'px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors tap-target',
                 period === f.days
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80'
               )}
             >
               {f.label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
         <div className="flex flex-wrap gap-1.5">
           {metrics.map(m => (
-            <button
+            <motion.button
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
+              {...PRESS_CTRL}
               className={cn(
-                'px-2.5 py-1 rounded-lg t-micro font-semibold transition-all border tap-target',
+                'px-2.5 py-1 rounded-lg t-micro font-semibold transition-colors border tap-target',
                 selectedMetric === m.key
                   ? 'border-primary/40 bg-primary/10 text-foreground'
                   : 'border-border/40 bg-card text-muted-foreground hover:text-foreground'
@@ -1022,7 +1026,7 @@ export default function Trends() {
             >
               <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: m.color }} />
               {m.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -1039,14 +1043,14 @@ export default function Trends() {
 
         <div className="flex items-baseline gap-2.5 flex-wrap">
           <p
-            className="t-title font-semibold font-mono leading-none"
+            className="t-title font-semibold font-mono leading-none num"
             style={{
               color: selectedMetric === 'recovery_score' && periodAvg != null
                 ? getZoneColor(getZone(periodAvg))
                 : metricConfig?.color,
             }}
           >
-            {periodAvg ?? '—'}
+            <CountUp value={periodAvg ?? '—'} />
           </p>
 
           {trend !== null && (

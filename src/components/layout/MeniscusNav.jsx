@@ -4,6 +4,7 @@ import { Activity, Brain, Clock, Plus, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useTodayZone } from '@/hooks/useTodayZone';
+import { PRESS_TAB } from '@/lib/motion-press';
 
 /* A gema é um Link com física: um corpo denso que CEDE pra dentro do menisco
    quando pressionado e volta com mola. motion.create pra o whileTap valer no
@@ -173,7 +174,7 @@ export default function MeniscusNav() {
           const active = location.pathname === item.path;
           if (item.gem) return <span key={item.path} aria-hidden="true" />;
           return (
-            <Link
+            <GemLink
               key={item.path}
               to={item.path}
               aria-current={active ? 'page' : undefined}
@@ -181,10 +182,11 @@ export default function MeniscusNav() {
               style={active
                 ? { color: `hsl(${L.h} ${L.s}% ${lit ? 62 : 66}%)` }
                 : undefined}
+              {...PRESS_TAB}
             >
               <item.icon className="w-5 h-5" strokeWidth={2} />
               <span>{item.label}</span>
-            </Link>
+            </GemLink>
           );
         })}
       </div>
