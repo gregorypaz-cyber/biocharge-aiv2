@@ -267,3 +267,13 @@ export const SLEEP_CATASTROPHIC_CEIL = 30;   // teto do recovery em noite catast
 export const SLEEP_DYN_FULL_H        = 6.0;  // ≥ isto: sem deslocamento de peso
 export const SLEEP_DYN_MAX_SHIFT     = 0.25; // peso máx. movido HRV → Sono (atingido em 3h)
 export const SLEEP_HRV_TRUST_H       = 5.0;  // < isto: HRV positivo não conta (fade a partir de SLEEP_DYN_FULL_H)
+
+// ── Detector de regime de sono ────────────────────────────────────
+// Eficiencia = tempo dormindo / tempo na cama. Abaixo de 85% e o limiar
+// clinico usado para insonia — nao e numero escolhido por nos. Abaixo dele
+// o recovery esta fora do dominio onde HRV/RHR foram validados: a literatura
+// (Sci Rep, crossover com polissonografia) mostra que fragmentacao de sono
+// NAO altera parametros autonomicos, entao HRV e RHR sao cegos a ela.
+// Isto NAO altera o score — so marca confianca. Ver docs/ai-decisions.md 28/07.
+export const SLEEP_EFF_CONSOLIDATED = 0.85;
+export const SLEEP_EFF_SEVERE       = 0.75;
