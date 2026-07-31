@@ -33,3 +33,10 @@ base44/.app.jsonc
 
 # Design review artifacts (screenshots, cached auth state)
 scripts/design-review/out/
+
+# Verdicts soltos do painel de design (por sessão) — avaliações que ficam
+# obsoletas depois de implementadas; locais, fora de PR. Base do painel
+# (BOLD-*, JUROR-*, PANEL, README, REVIEW) segue versionada.
+scripts/design-review/AI-*.md
+scripts/design-review/MOTION-*.md
+scripts/design-review/TODAY-*.md
