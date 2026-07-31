@@ -30,11 +30,11 @@ export default function MomentTimeline({ checkins }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-4"
+      className="rounded-2xl bg-card p-4"
     >
       <div className="flex items-center gap-1.5 mb-3.5">
         <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="t-micro font-bold uppercase tracking-widest text-muted-foreground">
+        <span className="text-sm font-semibold tracking-tight">
           O que o Reck notou
         </span>
       </div>

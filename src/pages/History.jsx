@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Minus, AlertTriangle, Dumbbell, Pencil, Zap, BedDouble } from 'lucide-react';
-import { computeCheckinScores, getDayScore, getZone, getZoneClasses } from '@/lib/biocharge-utils';
+import { getDayScore, getZone, getZoneClasses } from '@/lib/biocharge-utils';
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
 import WeeklyRetrospectCard from '@/components/history/WeeklyRetrospectCard';
@@ -33,7 +33,7 @@ function WeekLabel({ weekStart }) {
   const end = new Date(d);
   end.setDate(d.getDate() + 6);
   return (
-    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+    <span className="text-sm font-semibold tracking-tight">
       {d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} — {end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
     </span>
   );
@@ -116,7 +116,7 @@ function DayDetailSheet({ checkin, sessions, onClose, onEdit }) {
 
           {sessions.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Treinos</p>
+              <p className="text-sm font-semibold tracking-tight">Treinos</p>
               {sessions.map((s, i) => (
                 <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-secondary">
                   <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function History() {
               key={weekStart}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border bg-card overflow-hidden"
+              className="rounded-2xl bg-card overflow-hidden"
             >
               {/* Week header */}
               <button

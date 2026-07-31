@@ -163,7 +163,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
 <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border/60 bg-card p-4"
+        className="rounded-xl bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <Gauge className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
@@ -188,7 +188,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
 <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
+      className="rounded-xl bg-card p-4 space-y-3.5"
     >
 <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
@@ -210,7 +210,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
 
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
-          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro text-muted-foreground mb-1">
             Carga aguda (7d)
           </p>
           <p className="text-xl font-mono font-semibold text-foreground">
@@ -219,7 +219,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
-          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro text-muted-foreground mb-1">
             Carga crônica
           </p>
           <p className="text-xl font-mono font-semibold text-foreground">
@@ -228,7 +228,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
         </div>
 
         <div className="rounded-xl bg-secondary/30 border border-border/30 px-3 py-3">
-          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+          <p className="t-micro text-muted-foreground mb-1">
             ACWR
           </p>
           <p className={`text-xl font-mono font-semibold ${classification.color}`}>
@@ -291,7 +291,7 @@ function RunningEconomyCard({ sessions = [] }) {
   if (!eco) return null;
   const positive = eco.isImproving;
   return (
-    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card tint-strain p-4 space-y-3.5">
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-card tint-strain p-4 space-y-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <Gauge className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
@@ -355,7 +355,7 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
 
   if (byWeek.size < 2) {
     return (
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card p-4">
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-card p-4">
         <div className="flex items-start gap-3">
           <Footprints className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div>
@@ -385,7 +385,7 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
   const DirIcon = deltaKm > 0.1 ? TrendingUp : deltaKm < -0.1 ? TrendingDown : Minus;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border/60 bg-card tint-strain p-4 space-y-3.5">
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-card tint-strain p-4 space-y-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <Footprints className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
@@ -441,7 +441,7 @@ function WeightTrendCard({ checkins = [] }) {
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border/60 bg-card p-4"
+        className="rounded-xl bg-card p-4"
       >
         <div className="flex items-start gap-3">
           <Scale className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
@@ -481,7 +481,7 @@ function WeightTrendCard({ checkins = [] }) {
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border/60 bg-card p-4 space-y-3.5"
+      className="rounded-xl bg-card p-4 space-y-3.5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
@@ -676,7 +676,7 @@ export default function Trends() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-xl border border-border/60 bg-card px-4 py-3.5"
+        className="rounded-xl bg-card px-4 py-3.5"
       >
         <span className="t-micro text-muted-foreground block mb-1.5 leading-tight">
           Média de {period} dias
@@ -723,7 +723,7 @@ export default function Trends() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-border/60 bg-card p-4"
+          className="rounded-xl bg-card p-4"
         >
           <div className="flex items-baseline gap-2 mb-0.5">
             <h3 className="text-sm font-semibold tracking-tight">{metricConfig?.label}</h3>
@@ -806,7 +806,7 @@ export default function Trends() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-xl border border-border/60 bg-card p-4"
+          className="rounded-xl bg-card p-4"
         >
           <h3 className="text-sm font-semibold mb-0.5 tracking-tight">Recovery vs Fadiga</h3>
           <p className="t-micro text-muted-foreground mb-3">Equilíbrio carga-recuperação diário</p>
@@ -896,7 +896,7 @@ export default function Trends() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="rounded-xl border border-border/60 bg-card p-4"
+            className="rounded-xl bg-card p-4"
           >
             <h3 className="text-sm font-semibold mb-0.5 tracking-tight">
               Sono × Recovery do dia seguinte
@@ -992,7 +992,7 @@ export default function Trends() {
       {/* ── Leitura avançada / fora do recovery (movido pro fim) ── */}
       <div className="space-y-3">
         <div>
-          <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="text-sm font-semibold tracking-tight">
             Leitura avançada
           </p>
           <p className="t-micro text-muted-foreground mt-1">
