@@ -317,3 +317,34 @@ export function pickMoment(checkins, lastSignature = null) {
   const moments = detectMoments(checkins);
   return moments.find((m) => m.signature !== lastSignature) || null;
 }
+
+/**
+ * buildMomentTimeline(checkins, opts) → o ACERVO: o que o Reck notou ao longo do
+ * tempo. Reproduz os detectores COMO-SE-FOSSE cada dia (histórico até aquele dia),
+ * pega o momento de maior prioridade, e COLAPSA repetições consecutivas (uma
+ * sequência que persiste vira uma entrada, na data mais recente em que valeu).
+ * A Today é o palco; isto é o arquivo consultável (painel ART).
+ * Determinístico e puro. [] quando não há histórico suficiente.
+ */
+export function buildMomentTimeline(checkins, { maxDays = 90, limit = 40 } = {}) {
+  const desc = sortedDesc(checkins);
+  if (desc.length < MIN_HISTORY) return [];
+  const cutoff = day(desc[0].date) - maxDays;
+  const out = [];
+  let lastKey = null;
+  for (let i = 0; i < desc.length && out.length < limit; i++) {
+    if (day(desc[i].date) < cutoff) break;
+    const asOf = desc.slice(i); // desc[i] = "hoje" daquele dia; os mais antigos vêm depois
+    if (asOf.length < MIN_HISTORY) break;
+    const top = detectMoments(asOf)[0];
+    if (!top) continue;
+    // Colapsa por FAMÍLIA (tipo + tom), não por assinatura: uma sequência que
+    // cresce (verde 8→28d) vira UMA entrada no pico, não 20 quase-iguais — mas
+    // verde e vermelho (mesmo id, tons diferentes) seguem separados.
+    const key = `${top.id}:${top.tone}`;
+    if (key === lastKey) continue;
+    out.push({ date: desc[i].date, ...top });
+    lastKey = key;
+  }
+  return out;
+}
