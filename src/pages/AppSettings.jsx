@@ -6,6 +6,7 @@ import { User, LogOut, Globe, Dumbbell, Clock, Target, Plus, X } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import CoachProviderSettings from '@/components/settings/CoachProviderSettings';
 
 const COMMON_SPORTS = ['Corrida', 'Musculação', 'Ciclismo', 'Natação', 'Futsal', 'Futebol', 'Jiu-jitsu', 'CrossFit', 'HIIT', 'Yoga', 'Caminhada', 'Boxe', 'Basquete', 'Pilates'];
 
@@ -494,6 +495,8 @@ export default function AppSettings() {
           ⚠️ rMSSD e SDNN são métricas de HRV diferentes. Misturar wearables contamina seu baseline — ao trocar, considere recomeçar o histórico de HRV.
         </p>
       </motion.div>
+
+      <CoachProviderSettings />
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}

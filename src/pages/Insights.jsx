@@ -38,6 +38,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
 import { buildCoachContext } from '@/lib/coach-context-builder';
+import { isByoConfigured, callByo } from '@/lib/byo-llm';
 import { cn } from '@/lib/utils';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
@@ -1225,7 +1226,12 @@ Regras:
     });
 
     try {
-      const result = await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
+      // Coach com IA própria (BYO-LLM) quando configurada — chave do usuário, sem
+      // queimar crédito de integração. Cai na integração do Base44 se não houver.
+      // Cercado a linguagem: o contexto já traz os números; o LLM só conversa.
+      const result = isByoConfigured()
+        ? await callByo(systemContext)
+        : await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
 
       const impossibleSleep =
         /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) &&
