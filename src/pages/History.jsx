@@ -6,6 +6,7 @@ import { computeCheckinScores, getDayScore, getZone, getZoneClasses } from '@/li
 import { parseLocalDate, formatDateShort } from '@/lib/date-utils';
 import BodyStateBadge from '@/components/ui-bio/BodyStateBadge';
 import WeeklyRetrospectCard from '@/components/history/WeeklyRetrospectCard';
+import MomentTimeline from '@/components/history/MomentTimeline';
 import YearHeatmap from '@/components/history/YearHeatmap';
 import { useNavigate } from 'react-router-dom';
 
@@ -202,6 +203,10 @@ export default function History() {
 
       {/* WHOOP §8: o mapa de calor do ano acima da lista — a narrativa, não só a semana. */}
       {computed.length > 0 && <YearHeatmap checkins={computed} weeksBack={18} />}
+
+      {/* O acervo do "Reck notou": o diário datado do que o app percebeu ao longo
+         do tempo (a Today é o palco; aqui é o arquivo). Cala sem histórico. */}
+      <MomentTimeline checkins={computed} />
 
       {weeks.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">Nenhum registro ainda.</div>

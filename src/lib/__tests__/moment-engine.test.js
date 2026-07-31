@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectMoments, pickMoment } from '@/lib/moment-engine.js';
+import { detectMoments, pickMoment, buildMomentTimeline } from '@/lib/moment-engine.js';
 
 // Helper: gera N dias de check-in terminando em `end` (YYYY-MM-DD), newest não-garantido
 // (o motor ordena sozinho). `fn(i)` recebe i=0 (mais antigo) → N-1 (mais recente).
@@ -176,6 +176,42 @@ describe('moment-engine — despertares incomuns', () => {
   it('silêncio quando o wearable não registra despertares', () => {
     const cks = series(14, '2026-07-30', flat({ recovery_score: 58 }));
     expect(detectMoments(cks).find((x) => x.id === 'unusual_awakenings')).toBeUndefined();
+  });
+});
+
+describe('moment-engine — acervo (timeline)', () => {
+  it('vazio abaixo do histórico mínimo', () => {
+    expect(buildMomentTimeline(series(5, '2026-07-30', flat({ recovery_score: 58 })))).toEqual([]);
+  });
+
+  it('coleta percepções ao longo do tempo e colapsa repetições consecutivas', () => {
+    // 3 dias vermelhos no fim → a sequência cresce (2º, 3º) mas a assinatura muda
+    // a cada dia; um platô verde longo antes colapsa numa entrada só.
+    const cks = series(30, '2026-07-30', (i, n) => ({
+      hrv: 50, resting_hr: 52, sleep_hours: 7.5,
+      recovery_score: i >= n - 3 ? 35 : 80, // 27 verdes, depois 3 vermelhos
+    }));
+    const tl = buildMomentTimeline(cks, { maxDays: 90 });
+    expect(tl.length).toBeGreaterThan(0);
+    // cada entrada tem data + texto + assinatura, e datas em ordem decrescente
+    for (let i = 1; i < tl.length; i++) {
+      expect(tl[i - 1].date >= tl[i].date).toBe(true);
+    }
+    // não há duas entradas adjacentes da MESMA família (id+tom) — sequência que
+    // cresce colapsa numa entrada só
+    for (let i = 1; i < tl.length; i++) {
+      const a = `${tl[i].id}:${tl[i].tone}`;
+      const b = `${tl[i - 1].id}:${tl[i - 1].tone}`;
+      expect(a).not.toBe(b);
+    }
+  });
+
+  it('colapsa uma sequência verde longa numa única entrada', () => {
+    // 25 dias verdes estáveis → uma entrada de zone_streak verde, não 20
+    const cks = series(25, '2026-07-30', flat({ recovery_score: 82 }));
+    const tl = buildMomentTimeline(cks, { maxDays: 90 });
+    const greens = tl.filter((m) => m.id === 'zone_streak' && m.tone === 'positive');
+    expect(greens.length).toBe(1);
   });
 });
 
