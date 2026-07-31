@@ -48,6 +48,15 @@ const SLEEP_DURATION_OPTIONS = Array.from({ length: 33 }, (_, i) => {
   return { value, label };
 });
 
+// Casa um valor de horas (ex: 7.6) com a opção mais próxima da roda (passos de
+// 15 min, 4:00–12:00), para o <select> nativo abrir na roleta certa no iPhone.
+function nearestSleepOption(h) {
+  if (h == null || isNaN(h)) return '';
+  const quarter = Math.round(Number(h) * 4) / 4;
+  const clamped = Math.min(12, Math.max(4, quarter));
+  return Number(clamped.toFixed(2));
+}
+
 // Converte horas decimais (ex: 7.75) para "HH:MM" (ex: "07:45") e vice-versa,
 // para usar <input type="time"> (roleta no iPhone) mantendo o armazenamento em horas.
 function hoursToHHMM(h) {
@@ -103,6 +112,7 @@ function HRVField({ value, onChange, metric = 'rMSSD' }) {
 )}
       <Input
         type="number"
+        inputMode="numeric"
         step="1"
         min={0}
         max={250}
@@ -124,11 +134,15 @@ function HRVField({ value, onChange, metric = 'rMSSD' }) {
 const DEFAULT_FORM = {
   date: getTodayLocal(),
   rest_day: false,
-  biocharge_morning: 70,
+  // Subjetivos nascem VAZIOS (null), nunca num "neutro" pré-marcado: um default
+  // preenchido é um dado fabricado — o app gravaria fadiga/energia/stress que o
+  // usuário nunca informou. Ausente = ausente; o motor já renormaliza pelo que
+  // existe. (Instrumento manual: honestidade > formulário "completo".)
+  biocharge_morning: null,
   biocharge_pre_workout: null,
   biocharge_post_workout: null,
-  sleep_score: 70,
-  fatigue: 30,
+  sleep_score: null,
+  fatigue: null,
   deep_sleep_pct: null,
   rem_sleep_pct: null,
   sleep_awakenings: null,
@@ -136,11 +150,11 @@ const DEFAULT_FORM = {
   sleep_regularity_pct: null,
   sleep_heart_rate: null,
   rpe: 0,
-  mood: 3,
-  stress: 2,
-  energy: 3,
-  hydration: 3,
-  muscle_soreness: 1,
+  mood: null,
+  stress: null,
+  energy: null,
+  hydration: null,
+  muscle_soreness: null,
   sleep_hours: 7,
   sleep_start_time: null,
   dinner_time: null,
@@ -258,7 +272,32 @@ export default function DailyCheckin() {
   }, [isPostMode, allSessions, todayDate, postForm.rpe]);
 
 
-  const [advancedOpen, setAdvancedOpen] = useState(true);
+  // Refino nasce FECHADO: o trabalho diário é HRV + sono + olhar o número. Os
+  // ~15 campos opcionais ficam a um toque, não empilhados abertos toda manhã.
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // Streak do ritual: manhãs seguidas que a pessoa se leu (termina hoje/ontem).
+  // Reenquadra o ato manual como identidade — "sou alguém que se lê" — que é a
+  // força de retenção mais forte que existe, ao custo de uma linha de contagem.
+  const readingStreak = useMemo(() => {
+    if (!checkins?.length) return 0;
+    const dates = new Set(checkins.map((c) => c.date));
+    let streak = 0;
+    const cursor = new Date();
+    for (let i = 0; i < 400; i++) {
+      const iso = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+      if (dates.has(iso)) {
+        streak++;
+        cursor.setDate(cursor.getDate() - 1);
+      } else if (i === 0) {
+        // Hoje ainda não salvo: começa a contar a partir de ontem.
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [checkins]);
 
 const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updatePost = (field, value) => dispatch({ type: 'SET_POST_FIELD', field, value });
@@ -771,16 +810,21 @@ if (isPostMode) {
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
-          <h1 className="text-lg font-semibold tracking-tight">Check-in da manhã</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Sua leitura da manhã</h1>
           <div className="w-16" />
         </div>
 
 <div className="px-1 space-y-1">
+  {readingStreak >= 2 && (
+    <p className="t-micro font-semibold text-primary/90">
+      {readingStreak}ª manhã seguida que você se lê
+    </p>
+  )}
   <p className="text-sm text-muted-foreground">
-    Informe os sinais da manhã para calcular sua dose do dia.
+    Bom dia. Conta como você amanheceu — eu leio o resto.
   </p>
   <p className="t-micro text-muted-foreground">
-    Preencha o que tiver — tudo numa tela só — e salve no fim. Quanto mais sinais (HRV, FC, sono avançado), mais precisa fica a leitura do dia.
+    Dois números bastam pra ler seu dia: HRV e horas de sono. O resto é refino, quando você quiser.
   </p>
 </div>
 
@@ -794,6 +838,21 @@ if (isPostMode) {
     </p>
   </div>
 )}
+
+        {/* Abertura humana: o único lugar em que a pessoa FALA antes do instrumento
+            medir. Um ember de um toque — rápido, quente — que já conta no score
+            (energia/disposição), no lugar da antiga barra "0–100" que não entrava
+            em fórmula nenhuma. Uma manhã em modo recuperação não pede disposição. */}
+        {!isRestDay && (
+          <div className="rounded-2xl bg-card p-4">
+            <EmojiSelector
+              label="Como você amanheceu?"
+              type="energy"
+              value={form.energy}
+              onChange={(v) => { update('energy', v); update('mood', v); }}
+            />
+          </div>
+        )}
 
 
         {/* Day Intent */}
@@ -847,94 +906,31 @@ if (isPostMode) {
         </div>
 
 
-        {/* Date */}
-        <div className="px-1">
-  <div className="flex items-center gap-3">
-    <span className="t-micro uppercase tracking-wider text-muted-foreground font-semibold">
-      Data
-    </span>
-    <Input
-      type="date"
-      value={form.date}
-      max={getTodayLocal()}
-      onChange={(e) => update('date', e.target.value)}
-      className="bg-card border-border/60 max-w-[180px] h-9 text-sm"
-    />
-  </div>
-</div>
-
-        {/* Quick Check-in */}
-        <CheckinStep title="Check-in rápido" icon={Zap} delay={0.05}>
-          {!isApple && (
-          <SliderField
-  label="Como você acordou? (0–100)"
-  hint="Sua percepção geral ao acordar — fica como referência de calibração, não entra na fórmula"
-  value={form.biocharge_morning}
-  onChange={(v) => update('biocharge_morning', v)}
-  lowLabel="Baixo"
-  midLabel="Médio"
-  highLabel="Alto"
-/>
-          )}
-
-
-          {!isApple && (
-          <SliderField
-  label="Pontuação do Sono (Zepp)"
-  hint="Valor de 0–100 do app Zepp → Sono — fica como referência de calibração, não entra na fórmula"
-  value={form.sleep_score}
-  onChange={(v) => update('sleep_score', v)}
-  icon={Moon}
-  lowLabel="Ruim"
-  midLabel="Ok"
-  highLabel="Boa"
-/>
-          )}
-
+        {/* Sinais essenciais — os três que produzem o número: sono, HRV, FC.
+            As barras de calibração do Zepp saíram daqui (não entram em fórmula):
+            viraram um bloco opcional no fim do refino. */}
+        <CheckinStep title="Sinais essenciais" icon={Zap} delay={0.05}>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">
-              Horas de Sono
+            <label htmlFor="sleep-hours" className="text-sm font-medium text-foreground">
+              Horas de sono
             </label>
 
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={14}
-                step={1}
-                placeholder="7"
-                value={form.sleep_hours == null ? '' : Math.floor(form.sleep_hours)}
-                onChange={(e) => {
-                  const h = Math.min(14, Math.max(0, parseInt(e.target.value || '0', 10) || 0));
-                  const m = Math.round(((form.sleep_hours || 0) % 1) * 60);
-                  update('sleep_hours', Number((h + m / 60).toFixed(2)));
-                  setTouched((t) => ({ ...t, sleep_hours: true }));
-                }}
-                className="bg-secondary border-border/40 font-mono w-20 h-11 text-center"
-              />
-              <span className="text-sm text-muted-foreground">h</span>
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={59}
-                step={5}
-                placeholder="45"
-                value={form.sleep_hours == null ? '' : Math.round((form.sleep_hours % 1) * 60)}
-                onChange={(e) => {
-                  const m = Math.min(59, Math.max(0, parseInt(e.target.value || '0', 10) || 0));
-                  const h = Math.floor(form.sleep_hours || 0);
-                  update('sleep_hours', Number((h + m / 60).toFixed(2)));
-                  setTouched((t) => ({ ...t, sleep_hours: true }));
-                }}
-                className="bg-secondary border-border/40 font-mono w-20 h-11 text-center"
-              />
-              <span className="text-sm text-muted-foreground">min</span>
-            </div>
+            <select
+              id="sleep-hours"
+              value={form.sleep_hours == null ? '' : nearestSleepOption(form.sleep_hours)}
+              onChange={(e) => {
+                update('sleep_hours', Number(e.target.value));
+                setTouched((t) => ({ ...t, sleep_hours: true }));
+              }}
+              className="bg-secondary border border-border/40 rounded-xl font-mono h-11 px-3 text-sm w-full max-w-[160px] tap-target"
+            >
+              {SLEEP_DURATION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
 
             <p className="t-micro text-muted-foreground">
-              Duração total do sono — ex: 7 h 45 min.
+              Duração total do sono — a roda vai de 4:00 a 12:00.
             </p>
           </div>
 
@@ -953,6 +949,7 @@ if (isPostMode) {
               </label>
               <Input
                 type="number"
+                inputMode="numeric"
                 step="1"
                 min={30}
                 max={220}
@@ -970,10 +967,68 @@ if (isPostMode) {
 
         </CheckinStep>
 
-{/* Mini Preview */}
+{/* Mini Preview — a recompensa acende assim que HRV + sono entram */}
 <LivePreview preview={preview} compact />
 
-{/* Botão de salvar movido para o fim da página (ver patch 1.4) */}
+{/* IA + Salvar logo abaixo da recompensa: recompensa → ação, lado a lado.
+    O refino (opcional) fica embaixo — não mais entre a pessoa e o Salvar. */}
+{!savedCheckin && (
+  <div className="space-y-3">
+    {!isRestDay && (
+      <button
+        type="button"
+        onClick={() => update('generate_ai', !form.generate_ai)}
+        className={`w-full flex items-center justify-between rounded-2xl border p-3.5 text-left transition-all ${form.generate_ai ? 'border-primary/40 bg-primary/5' : 'border-border/40 bg-secondary'}`}
+      >
+        <div>
+          <p className="text-sm font-semibold">Gerar análise de IA hoje</p>
+          <p className="t-micro text-muted-foreground mt-0.5">
+            Texto profundo + bullets da Today. Usa crédito de integração — ligue só quando quiser.
+          </p>
+        </div>
+        <span className={`ml-3 shrink-0 w-11 h-6 rounded-full transition-all relative ${form.generate_ai ? 'bg-primary' : 'bg-border'}`}>
+          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${form.generate_ai ? 'left-[22px]' : 'left-0.5'}`} />
+        </span>
+      </button>
+    )}
+
+    <div className="space-y-2">
+      {!morningReady && (
+        <p className="t-micro text-amber-400/80 px-1 text-center">
+          <ArrowUp size={12} className="inline mr-1" />Falta só o HRV e as horas de sono — aí eu fecho seu plano
+        </p>
+      )}
+      <Button
+        onClick={() => saveMorningMutation.mutate(form)}
+        disabled={saveMorningMutation.isPending || !morningReady}
+        className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {saveMorningMutation.isPending ? (
+          <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar plano do dia
+          </>
+        )}
+      </Button>
+    </div>
+
+    {/* Data — quase sempre hoje; discreta, fora do caminho dos sinais */}
+    <div className="px-1">
+      <div className="flex items-center gap-2">
+        <span className="t-micro text-muted-foreground">Data</span>
+        <Input
+          type="date"
+          value={form.date}
+          max={getTodayLocal()}
+          onChange={(e) => update('date', e.target.value)}
+          className="bg-card border-border/60 max-w-[160px] h-8 text-xs"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
 {/* Advanced toggle */}
 <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
@@ -998,8 +1053,8 @@ if (isPostMode) {
           {!advancedOpen && (
   <p className="t-micro text-muted-foreground">
     {isRestDay
-      ? 'Opcional: sono profundo/REM, humor, stress, HRV e FC para melhorar a leitura da recuperação.'
-      : 'Opcional: sono profundo/REM, fadiga, humor, stress, HRV e FC para melhorar a prescrição do dia.'}
+      ? 'Opcional: sono profundo/REM, regularidade, stress e hidratação para afinar a leitura da recuperação.'
+      : 'Opcional: sono profundo/REM, regularidade, fadiga, stress e hidratação para afinar a prescrição do dia.'}
   </p>
 )}
 
@@ -1009,31 +1064,49 @@ if (isPostMode) {
         {advancedOpen && (
           <>
             <CheckinStep title="Sono — contexto avançado" icon={Moon} delay={0.1}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <SliderField
-  label="Sono Profundo"
-  hint="Percentual de sono profundo"
-  value={form.deep_sleep_pct}
-  onChange={(v) => update('deep_sleep_pct', v)}
-  unit="%"
-  max={60}
-  lowLabel="Baixo"
-  midLabel="Bom"
-  highLabel="Alto"
-/>
+              <p className="t-micro text-muted-foreground -mt-1">
+                Estes campos vêm do Zepp → Sono. Preencha o que quiser — cada um afina um pouco a leitura.
+              </p>
+              {/* Profundo/REM são números EXATOS copiados do Zepp, não quantidades
+                  "sentidas" — campo numérico bate slider (você digita, não mira). */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Sono profundo (%)</label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    step="1"
+                    min={0}
+                    max={60}
+                    placeholder="ex: 20"
+                    value={form.deep_sleep_pct ?? ''}
+                    onChange={(e) => update('deep_sleep_pct', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v)) update('deep_sleep_pct', Math.min(60, Math.max(0, v)));
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                </div>
 
-
-                <SliderField
-  label="Sono REM"
-  hint="Percentual de sono REM"
-  value={form.rem_sleep_pct}
-  onChange={(v) => update('rem_sleep_pct', v)}
-  unit="%"
-  max={60}
-  lowLabel="Baixo"
-  midLabel="Bom"
-  highLabel="Alto"
-/>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">Sono REM (%)</label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    step="1"
+                    min={0}
+                    max={60}
+                    placeholder="ex: 22"
+                    value={form.rem_sleep_pct ?? ''}
+                    onChange={(e) => update('rem_sleep_pct', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v)) update('rem_sleep_pct', Math.min(60, Math.max(0, v)));
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -1066,60 +1139,20 @@ if (isPostMode) {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">
-                    Despertares
-                  </label>
-                  <Input
-                    type="number"
-                    step="1"
-                    min={0}
-                    max={30}
-                    placeholder="ex: 5"
-                    value={form.sleep_awakenings ?? ''}
-                    onChange={(e) => update('sleep_awakenings', e.target.value === '' ? null : parseInt(e.target.value, 10))}
-                    onBlur={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(v)) update('sleep_awakenings', Math.min(30, Math.max(0, v)));
-                    }}
-                    className="bg-secondary border-border/40 font-mono"
-                  />
-                                    <p className="t-micro text-muted-foreground">Zepp → Sono</p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-muted-foreground">
-                    Tempo acordado
-                  </label>
-                  <Input
-                    type="number"
-                    step="1"
-                    min={0}
-                    max={600}
-                    placeholder="ex: 45"
-                    value={form.awake_minutes ?? ''}
-                    onChange={(e) => update('awake_minutes', e.target.value === '' ? null : parseInt(e.target.value, 10))}
-                    onBlur={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(v)) update('awake_minutes', Math.min(600, Math.max(0, v)));
-                    }}
-                    className="bg-secondary border-border/40 font-mono"
-                  />
-                  <p className="t-micro text-muted-foreground">min — Zepp → Sono → Acordado</p>
-                </div>
-
-
+              {/* Regularidade primeiro: é o 2º sinal de sono mais pesado (0.25),
+                  depois só a duração — não fica mais enterrada no fim do grid. */}
+              <div className="grid grid-cols-3 gap-3 pt-1">
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground">
                     Regularidade
                   </label>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     step="1"
                     min={0}
                     max={100}
-                    placeholder="ex: 75"
+                    placeholder="%"
                     value={form.sleep_regularity_pct ?? ''}
                     onChange={(e) => update('sleep_regularity_pct', e.target.value === '' ? null : parseInt(e.target.value, 10))}
                     onBlur={(e) => {
@@ -1128,7 +1161,48 @@ if (isPostMode) {
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
-                  <p className="t-micro text-muted-foreground">% — Zepp</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    Despertares
+                  </label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    step="1"
+                    min={0}
+                    max={30}
+                    placeholder="nº"
+                    value={form.sleep_awakenings ?? ''}
+                    onChange={(e) => update('sleep_awakenings', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v)) update('sleep_awakenings', Math.min(30, Math.max(0, v)));
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground">
+                    Tempo acordado
+                  </label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    step="1"
+                    min={0}
+                    max={600}
+                    placeholder="min"
+                    value={form.awake_minutes ?? ''}
+                    onChange={(e) => update('awake_minutes', e.target.value === '' ? null : parseInt(e.target.value, 10))}
+                    onBlur={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!Number.isNaN(v)) update('awake_minutes', Math.min(600, Math.max(0, v)));
+                    }}
+                    className="bg-secondary border-border/40 font-mono"
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -1137,10 +1211,11 @@ if (isPostMode) {
                   </label>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     step="1"
                     min={30}
                     max={120}
-                    placeholder="ex: 62"
+                    placeholder="bpm"
                     value={form.sleep_heart_rate ?? ''}
                     onChange={(e) => update('sleep_heart_rate', e.target.value === '' ? null : parseInt(e.target.value, 10))}
                     onBlur={(e) => {
@@ -1149,7 +1224,6 @@ if (isPostMode) {
                     }}
                     className="bg-secondary border-border/40 font-mono"
                   />
-                  <p className="t-micro text-muted-foreground">bpm — Zepp</p>
                 </div>
               </div>
             </CheckinStep>
@@ -1171,12 +1245,8 @@ if (isPostMode) {
             )}
 
             <CheckinStep title="Bem-estar" icon={Smile} delay={0.2}>
-              <EmojiSelector
-                label="Disposição (humor + energia)"
-                type="energy"
-                value={form.energy}
-                onChange={(v) => { update('energy', v); update('mood', v); }}
-              />
+              {/* Disposição/energia já foi a abertura da tela — não se pergunta
+                  de novo aqui. Restam os sinais que ela não cobre. */}
               <EmojiSelector
                 label="Estresse"
                 type="stress"
@@ -1205,6 +1275,7 @@ if (isPostMode) {
                   </label>
                   <Input
                     type="number"
+                    inputMode="decimal"
                     step="0.1"
                     min={30}
                     max={300}
@@ -1233,52 +1304,25 @@ if (isPostMode) {
               />
             </CheckinStep>
 
+            {/* Calibração (opcional) — o resumo que o Zepp já cospe. Não muda o
+                cálculo (é fusão dos mesmos sinais brutos); fica como SUA
+                referência pra comparar percepção × número. Some no perfil Apple. */}
+            {!isApple && (
+              <CheckinStep title="Calibração do Zepp (opcional)" icon={Moon} delay={0.35}>
+                <SliderField
+                  label="Pontuação do Sono (Zepp)"
+                  hint="Como o Zepp resumiu sua noite — sua referência, não muda o cálculo"
+                  value={form.sleep_score}
+                  onChange={(v) => update('sleep_score', v)}
+                  lowLabel="Ruim"
+                  midLabel="Ok"
+                  highLabel="Boa"
+                />
+              </CheckinStep>
+            )}
+
 
           </>
-        )}
-
-        {/* Análise de IA — opcional, só dispara quando você liga (protege crédito) */}
-        {!savedCheckin && !isRestDay && (
-          <button
-            type="button"
-            onClick={() => update('generate_ai', !form.generate_ai)}
-            className={`w-full flex items-center justify-between rounded-2xl border p-3.5 text-left transition-all ${form.generate_ai ? 'border-primary/40 bg-primary/5' : 'border-border/40 bg-secondary'}`}
-          >
-            <div>
-              <p className="text-sm font-semibold">Gerar análise de IA hoje</p>
-              <p className="t-micro text-muted-foreground mt-0.5">
-                Texto profundo + bullets da Today. Usa crédito de integração — ligue só quando quiser.
-              </p>
-            </div>
-            <span className={`ml-3 shrink-0 w-11 h-6 rounded-full transition-all relative ${form.generate_ai ? 'bg-primary' : 'bg-border'}`}>
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${form.generate_ai ? 'left-[22px]' : 'left-0.5'}`} />
-            </span>
-          </button>
-        )}
-
-        {/* Salvar — botão principal único, no fim da página */}
-        {!savedCheckin && (
-          <div className="space-y-2 pt-1">
-            {!morningReady && (
-              <p className="t-micro text-amber-400/80 px-1 text-center">
-                <ArrowUp size={12} className="inline mr-1" />Informe o HRV e as horas de sono para salvar
-              </p>
-            )}
-            <Button
-              onClick={() => saveMorningMutation.mutate(form)}
-              disabled={saveMorningMutation.isPending || !morningReady}
-              className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {saveMorningMutation.isPending ? (
-                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar plano do dia
-                </>
-              )}
-            </Button>
-          </div>
         )}
 
       </div>
