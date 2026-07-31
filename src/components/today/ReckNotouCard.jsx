@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { detectMoments } from '@/lib/moment-engine';
 
 /* ═══ O RECK NOTOU ════════════════════════════════════════════════════════════
@@ -85,22 +84,16 @@ export default function ReckNotouCard({ checkins = [], today }) {
       <div className="relative">
         <div className="flex items-center gap-1.5 mb-2">
           <Sparkles className="w-3.5 h-3.5" style={{ color: tone.accent }} />
-          <span className="t-micro font-bold uppercase tracking-widest" style={{ color: tone.accent }}>
+          <h3 className="text-sm font-semibold tracking-tight" style={{ color: tone.accent }}>
             O Reck notou
-          </span>
+          </h3>
         </div>
 
+        {/* A frase JÁ carrega o número (o painel: "78" era dito 3× na tela). Sem
+           chip de evidência aqui — o fato é falado uma vez, na voz. */}
         <p className="text-[15px] font-semibold leading-snug text-foreground">
           {moment.text}
         </p>
-
-        {moment.evidence && (
-          <div className="mt-3">
-            <span className={cn('t-micro font-mono font-semibold px-2 py-0.5 rounded-full border num', tone.chip)}>
-              {moment.evidence.label} {moment.evidence.value}
-            </span>
-          </div>
-        )}
       </div>
     </motion.div>
   );
