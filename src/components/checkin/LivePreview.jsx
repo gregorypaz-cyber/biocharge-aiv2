@@ -54,10 +54,12 @@ function getConfidenceChip(confidence) {
 }
 
 function CalibratingCard({ hasHrvToday, compact }) {
-  const title = hasHrvToday ? 'Calibrando seu baseline' : 'Falta o sinal principal';
+  // Slot vazio = promessa, não repreensão. Antes de qualquer dado, o card diz
+  // onde o número VAI aparecer, em vez de anunciar o que falta.
+  const title = hasHrvToday ? 'Calibrando seu baseline' : 'Seu número aparece aqui';
   const body = hasHrvToday
     ? 'HRV de hoje registrado. Antes de cravar um número de recovery, preciso de algumas noites de HRV para aprender o seu normal — é assim que o app evita inventar dado. Pode salvar normalmente; o histórico já está sendo construído.'
-    : 'Informe o HRV (e a FC de repouso, se tiver) acima para calcular o recovery do dia. Sem HRV, o número não teria base fisiológica.';
+    : 'Informe o HRV acima e eu leio seu recovery na hora. Com a FC de repouso junto, fica ainda mais preciso.';
 
   return (
     <motion.div
@@ -137,7 +139,7 @@ export default function LivePreview({ preview, compact = false }) {
               Plano preliminar
             </p>
             <p className="t-micro text-muted-foreground mt-1">
-              Você já pode salvar com estes dados e refinar depois.
+              Já dá pra salvar. Quer afinar? O refino fica logo abaixo.
             </p>
           </div>
 
