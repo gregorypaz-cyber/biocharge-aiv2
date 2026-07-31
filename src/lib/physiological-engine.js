@@ -1574,6 +1574,35 @@ export function assessBaselineFreshness(checkins, now = new Date()) {
   return { status, daysSinceLastReading, gapBeforeLatest, reason };
 }
 
+/**
+ * Detector de regime de sono. NAO altera o recovery — reporta se a noite esta
+ * dentro do dominio de validade do score.
+ * Silencio > sinal fabricado: sem awake_minutes, retorna state 'unknown' e
+ * inDomain true (nao penaliza noite so por falta de dado).
+ */
+export function assessSleepRegime(checkin) {
+  const h = Number(checkin?.sleep_hours);
+  const aw = Number(checkin?.awake_minutes);
+  if (!Number.isFinite(h) || h <= 0 || !Number.isFinite(aw) || aw < 0) {
+    return { state: 'unknown', efficiency: null, awakeMinutes: null, inDomain: true };
+  }
+  const asleep = h * 60;
+  const bed = asleep + aw;
+  if (bed <= 0) {
+    return { state: 'unknown', efficiency: null, awakeMinutes: null, inDomain: true };
+  }
+  const efficiency = asleep / bed;
+  let state = 'consolidated';
+  if (efficiency < C.SLEEP_EFF_SEVERE) state = 'severely_fragmented';
+  else if (efficiency < C.SLEEP_EFF_CONSOLIDATED) state = 'fragmented';
+  return {
+    state,
+    efficiency,
+    awakeMinutes: aw,
+    inDomain: efficiency >= C.SLEEP_EFF_CONSOLIDATED,
+  };
+}
+
 // ─── Async Analysis Wrapper ───────────────────────────────────────────────────
 
 function _djb2(str) {

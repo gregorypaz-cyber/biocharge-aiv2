@@ -327,7 +327,7 @@ function _sleepZ(todayScore, recentCheckins) {
   if (todayScore == null) return null;
   const prior = (recentCheckins || []).map((c) => calculateSleepScore(c)).filter((v) => v != null);
   if (prior.length < 4) return null;
-  const w = prior.slice(0, 14);
+  const w = prior.slice(0, RC.SLEEP_BL_WINDOW_NIGHTS);
   const m = w.reduce((a, b) => a + b, 0) / w.length;
   const sd = Math.max(Math.sqrt(w.reduce((a, b) => a + (b - m) * (b - m), 0) / (w.length - 1)), 5);
   const z = (todayScore - m) / sd;
