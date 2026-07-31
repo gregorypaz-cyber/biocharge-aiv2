@@ -239,6 +239,14 @@ export const ZONE_YELLOW_MIN = 42; // ≥ : em torno/abaixo do normal; < isto = 
 // independentemente de onde é calculado (Today recomputa ao vivo; DailyCheckin salva).
 export const BL_WINDOW_NIGHTS = 90;
 
+// Janela da baseline do componente Sono do Recovery (_sleepZ).
+// 90 noites alinha com Oura (tendencia de 14d comparada a media de 3 meses) e
+// Bevel (baseline pessoal de 60d). A janela antiga de 14 noites fazia a regua
+// descer junto com o usuario em mudanca de regime: em jul/2026 a baseline de
+// sono caiu de 83 para 50 (sd 3.3 -> 27), e uma noite ruim passou a ler como
+// "acima do meu normal" (deriva de 2.97 sigma). Ver docs/ai-decisions.md 28/07.
+export const SLEEP_BL_WINDOW_NIGHTS = 90;
+
 // ── HRV Variabilidade (Esco 2026 — médias semanais) ───────────────────────────
 /** Janela de dias para a média móvel do HRV (RMSSDmean) */
 export const RMSSD_MEAN_WINDOW = 7;
