@@ -28,7 +28,7 @@ function lerpHsl(from, to, t) {
 // O SALTO — a gema se remorfa ao vivo do valor de ontem pro de hoje: uma única
 // animação orgânica (~760ms) depois de um respiro pra tela assentar. Valor conta,
 // cor migra pela zona, e o peso do glifo engrossa junto (movimento 1).
-function useGemMorph({ fromVal, toVal, fromColor, toColor, delay = 300, dur = 880 }) {
+export function useGemMorph({ fromVal, toVal, fromColor, toColor, delay = 300, dur = 880 }) {
   const [state, setState] = useState({ value: fromVal, color: fromColor });
   useEffect(() => {
     const reduce =

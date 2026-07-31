@@ -34,6 +34,7 @@ import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
 import { computeCheckinScores } from '@/lib/biocharge-utils';
 import CheckinSuccessOverlay from '@/components/checkin/CheckinSuccessOverlay';
+import PostWorkoutCloseOverlay from '@/components/checkin/PostWorkoutCloseOverlay';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
@@ -217,6 +218,7 @@ export default function DailyCheckin() {
 
 
   const [savedCheckin, setSavedCheckin] = useState(null);
+  const [postClosed, setPostClosed] = useState(false);
 
   // Dia anterior com Recovery real — origem do morph da gema no reveal (O SALTO).
   // Sem ontem, o overlay faz a gema "nascer" slate em vez de morfar.
@@ -533,8 +535,8 @@ const savePostMutation = useMutation({
 
     if (navigator.vibrate) navigator.vibrate(40);
 
-    toast.success('Dia fechado. Você se leu de manhã e voltou depois do treino.')
-    navigate('/today');
+    // O fechamento é a recompensa (PostWorkoutCloseOverlay), não um toast.
+    setPostClosed(true);
   },
 });
 
@@ -613,6 +615,16 @@ if (isPostMode) {
 
     savePostMutation.mutate(postForm);
   };
+
+  if (postClosed) {
+    return (
+      <PostWorkoutCloseOverlay
+        recovery={morningRecovery}
+        sleepNeed={sleepNeed}
+        onContinue={() => navigate('/today', { state: { fromCheckin: true } })}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 max-w-xl mx-auto pb-8">
