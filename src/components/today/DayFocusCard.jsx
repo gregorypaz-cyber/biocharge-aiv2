@@ -22,7 +22,7 @@ export default function DayFocusCard({ mode, acwr, sleepDebtHours, soreness, str
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-4"
+      className="rounded-2xl bg-card p-4"
     >
       <div className="flex items-center gap-1.5 mb-2.5">
         <Target className="w-3.5 h-3.5 text-muted-foreground" />

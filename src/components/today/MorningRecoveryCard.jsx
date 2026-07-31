@@ -207,7 +207,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
       initial={initial ?? { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={reducedTransition}
-      className="rounded-2xl border border-border bg-card p-4 space-y-4"
+      className="rounded-2xl bg-card p-4 space-y-4"
     >
       {/* Header */}
       <div className="flex items-center gap-2">
