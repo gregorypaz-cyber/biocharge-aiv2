@@ -31,6 +31,7 @@ import HealthStatusCard from '@/components/today/HealthStatusCard';
 import RecoveryField from '@/components/today/RecoveryField';
 import ReckNotouCard from '@/components/today/ReckNotouCard';
 import RecoveryDriversCard from '@/components/today/RecoveryDriversCard';
+import DayFocusCard from '@/components/today/DayFocusCard';
 import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
@@ -1582,6 +1583,23 @@ if (isLoading) {
           ? <motion.div key={desc.id} variants={CASCADE_ITEM}>{el}</motion.div>
           : <React.Fragment key={desc.id}>{el}</React.Fragment>;
       })}
+
+      {/* FOCO DE HOJE — 2 ações determinísticas (dose + proteger), consistentes
+         por construção com a decisão do dia. Substitui os bullets de LLM que eram
+         gravados e nunca mostrados; agora grátis e visíveis. */}
+      <DayFocusCard
+        mode={dailyVerdict?.mode || enrichedCheckin?.decision_mode}
+        acwr={analysis?.trainingLoad?.ratio ?? null}
+        sleepDebtHours={analysis?.sleepDebt?.debt ?? null}
+        soreness={enrichedCheckin?.muscle_soreness ?? enrichedCheckin?.muscle_soreness_level ?? null}
+        stress={enrichedCheckin?.stress ?? enrichedCheckin?.stress_score ?? null}
+        hrvDeltaPct={(() => {
+          const d = recoveryDrivers?.drivers?.find((x) => x.id === 'hrv');
+          return d && d.baseline ? Math.round(((d.value - d.baseline) / d.baseline) * 100) : null;
+        })()}
+        restDay={isRestMode}
+        seed={today ? today.split('-').reduce((s, p) => s + Number(p), 0) : 0}
+      />
 
       {/* SEU NORMAL — a decomposição visual do score: onde cada sinal caiu hoje
          na régua pessoal (±1σ) e quanto puxou. O "porquê" logo abaixo do herói.

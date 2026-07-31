@@ -1012,6 +1012,90 @@ function buildTrainingLoadLabel(masterSignal) {
   return 'Descanso / recuperação ativa';
 }
 
+/* ═══ FOCO DE HOJE ════════════════════════════════════════════════════════════
+   Duas ações concretas pra executar o dia, 100% determinísticas: a DOSE (keyed na
+   decisão do dia — não pode contradizer o veredito, por construção) e o PROTEGER
+   (o fato mais saliente que pede atenção: dívida de sono > ACWR > dor > estresse >
+   HRV). Sem emoji (BRAND §5: emoji nunca em chrome). Variação diária via
+   pickNarrativeVariant semeado pela data. Substitui os bullets de LLM que eram
+   gravados e nunca mostrados — agora grátis, visíveis e consistentes. */
+function round1(n) { return Math.round(n * 10) / 10; }
+
+export function buildDayFocus(input = {}) {
+  const { mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed = 0 } = input;
+  const restLike = restDay || mode === 'recover';
+
+  const DOSE = {
+    train_high: [
+      'Pode puxar: a recuperação sustenta intensidade hoje.',
+      'Dia de treino forte — a janela está aberta.',
+      'Verde pra intensidade. Aproveita sem culpa.',
+    ],
+    train_moderate: [
+      'Fica na faixa moderada — controlado rende mais que heroico.',
+      'Dá pra treinar, mas sem virar forte no meio do caminho.',
+      'Moderado é a dose certa: nem segurar demais, nem forçar.',
+    ],
+    train_light: [
+      'Leve hoje: movimento que recupera, não que cobra.',
+      'Volume baixo e técnica — mantém o motor girando.',
+      'Um treino leve hoje protege a semana inteira.',
+    ],
+    recover: [
+      'Hoje o ganho está em recuperar, não em treinar.',
+      'Recuperação ativa no máximo — o corpo pede folga de verdade.',
+      'Segura a carga: descansar hoje é o que constrói amanhã.',
+    ],
+  };
+  const doseOpts = DOSE[mode] || (restLike ? DOSE.recover : DOSE.train_moderate);
+  const doseTone = restLike ? 'neutral' : 'good';
+  const dose = { text: pickNarrativeVariant(doseOpts, [], seed), tone: doseTone };
+
+  let protectOpts;
+  let protectTone = 'caution';
+  if (sleepDebtHours != null && sleepDebtHours >= 6) {
+    protectOpts = [
+      `Dívida de sono em ${round1(sleepDebtHours)}h — dormir cedo hoje vale mais que qualquer treino.`,
+      `Tua semana acumulou ${round1(sleepDebtHours)}h de déficit de sono. A prioridade é a cama.`,
+    ];
+  } else if (acwr != null && acwr > 1.3) {
+    protectOpts = [
+      `Carga recente subiu rápido (ACWR ${acwr.toFixed(2)}) — evita novos saltos por uns dias.`,
+      `Teu ACWR está em ${acwr.toFixed(2)}: segura o volume antes de subir mais.`,
+    ];
+  } else if (soreness != null && soreness >= 4) {
+    protectOpts = [
+      'Dor muscular alta — mobilidade e sono aceleram a volta.',
+      'O corpo ainda está dolorido: aquecimento longo e nada de recorde hoje.',
+    ];
+  } else if (stress != null && stress >= 4) {
+    protectOpts = [
+      'Estresse alto pesa na recuperação — reduzir o dia ajuda tanto quanto treinar bem.',
+      'Com estresse alto, proteger o sono rende mais que forçar a sessão.',
+    ];
+  } else if (hrvDeltaPct != null && hrvDeltaPct <= -8) {
+    protectOpts = [
+      `RMSSD ${hrvDeltaPct}% abaixo da tua semana — olho na intensidade.`,
+      `HRV ${hrvDeltaPct}% abaixo da média: o corpo ainda está processando carga.`,
+    ];
+  } else if (hrvDeltaPct != null && hrvDeltaPct >= 8) {
+    protectOpts = [
+      `RMSSD +${hrvDeltaPct}% acima da tua semana — o corpo absorveu bem.`,
+      `HRV ${hrvDeltaPct}% acima da média: sinal verde do sistema nervoso.`,
+    ];
+    protectTone = 'good';
+  } else {
+    protectOpts = [
+      'O sono desta noite é o que mais move tua leitura de amanhã.',
+      'Fecha o dia com um sono protegido — é a maior alavanca pra amanhã.',
+    ];
+    protectTone = 'neutral';
+  }
+  const protect = { text: pickNarrativeVariant(protectOpts, [], seed + 13), tone: protectTone };
+
+  return [dose, protect];
+}
+
 export function normalizeDailySignals(checkinLike, recentCheckins = []) {
   const recoveryHighThreshold = getPersonalHighRecovery(recentCheckins);
   const masterSignal = getDailyMasterSignal(checkinLike, recoveryHighThreshold);

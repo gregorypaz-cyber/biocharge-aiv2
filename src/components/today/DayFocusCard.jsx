@@ -1,0 +1,48 @@
+import { motion } from 'framer-motion';
+import { Target } from 'lucide-react';
+import { buildDayFocus } from '@/lib/biocharge-utils';
+
+/* ═══ FOCO DE HOJE ════════════════════════════════════════════════════════════
+   Duas ações concretas pra executar o dia — a dose (o que fazer) e o proteger (o
+   que cuidar). Determinístico via buildDayFocus, consistente por construção com a
+   decisão do dia. Compacto de propósito: não compete com o herói, complementa.
+   Sem check-in / calibração → o pai não renderiza (não há decisão ainda). */
+
+const DOT = {
+  good: 'hsl(142 70% 50%)',
+  caution: 'hsl(45 93% 58%)',
+  neutral: 'hsl(215 15% 62%)',
+};
+
+export default function DayFocusCard({ mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed }) {
+  const items = buildDayFocus({ mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed });
+  if (!items?.length) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-border/60 bg-card p-4"
+    >
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <Target className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="t-micro font-bold uppercase tracking-widest text-muted-foreground">
+          Foco de hoje
+        </span>
+      </div>
+
+      <ul className="space-y-2">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <span
+              className="mt-1.5 shrink-0 rounded-full"
+              style={{ width: 6, height: 6, background: DOT[it.tone] || DOT.neutral }}
+              aria-hidden="true"
+            />
+            <span className="text-sm leading-snug text-foreground/90">{it.text}</span>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
+  );
+}
