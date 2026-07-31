@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Info, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore, explainRecoveryV3, getZone, getZoneColor, getZoneClasses } from '@/lib/biocharge-utils';
 import {
@@ -25,7 +25,6 @@ import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutLoggedState from '@/components/today/WorkoutLoggedState';
 import NarrativeCard from '@/components/intelligence/NarrativeCard';
 import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardingCard';
-import WhyScoreCard from '@/components/intelligence/WhyScoreCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
 import RecoveryField from '@/components/today/RecoveryField';
@@ -141,7 +140,6 @@ function CollapsibleHint({ children, label = 'Entender' }) {
 }
 
 function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRestMode, phase, phaseCfg, isCalibrating, dailyVerdict, calibratingNightsLeft, heroDynamicContext, baselineTier, priorHrvNights, readinessFaixa, ringTrends, recoveryBaseline, cappedStrain, todaySessions, strainTarget, analysis, sortedCheckins, today, targetZoneLabel, CAPACITY_PT, AUTONOMIC_PT, capacityContradictionNote, setShowAddModal, CtaIcon }) {
-  const [showProntidaoHint, setShowProntidaoHint] = useState(false);
   // Chegou voando do reveal do check-in (O SALTO)? Então a gema já entra no valor
   // final — nada de re-contar depois do voo (evita o "reveal duplo").
   const fromCheckin = useLocation().state?.fromCheckin === true;
@@ -299,7 +297,6 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               captionColor={isCalibrating ? 'text-muted-foreground' : recoveryCaptionColor}
               size={288}
               animateCount={!fromCheckin}
-              onClick={() => setShowProntidaoHint((v) => !v)}
             />
           </motion.div>
 
@@ -327,48 +324,10 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           </div>
         </div>
 
-        {/* Entender os scores (toque — funciona no iPhone) */}
-        <div className="flex justify-center -mt-1.5">
-          <button
-            type="button"
-            aria-expanded={showProntidaoHint}
-            onClick={() => setShowProntidaoHint((v) => !v)}
-            className="flex items-center gap-1 t-micro font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors tap-target"
-          >
-            <Info className="w-3 h-3" />
-            Entender os scores
-            <motion.span animate={{ rotate: showProntidaoHint ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown className="w-3 h-3" />
-            </motion.span>
-          </button>
-        </div>
-        <AnimatePresence initial={false}>
-          {showProntidaoHint && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div className="rounded-xl bg-secondary/50 border border-border/40 px-3 py-2.5 space-y-1.5">
-                <p className="t-micro leading-relaxed">
-                  <span className="font-semibold text-foreground">Recovery</span>{' '}
-                  <span className="text-muted-foreground">— seu score do dia, calculado pelos sinais fisiológicos da manhã: HRV, frequência cardíaca de repouso e sono. É o número que orienta a decisão de treino.</span>
-                </p>
-                <p className="t-micro leading-relaxed">
-                  <span className="font-semibold text-foreground">Sono</span>{' '}
-                  <span className="text-muted-foreground">— qualidade da sua noite (duração, regularidade, continuidade, profundo e REM).</span>
-                </p>
-                <p className="t-micro leading-relaxed">
-                  <span className="font-semibold text-foreground">Strain</span>{' '}
-                  <span className="text-muted-foreground">— esforço acumulado hoje (0–21). É separado do recovery e comparado à meta sugerida para o dia.</span>
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+        {/* (Colapsado) "Entender os scores": as definições genéricas de
+           Recovery/Sono/Strain saíram do herói — educação de onboarding, ruído
+           no dia a dia. A leitura do dia vive no "Leitura de hoje" (um explicador
+           só) e o porquê visual no "Seu normal". */}
         {heroDynamicContext ? (
           <div
             className={cn(
@@ -494,7 +453,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
   const dotColor = getZoneClasses(getZone(displayedScore)).bg;
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+    <div className="rounded-2xl bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -1330,13 +1289,9 @@ function renderCard(desc) {
         ) : null;
 
       case 'why_score':
-        return analysis?.whyScore?.length > 0 ? (
-          <WhyScoreCard
-            key="why_score"
-            whyScore={analysis.whyScore}
-            recoveryScore={displayedScore}
-          />
-        ) : null;
+        // (Colapsado) WhyScoreCard saiu: os drivers em prosa duplicavam "Seu
+        // normal" (as bandas ±1σ visuais, mais premium). Um "porquê" só.
+        return null;
 
       case 'hrv_anomaly':
         return (

@@ -15,7 +15,7 @@ export default function SleepForecastCard({ checkin, sleepDebt = 0 }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-4"
+      className="rounded-2xl bg-blue-500/5 p-4 space-y-4"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">

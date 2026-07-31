@@ -79,7 +79,7 @@ export default function RecoveryDriversCard({ drivers }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border/60 bg-card p-4 space-y-4"
+      className="rounded-2xl bg-card p-4 space-y-4"
     >
       <div>
         <h3 className="text-sm font-semibold tracking-tight">Seu normal</h3>
