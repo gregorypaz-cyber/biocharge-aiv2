@@ -213,20 +213,11 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'hsl(25,90%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
-  // WHOOP §3: o decision_mode vira VERBO travado na cor de zona, em vez de uma
-  // frase enterrada num card. A cor já diz a faixa; o verbo diz a AÇÃO. (Fica em
-  // t-title 21px — "gigante" de verdade pediria o degrau t-hero, que desafia a
-  // escala fechada da §3 e depende de aprovação à parte.)
-  const DECISION_VERB = {
-    train_high: 'Treine forte',
-    train_moderate: 'Modere',
-    train_light: 'Treine leve',
-    recover: 'Recupere',
-  };
-  const decisionVerb = isRestMode
-    ? 'Recupere'
-    : (DECISION_VERB[dailyVerdict?.mode]
-        || (displayedScore >= 70 ? 'Treine' : displayedScore >= 42 ? 'Modere' : 'Recupere'));
+  // PAINEL (unânime): o verbo segue a ZONA, nunca o decision_mode — pra o herói
+  // JAMAIS dizer "Modere" enquanto brilha verde. Verbo e cor saem da MESMA zona
+  // (recoveryZone), então nunca dizem "vai" e "calma" no mesmo pixel.
+  const ZONE_VERB = { green: 'Treine', yellow: 'Modere', red: 'Recupere' };
+  const decisionVerb = isRestMode ? 'Recupere' : (ZONE_VERB[recoveryZone] || 'Modere');
 
   return (
     <motion.div
@@ -1575,41 +1566,39 @@ if (isLoading) {
 
       <LongevityOnboardingCard />
       
+      {/* PAINEL (arco): logo depois do HERÓI (execution) vêm as cartas de
+         inteligência — clímax → O Reck notou (emoção) → Seu normal (o porquê) →
+         Foco de hoje (a ação) — e só DEPOIS a logística (leitura, missão, treinos,
+         resumo da manhã). Antes o payoff emocional ficava enterrado no rodapé. */}
       {orderedPrimaryCards.map((desc) => {
         if (desc == null) return null;
         const el = renderCard(desc);
         if (!el) return null;
-        return cascade
-          ? <motion.div key={desc.id} variants={CASCADE_ITEM}>{el}</motion.div>
-          : <React.Fragment key={desc.id}>{el}</React.Fragment>;
+        const card = cascade ? <motion.div variants={CASCADE_ITEM}>{el}</motion.div> : el;
+        if (desc.id === 'execution') {
+          return (
+            <React.Fragment key={desc.id}>
+              {card}
+              <ReckNotouCard checkins={sortedCheckins} today={today} />
+              <RecoveryDriversCard drivers={recoveryDrivers} />
+              <DayFocusCard
+                mode={dailyVerdict?.mode || enrichedCheckin?.decision_mode}
+                acwr={analysis?.trainingLoad?.ratio ?? null}
+                sleepDebtHours={analysis?.sleepDebt?.debt ?? null}
+                soreness={enrichedCheckin?.muscle_soreness ?? enrichedCheckin?.muscle_soreness_level ?? null}
+                stress={enrichedCheckin?.stress ?? enrichedCheckin?.stress_score ?? null}
+                hrvDeltaPct={(() => {
+                  const d = recoveryDrivers?.drivers?.find((x) => x.id === 'hrv');
+                  return d && d.baseline ? Math.round(((d.value - d.baseline) / d.baseline) * 100) : null;
+                })()}
+                restDay={isRestMode}
+                seed={today ? today.split('-').reduce((s, p) => s + Number(p), 0) : 0}
+              />
+            </React.Fragment>
+          );
+        }
+        return <React.Fragment key={desc.id}>{card}</React.Fragment>;
       })}
-
-      {/* FOCO DE HOJE — 2 ações determinísticas (dose + proteger), consistentes
-         por construção com a decisão do dia. Substitui os bullets de LLM que eram
-         gravados e nunca mostrados; agora grátis e visíveis. */}
-      <DayFocusCard
-        mode={dailyVerdict?.mode || enrichedCheckin?.decision_mode}
-        acwr={analysis?.trainingLoad?.ratio ?? null}
-        sleepDebtHours={analysis?.sleepDebt?.debt ?? null}
-        soreness={enrichedCheckin?.muscle_soreness ?? enrichedCheckin?.muscle_soreness_level ?? null}
-        stress={enrichedCheckin?.stress ?? enrichedCheckin?.stress_score ?? null}
-        hrvDeltaPct={(() => {
-          const d = recoveryDrivers?.drivers?.find((x) => x.id === 'hrv');
-          return d && d.baseline ? Math.round(((d.value - d.baseline) / d.baseline) * 100) : null;
-        })()}
-        restDay={isRestMode}
-        seed={today ? today.split('-').reduce((s, p) => s + Number(p), 0) : 0}
-      />
-
-      {/* SEU NORMAL — a decomposição visual do score: onde cada sinal caiu hoje
-         na régua pessoal (±1σ) e quanto puxou. O "porquê" logo abaixo do herói.
-         Cala sozinho durante a calibração (sem baseline → sem "teu normal"). */}
-      <RecoveryDriversCard drivers={recoveryDrivers} />
-
-      {/* O RECK NOTOU — a revelação determinística do dia (moment-engine). Logo
-         abaixo do herói: o app deixa de só explicar/prescrever e PERCEBE. Cala
-         sozinho quando nada cruza o portão (não é card fixo). */}
-      <ReckNotouCard checkins={sortedCheckins} today={today} />
 
       <FatLossCard checkins={sortedCheckins} />
 
