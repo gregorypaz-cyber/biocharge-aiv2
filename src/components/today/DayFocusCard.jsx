@@ -26,9 +26,7 @@ export default function DayFocusCard({ mode, acwr, sleepDebtHours, soreness, str
     >
       <div className="flex items-center gap-1.5 mb-2.5">
         <Target className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="t-micro font-bold uppercase tracking-widest text-muted-foreground">
-          Foco de hoje
-        </span>
+        <h3 className="text-sm font-semibold tracking-tight">Foco de hoje</h3>
       </div>
 
       <ul className="space-y-2">

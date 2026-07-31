@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle, ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
 
 function getTitle(score) {
   if (score >= 80) return 'O que mais sustentou seu recovery hoje';
@@ -39,7 +38,7 @@ export default function WhyScoreCard({ whyScore, recoveryScore }) {
               {getTitle(recoveryScore)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Explicação detalhada dos fatores que mais pesaram no seu recovery.
+              O que puxou pra cima e o que puxou pra baixo — com os números.
             </p>
           </div>
         </div>

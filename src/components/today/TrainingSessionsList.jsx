@@ -77,7 +77,7 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
         <div className="flex items-center gap-2">
           <Dumbbell className="w-4 h-4 text-primary" />
 
-          <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wide">
+          <span className="text-sm font-semibold tracking-tight">
             Treinos de hoje
           </span>
 
