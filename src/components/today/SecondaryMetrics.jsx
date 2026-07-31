@@ -29,7 +29,7 @@ export default function SecondaryMetrics({ children, count = 0 }) {
 
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-sm font-semibold tracking-tight">
                 Seu dia completo
               </span>
 

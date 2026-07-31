@@ -219,6 +219,16 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
   const ZONE_VERB = { green: 'Treine', yellow: 'Modere', red: 'Recupere' };
   const decisionVerb = isRestMode ? 'Recupere' : (ZONE_VERB[recoveryZone] || 'Modere');
 
+  // Subtítulo do herói: ART flagou o fallback "Baseado no seu check-in mais
+  // recente" como rodapé de relatório. Quando o motor não tem uma linha dinâmica,
+  // uma frase com sangue, consistente com a zona (mesmo humor do verbo/cor).
+  const ZONE_SUBLINE = {
+    green: 'Teu corpo acordou com margem. Se a vontade pedir, hoje aguenta.',
+    yellow: 'Dá pra treinar, mas o corpo pede a dose certa — sem heroísmo.',
+    red: 'Hoje o ganho está em recuperar de verdade, não em treinar.',
+  };
+  const heroSubline = heroDynamicContext?.heroLine || ZONE_SUBLINE[recoveryZone] || dailyVerdict?.subheadline;
+
   return (
     <motion.div
       key={phase + '-card'}
@@ -260,7 +270,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
                 ? (calibratingNightsLeft > 0
                     ? `Faltam ${calibratingNightsLeft} ${calibratingNightsLeft === 1 ? 'noite' : 'noites'} de HRV para o Recovery ficar confiável. Continue registrando — não vou inventar um número antes disso.`
                     : 'Quase lá — mais uma leitura e o Recovery abre.')
-                : (heroDynamicContext?.heroLine || dailyVerdict.subheadline)}
+                : heroSubline}
             </p>
 
             {!isCalibrating && (
@@ -493,7 +503,7 @@ function TodayReadingCard({ displayedScore, enrichedCheckin, cappedStrain, strai
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-          <span className="t-micro font-bold uppercase tracking-widest text-muted-foreground shrink-0">Leitura de hoje</span>
+          <span className="text-sm font-semibold tracking-tight shrink-0">Leitura de hoje</span>
           {!open && (
             <span className={`text-xs truncate ${toneClass}`}>{bodyClause}</span>
           )}
