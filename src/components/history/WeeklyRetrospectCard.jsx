@@ -99,7 +99,7 @@ export default function WeeklyRetrospectCard({ weekStart, weekEnd, checkins, ses
       {/* Header */}
       <div className="flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
-        <span className="t-micro font-bold uppercase tracking-widest text-primary">Retrospecto da semana</span>
+        <span className="text-sm font-semibold tracking-tight text-primary">Retrospecto da semana</span>
       </div>
 
       {/* Metrics row */}

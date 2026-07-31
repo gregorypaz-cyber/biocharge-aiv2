@@ -77,9 +77,9 @@ export default function YearHeatmap({ checkins = [], weeksBack = 18, onSelectDat
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
+    <div className="rounded-2xl bg-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="t-micro font-bold uppercase tracking-widest text-muted-foreground/70">O seu ano</p>
+        <p className="text-sm font-semibold tracking-tight">O seu ano</p>
         <div className="flex items-center gap-1.5 t-micro text-muted-foreground">
           <span>menos</span>
           {['hsl(0,72%,55%)', 'hsl(45,93%,58%)', 'hsl(142,70%,50%)'].map((c) => (
