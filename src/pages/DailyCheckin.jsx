@@ -32,10 +32,7 @@ import SliderField from '@/components/checkin/SliderField';
 import EmojiSelector from '@/components/checkin/EmojiSelector';
 import CheckinStep from '@/components/checkin/CheckinStep';
 import LivePreview from '@/components/checkin/LivePreview';
-import {
-  computeCheckinScores,
-  generateContextualBulletsAI,
-} from '@/lib/biocharge-utils';
+import { computeCheckinScores } from '@/lib/biocharge-utils';
 import CheckinSuccessOverlay from '@/components/checkin/CheckinSuccessOverlay';
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
@@ -337,21 +334,9 @@ const saveMorningMutation = useMutation({
     }
     
 
-    // ✅ IA só entra como suporte secundário, não como voz principal do dia
-    try {
-      const acwr = payload.acwr ?? null;
-      const jaTemBullets = !!(editData?.contextual_bullets || todayRecord?.contextual_bullets);
-      const aiBullets =
-        (!payload.rest_day && data.generate_ai && !editData?.id && !jaTemBullets)
-          ? await generateContextualBulletsAI(payload, scores, recentCheckins, sortedSessions, acwr)
-          : null;
-
-      if (aiBullets?.length) {
-        scores.contextual_bullets = JSON.stringify(aiBullets);
-      }
-    } catch (e) {
-      console.warn('AI support bullets failed, keeping deterministic signals', e);
-    }
+    // (Removido) bullets contextuais via InvokeLLM: a saída era gravada mas NUNCA
+    // renderizada em lugar nenhum — LLM queimando crédito por texto invisível. A
+    // voz do dia já vem determinística (headline_today / recommendation).
 
     let savedRecord;
     if (editData?.id) {
