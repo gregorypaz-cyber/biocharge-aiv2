@@ -167,7 +167,6 @@ const DEFAULT_FORM = {
 };
 
 const DEFAULT_POST_FORM = {
-  biocharge_post_workout: 0,
   rpe: 0,
   energy: 0,
   muscle_soreness: 0,
@@ -511,45 +510,22 @@ const savePostMutation = useMutation({
         : '[PÓS-TREINO] ' + data.notes
       : existing.notes || '';
 
-    const deltaPost =
-      data.biocharge_post_workout > 0 && existing.biocharge_morning
-        ? data.biocharge_post_workout - existing.biocharge_morning
-        : existing.delta_post ?? null;
-
+    // O pós-treino é a leitura do FIM do dia: ele NÃO reescreve o recovery/prontidão
+    // da manhã (nenhum destes sinais chega no recovery, e sobrescrever a coluna da
+    // manhã destruía o significado do registro matinal). Grava o estado pós-esforço
+    // em colunas próprias (*_post), preserva tudo da manhã, e marca o dia como fechado
+    // com uma flag explícita — a detecção de "pós-treino feito" não depende mais de o
+    // usuário ter digitado uma nota.
     const payload = {
       ...existing,
-      biocharge_post_workout:
-        data.biocharge_post_workout > 0
-          ? data.biocharge_post_workout
-          : existing.biocharge_post_workout,
-      rpe: data.rpe > 0 ? data.rpe : existing.rpe,
-      energy: data.energy > 0 ? data.energy : existing.energy,
-      muscle_soreness:
-        data.muscle_soreness > 0
-          ? data.muscle_soreness
-          : existing.muscle_soreness,
-      delta_post: deltaPost,
+      energy_post: data.energy > 0 ? data.energy : (existing.energy_post ?? null),
+      soreness_post: data.muscle_soreness > 0 ? data.muscle_soreness : (existing.soreness_post ?? null),
+      rpe_post: data.rpe > 0 ? data.rpe : (existing.rpe_post ?? null),
       notes: mergedNotes,
+      post_workout_done: true,
     };
 
-    const recentCheckins = [...checkins]
-      .filter((c) => c.id !== existing.id)
-      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
-      .slice(0, 90);
-
-    const sortedSessions = [...allSessions].sort((a, b) =>
-      String(b.date).localeCompare(String(a.date))
-    );
-
-    const scores = computeCheckinScores(payload, recentCheckins, sortedSessions);
-
-    // ✅ preservar a âncora da manhã
-    scores.morning_recovery_score =
-      existing.morning_recovery_score ??
-      existing.recovery_score ??
-      scores.recovery_score;
-
-    return base44.entities.DailyCheckin.update(existing.id, scores);
+    return base44.entities.DailyCheckin.update(existing.id, payload);
   },
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
@@ -557,7 +533,7 @@ const savePostMutation = useMutation({
 
     if (navigator.vibrate) navigator.vibrate(40);
 
-    toast.success('Resposta pós-treino salva — a leitura de amanhã ficou mais precisa.')
+    toast.success('Dia fechado. Você se leu de manhã e voltou depois do treino.')
     navigate('/today');
   },
 });
@@ -622,17 +598,16 @@ if (isPostMode) {
   const sleepNeed = todayRecord?.sleep_need_tonight ?? null;
 
   const handleSavePost = () => {
-    const { biocharge_post_workout, rpe, energy, muscle_soreness, notes } = postForm;
+    const { rpe, energy, muscle_soreness, notes } = postForm;
 
     const hasData =
-      biocharge_post_workout > 0 ||
       rpe > 0 ||
       energy > 0 ||
       muscle_soreness > 0 ||
       notes.trim().length > 0;
 
     if (!hasData) {
-      toast.warning("Preencha ao menos um campo ou toque em 'Pular por agora'.");
+      toast.warning("Preencha ao menos um campo ou toque em 'Deixar pra depois'.");
       return;
     }
 
@@ -666,23 +641,19 @@ if (isPostMode) {
           </div>
 
           <div>
-            <p className="t-micro font-semibold uppercase tracking-widest text-primary">
-              Resposta do corpo
-            </p>
-
-            <h2 className="text-lg font-semibold leading-tight mt-1">
-              Como seu corpo respondeu ao treino?
+            <h2 className="text-lg font-semibold leading-tight">
+              Como o corpo respondeu?
             </h2>
 
             <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">
-              Leva cerca de 30 segundos. RPE, energia e dor muscular ajudam o app a ajustar melhor a leitura de amanhã.
+              Você fez o trabalho — agora conta como ficou. Leva 30 segundos e fecha o dia.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-1">
           <div className="rounded-xl bg-secondary border border-border/30 px-3 py-2.5">
-            <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="t-micro text-muted-foreground mb-1">
               Recovery manhã
             </p>
             <p className="text-sm font-mono font-semibold">
@@ -691,7 +662,7 @@ if (isPostMode) {
           </div>
 
           <div className="rounded-xl bg-secondary border border-border/30 px-3 py-2.5">
-            <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="t-micro text-muted-foreground mb-1">
               Strain hoje
             </p>
             <p className="text-sm font-mono font-semibold">
@@ -700,7 +671,7 @@ if (isPostMode) {
           </div>
 
           <div className="rounded-xl bg-secondary border border-border/30 px-3 py-2.5">
-            <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="t-micro text-muted-foreground mb-1">
               Sono alvo
             </p>
             <p className="text-sm font-mono font-semibold">
@@ -714,7 +685,7 @@ if (isPostMode) {
       <CheckinStep title="Esforço percebido" icon={Flame} delay={0.05}>
         <SliderField
           label="Quão pesado foi o treino?"
-          hint="RPE 1–10 · se você já registrou o treino, vem preenchido — confirme ou ajuste"
+          hint="De 1 a 10, quanto o treino puxou? Se você já registrou, é só confirmar."
           value={postForm.rpe}
           onChange={(value) => updatePost('rpe', value)}
           min={0}
@@ -722,11 +693,12 @@ if (isPostMode) {
           lowLabel="Leve"
           midLabel="Moderado"
           highLabel="Máximo"
+          neutralTrack
         />
       </CheckinStep>
 
       {/* Sensations */}
-      <CheckinStep title="Resposta do corpo" icon={Activity} delay={0.1}>
+      <CheckinStep title="Como você tá agora" icon={Activity} delay={0.1}>
         <EmojiSelector
           label="Energia agora"
           type="energy"
@@ -749,12 +721,12 @@ if (isPostMode) {
         <Textarea
           value={postForm.notes}
           onChange={(event) => updatePost('notes', event.target.value)}
-          placeholder="Algo que mudou DEPOIS do treino? Ex: recuperei rápido, pernas pesadas no fim..."
+          placeholder="Como você saiu do treino? Leve, arrasado, surpreso… o que quiser deixar registrado."
           className="bg-secondary border-border/40 min-h-[80px] resize-none"
         />
 
         <p className="t-micro text-muted-foreground leading-relaxed">
-          Só o que você quer acrescentar depois do treino. O que escreveu ao registrar o treino já está salvo e já conta na análise.
+          Opcional. O que você escreveu ao registrar o treino já está guardado.
         </p>
       </CheckinStep>
 
@@ -769,7 +741,7 @@ if (isPostMode) {
         ) : (
           <>
             <Save className="w-4 h-4 mr-2" />
-            Salvar resposta pós-treino
+            Fechar o dia
           </>
         )}
       </Button>
@@ -779,11 +751,11 @@ if (isPostMode) {
         className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-border text-muted-foreground text-sm font-medium hover:text-foreground hover:border-border/60 transition-all"
       >
         <SkipForward className="w-4 h-4" />
-        Pular por agora
+        Deixar pra depois
       </button>
 
       <p className="t-micro text-muted-foreground text-center leading-relaxed px-4">
-        O pós-treino atualiza o check-in de hoje e melhora os insights de recuperação, carga e resposta ao treino.
+        Fica registrado no seu dia e ajuda o app a entender como você responde ao esforço.
       </p>
     </div>
   );

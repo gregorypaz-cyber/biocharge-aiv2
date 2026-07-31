@@ -24,6 +24,11 @@ function interpretAcwr(acwr) {
 
 function hasPostWorkoutData(checkin) {
   return (
+    checkin?.post_workout_done === true ||
+    checkin?.energy_post != null ||
+    checkin?.soreness_post != null ||
+    checkin?.rpe_post != null ||
+    // legado: registros salvos antes da flag explícita
     checkin?.biocharge_post_workout > 0 ||
     checkin?.delta_post != null ||
     String(checkin?.notes || '').includes('[PÓS-TREINO]')

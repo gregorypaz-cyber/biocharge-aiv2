@@ -13,6 +13,7 @@ export default function SliderField({
   lowLabel = null,
   midLabel = null,
   highLabel = null,
+  neutralTrack = false,
 }) {
   return (
     <div className="space-y-2.5">
@@ -36,13 +37,19 @@ export default function SliderField({
       </div>
 
       <div className="relative pt-1">
-        {/* Zonas visuais */}
+        {/* Zonas visuais. neutralTrack: para sinais onde "alto" não é pior — ex.:
+           esforço/RPE. Pintar um treino puxado de vermelho sugeriria perigo e
+           pressiona sub-reportar justamente o dado de carga que queremos honesto. */}
         <div className="absolute inset-x-0 top-[11px] h-1.5 rounded-full overflow-hidden pointer-events-none">
-          <div className="grid grid-cols-3 h-full">
-            <div className="bg-emerald-500/30" />
-            <div className="bg-yellow-500/30" />
-            <div className="bg-red-500/30" />
-          </div>
+          {neutralTrack ? (
+            <div className="h-full bg-secondary" />
+          ) : (
+            <div className="grid grid-cols-3 h-full">
+              <div className="bg-emerald-500/30" />
+              <div className="bg-yellow-500/30" />
+              <div className="bg-red-500/30" />
+            </div>
+          )}
         </div>
 
         <Slider

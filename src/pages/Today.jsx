@@ -1326,6 +1326,11 @@ function renderCard(desc) {
   if (todaySessions.length === 0) return null;
 
   const hasPostWorkout =
+    enrichedCheckin?.post_workout_done === true ||
+    enrichedCheckin?.energy_post != null ||
+    enrichedCheckin?.soreness_post != null ||
+    enrichedCheckin?.rpe_post != null ||
+    // legado: registros salvos antes da flag explícita
     enrichedCheckin?.biocharge_post_workout > 0 ||
     enrichedCheckin?.delta_post != null ||
     String(enrichedCheckin?.notes || '').includes('[PÓS-TREINO]');
