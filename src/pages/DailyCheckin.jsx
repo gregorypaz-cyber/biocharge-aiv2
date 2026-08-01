@@ -467,17 +467,29 @@ ${JSON.stringify(summary, null, 2)}`,
 
     return savedRecord;
   },
-  onSuccess: async (result) => {
-    await queryClient.refetchQueries({ queryKey: QUERY_KEYS.checkins(user?.email) });
-    await queryClient.refetchQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) });
-
+  onSuccess: (result) => {
     if (navigator.vibrate) navigator.vibrate(40);
+
+    // Atualiza os caches em SEGUNDO PLANO (sem await): o reveal/navegação não pode
+    // depender de uma rede que pode falhar ou demorar. Antes, o onSuccess ficava
+    // preso no `await refetchQueries` e, se o refetch atrasasse/rejeitasse, nunca
+    // chegava ao setSavedCheckin — o botão animava, o check-in até salvava, mas a
+    // tela não avançava (e o onError não dispara, porque a mutation já teve sucesso).
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.checkins(user?.email) }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trainingSessions(user?.email) }).catch(() => {});
 
     if (editData?.id) {
       toast.success('Check-in atualizado!');
       navigate('/history');
-    } else {
+      return;
+    }
+
+    if (result) {
       setSavedCheckin(result);
+    } else {
+      // Salvou, mas o backend não devolveu o registro: não trava o usuário na tela.
+      toast.success('Check-in salvo!');
+      navigate('/today', { state: { fromCheckin: true } });
     }
   },
   onError: (err) => {
