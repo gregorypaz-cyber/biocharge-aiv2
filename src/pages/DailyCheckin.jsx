@@ -356,7 +356,20 @@ const saveMorningMutation = useMutation({
         recordForPayloadDate?.morning_recovery_score ??
         scores.recovery_score;
     }
-    
+
+    // `biocharge_morning` é OBRIGATÓRIO no schema do DailyCheckin (legado do Zepp),
+    // mas o app não coleta mais esse 0–100 — virou o emoji de disposição. Sem valor,
+    // ele ia como null e o backend REJEITAVA o create/update: o check-in nunca salvava
+    // (o botão salvava "no vazio"). Preenchemos com a leitura de recovery da manhã —
+    // que é literalmente "a carga com que você acordou" — e nunca deixamos null.
+    if (scores.biocharge_morning == null) {
+      scores.biocharge_morning =
+        scores.recovery_score ??
+        scores.morning_recovery_score ??
+        scores.readiness_score ??
+        70;
+    }
+
 
     // (Removido) bullets contextuais via InvokeLLM: a saída era gravada mas NUNCA
     // renderizada em lugar nenhum — LLM queimando crédito por texto invisível. A
