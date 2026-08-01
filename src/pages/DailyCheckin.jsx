@@ -40,24 +40,6 @@ import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
 
 
-const SLEEP_DURATION_OPTIONS = Array.from({ length: 33 }, (_, i) => {
-  const totalMinutes = 4 * 60 + i * 15; // de 4h até 12h em steps de 15 min
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  const value = Number((totalMinutes / 60).toFixed(2));
-  const label = `${hours}:${String(minutes).padStart(2, '0')}`;
-  return { value, label };
-});
-
-// Casa um valor de horas (ex: 7.6) com a opção mais próxima da roda (passos de
-// 15 min, 4:00–12:00), para o <select> nativo abrir na roleta certa no iPhone.
-function nearestSleepOption(h) {
-  if (h == null || isNaN(h)) return '';
-  const quarter = Math.round(Number(h) * 4) / 4;
-  const clamped = Math.min(12, Math.max(4, quarter));
-  return Number(clamped.toFixed(2));
-}
-
 // Converte horas decimais (ex: 7.75) para "HH:MM" (ex: "07:45") e vice-versa,
 // para usar <input type="time"> (roleta no iPhone) mantendo o armazenamento em horas.
 function hoursToHHMM(h) {
@@ -229,12 +211,16 @@ export default function DailyCheckin() {
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))[0] || null;
   }, [checkins, savedCheckin]);
 
-  const [touched, setTouched] = useState({ sleep_hours: !!editData, hrv: !!editData });
   // Exige HRV + horas de sono — não biocharge_morning/sleep_score (Zepp). Esses
   // dois ficam só como referência de calibração (não entram em nenhuma fórmula);
   // HRV é o único sinal sem o qual recovery_score sai null. Mesma exigência para
   // Apple e Zepp, porque é o mesmo motor por trás dos dois perfis.
-  const morningReady = touched.sleep_hours && touched.hrv;
+  //
+  // Trava baseada em VALOR, não em "toque": antes exigíamos que o usuário mexesse
+  // no campo de sono, então quem aceitava o padrão (7h) e só preenchia o HRV ficava
+  // com o botão desabilitado pra sempre — "salvar não fazia nada" e nada persistia.
+  const morningReady =
+    (form.hrv != null || form.hrv_manual != null) && Number(form.sleep_hours) > 0;
 
   // Carrega o check-in já salvo de hoje uma única vez, para não sobrescrever
   // dados reais com os valores default ao reabrir a página.
@@ -250,7 +236,6 @@ export default function DailyCheckin() {
     ) {
       loadedTodayRef.current = true;
       dispatch({ type: 'LOAD_EDIT', data: { rest_day: !!todayRecord.rest_day, ...todayRecord } });
-      setTouched({ sleep_hours: true, hrv: true });
       setEditingExisting(true);
     }
   }, [isPostMode, editData, savedCheckin, todayRecord]);
@@ -306,7 +291,6 @@ const update = (field, value) => dispatch({ type: 'SET_FIELD', field, value });
   const updateHrv = (value) => {
     update('hrv_manual', value);
     update('hrv', value); // espelha por compatibilidade com legado
-    setTouched((t) => ({ ...t, hrv: true }));
   };
 
 const { intent: dayIntent, setDayIntent } = useDayContext();
@@ -495,6 +479,10 @@ ${JSON.stringify(summary, null, 2)}`,
     } else {
       setSavedCheckin(result);
     }
+  },
+  onError: (err) => {
+    console.error('Falha ao salvar check-in da manhã', err);
+    toast.error('Não consegui salvar seu check-in. Verifique a conexão e tente de novo.');
   },
 });
 
@@ -899,22 +887,19 @@ if (isPostMode) {
               Horas de sono
             </label>
 
-            <select
+            {/* Roleta de hora do iPhone (type="time") — mesma do "hora do jantar".
+               Guardamos em horas decimais; hoursToHHMM/hhmmToHours convertem
+               "HH:MM" ⇄ 7.75. */}
+            <Input
               id="sleep-hours"
-              value={form.sleep_hours == null ? '' : nearestSleepOption(form.sleep_hours)}
-              onChange={(e) => {
-                update('sleep_hours', Number(e.target.value));
-                setTouched((t) => ({ ...t, sleep_hours: true }));
-              }}
-              className="bg-secondary border border-border/40 rounded-xl font-mono h-11 px-3 text-sm w-full max-w-[160px] tap-target"
-            >
-              {SLEEP_DURATION_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              type="time"
+              value={hoursToHHMM(form.sleep_hours)}
+              onChange={(e) => update('sleep_hours', hhmmToHours(e.target.value))}
+              className="bg-secondary border-border/40 font-mono w-36 h-11 text-sm tap-target"
+            />
 
             <p className="t-micro text-muted-foreground">
-              Duração total do sono — a roda vai de 4:00 a 12:00.
+              Duração total do sono — ex: 7:45.
             </p>
           </div>
 
@@ -979,7 +964,7 @@ if (isPostMode) {
     <div className="space-y-2">
       {!morningReady && (
         <p className="t-micro text-amber-400/80 px-1 text-center">
-          <ArrowUp size={12} className="inline mr-1" />Falta só o HRV e as horas de sono — aí eu fecho seu plano
+          <ArrowUp size={12} className="inline mr-1" />Falta só o HRV — aí eu fecho seu plano
         </p>
       )}
       <Button
