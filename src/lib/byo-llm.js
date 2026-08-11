@@ -119,3 +119,17 @@ export async function testByo() {
     return { ok: false, message: e?.message || 'Falha ao conectar.' };
   }
 }
+
+/**
+ * Caminho ÚNICO de chamada de LLM do app.
+ * Usa o provedor do usuário (BYO) quando configurado; senão executa o fallback
+ * injetado (tipicamente a integração do Base44, que gasta crédito).
+ * O fallback é injetado para este módulo continuar puro e testável sem rede.
+ * Não faz fallback automático em ERRO do BYO: se a chave do usuário falhar, o
+ * erro sobe — gastar crédito silenciosamente seria o oposto da intenção.
+ */
+export async function askLLM(prompt, fallback, opts = {}) {
+  if (isByoConfigured()) return callByo(prompt, opts);
+  if (typeof fallback !== 'function') throw new Error('askLLM sem fallback');
+  return fallback(prompt);
+}

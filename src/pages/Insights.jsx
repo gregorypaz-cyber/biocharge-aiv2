@@ -38,7 +38,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
 import { buildCoachContext } from '@/lib/coach-context-builder';
-import { isByoConfigured, callByo } from '@/lib/byo-llm';
+import { askLLM } from '@/lib/byo-llm';
 import { cn } from '@/lib/utils';
 import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
 import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
@@ -1159,8 +1159,7 @@ const primaryInsight = useMemo(() => {
     }));
 
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um analista de performance e recuperação no estilo Whoop. Gere uma leitura útil, direta e honesta em português brasileiro.
+      const promptAnalise = `Você é um analista de performance e recuperação no estilo Whoop. Gere uma leitura útil, direta e honesta em português brasileiro.
 
 Objetivo:
 - transformar dados recentes em uma leitura clara
@@ -1197,8 +1196,11 @@ Regras:
 - evite frases vagas como "escute seu corpo"
 - não diga apenas "treino moderado recomendado"
 - não faça diagnóstico médico
-- termine com uma frase completa`,
-      });
+- termine com uma frase completa`;
+      const result = await askLLM(
+        promptAnalise,
+        (p) => base44.integrations.Core.InvokeLLM({ prompt: p })
+      );
 
       setAiInsight(result);
       setAnalysisGeneratedAt(new Date());
@@ -1229,9 +1231,10 @@ Regras:
       // Coach com IA própria (BYO-LLM) quando configurada — chave do usuário, sem
       // queimar crédito de integração. Cai na integração do Base44 se não houver.
       // Cercado a linguagem: o contexto já traz os números; o LLM só conversa.
-      const result = isByoConfigured()
-        ? await callByo(systemContext)
-        : await base44.integrations.Core.InvokeLLM({ prompt: systemContext });
+      const result = await askLLM(
+        systemContext,
+        (p) => base44.integrations.Core.InvokeLLM({ prompt: p })
+      );
 
       const impossibleSleep =
         /(\d{2,3})\s*h(oras?)?\s*de\s*sono/i.test(result) &&

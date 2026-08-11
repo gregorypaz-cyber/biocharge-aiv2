@@ -38,6 +38,7 @@ import PostWorkoutCloseOverlay from '@/components/checkin/PostWorkoutCloseOverla
 import { useUserCheckins, useUserTrainingSessions } from '@/hooks/useUserData';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
+import { askLLM } from '@/lib/byo-llm';
 
 
 // Converte horas decimais (ex: 7.75) para "HH:MM" (ex: "07:45") e vice-versa,
@@ -425,8 +426,7 @@ const saveMorningMutation = useMutation({
         nota_de_hoje: (payload.notes && String(payload.notes).trim()) ? String(payload.notes).trim().slice(0, 200) : null,
       };
 
-      base44.integrations.Core.InvokeLLM({
-        prompt: `INSTRUÇÃO: Você é um analista de performance e recuperação esportiva. Gere uma análise personalizada, profunda e útil em português brasileiro.
+      const promptDeepAnalysis = `INSTRUÇÃO: Você é um analista de performance e recuperação esportiva. Gere uma análise personalizada, profunda e útil em português brasileiro.
 
 CONTEXTO DO DIA DE HOJE (use para guiar o tom — não repita estas frases literalmente):
 - Decisão: ${todayContext.decisao_do_dia}
@@ -466,8 +466,8 @@ Recomendações para os próximos 7 dias
 - [ação concreta sobre o ponto mais fraco identificado nos dados]
 
 DADOS (${summary.length} dias, mais recente primeiro):
-${JSON.stringify(summary, null, 2)}`,
-      })
+${JSON.stringify(summary, null, 2)}`;
+      askLLM(promptDeepAnalysis, (p) => base44.integrations.Core.InvokeLLM({ prompt: p }))
         .then((deepAnalysis) => {
           if (deepAnalysis && savedRecord?.id) {
             base44.entities.DailyCheckin.update(savedRecord.id, {
