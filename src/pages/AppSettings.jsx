@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { User, LogOut, Globe, Dumbbell, Clock, Target, Plus, X } from 'lucide-react';
+import { User, LogOut, Globe, Dumbbell, Clock, Target, Plus, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -63,6 +63,7 @@ export default function AppSettings() {
   });
   const [customSport, setCustomSport] = useState('');
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (user?.preferences) {
@@ -114,6 +115,97 @@ export default function AppSettings() {
       toast.error('Não foi possível salvar agora. Tente novamente.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const exportData = async () => {
+    setExporting(true);
+
+    const ENTITIES = [
+      'DailyCheckin', 'TrainingSession', 'WorkoutSession', 'HRVRecord',
+      'WeeklyRetrospect', 'WorkoutFeedback', 'SleepRecord',
+    ];
+
+    try {
+      const data = {};
+      const counts = {};
+      const errors = [];
+
+      for (const name of ENTITIES) {
+        let rows;
+        try {
+          rows = await base44.entities[name].filter({ created_by: user.email }, '-date', 10000);
+        } catch {
+          // Sort '-date' pode não existir em toda entidade — tenta sem ordenação.
+          try {
+            rows = await base44.entities[name].filter({ created_by: user.email });
+          } catch (err) {
+            errors.push({ entity: name, error: String(err) });
+            continue;
+          }
+        }
+        const list = Array.isArray(rows) ? rows : [];
+        data[name] = list;
+        counts[name] = list.length;
+      }
+
+      const obj = {
+        backup_meta: {
+          app: 'Reck',
+          schema_version: 1,
+          exported_at: new Date().toISOString(),
+          user_email: user.email,
+          counts,
+          errors,
+          note: 'Chaves de API e configuracoes locais nao estao neste arquivo.',
+        },
+        preferences: user.preferences || {},
+        data,
+      };
+
+      const json = JSON.stringify(obj, null, 2);
+      const filename = `reck-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const totalRegistros = Object.values(counts).reduce((a, n) => a + n, 0);
+
+      const blob = new Blob([json], { type: 'application/json' });
+      const file = new File([blob], filename, { type: 'application/json' });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+        } catch (shareErr) {
+          // Usuário cancelou a folha de compartilhamento → não é erro.
+          if (shareErr?.name === 'AbortError') {
+            setExporting(false);
+            return;
+          }
+          // Falha real do share → cai no anchor.
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      if (errors.length > 0) {
+        toast.warning(`Backup parcial · falharam: ${errors.map((e) => e.entity).join(', ')}`);
+      } else {
+        toast.success(`Backup gerado · ${totalRegistros} registros`);
+      }
+    } catch (err) {
+      console.error('exportData failed', err);
+      toast.error('Não foi possível gerar o backup agora. Tente novamente.');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -527,6 +619,32 @@ export default function AppSettings() {
             </button>
           ))}
         </div>
+      </motion.div>
+
+      {/* Seus dados — export completo */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22 }}
+        className="rounded-2xl border border-border bg-card p-5 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Download className="w-4 h-4 text-primary" />
+          <span className="font-semibold text-sm">Seus dados</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Baixa todo o seu histórico (check-ins, treinos, HRV e mais) num único arquivo JSON,
+          para você guardar onde quiser. Suas chaves de API não vão junto — ficam só no aparelho.
+          Importar de volta ainda não existe.
+        </p>
+        <Button
+          onClick={exportData}
+          disabled={exporting}
+          variant="outline"
+          className="w-full"
+        >
+          {exporting ? 'Gerando...' : 'Baixar meus dados (JSON)'}
+        </Button>
       </motion.div>
 
       {/* Save */}
