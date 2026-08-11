@@ -1148,7 +1148,8 @@ const primaryInsight = useMemo(() => {
       sleep: c.sleep_quality,
       sleep_hours: c.sleep_hours,
       fatigue: c.fatigue_score,
-      stress: c.stress_score,
+      awake_minutes: c.awake_minutes,
+      notas: c.notes || null,
       hrv: c.hrv,
       rpe: c.rpe,
       zone: c.zone,
@@ -1196,7 +1197,10 @@ Regras:
 - evite frases vagas como "escute seu corpo"
 - não diga apenas "treino moderado recomendado"
 - não faça diagnóstico médico
-- termine com uma frase completa`;
+- termine com uma frase completa
+- não afirme causa (estresse, doença, overtraining) sem evidência direta nos campos enviados; se os dados não explicarem um padrão, diga que não explicam
+- o campo "notas" é contexto de vida escrito pelo próprio usuário: use para explicar o que os números mostram, e nunca o cite literalmente
+- não prescreva treino (intensidade, volume, o que fazer ou não): o usuário segue plano externo`;
       const result = await askLLM(
         promptAnalise,
         (p) => base44.integrations.Core.InvokeLLM({ prompt: p }),

@@ -14,67 +14,37 @@ function normalizeText(text) {
     .trim();
 }
 
-function splitSentences(text) {
-  return normalizeText(text)
-    .split(/\n|(?<=\.)\s+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 18 && s.length < 260)
-    // descarta linhas que são cabeçalhos (curtas, sem pontuação final),
-    // para não virarem "leitura principal" / item de destaque
-    .filter((s) => /[.!?]$/.test(s) || (s.match(/\s/g) || []).length > 6);
+/* O prompt da análise pede 5 cabeçalhos markdown fixos. Ler a estrutura é
+   determinístico; pontuar frases por palavra-chave não é — e promovia linha de
+   dado bruto a "Pede atenção". Se os cabeçalhos não vierem, este componente não
+   renderiza: silêncio > destaque fabricado. */
+function parseSections(text) {
+  const out = {};
+  let current = null;
+  for (const line of String(text || '').split('\n')) {
+    const h = line.match(/^\s*#{1,4}\s*(.+?)\s*$/);
+    if (h) {
+      current = normalizeText(h[1]).toLowerCase();
+      out[current] = [];
+    } else if (current && line.trim()) {
+      out[current].push(line.trim());
+    }
+  }
+  return out;
 }
 
-function scoreMainReading(sentence) {
-  const l = sentence.toLowerCase();
-  let score = 0;
-
-  if (/principal|mais importante|padrão|tendência|agora|momento/i.test(l)) score += 18;
-  if (/sono|recovery|recuperação|hrv|carga|fadiga|stress|strain/i.test(l)) score += 14;
-  if (/limitando|segurando|melhorando|piorando|associado|responde/i.test(l)) score += 12;
-  if (/\d+/.test(sentence)) score += 4;
-
-  return score;
+function sectionLines(sections, ...aliases) {
+  for (const a of aliases) {
+    const key = Object.keys(sections).find((k) => k.startsWith(a));
+    if (key && sections[key].length) return sections[key];
+  }
+  return [];
 }
 
-function scoreAlert(sentence) {
-  const l = sentence.toLowerCase();
-  let score = 0;
-
-  if (/atenção|alerta|risco|sobrecarga|overreach|fadiga|déficit|dívida/i.test(l)) score += 22;
-  if (/reduzir|evitar|proteger|pausar|descanso|controle|cautela/i.test(l)) score += 16;
-  if (/sono.*curto|sono.*ruim|stress alto|hrv.*baixo|carga.*alta/i.test(l)) score += 12;
-  if (/\d+/.test(sentence)) score += 4;
-
-  return score;
-}
-
-function scoreAction(sentence) {
-  const l = sentence.toLowerCase();
-  let score = 0;
-
-  if (/priorize|tente|observe|reduza|mantenha|ajuste|durma|hidrate|faça|evite/i.test(l)) score += 22;
-  if (/próximos 3 dias|próximos 7 dias|esta semana|hoje à noite|amanhã/i.test(l)) score += 12;
-  if (/sono|treino|carga|recuperação|stress|hidratação/i.test(l)) score += 8;
-
-  return score;
-}
-
-function pickBest(sentences, scorer, limit, usedTexts = []) {
-  const used = new Set(usedTexts);
-
-  return sentences
-    .filter((s) => !used.has(s))
-    .map((s) => ({ text: s, score: scorer(s) }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((item) => item.text);
-}
-
-function shortTitle(sentence) {
-  const cleaned = sentence.replace(/^[-–•]\s*/, '').trim();
-  const words = cleaned.split(/\s+/);
-  return words.slice(0, 6).join(' ').replace(/[,:;]$/, '') + (words.length > 6 ? '…' : '');
+/* Limpa marcação e bullet; devolve null se não sobrar frase útil. */
+function cleanLine(line) {
+  const t = normalizeText(line).replace(/^[-–•]\s*/, '').trim();
+  return t.length > 18 ? t : null;
 }
 
 function HighlightBlock({ icon: Icon, label, color, bg, border, items, maxItems = 2 }) {
@@ -105,13 +75,17 @@ function HighlightBlock({ icon: Icon, label, color, bg, border, items, maxItems 
 export default function AnalysisHighlights({ analysisText }) {
   if (!analysisText || typeof analysisText !== 'string') return null;
 
-  const sentences = splitSentences(analysisText);
-  if (!sentences.length) return null;
+  const sections = parseSections(analysisText);
 
-  const mainReading = pickBest(sentences, scoreMainReading, 1);
-  const alerts = pickBest(sentences, scoreAlert, 2, mainReading);
-  const actions = pickBest(sentences, scoreAction, 2, [...mainReading, ...alerts]);
+  const mainReading = sectionLines(sections, 'leitura principal')
+    .map(cleanLine).filter(Boolean).slice(0, 1);
+  const alerts = sectionLines(sections, 'o que está limitando', 'o que esta limitando')
+    .map(cleanLine).filter(Boolean).slice(0, 2);
+  const actions = sectionLines(sections, 'ajuste para os próximos', 'ajuste para os proximos')
+    .map(cleanLine).filter(Boolean).slice(0, 2);
 
+  // Sem estrutura reconhecível não inventa destaque. O texto completo continua
+  // sendo renderizado normalmente pela tela que consome este componente.
   if (!mainReading.length && !alerts.length && !actions.length) return null;
 
   return (
