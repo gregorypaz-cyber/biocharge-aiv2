@@ -467,7 +467,7 @@ Recomendações para os próximos 7 dias
 
 DADOS (${summary.length} dias, mais recente primeiro):
 ${JSON.stringify(summary, null, 2)}`;
-      askLLM(promptDeepAnalysis, (p) => base44.integrations.Core.InvokeLLM({ prompt: p }))
+      askLLM(promptDeepAnalysis, (p) => base44.integrations.Core.InvokeLLM({ prompt: p }), { maxTokens: 1600, timeoutMs: 90000 })
         .then((deepAnalysis) => {
           if (deepAnalysis && savedRecord?.id) {
             base44.entities.DailyCheckin.update(savedRecord.id, {

@@ -16,7 +16,7 @@
 const STORAGE_KEY = 'reck-byo-llm';
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o-mini';
-const TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 30000;
 
 export function getByoConfig() {
   try {
@@ -56,7 +56,7 @@ export function isByoConfigured() {
 export const BYO_DEFAULTS = { baseUrl: DEFAULT_BASE_URL, model: DEFAULT_MODEL };
 
 /* Monta a requisição compatível-OpenAI. Pura e exportada pra ser testável sem rede. */
-export function buildChatRequest(prompt, cfg = getByoConfig(), { maxTokens = 700, temperature = 0.4 } = {}) {
+export function buildChatRequest(prompt, cfg = getByoConfig(), { maxTokens = 700, temperature = 0.4 /* timeoutMs é de transporte, não entra no body */ } = {}) {
   return {
     url: `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`,
     headers: {
@@ -88,7 +88,8 @@ export async function callByo(prompt, opts = {}) {
 
   const { url, headers, body } = buildChatRequest(prompt, cfg, opts);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(url, {
@@ -105,6 +106,12 @@ export async function callByo(prompt, opts = {}) {
     const text = parseChatResponse(data);
     if (!text) throw new Error('Resposta vazia do provedor');
     return text;
+  } catch (err) {
+    // O abort do timeout vira um erro legível; o resto sobe inalterado.
+    if (err?.name === 'AbortError') {
+      throw new Error(`Tempo esgotado (${Math.round(timeoutMs / 1000)}s) — o modelo demorou demais para responder.`);
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }

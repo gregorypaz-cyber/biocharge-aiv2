@@ -1199,14 +1199,16 @@ Regras:
 - termine com uma frase completa`;
       const result = await askLLM(
         promptAnalise,
-        (p) => base44.integrations.Core.InvokeLLM({ prompt: p })
+        (p) => base44.integrations.Core.InvokeLLM({ prompt: p }),
+        { maxTokens: 1600, timeoutMs: 90000 }
       );
 
       setAiInsight(result);
       setAnalysisGeneratedAt(new Date());
     } catch (err) {
       console.warn(err);
-      setAiInsightError('Não foi possível gerar a análise profunda agora. Tente novamente.');
+      const detalhe = err?.message ? ` (${err.message})` : '';
+      setAiInsightError(`Não foi possível gerar a análise profunda agora${detalhe}`);
     } finally {
       setIsGenerating(false);
     }
@@ -1259,7 +1261,8 @@ Regras:
       }
     } catch (err) {
       console.warn(err);
-      setCoachResponse('Não foi possível conectar ao coach agora. Tente novamente.');
+      const detalhe = err?.message ? ` (${err.message})` : '';
+      setCoachResponse(`Não foi possível conectar ao coach agora. Tente novamente.${detalhe}`);
     } finally {
       setCoachInput('');
       setCoachQuestion('');
