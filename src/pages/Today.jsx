@@ -15,7 +15,7 @@ import {
   calculateRecoveryDemand,
   calculateSleepNeed,
 } from '@/lib/training-impact-engine';
-import { runPhysiologicalAnalysisAsync } from '@/lib/physiological-engine';
+import { runPhysiologicalAnalysisAsync, assessSleepRegime } from '@/lib/physiological-engine';
 import { QUERY_KEYS } from '@/lib/query-keys';
 import { useDayContext } from '@/lib/dayContext';
 
@@ -199,6 +199,26 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : sleepVal >= 65 ? 'text-blue-400'
     : 'text-blue-500';
 
+  // Direção B: chip de regime de sono. NÃO altera o recovery — só sinaliza quando
+  // a noite caiu FORA do domínio onde HRV/RHR foram validados (eficiência < consolidado).
+  // Silêncio > sinal fabricado: inDomain, sem eficiência ou sem regime → sem chip.
+  // âmbar = 'fragmented', laranja = 'severely_fragmented'.
+  const sleepRegime = assessSleepRegime(enrichedCheckin);
+  const regimeChip =
+    !sleepRegime || sleepRegime.efficiency == null || sleepRegime.inDomain
+      ? null
+      : sleepRegime.state === 'severely_fragmented'
+        ? {
+            wrap: 'bg-zone-orange/10 text-zone-orange/90',
+            dot: 'bg-zone-orange',
+            label: `Noite muito fragmentada · eficiência ${Math.round(sleepRegime.efficiency * 100)}%`,
+          }
+        : {
+            wrap: 'bg-zone-amber/10 text-zone-amber/90',
+            dot: 'bg-zone-amber',
+            label: `Noite fragmentada · eficiência ${Math.round(sleepRegime.efficiency * 100)}%`,
+          };
+
   // Visão B (constelação, ART): satélites são micro-gemas em cor de DOMÍNIO.
   // Sono já é campo azul (sleepColor). Strain vira campo LARANJA (BRAND §2:
   // laranja é o domínio de carga), slate quando não há carga ("sinal sem dado
@@ -322,6 +342,15 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               live={false}
             />
           </div>
+
+          {regimeChip && !isCalibrating && (
+            <span
+              className={`mt-3 inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${regimeChip.wrap}`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${regimeChip.dot}`} />
+              {regimeChip.label}
+            </span>
+          )}
         </div>
 
         {/* (Colapsado) "Entender os scores": as definições genéricas de
