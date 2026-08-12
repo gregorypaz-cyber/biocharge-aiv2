@@ -3,6 +3,54 @@
 > Entradas mais recentes no topo. Nunca reescrever entrada antiga, só acrescentar.
 > Entradas anteriores a 28/07/2026 vivem nos arquivos do Projeto (ainda não migradas).
 
+## 2026-08-12 · Sessão de agosto: BYO-LLM, backup e badge de sono
+
+### Fonte de noite: Fitbit Air SUBSTITUÍDO pelo Garmin Cirqa
+O §2 do plano de ingestão foi respondido **sem conta Garmin**: o RMSSD só aparece em
+leituras de 5 min e a temperatura **não tem endpoint** na `python-garminconnect` → a
+entrada de noite fica **manual** por ora. **Por quê:** não travar o produto na compra —
+a automação de ingestão foi **desacoplada** da aquisição do relógio. O Cirqa é o plano
+vigente de fonte de noite; o Fitbit deixou de ser plano.
+
+### BYO-LLM via OpenRouter
+Coach + análise profunda + deep-analysis passam a rodar por provedor próprio. **Por quê:**
+tirar o runtime de LLM do crédito de integração Base44 (free, escasso). O **retrospecto
+semanal fica de fora** por ser função de **backend** — a chave do usuário nunca pode ir ao
+backend, então ele segue no crédito Base44.
+
+### stress_score REMOVIDO do prompt da análise
+`stress_score` é **composto** (stress 50% + mood 30% + energy 20%), assume **só 3 valores
+em 21 dias**, e o modelo o interpretou literalmente como "50% de estresse", produzindo
+**diagnóstico causal sem base**. **Por quê:** um número composto e quase-binário não é
+evidência — dava munição para o modelo inventar causa. Fora do prompt.
+
+### notes (check-in) e notas de treino ENTRARAM no prompt
+Com regra explícita de **nunca citar literalmente**. **Por quê:** a nota é contexto de vida
+e de esforço percebido que os números não capturam — ela deve **mudar a conclusão, não
+enfeitá-la**. Citar literal viraria enfeite; usar como evidência muda a leitura.
+
+### AnalysisHighlights: heurística de frases → leitura de cabeçalhos
+A pontuação de frases aceitava `score > 0`, então **qualquer frase com número** virava
+"Pede atenção". **Por quê:** falso positivo estrutural. Trocado por leitura direta dos
+cabeçalhos da análise, que já carregam a hierarquia.
+
+### Badge de regime de sono (Direção B) no ar
+Dispara em ~**76%** das noites no regime atual. Limiares **NÃO recalibrados de propósito**.
+**Por quê:** calibrar com 21 noites de um regime atípico (pós-bebê) fixaria a régua no
+transitório — melhor badge honesto de baixa confiança do que limiar falsamente preciso.
+
+### awake_minutes: colinearidade resolvida, sinal ainda não-testável
+A **colinearidade estrutural com o regime foi RESOLVIDA** (há noites de 66% e de 99% no
+mesmo mês). Mas o sinal **segue não-testável**: deriva temporal (parcial r=−0,34, p=0,13)
+e alvo **quase-binário** (energia: 95,2% em 2 valores). **Por quê:** sem variância no alvo
+e sem controle da deriva, não há como extrair sinal — fica congelado, não descartado.
+
+### Autocorreção registrada: teste de minutos-por-despertar tinha premissa falsa
+Três noites (**04, 05 e 07/08**) foram acusadas de implausíveis por um teste de
+minutos-por-despertar; as **notas do próprio dono confirmaram que eram reais**. **Por quê
+o teste errou:** despertares **não são intercambiáveis** — o teste embutia a premissa falsa
+de que todo despertar dura um tempo comparável. Premissa removida.
+
 ## 2026-07-28 · Investigação de peso do Recovery ENCERRADA sem re-peso
 
 ### Decisão
