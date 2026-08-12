@@ -1200,7 +1200,9 @@ Regras:
 - termine com uma frase completa
 - não afirme causa (estresse, doença, overtraining) sem evidência direta nos campos enviados; se os dados não explicarem um padrão, diga que não explicam
 - o campo "notas" é contexto de vida escrito pelo próprio usuário: use para explicar o que os números mostram, e nunca o cite literalmente
-- não prescreva treino (intensidade, volume, o que fazer ou não): o usuário segue plano externo`;
+- não prescreva treino (intensidade, volume, o que fazer ou não): o usuário segue plano externo
+- se o limitador não estiver sob controle do usuário, diga isso em vez de prescrever: a seção de ajuste pode conter uma única frase explicando por que não há ajuste útil agora, e no máximo uma ação de mitigação realista
+- não sugira higiene do sono genérica (luz azul, temperatura do quarto, horário fixo, refeições) a menos que os dados enviados apontem especificamente para isso`;
       const result = await askLLM(
         promptAnalise,
         (p) => base44.integrations.Core.InvokeLLM({ prompt: p }),
