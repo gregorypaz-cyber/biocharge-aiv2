@@ -48,6 +48,10 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 > ⚠️ **Não recalibrar sem necessidade.** Recalibrar a fórmula no meio do histórico torna scores antigos não-comparáveis (invalida cálculo de tendência no campo afetado). Avisar isso ANTES de qualquer mudança de peso. Deixar a fórmula assentar 10–14 dias antes de nova calibração — não perseguir alvo móvel.
 
+**Recovery v4 em produção desde ~19/07/2026:** piso por sono, peso dinâmico HRV→Sono e HRV trust one-way (o trust só reduz a confiança, nunca a infla). Está no código vigente — se divergir, o código manda.
+
+**`assessSleepRegime()`** existe em `physiological-engine.js`: detecta o regime de sono atual e alimenta um **badge de baixa confiança** na Today (Direção B). Dispara em ~76% das noites no regime atual; limiares **não recalibrados de propósito** (não calibrar com 21 noites de regime atípico).
+
 ---
 
 ## 4. Regras de arquitetura (Base44)
@@ -66,7 +70,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 - **Não inchar o check-in nem as telas.** Cada campo novo precisa justificar sua existência. Resistir a over-engineering.
 - **O gate de "salvar" do check-in deve exigir o sinal que a fórmula realmente precisa, não o que parece mais "principal" na tela.** Hoje exige HRV + horas de sono (são os únicos cuja ausência muda o resultado: sem HRV, `recovery_score` sai `null`). Campos de calibração (Zepp: `biocharge_morning`, `sleep_score`) nunca devem ser obrigatórios — eles não entram em fórmula nenhuma (corrigido em 20/06/2026, antes travava o save nos campos errados).
 - Premium visual = hierarquia + herói gráfico + espaço em branco + **menos** texto.
-- 6 abas com papéis distintos, sem redundância: **Hoje** (decisão do dia), **Insights** (padrões e o que explica), **Check-in**, **Tendências** (evolução no tempo), **Resumo** (estado + semana), **Timeline** (histórico dia-a-dia).
+- **5 abas** com papéis distintos, sem redundância: **Hoje** (decisão do dia), **Padrões/Insights** (padrões e o que explica), **Check-in**, **Tendências** (evolução no tempo), **Histórico/Timeline** (histórico dia-a-dia). A antiga aba **Resumo é MORTA** — suas rotas redirecionam para `/today`; não tratar como aba viva.
 - UI em **português-BR**.
 
 ---
@@ -77,6 +81,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 - **Chamadas de LLM no runtime gastam crédito de integração.** Estão atrás de um toggle opt-in (`generate_ai`, default false) no check-in da manhã + gate de "registro novo, sem análise prévia". **Não reintroduzir geração automática de IA no save.**
 - `runPhysiologicalAnalysis` e correlações são **JS local** — não gastam crédito, pode usar à vontade.
 - Edição via GitHub→Base44 (este fluxo) **não gasta** crédito de mensagem.
+- **BYO-LLM (`src/lib/byo-llm.js`, chave em `localStorage` `reck-byo-llm`)** roteia **coach + análise profunda + deep-analysis** por provedor próprio (OpenRouter), **sem gastar crédito de integração**. `generateWeeklyRetrospect` continua no crédito Base44 por ser função de **backend** — a chave do usuário **NUNCA vai ao backend**.
 
 ---
 
@@ -110,7 +115,7 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 **Já descartado (não reabrir sem dados novos):** strain→recovery D+1 (r=+0,17, sem sinal; strain do dono é de baixa variância).
 
-**Entidades órfãs** (no schema, nunca escritas — candidatas a limpeza): SleepRecord, WorkoutSession, HRVRecord, WeeklyRetrospect. `cadence_spm` é loop morto (nunca preenchido).
+**Entidades órfãs** (no schema, nunca escritas — candidatas a limpeza): SleepRecord, WorkoutSession, HRVRecord. `cadence_spm` é loop morto (nunca preenchido). **WeeklyRetrospect e WorkoutFeedback saíram desta lista** — o export de 12/08/2026 confirmou registros reais (5 e 4 respectivamente); não são mais candidatas a limpeza.
 
 **Componentes órfãos (resolvido 20/06/2026):** `ScoresGrid.jsx` e `HeroSection.jsx` existiam calculados/prontos, mas não importados em nenhuma rota — código morto, zero retorno pro dono. `HeroSection` foi removido (duplicava a Today: mesmo anel, mesma recomendação, até tinha um botão "Ver plano do dia → /today"). `ScoresGrid` foi religado no Resumo com recálculo ao vivo (e corrigido o rótulo "Prontidão"→"Recovery", que tinha o mesmo erro de nomenclatura do §3). **Lição de processo:** antes de declarar um componente "pronto", confirmar com `grep -rl "NomeDoComponente" src` que ele é de fato importado em alguma página roteada (`App.jsx`) — código calculado e nunca exibido é o tipo de placebo mais fácil de não perceber, porque "funciona" em todo teste que só olha o cálculo, nunca a tela.
 
@@ -135,3 +140,8 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 - `src/lib/training-impact-engine.js`, `src/lib/physio-constants.js` — impacto de treino e constantes.
 - `src/pages/` — Today, DailyCheckin, Insights, Trends, Dashboard, History.
 - `base44/entities/*.jsonc` — schemas (lembrar: campo ausente = descartado no save).
+- `src/lib/byo-llm.js` — roteamento BYO-LLM (OpenRouter) do coach + análise profunda + deep-analysis; chave só em `localStorage`.
+- `src/index.css` — tokens de tema e camada base do design.
+- `src/components/layout/AppLayout.jsx` — casca do app (as páginas fora dele, como `Health.jsx`, não têm entrada no menu).
+- `src/components/layout/MeniscusNav.jsx` — navegação inferior/abas.
+- `BRAND.md` — identidade e voz do produto (Reck).

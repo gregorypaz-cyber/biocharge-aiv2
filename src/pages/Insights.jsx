@@ -1157,6 +1157,10 @@ const primaryInsight = useMemo(() => {
       mood: c.mood,
       energy: c.energy,
       strain: c.daily_strain_accumulated,
+      notas_treino: (trainingSessions || [])
+        .filter((s) => s.date === c.date && (s.notes || '').trim())
+        .map((s) => s.notes.trim())
+        .join(' | ') || null,
     }));
 
     try {
@@ -1202,7 +1206,8 @@ Regras:
 - o campo "notas" é contexto de vida escrito pelo próprio usuário: use para explicar o que os números mostram, e nunca o cite literalmente
 - não prescreva treino (intensidade, volume, o que fazer ou não): o usuário segue plano externo
 - se o limitador não estiver sob controle do usuário, diga isso em vez de prescrever: a seção de ajuste pode conter uma única frase explicando por que não há ajuste útil agora, e no máximo uma ação de mitigação realista
-- não sugira higiene do sono genérica (luz azul, temperatura do quarto, horário fixo, refeições) a menos que os dados enviados apontem especificamente para isso`;
+- não sugira higiene do sono genérica (luz azul, temperatura do quarto, horário fixo, refeições) a menos que os dados enviados apontem especificamente para isso
+- o campo "notas_treino" é o que o usuário escreveu sobre a sessão daquele dia: use como evidência de esforço percebido, nunca cite literalmente`;
       const result = await askLLM(
         promptAnalise,
         (p) => base44.integrations.Core.InvokeLLM({ prompt: p }),

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { motion } from 'framer-motion';
-import { User, LogOut, Globe, Dumbbell, Clock, Target, Plus, X, Download } from 'lucide-react';
+import { User, LogOut, Globe, Dumbbell, Clock, Target, Plus, X, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -64,6 +64,9 @@ export default function AppSettings() {
   const [customSport, setCustomSport] = useState('');
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState(null); // { faltando, total, arquivo }
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (user?.preferences) {
@@ -206,6 +209,121 @@ export default function AppSettings() {
       toast.error('Não foi possível gerar o backup agora. Tente novamente.');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const IMPORT_ENTITIES = [
+    'DailyCheckin', 'TrainingSession', 'WorkoutSession', 'HRVRecord',
+    'WeeklyRetrospect', 'WorkoutFeedback', 'SleepRecord',
+  ];
+
+  const chaveDeRegistro = (r) => (r?.date != null ? `d:${r.date}` : `i:${r?.id}`);
+
+  // Lê e ANALISA o arquivo. Não escreve nada — só monta o preview do que falta.
+  const handleFilePick = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      let obj;
+      try {
+        const text = await file.text();
+        obj = JSON.parse(text);
+      } catch {
+        toast.error('Arquivo não parece um backup do Reck.');
+        return;
+      }
+
+      if (!(obj?.backup_meta?.app === 'Reck' && obj.backup_meta.schema_version === 1)) {
+        toast.error('Arquivo não parece um backup do Reck.');
+        return;
+      }
+
+      if (obj.backup_meta.user_email !== user.email) {
+        toast.error('Este backup é de outra conta.');
+        return;
+      }
+
+      const porEntidade = {};
+      const avisos = [];
+      let total = 0;
+
+      for (const nome of IMPORT_ENTITIES) {
+        const registros = Array.isArray(obj.data?.[nome]) ? obj.data[nome] : [];
+        if (registros.length === 0) continue;
+
+        try {
+          const existentes = await base44.entities[nome].filter({ created_by: user.email }, '-date', 10000);
+          const lista = Array.isArray(existentes) ? existentes : [];
+          const chaves = new Set(lista.map(chaveDeRegistro));
+          let faltando = 0;
+          for (const r of registros) {
+            if (!chaves.has(chaveDeRegistro(r))) faltando += 1;
+          }
+          porEntidade[nome] = faltando;
+          total += faltando;
+        } catch {
+          // Entidade que falhar conta como 0 e entra nos avisos.
+          porEntidade[nome] = 0;
+          avisos.push(nome);
+        }
+      }
+
+      setImportPreview({ obj, porEntidade, total, nomeArquivo: file.name, avisos });
+    } finally {
+      // Limpa o input para permitir escolher o mesmo arquivo de novo.
+      event.target.value = '';
+    }
+  };
+
+  // Só roda após o usuário confirmar o preview. Cria SÓ o que falta — nunca update, nunca delete.
+  const confirmImport = async () => {
+    if (!importPreview?.obj) return;
+    setImporting(true);
+
+    const { obj } = importPreview;
+    let sucessos = 0;
+    let falhas = 0;
+
+    try {
+      for (const nome of IMPORT_ENTITIES) {
+        const registros = Array.isArray(obj.data?.[nome]) ? obj.data[nome] : [];
+        if (registros.length === 0) continue;
+
+        // Relê os existentes na hora de criar — não confia num preview possivelmente velho.
+        let lista;
+        try {
+          const existentes = await base44.entities[nome].filter({ created_by: user.email }, '-date', 10000);
+          lista = Array.isArray(existentes) ? existentes : [];
+        } catch {
+          // Sem conseguir ler os existentes, não arrisca duplicar: pula a entidade inteira.
+          continue;
+        }
+        const chaves = new Set(lista.map(chaveDeRegistro));
+
+        for (const r of registros) {
+          const chave = chaveDeRegistro(r);
+          if (chaves.has(chave)) continue; // já existe → nunca sobrescreve.
+
+          const { id, created_date, updated_date, created_by, ...registroSemId } = r;
+          try {
+            await base44.entities[nome].create(registroSemId);
+            chaves.add(chave);
+            sucessos += 1;
+          } catch {
+            falhas += 1;
+          }
+        }
+      }
+
+      if (falhas > 0) {
+        toast.warning(`${sucessos} registros restaurados · ${falhas} falharam`);
+      } else {
+        toast.success(`${sucessos} registros restaurados`);
+      }
+    } finally {
+      setImportPreview(null);
+      setImporting(false);
     }
   };
 
@@ -635,7 +753,7 @@ export default function AppSettings() {
         <p className="text-xs text-muted-foreground">
           Baixa todo o seu histórico (check-ins, treinos, HRV e mais) num único arquivo JSON,
           para você guardar onde quiser. Suas chaves de API não vão junto — ficam só no aparelho.
-          Importar de volta ainda não existe.
+          Restaurar de volta só cria o que está faltando — nunca altera nem apaga nada existente.
         </p>
         <Button
           onClick={exportData}
@@ -645,6 +763,73 @@ export default function AppSettings() {
         >
           {exporting ? 'Gerando...' : 'Baixar meus dados (JSON)'}
         </Button>
+
+        <input
+          type="file"
+          accept="application/json"
+          ref={fileInputRef}
+          onChange={handleFilePick}
+          className="hidden"
+        />
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={importing}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Upload className="w-4 h-4 mr-2" /> Restaurar de um backup
+        </Button>
+
+        {importPreview != null && (
+          <div className="rounded-xl border border-border bg-secondary p-4 space-y-3">
+            {importPreview.total === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nada a restaurar — este backup não tem registros novos.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  Vou criar {importPreview.total} registros que não existem hoje. Nada existente
+                  será alterado ou apagado.
+                </p>
+                <ul className="space-y-1">
+                  {Object.entries(importPreview.porEntidade)
+                    .filter(([, n]) => n > 0)
+                    .map(([nome, n]) => (
+                      <li key={nome} className="text-xs text-foreground">
+                        {nome}: {n}
+                      </li>
+                    ))}
+                </ul>
+              </>
+            )}
+            {importPreview.avisos?.length > 0 && (
+              <p className="t-micro text-amber-300/90 leading-relaxed">
+                Não consegui ler o histórico atual de: {importPreview.avisos.join(', ')} — essas
+                entidades foram contadas como 0.
+              </p>
+            )}
+            <div className="flex gap-2">
+              {importPreview.total > 0 && (
+                <Button
+                  onClick={confirmImport}
+                  disabled={importing || importPreview.total === 0}
+                  className="flex-1 font-semibold"
+                >
+                  {importing ? 'Restaurando...' : `Restaurar ${importPreview.total}`}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={importing}
+                onClick={() => setImportPreview(null)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Save */}
