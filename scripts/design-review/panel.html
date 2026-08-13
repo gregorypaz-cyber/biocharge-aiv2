@@ -409,7 +409,7 @@
   <section>
     <div class="sec-head">
       <div class="role"><span class="rn">✦</span><h2>Dark Mode · conformidade com o guia</h2></div>
-      <span class="score-badge" style="color:var(--blue); border-color:hsl(200 80% 55% / .4); background:hsl(200 80% 55% / .06)">3 ok · 2 lacunas · 2 falhas</span>
+      <span class="score-badge" style="color:var(--blue); border-color:hsl(200 80% 55% / .4); background:hsl(200 80% 55% / .06)">3 ok · 1 corrigido (T1) · 3 pendências</span>
     </div>
     <p class="criterion">Base: <a href="https://www.uxdesigninstitute.com/blog/dark-mode-design-practical-guide/" target="_blank" rel="noopener">UX Design Institute — Dark mode design: a practical guide</a>. Contraste <span class="mono">MEDIDO</span> por luminância WCAG sobre os tokens da marca (<span class="mono">src/index.css</span>); saturação e texto <span class="mono">OBSERVADO</span> nas capturas.</p>
 
@@ -429,13 +429,13 @@
         </tr>
         <tr>
           <td>Baixar saturação<span class="g">"muted tones"; saturado vibra no escuro</span></td>
-          <td>Paleta de sinal roda quente: amber <b class="ratio">S=93%</b>, orange 90%, blue 80%, red 72%, green 70%. Amber a 93% usado 522× no Histórico = o "vibrating on dark" do guia.</td>
-          <td><span class="verdict v-fail">Falha</span></td>
+          <td>No diagnóstico a paleta rodava quente: amber <b class="ratio">S=93%</b>, orange 90% — amber usado 522× no Histórico = o "vibrating on dark" do guia. <b style="color:var(--green)">T1 dessaturou</b> amber <span class="ratio">93→72%</span> e orange <span class="ratio">90→70%</span> (blue 80% mantido — não era o achado).</td>
+          <td><span class="verdict v-pass">Corrigido · T1</span></td>
         </tr>
         <tr>
           <td>Contraste ≥ 4.5:1<span class="g">texto normal (3:1 grande)</span></td>
-          <td>muted <span class="mono">#6C7C93</span> sobre card = <span class="ratio">4.45:1</span>; red <span class="mono">#DF3A3A</span> sobre card = <span class="ratio">4.32:1</span> — passam só como texto grande, mas aparecem em tamanho normal.</td>
-          <td><span class="verdict v-warn">Falha AA</span></td>
+          <td>muted <span class="mono">#919CAC</span> (token real, 62%) sobre card = <span class="ratio">6.79:1</span> — <b>passa AA</b>. Só o red <span class="mono">#DF3A3A</span> = <span class="ratio">4.32:1</span> fica marginal (passa como texto grande). <em>Correção: o 4.45:1 do diagnóstico usou o valor stale do BRAND.md (50%).</em></td>
+          <td><span class="verdict v-warn">Red marginal</span></td>
         </tr>
         <tr>
           <td>Fontes finas somem no escuro<span class="g">regular/medium no corpo</span></td>
@@ -457,8 +457,8 @@
     </div>
 
     <div class="sat">
-      <div class="sw"><i style="background:#F8C630"></i><span><b>amber</b> S=93%</span></div>
-      <div class="sw"><i style="background:#F47B25"></i><span><b>orange</b> S=90%</span></div>
+      <div class="sw"><i style="background:#E1BA47"></i><span><b>amber</b> S=93→72%</span></div>
+      <div class="sw"><i style="background:#DD7F3C"></i><span><b>orange</b> S=90→70%</span></div>
       <div class="sw"><i style="background:#30ABE8"></i><span><b>blue</b> S=80%</span></div>
       <div class="sw"><i style="background:#DF3A3A"></i><span><b>red</b> S=72%</span></div>
       <div class="sw"><i style="background:#26D968"></i><span><b>green</b> S=70%</span></div>
@@ -468,7 +468,7 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px">
       <div class="note" style="border-color:hsl(0 72% 55% / .3); background:hsl(0 72% 55% / .05)">
         <h3 style="color:var(--red)">O guia dá causa-raiz ao problema do amber</h3>
-        O achado nº1 do painel não é só <em>quantidade</em> — é <b style="color:#C4CEDB">saturação</b>. Amber a 93% é o "overly intense / vibrating on dark" do artigo. A correção que o guia aponta é <b style="color:#C4CEDB">dessaturar a paleta de sinal</b> (amber ~60–70% em vez de 93%), não só usar menos.
+        O achado nº1 do painel não é só <em>quantidade</em> — é <b style="color:#C4CEDB">saturação</b>. Amber a 93% é o "overly intense / vibrating on dark" do artigo. A correção que o guia aponta é <b style="color:#C4CEDB">dessaturar a paleta de sinal</b> — <b style="color:var(--green)">feito na T1</b>: amber 93→72%, orange 90→70%, sincronizado nos 14 pontos onde o HSL estava cravado.
       </div>
       <div class="note" style="border-color:hsl(142 70% 50% / .3); background:hsl(142 70% 50% / .05)">
         <h3 style="color:var(--green)">Onde o Reck já acerta (fato, não elogio)</h3>

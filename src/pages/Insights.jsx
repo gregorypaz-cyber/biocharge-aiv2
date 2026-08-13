@@ -40,8 +40,6 @@ import ReactMarkdown from 'react-markdown';
 import { buildCoachContext } from '@/lib/coach-context-builder';
 import { askLLM } from '@/lib/byo-llm';
 import { cn } from '@/lib/utils';
-import PhysioStateCard from '@/components/intelligence/PhysioStateCard';
-import TrainingLoadCard from '@/components/intelligence/TrainingLoadCard';
 import CorrelationsCard from '@/components/intelligence/CorrelationsCard';
 import AnalysisHighlights from '@/components/intelligence/AnalysisHighlights';
 import AnalysisBody from '@/components/intelligence/AnalysisBody';

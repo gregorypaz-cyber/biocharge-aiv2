@@ -68,15 +68,15 @@ Os **tokens HSL são canônicos**. O hex é derivado, para contextos que não ac
 | `--secondary` / `--muted` | `hsl(220 15% 12%)` | `#1A1D23` | 3ª camada — elemento interno **sobe**, nunca afunda pro fundo |
 | `--border` / `--input` | `hsl(220 15% 14%)` | `#1E2229` | Hairline de separação |
 | `--foreground` | `hsl(210 40% 96%)` | `#F1F5F9` | Texto primário (branco-gelo) |
-| `--muted-foreground` | `hsl(215 15% 50%)` | `#6C7C93` | Texto secundário e todo o chrome |
+| `--muted-foreground` | `hsl(215 14% 62%)` | `#919CAC` | Texto secundário e todo o chrome |
 
 ### Sinal
 | Token | HSL | Hex | Papel |
 |---|---|---|---|
 | `--primary` / `--bio-green` | `hsl(142 70% 50%)` | `#26D968` | **Verde de marca** |
-| `--bio-yellow` (`zone-amber`) | `hsl(45 93% 58%)` | `#F8C630` | Âmbar |
+| `--bio-yellow` (`zone-amber`) | `hsl(45 72% 58%)` | `#E1BA47` | Âmbar (dessaturado na T1 — era 93%, vibrava no escuro) |
 | `--bio-red` / `--destructive` | `hsl(0 72% 55%)` | `#DF3A3A` | Vermelho |
-| `--bio-orange` | `hsl(25 90% 55%)` | `#F47B25` | Laranja — alerta **fora** da gramática de zona |
+| `--bio-orange` | `hsl(25 70% 55%)` | `#DD7F3C` | Laranja — alerta **fora** da gramática de zona (dessaturado na T1 — era 90%) |
 | `--bio-blue` | `hsl(200 80% 55%)` | `#30ABE8` | Azul — domínio sono |
 | `--bio-purple` | `hsl(280 65% 60%)` | `#AF57DB` | Roxo — domínio auxiliar |
 

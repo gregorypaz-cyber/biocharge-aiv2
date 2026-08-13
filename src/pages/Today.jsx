@@ -35,7 +35,7 @@ import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { buildCardLayout } from '@/utils/priorityEngine';
-import { getDailyVerdict, getSleepDebtHours } from '@/lib/decision-engine';
+import { getDailyVerdict } from '@/lib/decision-engine';
 
 /* ═══ O RITUAL DA MANHÃ ═══════════════════════════════════════════════════
    Ao abrir o Hoje pela primeira vez na sessão, os elementos não aparecem de
