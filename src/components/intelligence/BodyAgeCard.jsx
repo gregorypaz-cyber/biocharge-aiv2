@@ -111,7 +111,7 @@ export default function BodyAgeCard() {
   }
 
   const r = result;
-  const vitColor = r.vitality >= 70 ? 'hsl(142,70%,50%)' : r.vitality >= 40 ? 'hsl(45,93%,58%)' : 'hsl(0,72%,55%)';
+  const vitColor = r.vitality >= 70 ? 'hsl(142,70%,50%)' : r.vitality >= 40 ? 'hsl(45,72%,58%)' : 'hsl(0,72%,55%)';
   const vitFaixa = r.vitality >= 70 ? 'Alta' : r.vitality >= 40 ? 'Média' : 'Baixa';
   const younger = r.deltaYears < 0;
   const deltaAbs = Math.abs(r.deltaYears);

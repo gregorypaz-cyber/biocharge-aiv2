@@ -44,7 +44,7 @@ function stateBorderBg(state) {
 // mas atrás de uma PALAVRA (o veredito não tem número, então não vira gema).
 function stateGlow(state) {
   if (state === 'normal') return 'hsl(142,70%,50%)';
-  if (state === 'acute') return 'hsl(45,93%,58%)';
+  if (state === 'acute') return 'hsl(45,72%,58%)';
   if (state === 'sustained') return 'hsl(0,72%,55%)';
   return 'hsl(215,20%,50%)';
 }

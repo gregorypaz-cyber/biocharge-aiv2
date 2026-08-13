@@ -228,7 +228,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
   const strainColor =
     cappedStrain <= 0 ? 'hsl(215,30%,55%)'
     : strainVsTarget.color === 'text-zone-red' ? 'hsl(0,84%,60%)'
-    : 'hsl(25,90%,55%)';
+    : 'hsl(25,70%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
   // PAINEL (unânime): o verbo segue a ZONA, nunca o decision_mode — pra o herói
