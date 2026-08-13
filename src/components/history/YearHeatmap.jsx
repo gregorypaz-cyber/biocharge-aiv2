@@ -82,7 +82,7 @@ export default function YearHeatmap({ checkins = [], weeksBack = 18, onSelectDat
         <p className="text-sm font-semibold tracking-tight">O seu ano</p>
         <div className="flex items-center gap-1.5 t-micro text-muted-foreground">
           <span>menos</span>
-          {['hsl(0,72%,55%)', 'hsl(45,93%,58%)', 'hsl(142,70%,50%)'].map((c) => (
+          {['hsl(0,72%,55%)', 'hsl(45,72%,58%)', 'hsl(142,70%,50%)'].map((c) => (
             <span key={c} className="w-2.5 h-2.5 rounded-[3px]" style={{ background: c, opacity: 0.9 }} />
           ))}
           <span>mais</span>

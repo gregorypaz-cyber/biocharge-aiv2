@@ -81,8 +81,8 @@ const GOOD_HIGH = new Set(['mood', 'energy', 'hydration']);
 function emberColor(type, level) {
   const good = GOOD_HIGH.has(type) ? level : 6 - level; // normaliza: maior = melhor
   if (good >= 4) return 'hsl(142,70%,50%)';
-  if (good === 3) return 'hsl(45,93%,58%)';
-  if (good === 2) return 'hsl(25,90%,55%)';
+  if (good === 3) return 'hsl(45,72%,58%)';
+  if (good === 2) return 'hsl(25,70%,55%)';
   return 'hsl(0,72%,55%)';
 }
 const withA = (hsl, a) => hsl.replace('hsl(', 'hsla(').replace(')', `, ${a})`);

@@ -36,7 +36,7 @@ const metrics = [
   { key: 'sleep_quality', label: 'Sono', color: 'hsl(200,80%,55%)' },
   { key: 'fatigue_score', label: 'Fadiga', color: 'hsl(0,72%,55%)' },
   { key: 'stress_score', label: 'Estresse', color: 'hsl(280,65%,60%)' },
-  { key: 'hrv', label: 'HRV', color: 'hsl(45,93%,58%)' },
+  { key: 'hrv', label: 'HRV', color: 'hsl(45,72%,58%)' },
   { key: 'biocharge_morning', label: 'BioCharge', color: 'hsl(200,80%,65%)' },
 ];
 

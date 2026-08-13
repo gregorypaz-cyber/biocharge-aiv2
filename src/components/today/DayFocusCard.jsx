@@ -10,7 +10,7 @@ import { buildDayFocus } from '@/lib/biocharge-utils';
 
 const DOT = {
   good: 'hsl(142 70% 50%)',
-  caution: 'hsl(45 93% 58%)',
+  caution: 'hsl(45 72% 58%)',
   neutral: 'hsl(215 15% 62%)',
 };
 

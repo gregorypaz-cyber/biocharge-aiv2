@@ -9,7 +9,7 @@ import { getTodayLocal } from '@/lib/date-utils';
    moment-engine (buildMomentTimeline reproduz os detectores como-se-fosse cada
    dia e colapsa repetições). Sem histórico suficiente → não renderiza (§8). */
 
-const TONE = { positive: 'hsl(142 70% 50%)', caution: 'hsl(45 93% 58%)' };
+const TONE = { positive: 'hsl(142 70% 50%)', caution: 'hsl(45 72% 58%)' };
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
 function fmtDate(dateStr, today) {

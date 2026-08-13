@@ -161,7 +161,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
   const isCalibrating = rawScore == null;
   const score = rawScore ?? 0;
   const zone = checkin?.zone || 'yellow';
-  const color = isCalibrating ? 'hsl(215,15%,55%)' : (getZoneColor(zone) || 'hsl(45,93%,58%)');
+  const color = isCalibrating ? 'hsl(215,15%,55%)' : (getZoneColor(zone) || 'hsl(45,72%,58%)');
   const summary = isCalibrating
     ? { title: 'Calibrando', subtitle: 'Ainda reunindo noites de HRV para um Recovery confiável. Os sinais crus abaixo já valem.' }
     : getRecoverySummary(score);

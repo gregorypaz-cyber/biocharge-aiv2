@@ -33,8 +33,8 @@ const TONE = {
     chip: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
   },
   caution: {
-    accent: 'hsl(45,93%,58%)',
-    border: 'hsl(45 93% 58% / 0.28)',
+    accent: 'hsl(45,72%,58%)',
+    border: 'hsl(45 72% 58% / 0.28)',
     chip: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
   },
 };

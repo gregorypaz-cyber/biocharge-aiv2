@@ -665,7 +665,7 @@ export function getZone(recoveryScore) {
 export function getZoneColor(zone) {
   const colors = {
     green: 'hsl(142, 70%, 50%)',
-    yellow: 'hsl(45, 93%, 58%)',
+    yellow: 'hsl(45, 72%, 58%)',
     red: 'hsl(0, 72%, 55%)',
   };
   return colors[zone] || colors.yellow;
