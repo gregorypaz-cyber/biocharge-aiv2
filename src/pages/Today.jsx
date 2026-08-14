@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight, Compass } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore, explainRecoveryV3, getZone, getZoneColor, getZoneClasses } from '@/lib/biocharge-utils';
 import {
@@ -52,6 +52,13 @@ const CASCADE_ITEM = {
   hidden: { opacity: 0, y: 16 },
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
+
+// HhMM a partir de horas decimais (mesmo formato do card da noite): 6.37h → "6h22".
+function hoursToHhMM(hours) {
+  if (hours == null || Number.isNaN(hours)) return null;
+  const total = Math.max(0, Math.round(hours * 60));
+  return `${Math.floor(total / 60)}h${String(total % 60).padStart(2, '0')}`;
+}
 
 
 function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions, isRestMode }) {
@@ -231,6 +238,44 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'hsl(25,70%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
+  // LINHA DE CAUSA (fato, não alerta): sono em HhMM · HRV + Δ vs baseline · FC +
+  // Δ vs baseline. Deltas vêm de analysis.baseline (d14→d7), nunca de média local
+  // recalculada. Cada termo sem dado é omitido; sem cor — é fato, não alerta.
+  const causeParts = [];
+  const causeSleep = enrichedCheckin?.sleep_hours != null ? Number(enrichedCheckin.sleep_hours) : null;
+  if (causeSleep != null && causeSleep > 0) causeParts.push(`${hoursToHhMM(causeSleep)} de sono`);
+  const causeHrv = enrichedCheckin?.hrv_manual ?? enrichedCheckin?.hrv ?? null;
+  if (causeHrv != null) {
+    const baseHrv = analysis?.baseline?.hrv?.d14 ?? analysis?.baseline?.hrv?.d7 ?? null;
+    let d = '';
+    if (baseHrv != null && baseHrv > 0) {
+      const pct = Math.round(((causeHrv - baseHrv) / baseHrv) * 100);
+      d = ` (${pct >= 0 ? '+' : ''}${pct}%)`;
+    }
+    causeParts.push(`HRV ${Math.round(causeHrv)}${d}`);
+  }
+  const causeRhr = enrichedCheckin?.resting_hr ?? enrichedCheckin?.resting_heart_rate ?? null;
+  if (causeRhr != null) {
+    const baseRhr = analysis?.baseline?.rhr?.d14 ?? analysis?.baseline?.rhr?.d7 ?? null;
+    let d = '';
+    if (baseRhr != null && baseRhr > 0) {
+      const diff = Math.round(causeRhr - baseRhr);
+      d = ` (${diff >= 0 ? '+' : ''}${diff})`;
+    }
+    causeParts.push(`FC ${Math.round(causeRhr)}${d}`);
+  }
+  const causeLine = causeParts.join(' · ');
+
+  // CHIP DE SAÚDE ao lado do baseline: só quando o Monitor de Saúde está em desvio
+  // (acute → âmbar, sustained → vermelho). normal/calibrating → silêncio.
+  const healthState = analysis?.healthSignals?.state;
+  const healthChip =
+    healthState === 'sustained'
+      ? { wrap: 'bg-zone-red/10 text-zone-red/90', dot: 'bg-zone-red', label: '2º dia de sinais alterados' }
+      : healthState === 'acute'
+        ? { wrap: 'bg-zone-amber/10 text-zone-amber/90', dot: 'bg-zone-amber', label: 'Sinais fora do padrão' }
+        : null;
+
   // PAINEL (unânime): o verbo segue a ZONA, nunca o decision_mode — pra o herói
   // JAMAIS dizer "Modere" enquanto brilha verde. Verbo e cor saem da MESMA zona
   // (recoveryZone), então nunca dizem "vai" e "calma" no mesmo pixel.
@@ -273,8 +318,9 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
         {/* Decisão de hoje */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-               Decisão de hoje
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Compass className="w-4 h-4" />
+              <span className="text-sm font-semibold tracking-tight">Decisão de hoje</span>
             </span>
             {isCalibrating ? (
               <h2 className="text-xl font-semibold mt-1 leading-tight">Calibrando seu baseline</h2>
@@ -292,12 +338,23 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             </p>
 
             {!isCalibrating && (
-              <span
-                className={`mt-2 inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${baselineChip.dot}`} />
-                {baselineChip.label}
-              </span>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${baselineChip.dot}`} />
+                  {baselineChip.label}
+                </span>
+                {healthChip && (
+                  <Link
+                    to="/saude"
+                    className={`inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${healthChip.wrap}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${healthChip.dot}`} />
+                    {healthChip.label}
+                  </Link>
+                )}
+              </div>
             )}
 
           </div>
@@ -343,6 +400,12 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             />
           </div>
 
+          {causeLine && !isCalibrating && (
+            <p className="mt-2.5 font-mono t-micro text-muted-foreground text-center">
+              {causeLine}
+            </p>
+          )}
+
           {regimeChip && !isCalibrating && (
             <span
               className={`mt-3 inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${regimeChip.wrap}`}
@@ -357,7 +420,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
            Recovery/Sono/Strain saíram do herói — educação de onboarding, ruído
            no dia a dia. A leitura do dia vive no "Leitura de hoje" (um explicador
            só) e o porquê visual no "Seu normal". */}
-        {heroDynamicContext ? (
+        {heroDynamicContext && (
           <div
             className={cn(
               'px-3 py-2.5 rounded-xl border text-xs leading-snug',
@@ -369,19 +432,6 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             </span>{' '}
             {heroDynamicContext.text}
           </div>
-        ) : (
-          !todaySessions.length && !isRestMode && (
-            // APPLE §6: sem moldura — a frase-ação vive solta sob o herói, não num card.
-            <p className="px-3 text-center text-sm text-muted-foreground leading-snug">
-              {isCalibrating
-                ? 'Ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
-                : displayedScore >= 70
-                ? 'Recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
-                : displayedScore >= 42
-                ? 'Recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
-                : 'Recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
-            </p>
-          )
         )}
 
         {!heroDynamicContext &&
@@ -412,6 +462,10 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           {phaseCfg.ctaLabel}
         </button>
       )}
+
+      <div className="mt-3 flex justify-center">
+        <QuickIntentEdit />
+      </div>
     </motion.div>
   );
 }
@@ -1508,7 +1562,6 @@ if (isLoading) {
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
           <h1 className="t-hero font-bold">Hoje</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (
             <p className="t-micro text-muted-foreground flex items-center gap-1 mt-1">
@@ -1526,23 +1579,6 @@ if (isLoading) {
         </div>
 
       </div>
-      </motion.div>
-
-      {bannerCfg.bannerText && (
-        <motion.div
-          key={advisoryPhase + (userRest ? '-rest' : '-adv')}
-          {...(cascade
-            ? { variants: CASCADE_ITEM }
-            : { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 } })}
-          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium flex items-start gap-2', bannerCfg.bannerClass)}
-        >
-          {bannerCfg.bannerIcon && <bannerCfg.bannerIcon className="w-4 h-4 shrink-0 mt-px" />}
-          <span>{bannerCfg.bannerText}</span>
-        </motion.div>
-      )}
-
-      <motion.div {...(cascade ? { variants: CASCADE_ITEM } : {})}>
-        <QuickIntentEdit />
       </motion.div>
 
       {deepSleepAlert && !deepSleepAlertDismissed && (
@@ -1581,7 +1617,16 @@ if (isLoading) {
               {card}
               <ReckNotouCard checkins={sortedCheckins} today={today} />
               <RecoveryDriversCard drivers={recoveryDrivers} />
+            </React.Fragment>
+          );
+        }
+        if (desc.id === 'sleep_forecast') {
+          // FUSÃO DO PLANO: o Foco do dia (DayFocusCard) passa a viver colado ACIMA
+          // do card de sono, no mesmo React.Fragment — plano + previsão da noite juntos.
+          return (
+            <React.Fragment key={desc.id}>
               <DayFocusCard
+                strainTarget={strainTarget}
                 mode={dailyVerdict?.mode || enrichedCheckin?.decision_mode}
                 acwr={analysis?.trainingLoad?.ratio ?? null}
                 sleepDebtHours={analysis?.sleepDebt?.debt ?? null}
@@ -1594,6 +1639,7 @@ if (isLoading) {
                 restDay={isRestMode}
                 seed={today ? today.split('-').reduce((s, p) => s + Number(p), 0) : 0}
               />
+              {card}
             </React.Fragment>
           );
         }

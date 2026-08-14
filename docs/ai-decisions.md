@@ -3,6 +3,55 @@
 > Entradas mais recentes no topo. Nunca reescrever entrada antiga, só acrescentar.
 > Entradas anteriores a 28/07/2026 vivem nos arquivos do Projeto (ainda não migradas).
 
+## 2026-08-14 · Reorganização da Today (3 ondas) — só composição de tela
+
+**Nenhuma fórmula tocada** (recovery, sono, strain, readiness, constantes intactos).
+Puramente composição/hierarquia da tela Hoje, em 3 commits.
+
+### Onda 1 — deduplicar e reordenar
+- `priorityEngine.ts` (4 fases): `why_score` vira `action:'exclude'` — `renderCard`
+  já retornava `null`, mas o card consumia uma vaga de `MAX_PRIMARY`, cortada antes
+  do render. `current_state` removido do descriptor (era removido pelo `strip` no
+  Today depois do corte — vaga desperdiçada). `morning_recovery` movido para
+  `priority 2.5` (a causa da noite vem antes do plano e dos treinos).
+- Today.jsx: removido o banner de fase (duplicava o verbo do herói; `bannerCfg`
+  mantido pois outras props seguem em uso). `QuickIntentEdit` deixou de ser card
+  próprio — passou para dentro do `ExecutionCard`, abaixo dos chips. Removida a
+  frase-ação repetida sob os satélites e o subtítulo "Decisão do dia" do cabeçalho.
+- **Fusão do plano**: `DayFocusCard` saiu do fragmento de `execution` e passou a ser
+  renderizado logo acima do card de sono (`sleep_forecast`), no mesmo `React.Fragment`.
+- **Um só número de débito**: a bullet de dívida de sono saiu do `DayFocusCard`
+  (filtrada na apresentação, sem tocar `buildDayFocus`); o número canônico fica no
+  `SleepForecastCard` com 1 casa decimal. Antes: 6,9h vs ~7h no mesmo scroll.
+
+### Onda 2 — herói decide, sem repetir
+- **Linha de causa** sob os satélites do herói (font-mono, fato não alerta, sem cor):
+  sono em HhMM · HRV + Δ vs baseline · FC + Δ vs baseline. Deltas vêm de
+  `analysis.baseline` (d14→d7) — **não** recalcula média local. Cada termo sem dado
+  é omitido.
+- **Chip de saúde** ao lado do baseline quando `healthSignals.state` é `acute`
+  (âmbar "Sinais fora do padrão") ou `sustained` (vermelho "2º dia de sinais
+  alterados"), tap → `/saude`. `normal`/`calibrating` → silêncio.
+- **Alvo de carga** no `DayFocusCard`: primeira linha "Hoje · carga alvo até
+  {strainTarget}" (prop vinda do Today), só o número — sem prescrever treino.
+- `TrainingSessionsList`: empty state único (0 sessões oculta "Resumo do dia" e o
+  CTA duplicado do header; sobra um bloco com mensagem + um CTA).
+
+### Onda 3 — acompanhamento vira linha, títulos viram sistema
+- `FatLossCard` em **modo compacto por padrão**: uma linha (ícone + "Corte" + peso
+  font-mono + delta/semana + sparkline 14d h=24 + chevron que expande o card completo).
+- **Header único de card**: ícone Lucide 16px + `text-sm font-semibold tracking-tight`
+  (sentence case). Convertidos "DECISÃO DE HOJE" (ícone Compass), "CORTE" e
+  "ARQUITETURA DA NOITE". Maiúsculas só em eyebrows de seção fora de card.
+- **Nomenclatura** no `MorningRecoveryCard`: "RMSSD"→"HRV", "RHR"→"FC repouso"
+  (bate com o `RecoveryDriversCard`); tile de sono em HhMM (6h22), não 6.37h.
+- Data removida do cabeçalho do `MorningRecoveryCard` (já está no topo da tela).
+
+**Por quê:** a Today acumulou duplicações (mesmo verbo no banner e no herói, dois
+números de débito com arredondamentos diferentes, dois empty states de treino, dois
+CTAs) e altura excessiva. Objetivo: uma única frase de veredito, um único número de
+débito, um único CTA de treino, e títulos consistentes — sem tocar em nenhuma fórmula.
+
 ## 2026-08-12 · Sessão de agosto: BYO-LLM, backup e badge de sono
 
 ### Fonte de noite: Fitbit Air SUBSTITUÍDO pelo Garmin Cirqa

@@ -88,27 +88,32 @@ export default function TrainingSessionsList({ checkin, sessions = [], onUpdate 
           )}
         </div>
 
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10 tap-target"
-          onClick={() => setShowModal(true)}
-        >
-          <Plus className="w-3 h-3" />
-          Adicionar
-        </Button>
+        {sessions.length > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10 tap-target"
+            onClick={() => setShowModal(true)}
+          >
+            <Plus className="w-3 h-3" />
+            Adicionar
+          </Button>
+        )}
       </div>
 
-      {/* Daily summary */}
-      <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
-        <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
-          Resumo do dia
-        </p>
+      {/* Daily summary — só com treino registrado. Vazio tem seu próprio bloco
+          único abaixo (mensagem + CTA), sem duplicar aqui o "Nenhum treino". */}
+      {sessions.length > 0 && (
+        <div className="rounded-xl bg-secondary/40 border border-border/40 px-3 py-2.5">
+          <p className="t-micro uppercase tracking-wider text-muted-foreground mb-1">
+            Resumo do dia
+          </p>
 
-        <p className="text-xs text-foreground/85 leading-relaxed">
-          {summaryText}
-        </p>
-      </div>
+          <p className="text-xs text-foreground/85 leading-relaxed">
+            {summaryText}
+          </p>
+        </div>
+      )}
 
       {/* Empty state / sessions */}
       <AnimatePresence mode="popLayout">

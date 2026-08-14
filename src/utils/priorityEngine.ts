@@ -86,7 +86,7 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
          * a tela conta "o que fazer" → "por que você está assim". Só entra como
          * principal se já existe treino registrado? Não — a causa importa todo dia.
          */
-        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 3 },
+        { id: 'why_score', action: 'exclude', priority: 3 },
 
         /**
          * Se já existe treino registrado hoje, registrar pós-treino é o próximo passo.
@@ -107,8 +107,7 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
         },
 
         { id: 'training_sessions', action: 'show', priority: 6 },
-        { id: 'morning_recovery', action: 'show', priority: 7 },
-        { id: 'current_state', action: 'show', priority: 8 },
+        { id: 'morning_recovery', action: 'show', priority: 2.5 },
         { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
         {
           id: 'recovery_demand',
@@ -124,7 +123,7 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
         { id: 'workout', action: 'show', priority: 2 },
 
         // Causa sobe para o bloco principal, logo após a prescrição (mesma lógica do PLANNING).
-        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 3 },
+        { id: 'why_score', action: 'exclude', priority: 3 },
 
         {
           id: 'post_workout_cta',
@@ -139,8 +138,7 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
         },
 
         { id: 'training_sessions', action: 'show', priority: 6 },
-        { id: 'morning_recovery', action: 'show', priority: 7 },
-        { id: 'current_state', action: 'show', priority: 8 },
+        { id: 'morning_recovery', action: 'show', priority: 2.5 },
         { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 9 },
         { id: 'recovery_demand', action: 'exclude', priority: 10 },
         { id: 'narrative', action: 'exclude', priority: 11 },
@@ -175,9 +173,8 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
 
         { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 5 },
         { id: 'training_sessions', action: 'show', priority: 6 },
-        { id: 'morning_recovery', action: 'show', priority: 7 },
-        { id: 'current_state', action: 'show', priority: 8 },
-        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 9 },
+        { id: 'morning_recovery', action: 'show', priority: 2.5 },
+        { id: 'why_score', action: 'exclude', priority: 9 },
         { id: 'recovery_demand', action: 'exclude', priority: 10 },
         { id: 'narrative', action: 'exclude', priority: 11 },
       ];
@@ -211,9 +208,8 @@ function rulesForPhase(phase: DayPhase, input: PriorityEngineInput): CardDescrip
 
         { id: 'hrv_anomaly', action: hasHrvAnomaly ? 'show' : 'exclude', priority: 5 },
         { id: 'training_sessions', action: 'show', priority: 6 },
-        { id: 'morning_recovery', action: 'show', priority: 7 },
-        { id: 'current_state', action: 'show', priority: 8 },
-        { id: 'why_score', action: hasAnalysis ? 'show' : 'exclude', priority: 9 },
+        { id: 'morning_recovery', action: 'show', priority: 2.5 },
+        { id: 'why_score', action: 'exclude', priority: 9 },
         { id: 'recovery_demand', action: 'exclude', priority: 10 },
         { id: 'narrative', action: 'exclude', priority: 11 },
       ];
