@@ -14,7 +14,7 @@ const DOT = {
   neutral: 'hsl(215 15% 62%)',
 };
 
-export default function DayFocusCard({ mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed }) {
+export default function DayFocusCard({ strainTarget, mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed }) {
   // UM SÓ NÚMERO DE DÉBITO: a dívida de sono canônica vive no SleepForecastCard
   // (1 casa decimal). Aqui a bullet de débito sai — DayFocusCard e SleepForecastCard
   // mostravam o mesmo número com arredondamentos diferentes (6.9h vs ~7h).
@@ -32,6 +32,13 @@ export default function DayFocusCard({ mode, acwr, sleepDebtHours, soreness, str
         <Target className="w-3.5 h-3.5 text-muted-foreground" />
         <h3 className="text-sm font-semibold tracking-tight">Foco de hoje</h3>
       </div>
+
+      {/* ALVO DE CARGA: só o número-alvo, sem prescrever treino. */}
+      {strainTarget != null && (
+        <p className="text-sm font-medium text-foreground/90 mb-2.5">
+          Hoje · carga alvo até <span className="font-mono">{strainTarget}</span>
+        </p>
+      )}
 
       <ul className="space-y-2">
         {items.map((it, i) => (

@@ -53,6 +53,13 @@ const CASCADE_ITEM = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
 
+// HhMM a partir de horas decimais (mesmo formato do card da noite): 6.37h → "6h22".
+function hoursToHhMM(hours) {
+  if (hours == null || Number.isNaN(hours)) return null;
+  const total = Math.max(0, Math.round(hours * 60));
+  return `${Math.floor(total / 60)}h${String(total % 60).padStart(2, '0')}`;
+}
+
 
 function getHeroDynamicContext({ checkin, analysis, dailyVerdict, todaySessions, isRestMode }) {
   const delayedFatigue = checkin?.delayed_fatigue_alert || null;
@@ -231,6 +238,44 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
     : 'hsl(25,70%,55%)';
   const strainCaption = isRestMode ? 'foco recuperar' : strainVsTarget.short;
 
+  // LINHA DE CAUSA (fato, não alerta): sono em HhMM · HRV + Δ vs baseline · FC +
+  // Δ vs baseline. Deltas vêm de analysis.baseline (d14→d7), nunca de média local
+  // recalculada. Cada termo sem dado é omitido; sem cor — é fato, não alerta.
+  const causeParts = [];
+  const causeSleep = enrichedCheckin?.sleep_hours != null ? Number(enrichedCheckin.sleep_hours) : null;
+  if (causeSleep != null && causeSleep > 0) causeParts.push(`${hoursToHhMM(causeSleep)} de sono`);
+  const causeHrv = enrichedCheckin?.hrv_manual ?? enrichedCheckin?.hrv ?? null;
+  if (causeHrv != null) {
+    const baseHrv = analysis?.baseline?.hrv?.d14 ?? analysis?.baseline?.hrv?.d7 ?? null;
+    let d = '';
+    if (baseHrv != null && baseHrv > 0) {
+      const pct = Math.round(((causeHrv - baseHrv) / baseHrv) * 100);
+      d = ` (${pct >= 0 ? '+' : ''}${pct}%)`;
+    }
+    causeParts.push(`HRV ${Math.round(causeHrv)}${d}`);
+  }
+  const causeRhr = enrichedCheckin?.resting_hr ?? enrichedCheckin?.resting_heart_rate ?? null;
+  if (causeRhr != null) {
+    const baseRhr = analysis?.baseline?.rhr?.d14 ?? analysis?.baseline?.rhr?.d7 ?? null;
+    let d = '';
+    if (baseRhr != null && baseRhr > 0) {
+      const diff = Math.round(causeRhr - baseRhr);
+      d = ` (${diff >= 0 ? '+' : ''}${diff})`;
+    }
+    causeParts.push(`FC ${Math.round(causeRhr)}${d}`);
+  }
+  const causeLine = causeParts.join(' · ');
+
+  // CHIP DE SAÚDE ao lado do baseline: só quando o Monitor de Saúde está em desvio
+  // (acute → âmbar, sustained → vermelho). normal/calibrating → silêncio.
+  const healthState = analysis?.healthSignals?.state;
+  const healthChip =
+    healthState === 'sustained'
+      ? { wrap: 'bg-zone-red/10 text-zone-red/90', dot: 'bg-zone-red', label: '2º dia de sinais alterados' }
+      : healthState === 'acute'
+        ? { wrap: 'bg-zone-amber/10 text-zone-amber/90', dot: 'bg-zone-amber', label: 'Sinais fora do padrão' }
+        : null;
+
   // PAINEL (unânime): o verbo segue a ZONA, nunca o decision_mode — pra o herói
   // JAMAIS dizer "Modere" enquanto brilha verde. Verbo e cor saem da MESMA zona
   // (recoveryZone), então nunca dizem "vai" e "calma" no mesmo pixel.
@@ -292,12 +337,23 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             </p>
 
             {!isCalibrating && (
-              <span
-                className={`mt-2 inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${baselineChip.dot}`} />
-                {baselineChip.label}
-              </span>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${baselineChip.wrap}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${baselineChip.dot}`} />
+                  {baselineChip.label}
+                </span>
+                {healthChip && (
+                  <Link
+                    to="/saude"
+                    className={`inline-flex items-center gap-1.5 t-micro font-medium px-2 py-0.5 rounded-full ${healthChip.wrap}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${healthChip.dot}`} />
+                    {healthChip.label}
+                  </Link>
+                )}
+              </div>
             )}
 
           </div>
@@ -342,6 +398,12 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
               live={false}
             />
           </div>
+
+          {causeLine && !isCalibrating && (
+            <p className="mt-2.5 font-mono t-micro text-muted-foreground text-center">
+              {causeLine}
+            </p>
+          )}
 
           {regimeChip && !isCalibrating && (
             <span
@@ -1563,6 +1625,7 @@ if (isLoading) {
           return (
             <React.Fragment key={desc.id}>
               <DayFocusCard
+                strainTarget={strainTarget}
                 mode={dailyVerdict?.mode || enrichedCheckin?.decision_mode}
                 acwr={analysis?.trainingLoad?.ratio ?? null}
                 sleepDebtHours={analysis?.sleepDebt?.debt ?? null}
