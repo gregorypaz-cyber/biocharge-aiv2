@@ -674,6 +674,7 @@ export function detectCorrelations(checkins) {
       type: positive ? 'positive' : 'warning',
       text: (positive ? rel.pos : rel.neg).replace('{d}', String(delta)),
       r: Math.round(r * 100) / 100,
+      p: _corrPValue(r, xs.length),
       samples: xs.length,
     });
   }
@@ -788,6 +789,9 @@ export function detectPersonalBottleneck(checkins) {
   );
 
   const ranked = [];
+  // Candidatos que chegaram a ter um r calculado (passaram amostra/variância/distintos).
+  // A UI do herói sem sinal usa isto para mostrar "o que estou testando agora".
+  const evaluated = [];
 
   for (const c of candidates) {
     // Pares: variável do dia X  vs  HRV do dia X+1 (dia seguinte).
@@ -831,6 +835,16 @@ export function detectPersonalBottleneck(checkins) {
     const r = _pearson(xs, ys);
     if (r == null) continue;
 
+    const passed =
+      Math.abs(r) >= BOTTLENECK_MIN_CORRELATION &&
+      _corrPValue(r, xs.length) <= CORRELATION_MAX_P;
+    evaluated.push({
+      label: c.label,
+      r: Math.round(r * 100) / 100,
+      samples: xs.length,
+      passed,
+    });
+
     if (Math.abs(r) < BOTTLENECK_MIN_CORRELATION) continue; // efeito fraco demais
     if (_corrPValue(r, xs.length) > CORRELATION_MAX_P) continue; // não significativo p/ esse n
 
@@ -847,7 +861,7 @@ export function detectPersonalBottleneck(checkins) {
   }
 
   if (ranked.length === 0) {
-    return { ready: true, hasSignal: false };
+    return { ready: true, hasSignal: false, evaluated };
   }
 
   ranked.sort((a, b) => b.strength - a.strength);
@@ -864,6 +878,7 @@ export function detectPersonalBottleneck(checkins) {
     bottleneck: top,
     ranking: ranked,
     strengthLabel,
+    evaluated,
   };
 }
 
@@ -1966,7 +1981,10 @@ export function detectLongTermTrends(checkins) {
     { key: 'resting_hr', label: 'FC de repouso', unit: 'bpm', higherIsBetter: false, icon: '❤️' },
     // 'Sono (score)' e não 'Qualidade do sono': cabe em 1 linha na tabela sem
     // truncar, e o '(score)' o distingue de 'Sono profundo' (que é % de fase).
-    { key: 'sleep_score', label: 'Sono (score)', unit: 'pts', higherIsBetter: true, icon: '😴' },
+    // sleep_quality = saida do calculateSleepScore v2 (sinal cru portavel).
+    // sleep_score = composto do Zepp, so referencia de calibracao (CONTEXT: tese de
+    // portabilidade). Trocado em 2026-08: a tendencia anterior media o Zepp.
+    { key: 'sleep_quality', label: 'Sono (score)', unit: 'pts', higherIsBetter: true, icon: '😴' },
     { key: 'deep_sleep_pct', label: 'Sono profundo', unit: '%', higherIsBetter: true, icon: '🌙' },
   ];
   const results = [];
@@ -2000,17 +2018,24 @@ export function detectLongTermTrends(checkins) {
       current: lastValid != null ? Math.round(lastValid * 10) / 10 : null,
       r: t.r,
       sentiment,
+      basis: m.smoothed ? 'media 7d' : 'hoje',
     });
   }
 
   const anyReady = results.length > 0;
   const trending = results.filter((x) => x.hasTrend);
 
+  // Extremos de data da janela — a UI usa para avisar quando a janela atravessa
+  // uma quebra de regime (ex.: mudança de rotina de sono).
+  const dated = chrono.map((c) => c.date).filter(Boolean);
+
   return {
     ready: anyReady,
     daysNeeded: TREND_MIN_DAYS,
     metrics: results,
     hasAnyTrend: trending.length > 0,
+    firstDate: dated.length ? dated[0] : null,
+    lastDate: dated.length ? dated[dated.length - 1] : null,
   };
 }
 // ─── Helpers estatísticos expostos (Swing 1 — expansão) ──────────────────────

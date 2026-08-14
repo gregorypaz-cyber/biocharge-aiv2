@@ -51,6 +51,10 @@ import BodyAgeCard from '@/components/intelligence/BodyAgeCard';
 /* Helpers */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+// Quebra de regime de sono (mudança de rotina) — janelas de tendência que a
+// atravessam misturam dois regimes; a UI avisa quando isso acontece.
+const REGIME_BREAK = '2026-07-11';
+
 function avg(arr) {
   const valid = arr.filter((v) => v != null && !isNaN(v));
   return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
@@ -275,7 +279,7 @@ function LongTermTrendsCard({ trends }) {
         </button>
       </div>
       <p className="text-xs text-muted-foreground mb-4">
-        Últimos {trends.metrics[0]?.days || 0} dias
+        Últimos {trends.metrics[0]?.days || 0} dias · valores atuais, não médias do período
       </p>
 
       <AnimatePresence>
@@ -311,7 +315,12 @@ function LongTermTrendsCard({ trends }) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <InsightIcon icon={m.icon} size={18} className={`${t.icon} shrink-0`} />
-                <span className="text-sm font-medium leading-snug">{m.label}</span>
+                <div className="min-w-0">
+                  <span className="text-sm font-medium leading-snug block">{m.label}</span>
+                  {m.basis && (
+                    <span className="t-micro text-muted-foreground/70 leading-none">{m.basis}</span>
+                  )}
+                </div>
               </div>
               <div className="flex items-baseline gap-2 shrink-0">
                 {value != null && (
@@ -335,6 +344,13 @@ function LongTermTrendsCard({ trends }) {
           Tudo estável no período — suas métricas estão oscilando em torno da sua
           base, sem uma direção clara. Para evolução de longo prazo, isso é um
           sinal saudável de consistência.
+        </p>
+      )}
+
+      {trends.firstDate && trends.firstDate <= REGIME_BREAK && (
+        <p className="t-micro text-amber-400/90 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
+          Esta janela atravessa a mudança de regime de sono de 11/07 — parte da
+          tendência reflete a mudança de rotina, não só o corpo.
         </p>
       )}
     </motion.div>
@@ -861,21 +877,56 @@ function buildRecentShifts(computed, analysis) {
   const last7 = computed.slice(0, 7);
   const prev7 = computed.slice(7, 14);
 
+  // EFEITO MÍNIMO RELATIVO: em vez de um limiar fixo de 5 pts, exigir que o
+  // delta 7v7 do recovery supere o desvio-padrão dos deltas 7v7 das últimas 8
+  // janelas disponíveis. Assim só sinalizamos mudança acima do ruído típico.
+  const deltas7v7 = [];
+  for (let k = 0; k <= 7; k++) {
+    const win = computed.slice(k, k + 7);
+    const prevWin = computed.slice(k + 7, k + 14);
+    if (win.length >= 4 && prevWin.length >= 4) {
+      const a = avg(win.map((c) => c.recovery_score || 0));
+      const b = avg(prevWin.map((c) => c.recovery_score || 0));
+      if (a != null && b != null) deltas7v7.push(a - b);
+    }
+  }
+  let sd7v7 = null;
+  if (deltas7v7.length >= 2) {
+    const m = avg(deltas7v7);
+    sd7v7 = Math.sqrt(avg(deltas7v7.map((d) => (d - m) ** 2)));
+  }
+
   if (last7.length >= 4) {
     const rec7 = avg(last7.map((c) => c.recovery_score || 0));
     const prevRec7 = prev7.length >= 4 ? avg(prev7.map((c) => c.recovery_score || 0)) : null;
 
-    if (rec7 != null && prevRec7 != null && Math.abs(rec7 - prevRec7) >= 5) {
+    const recThreshold = sd7v7 != null ? Math.max(5, sd7v7) : 5;
+    if (rec7 != null && prevRec7 != null && Math.abs(rec7 - prevRec7) >= recThreshold) {
+      const typicalNote = sd7v7 != null ? ` (variação típica: ±${Math.round(sd7v7)} pts)` : '';
       pushUnique('recovery', {
         icon: rec7 > prevRec7 ? TrendingUp : TrendingDown,
         title: rec7 > prevRec7 ? 'Recuperação melhorando' : 'Recuperação piorando',
-        text: `Sua média de recuperação dos últimos 7 dias ${rec7 > prevRec7 ? 'subiu' : 'caiu'} de ${Math.round(prevRec7)} para ${Math.round(rec7)}.`,
+        text: `Sua média de recuperação dos últimos 7 dias ${rec7 > prevRec7 ? 'subiu' : 'caiu'} de ${Math.round(prevRec7)} para ${Math.round(rec7)}.${typicalNote}`,
         tone: rec7 > prevRec7 ? 'positive' : 'negative',
       });
     }
 
+    // GATE ANTI-QUASE-BINÁRIO: se o sono curto (<7h) já domina >85% das últimas
+    // ~30 noites com registro, isso não é "mudança recente" — é o regime atual.
+    // Sinalizar como neutro (regime), não como alerta negativo.
+    const shortNights = computed.slice(0, 30).filter((c) => (c.sleep_hours ?? 0) > 0 && c.sleep_hours < 7).length;
+    const shortDenom = computed.slice(0, 30).filter((c) => (c.sleep_hours ?? 0) > 0).length;
+    const chronicShort = shortDenom >= 15 && (shortNights / shortDenom) > 0.85;
+
     const sleep7 = avg(last7.map((c) => c.sleep_hours || 0));
-    if (sleep7 != null && sleep7 < 7) {
+    if (chronicShort) {
+      pushUnique('sleep', {
+        icon: Moon,
+        title: 'Sono curto virou o seu normal',
+        text: `Sono abaixo de 7h em ${shortNights} das últimas ${shortDenom} noites com registro. Isso já não é mudança recente — é o seu regime atual.`,
+        tone: 'neutral',
+      });
+    } else if (sleep7 != null && sleep7 < 7) {
       pushUnique('sleep', {
         icon: Moon,
         title: 'Seu sono recente está curto',
