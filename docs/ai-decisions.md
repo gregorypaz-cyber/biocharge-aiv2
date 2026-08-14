@@ -3,6 +3,50 @@
 > Entradas mais recentes no topo. Nunca reescrever entrada antiga, só acrescentar.
 > Entradas anteriores a 28/07/2026 vivem nos arquivos do Projeto (ainda não migradas).
 
+## 2026-08-14 · Padrões/Insights — honestidade de dado + hierarquia (3 ondas)
+
+**Nenhuma fórmula tocada** (recovery, sono, strain, readiness, constantes intactos).
+Onda 1 = honestidade de fonte/gate; ondas 2–3 = composição e superfície de IA.
+
+### Fonte da tendência de sono trocada (Zepp → v2 próprio)
+- `detectLongTermTrends` (`physiological-engine.js`): a linha **"Sono (score)"** passou
+  a medir `sleep_quality` (saída do `calculateSleepScore` v2, sinal cru portável) em vez
+  de `sleep_score` (o **composto do Zepp**, que por CONTEXT §3 é só referência de
+  calibração e não entra em fórmula). A definição do Zepp muda entre firmwares e não é
+  portável — medir tendência sobre ele misturava réguas.
+- **Aviso de não-comparabilidade:** valores anteriores dessa linha (que refletiam o
+  composto do Zepp) **não são comparáveis** com os novos (score v2 próprio). A tendência
+  recomeça do zero conceitual nesta troca; não ler a inflexão de 08/2026 como mudança
+  fisiológica.
+- Cada métrica de tendência agora expõe `basis` (`'media 7d'` p/ o HRV suavizado, `'hoje'`
+  p/ o resto) e a janela expõe `firstDate`/`lastDate` — a UI rotula a base temporal por
+  linha e avisa quando a janela atravessa a quebra de regime de sono de 11/07.
+
+### Gate anti-quase-binário em `buildRecentShifts` (Insights.jsx)
+- Sono <7h que já domina **>85% de ≥15 noites** com registro deixa de acender item
+  negativo "sono recente curto" e vira item **neutro** "sono curto virou o seu normal":
+  não é mudança recente, é o regime atual (CONTEXT §2.4 — variável quase-binária não gera
+  alerta). Evita o vermelho crônico que acende todo dia e vira placebo.
+- Recovery: o limiar fixo de ±5 pts virou **efeito mínimo relativo** — exige
+  `|Δ7v7| ≥ max(5, sd(deltas 7v7 das últimas 8 janelas))`, com nota de variação típica no
+  texto. Só sinaliza mudança acima do ruído próprio.
+
+### Correlações promovidas ao topo + ficha técnica exposta
+- Bloco de correlações movido para logo abaixo do herói, aberto por padrão. `detectCorrelations`
+  agora expõe `p` no payload; o `CorrelationsCard` mostra `r · n · p` (font-mono cinza, sem
+  cor semântica — ficha técnica, não alerta).
+- Herói sem sinal deixa de ser card vazio: `detectPersonalBottleneck` expõe `evaluated[]`
+  (label, r, n, passed — só dados já calculados no loop) e a UI lista "o que estou testando
+  agora" contra o corte, com rodapé "o silêncio aqui é proposital".
+- Superfície de IA fundida: "Leitura completa" + "Pergunte ao Coach" → card único
+  **"Pergunte ao Reck"** (leitura completa vira a 1ª sugestão da lista). `askLLM`/
+  `buildCoachContext`/estados preservados — só a casca mudou. Dívida de sono usa
+  `sleepDebt.debt` com 1 casa (mesmo número da Hoje), sem `~7h` arredondado à mão.
+
+### Testes
+- Suite inteira verde (127 testes). Nenhum teste fixava `'sleep_score'` como chave, então
+  não houve teste a atualizar por causa da troca de fonte.
+
 ## 2026-08-14 · Reorganização da Today (3 ondas) — só composição de tela
 
 **Nenhuma fórmula tocada** (recovery, sono, strain, readiness, constantes intactos).

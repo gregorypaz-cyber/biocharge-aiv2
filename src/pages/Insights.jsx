@@ -51,6 +51,10 @@ import BodyAgeCard from '@/components/intelligence/BodyAgeCard';
 /* Helpers */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+// Quebra de regime de sono (mudança de rotina) — janelas de tendência que a
+// atravessam misturam dois regimes; a UI avisa quando isso acontece.
+const REGIME_BREAK = '2026-07-11';
+
 function avg(arr) {
   const valid = arr.filter((v) => v != null && !isNaN(v));
   return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
@@ -121,18 +125,40 @@ function BottleneckInsight({ bottleneck }) {
   }
 
   if (!bottleneck.hasSignal) {
+    const evaluated = bottleneck.evaluated || [];
     return (
       <div className="rounded-2xl border border-border/50 bg-card p-5">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-secondary border border-border/40 flex items-center justify-center shrink-0">
             <Target className="w-4 h-4 text-muted-foreground" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Sem um gargalo dominante</p>
             <p className="text-xs text-muted-foreground leading-relaxed mt-1">
               Por enquanto nenhum fator isolado domina sua recuperação — seus dados
               estão equilibrados. Isso costuma ser um bom sinal.
             </p>
+
+            {evaluated.length > 0 && (
+              <div className="mt-4 border-t border-border/30 pt-3">
+                <p className="t-micro font-semibold uppercase tracking-widest text-muted-foreground/80 mb-2.5">
+                  O que estou testando agora
+                </p>
+                <div className="space-y-1.5">
+                  {evaluated.map((e) => (
+                    <div key={e.label} className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-foreground/80 truncate">{e.label}</span>
+                      <span className="t-micro font-mono text-muted-foreground shrink-0">
+                        r = {e.r > 0 ? '+' : ''}{e.r} · n = {e.samples} · corte 0,35
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3">
+                  Nenhum passou o corte ainda. O silêncio aqui é proposital.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -264,7 +290,7 @@ function LongTermTrendsCard({ trends }) {
       className="rounded-2xl border border-border/50 bg-card tint-recovery p-5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]"
     >
       <div className="flex items-start justify-between mb-0.5">
-        <h2 className="t-section font-semibold tracking-tight">Sua evolução</h2>
+        <h2 className="text-sm font-semibold tracking-tight">Sua evolução</h2>
         <button
           type="button"
           onClick={() => setShowInfo((v) => !v)}
@@ -275,7 +301,7 @@ function LongTermTrendsCard({ trends }) {
         </button>
       </div>
       <p className="text-xs text-muted-foreground mb-4">
-        Últimos {trends.metrics[0]?.days || 0} dias
+        Últimos {trends.metrics[0]?.days || 0} dias · valores atuais, não médias do período
       </p>
 
       <AnimatePresence>
@@ -311,7 +337,12 @@ function LongTermTrendsCard({ trends }) {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <InsightIcon icon={m.icon} size={18} className={`${t.icon} shrink-0`} />
-                <span className="text-sm font-medium leading-snug">{m.label}</span>
+                <div className="min-w-0">
+                  <span className="text-sm font-medium leading-snug block">{m.label}</span>
+                  {m.basis && (
+                    <span className="t-micro text-muted-foreground/70 leading-none">{m.basis}</span>
+                  )}
+                </div>
               </div>
               <div className="flex items-baseline gap-2 shrink-0">
                 {value != null && (
@@ -335,6 +366,13 @@ function LongTermTrendsCard({ trends }) {
           Tudo estável no período — suas métricas estão oscilando em torno da sua
           base, sem uma direção clara. Para evolução de longo prazo, isso é um
           sinal saudável de consistência.
+        </p>
+      )}
+
+      {trends.firstDate && trends.firstDate <= REGIME_BREAK && (
+        <p className="t-micro text-amber-400/90 leading-relaxed mt-3 border-t border-border/30 pt-2.5">
+          Esta janela atravessa a mudança de regime de sono de 11/07 — parte da
+          tendência reflete a mudança de rotina, não só o corpo.
         </p>
       )}
     </motion.div>
@@ -517,7 +555,7 @@ function PrimaryInsightCard({ item }) {
   );
 }
 
-function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
+function ExpandableSection({ title, subtitle, children, defaultOpen = false, icon: Icon }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -526,11 +564,14 @@ function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-secondary/30 transition-colors"
       >
-        <div>
-          <p className="text-sm font-semibold leading-snug">{title}</p>
-          {subtitle ? (
-            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
-          ) : null}
+        <div className="flex items-center gap-2 min-w-0">
+          {Icon ? <Icon className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={1.5} /> : null}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-tight leading-snug">{title}</p>
+            {subtitle ? (
+              <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
+            ) : null}
+          </div>
         </div>
 
         <ChevronDown
@@ -861,21 +902,56 @@ function buildRecentShifts(computed, analysis) {
   const last7 = computed.slice(0, 7);
   const prev7 = computed.slice(7, 14);
 
+  // EFEITO MÍNIMO RELATIVO: em vez de um limiar fixo de 5 pts, exigir que o
+  // delta 7v7 do recovery supere o desvio-padrão dos deltas 7v7 das últimas 8
+  // janelas disponíveis. Assim só sinalizamos mudança acima do ruído típico.
+  const deltas7v7 = [];
+  for (let k = 0; k <= 7; k++) {
+    const win = computed.slice(k, k + 7);
+    const prevWin = computed.slice(k + 7, k + 14);
+    if (win.length >= 4 && prevWin.length >= 4) {
+      const a = avg(win.map((c) => c.recovery_score || 0));
+      const b = avg(prevWin.map((c) => c.recovery_score || 0));
+      if (a != null && b != null) deltas7v7.push(a - b);
+    }
+  }
+  let sd7v7 = null;
+  if (deltas7v7.length >= 2) {
+    const m = avg(deltas7v7);
+    sd7v7 = Math.sqrt(avg(deltas7v7.map((d) => (d - m) ** 2)));
+  }
+
   if (last7.length >= 4) {
     const rec7 = avg(last7.map((c) => c.recovery_score || 0));
     const prevRec7 = prev7.length >= 4 ? avg(prev7.map((c) => c.recovery_score || 0)) : null;
 
-    if (rec7 != null && prevRec7 != null && Math.abs(rec7 - prevRec7) >= 5) {
+    const recThreshold = sd7v7 != null ? Math.max(5, sd7v7) : 5;
+    if (rec7 != null && prevRec7 != null && Math.abs(rec7 - prevRec7) >= recThreshold) {
+      const typicalNote = sd7v7 != null ? ` (variação típica: ±${Math.round(sd7v7)} pts)` : '';
       pushUnique('recovery', {
         icon: rec7 > prevRec7 ? TrendingUp : TrendingDown,
         title: rec7 > prevRec7 ? 'Recuperação melhorando' : 'Recuperação piorando',
-        text: `Sua média de recuperação dos últimos 7 dias ${rec7 > prevRec7 ? 'subiu' : 'caiu'} de ${Math.round(prevRec7)} para ${Math.round(rec7)}.`,
+        text: `Sua média de recuperação dos últimos 7 dias ${rec7 > prevRec7 ? 'subiu' : 'caiu'} de ${Math.round(prevRec7)} para ${Math.round(rec7)}.${typicalNote}`,
         tone: rec7 > prevRec7 ? 'positive' : 'negative',
       });
     }
 
+    // GATE ANTI-QUASE-BINÁRIO: se o sono curto (<7h) já domina >85% das últimas
+    // ~30 noites com registro, isso não é "mudança recente" — é o regime atual.
+    // Sinalizar como neutro (regime), não como alerta negativo.
+    const shortNights = computed.slice(0, 30).filter((c) => (c.sleep_hours ?? 0) > 0 && c.sleep_hours < 7).length;
+    const shortDenom = computed.slice(0, 30).filter((c) => (c.sleep_hours ?? 0) > 0).length;
+    const chronicShort = shortDenom >= 15 && (shortNights / shortDenom) > 0.85;
+
     const sleep7 = avg(last7.map((c) => c.sleep_hours || 0));
-    if (sleep7 != null && sleep7 < 7) {
+    if (chronicShort) {
+      pushUnique('sleep', {
+        icon: Moon,
+        title: 'Sono curto virou o seu normal',
+        text: `Sono abaixo de 7h em ${shortNights} das últimas ${shortDenom} noites com registro. Isso já não é mudança recente — é o seu regime atual.`,
+        tone: 'neutral',
+      });
+    } else if (sleep7 != null && sleep7 < 7) {
       pushUnique('sleep', {
         icon: Moon,
         title: 'Seu sono recente está curto',
@@ -1116,7 +1192,7 @@ const primaryInsight = useMemo(() => {
   }
 
   if (sleepDebt != null && sleepDebt >= 4) {
-    qs.push(`Como recuperar ${Math.round(sleepDebt)}h de dívida de sono?`);
+    qs.push(`Como recuperar ${sleepDebt.toFixed(1)}h de dívida de sono?`);
   }
 
   if (ratio != null && ratio > 1.3) {
@@ -1308,18 +1384,30 @@ Regras:
         <PrimaryInsightCard item={primaryInsight} />
       )}
 
+      {/* Correlações — ficha técnica logo abaixo do herói, aberta por padrão:
+          é o conteúdo estatístico que sustenta o resto da tela. */}
+      <ExpandableSection
+        title="Correlações"
+        subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
+        icon={TrendingUp}
+        defaultOpen
+      >
+        {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
+          <CorrelationsCard
+            correlations={analysis.correlations}
+            laggedEffects={analysis.laggedEffects}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Ainda não há correlação forte o suficiente para destacar. Continue registrando.
+          </p>
+        )}
+      </ExpandableSection>
+
       {/* Fronteira 3 — tendências de longo prazo ("estou melhorando?") */}
       {analysis?.longTermTrends && (
         <LongTermTrendsCard trends={analysis.longTermTrends} />
       )}
-
-      {/* Vitalidade + Idade corporal (BodyAgeCard).
-          "Idade de condicionamento" (FitnessAgeCard) foi aposentada: era troféu
-          de vaidade (VO₂max estimado → "X anos mais jovem que sua idade real"),
-          um número que não muda a ação de hoje — proibido pelo CONTEXT §2.1. O
-          VO₂max sobrevive como contexto de tendência na Vitalidade ao longo do
-          tempo (Tendências), não como troféu na abertura dos Insights. */}
-      <BodyAgeCard />
 
       {/* 1. High-value discoveries — só aparece quando há descoberta real.
           Quando vazio, o herói no topo (PrimaryInsightCard) já cobre o aviso
@@ -1368,50 +1456,32 @@ Regras:
         )}
       </div>
 
-     {/* 3. Deep analysis */}
-<motion.div
+     {/* 3. Pergunte ao Reck — superfície única de IA (leitura completa + coach).
+         A "Gerar leitura completa" é a primeira sugestão da lista, não um card
+         à parte. askLLM/buildCoachContext e os estados são preservados. */}
+      <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-xl border border-border/60 bg-card overflow-hidden"
       >
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Leitura completa</h2>
-          </div>
-
-          {!todayCheckin?.deep_analysis_text && (
-            <Button
-              onClick={generateInsights}
-              disabled={isGenerating || computed.length < 5}
-              size="sm"
-              className="bg-primary text-primary-foreground h-8 px-4 text-xs tap-target"
-            >
-              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar análise'}
-            </Button>
-          )}
+        <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
+          <Brain className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+          <h2 className="text-sm font-semibold tracking-tight">Pergunte ao Reck</h2>
         </div>
 
-        <div className="p-4">
-          <p className="t-micro text-muted-foreground mb-3">
-            Uma leitura mais detalhada dos padrões recentes de recovery, sono, carga e comportamento.
-          </p>
-
-          {computed.length < 5 ? (
-            <p className="text-sm text-muted-foreground">
-              Registre ao menos 5 check-ins para uma análise profunda mais útil.
-            </p>
-          ) : todayCheckin?.deep_analysis_text ? (
-            <>
+        <div className="p-4 space-y-3.5">
+          {/* Saída da leitura completa (deep analysis) */}
+          {computed.length >= 5 && todayCheckin?.deep_analysis_text ? (
+            <div>
               <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
               <AnalysisBody
                 text={todayCheckin.deep_analysis_text}
                 expanded={analysisExpanded}
                 onExpand={() => setAnalysisExpanded(true)}
               />
-            </>
-          ) : aiInsight ? (
-            <>
+            </div>
+          ) : computed.length >= 5 && aiInsight ? (
+            <div>
               <AnalysisHighlights analysisText={aiInsight} />
               <AnalysisBody
                 text={aiInsight}
@@ -1429,48 +1499,20 @@ Regras:
                   })}
                 </p>
               )}
-            </>
+            </div>
           ) : aiInsightError ? (
             <p className="text-sm text-red-400/80">{aiInsightError}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              A análise profunda aparece automaticamente após o check-in, quando disponível. Você também pode gerar uma nova leitura agora.
-            </p>
-          )}
-        </div>
-      </motion.div>
+          ) : null}
 
-      {/* 4. Coach IA */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12 }}
-        className="rounded-xl border border-border/60 bg-card overflow-hidden"
-      >
-        <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
-          <Brain className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Pergunte ao Coach</h2>
-        </div>
-
-        <div className="p-4 space-y-3.5">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-  Use o Coach para transformar seus dados recentes em decisões práticas: recovery, sono, carga e treino.
-</p>
-
+          {/* Resposta do coach */}
           {coachResponse ? (
-            <>
-              <p className="t-micro text-muted-foreground mb-2">
-                Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
-              </p>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
-              >
-                <ReactMarkdown>{coachResponse}</ReactMarkdown>
-              </motion.div>
-            </>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
+            >
+              <ReactMarkdown>{coachResponse}</ReactMarkdown>
+            </motion.div>
           ) : null}
 
           <div className="space-y-2">
@@ -1483,17 +1525,34 @@ Regras:
             />
 
             <div className="grid grid-cols-1 gap-2">
-  {suggestedQuestions.map((q) => (
-    <button
-      key={q}
-      type="button"
-      onClick={() => setCoachInput(q)}
-      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors tap-target"
-    >
-      {q}
-    </button>
-  ))}
-</div>
+              {/* Leitura completa vira a primeira sugestão da lista */}
+              <button
+                type="button"
+                onClick={generateInsights}
+                disabled={isGenerating || computed.length < 5}
+                className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl bg-primary/10 border border-primary/25 text-xs font-medium text-foreground hover:bg-primary/15 transition-colors tap-target disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                )}
+                {computed.length < 5
+                  ? 'Gerar leitura completa (5+ check-ins)'
+                  : 'Gerar leitura completa'}
+              </button>
+
+              {suggestedQuestions.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => setCoachInput(q)}
+                  className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors tap-target"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
 
             <Button
               onClick={askCoach}
@@ -1505,7 +1564,7 @@ Regras:
               ) : (
                 <>
                   <Send className="w-3.5 h-3.5 mr-1.5" />
-                  Perguntar ao Coach
+                  Perguntar ao Reck
                 </>
               )}
             </Button>
@@ -1517,21 +1576,14 @@ Regras:
         </div>
       </motion.div>
 
-      {/* 6. Correlações — único conteúdo técnico que não vive na Hoje/Trends */}
+      {/* Vitalidade + idade corporal — acompanhamento de longo prazo, no rodapé
+          e fechado por padrão: não muda a decisão de hoje. */}
       <ExpandableSection
-        title="Correlações nos seus dados"
-        subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
+        title="Vitalidade e idade corporal"
+        subtitle="Acompanhamento de longo prazo. Não muda a decisão de hoje."
+        icon={Heart}
       >
-        {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
-          <CorrelationsCard
-            correlations={analysis.correlations}
-            laggedEffects={analysis.laggedEffects}
-          />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Ainda não há correlação forte o suficiente para destacar. Continue registrando.
-          </p>
-        )}
+        <BodyAgeCard />
       </ExpandableSection>
     </div>
   );

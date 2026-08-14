@@ -3,6 +3,14 @@ import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// p-valor como ficha técnica: <0,001 quando muito pequeno, senão 3 casas com
+// vírgula decimal (padrão pt-BR).
+function fmtP(p) {
+  if (p == null || Number.isNaN(p)) return null;
+  if (p < 0.001) return '<0,001';
+  return p.toFixed(3).replace('.', ',');
+}
+
 export default function CorrelationsCard({ correlations, laggedEffects }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -23,8 +31,8 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
       className="rounded-2xl border border-border/50 bg-card p-5"
     >
       <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-4 h-4 text-primary" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Padrões Detectados</span>
+        <TrendingUp className="w-4 h-4 text-primary" strokeWidth={1.5} />
+        <h2 className="text-sm font-semibold tracking-tight">Correlações</h2>
       </div>
       <div className="space-y-3">
         {visible.map((item, i) => (
@@ -44,12 +52,20 @@ export default function CorrelationsCard({ correlations, laggedEffects }) {
             )}
           >
             <span className="text-base mt-0.5 shrink-0">{item.icon}</span>
-            <div className="flex flex-wrap items-center gap-2 flex-1">
-              <span className="text-foreground/85">{item.text}</span>
-              {item.source === 'lagged' && (
-                <span className="t-micro px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
-                  Amanhã
-                </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-foreground/85">{item.text}</span>
+                {item.source === 'lagged' && (
+                  <span className="t-micro px-1.5 py-0.5 rounded-md bg-secondary text-muted-foreground shrink-0">
+                    Amanhã
+                  </span>
+                )}
+              </div>
+              {item.source === 'correlation' && item.r != null && (
+                <p className="t-micro font-mono text-muted-foreground/70 mt-1.5">
+                  r = {item.r > 0 ? '+' : ''}{item.r} · n = {item.samples}
+                  {fmtP(item.p) ? ` · p = ${fmtP(item.p)}` : ''}
+                </p>
               )}
             </div>
           </motion.div>
