@@ -1603,6 +1603,84 @@ export function assessSleepRegime(checkin) {
   };
 }
 
+/**
+ * Arquitetura da noite para exibicao. NAO gera score nem entra em formula.
+ * base 'bed' = tempo na cama (inclui acordado, soma 100). base 'sleep' = so o sono.
+ * Silencio > sinal fabricado: sem dado, retorna null ou omite o segmento.
+ */
+export function buildSleepArchitecture(checkin, { base = 'bed' } = {}) {
+  const h = Number(checkin?.sleep_hours);
+  const deepPct = Number(checkin?.deep_sleep_pct);
+  if (!Number.isFinite(h) || h <= 0 || !Number.isFinite(deepPct)) return null;
+
+  const remRaw = Number(checkin?.rem_sleep_pct);
+  const hasRem = Number.isFinite(remRaw) && remRaw > 0;
+  const remPct = hasRem ? remRaw : 0;
+  if (deepPct + remPct > 100) {
+    return { valid: false, reason: 'stage_sum_over_100', segments: [] };
+  }
+
+  const tstMin = h * 60;
+  const awRaw = Number(checkin?.awake_minutes);
+  const awakeMin = Number.isFinite(awRaw) && awRaw >= 0 ? awRaw : null;
+  const useBed = base === 'bed' && awakeMin != null;
+
+  const deepMin  = tstMin * deepPct / 100;
+  const remMin   = tstMin * remPct / 100;
+  const lightMin = Math.max(0, tstMin - deepMin - remMin);
+
+  const raw = [
+    { id: 'deep',  label: 'Profundo', minutes: deepMin },
+    ...(hasRem ? [{ id: 'rem', label: 'REM', minutes: remMin }] : []),
+    { id: 'light', label: 'Leve', minutes: lightMin },
+    ...(useBed ? [{ id: 'awake', label: 'Acordado', minutes: awakeMin }] : []),
+  ];
+  const total = raw.reduce((s, x) => s + x.minutes, 0);
+
+  // maior resto: os pct SEMPRE somam exatamente 100
+  const exact = raw.map((x) => (total > 0 ? (x.minutes / total) * 100 : 0));
+  const floors = exact.map((v) => Math.floor(v));
+  let left = 100 - floors.reduce((a, b) => a + b, 0);
+  const order = exact
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  for (let k = 0; k < order.length && left > 0; k++, left--) floors[order[k].i] += 1;
+
+  const regime = assessSleepRegime(checkin);
+  return {
+    valid: true,
+    base: useBed ? 'bed' : 'sleep',
+    baseFellBack: base === 'bed' && !useBed,
+    canSwitchBase: awakeMin != null,
+    totalMinutes: total,
+    tstMin,
+    awakeMin,
+    awakenings: Number.isFinite(Number(checkin?.sleep_awakenings)) ? Number(checkin.sleep_awakenings) : null,
+    efficiency: regime?.efficiency ?? null,
+    segments: raw.map((x, i) => ({ ...x, pct: floors[i] })),
+  };
+}
+
+/**
+ * Mediana pessoal de minutos por estagio nas ultimas N noites (exclui hoje).
+ * Retorna null com menos de MIN noites — nunca inventa referencia.
+ */
+export function sleepStageNormals(recentCheckins = [], n = 14, min = 7) {
+  const rows = (recentCheckins || [])
+    .slice(0, n)
+    .map((c) => buildSleepArchitecture(c, { base: 'bed' }))
+    .filter((a) => a && a.valid);
+  if (rows.length < min) return null;
+  const med = (arr) => {
+    const s = arr.filter((v) => v != null).sort((a, b) => a - b);
+    if (!s.length) return null;
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  const pick = (id) => med(rows.map((r) => r.segments.find((s) => s.id === id)?.minutes ?? null));
+  return { nights: rows.length, deep: pick('deep'), rem: pick('rem'), light: pick('light'), awake: pick('awake') };
+}
+
 // ─── Async Analysis Wrapper ───────────────────────────────────────────────────
 
 function _djb2(str) {

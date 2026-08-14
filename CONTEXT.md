@@ -52,6 +52,8 @@ Objetivo: insights **honestos** sobre sono, corrida e musculação. O dono é co
 
 **`assessSleepRegime()`** existe em `physiological-engine.js`: detecta o regime de sono atual e alimenta um **badge de baixa confiança** na Today (Direção B). Dispara em ~76% das noites no regime atual; limiares **não recalibrados de propósito** (não calibrar com 21 noites de regime atípico).
 
+**`buildSleepArchitecture()` / `sleepStageNormals()`** (adicionadas em 14/08/2026, `physiological-engine.js`) são funções de **APRESENTAÇÃO** — **NÃO geram score nem entram em nenhuma fórmula** (recovery/sono/strain intactos). `buildSleepArchitecture(checkin, { base })` monta a arquitetura da noite para o card "Sua noite": `base 'bed'` = % do tempo na cama (inclui o segmento "Acordado", soma exatamente 100 via maior-resto); `base 'sleep'` = % só do sono. Sem `awake_minutes`, cai para `base 'sleep'` (`baseFellBack`). Estágios que somam >100 → `valid:false` (a UI omite a barra). A `efficiency` do card vem da **fonte única** `assessSleepRegime` (não recalcula). `sleepStageNormals(recentCheckins)` devolve a mediana pessoal de minutos por estágio nas últimas 14 noites (≥7 noites, senão `null` — nunca inventa referência). O card **passou a somar 100%** (nova base do card da noite, incluindo tempo acordado) e usa **baseline único** (`analysis.baseline.hrv/rhr.d14→d7`) para os deltas e a linha tracejada do sparkline.
+
 ---
 
 ## 4. Regras de arquitetura (Base44)

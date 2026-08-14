@@ -1289,6 +1289,7 @@ function renderCard(desc) {
             checkin={enrichedCheckin}
             delta={recoveryDelta}
             recentCheckins={sortedCheckins.filter((c) => c.date !== today)}
+            baseline={analysis?.baseline}
           />
         );
 
