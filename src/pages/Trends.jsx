@@ -8,6 +8,13 @@ import {
 } from 'recharts';
 import { computeCheckinScores, getZone, getZoneColor } from '@/lib/biocharge-utils';
 import { calculateTrainingLoad, calculateRunningEconomy, pearson, corrPValue } from '@/lib/physiological-engine';
+import {
+  REGIME_BREAK,
+  classifyTrainingLoad,
+  scatterCrossesRegime,
+  scatterSignificant,
+  formatTooltipValue,
+} from '@/lib/trends-gates';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
@@ -85,7 +92,8 @@ function ZoneTooltip({ active, payload, label, selectedMetric }) {
         const isRecovery = p.dataKey === 'recovery_score'
           || (p.dataKey === 'moving_avg' && selectedMetric === 'recovery_score');
         const color = isRecovery && p.value != null ? getZoneColor(getZone(p.value)) : p.color;
-        return <div key={i} style={{ color }}>{p.name}: {p.value}</div>;
+        const shown = formatTooltipValue(p.value);
+        return <div key={i} style={{ color }}>{p.name}: {shown}</div>;
       })}
     </div>
   );
@@ -102,41 +110,21 @@ function clampRange(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+// Visual por tier — a DECISÃO (label/risco/muted/textos) vem de
+// classifyTrainingLoad (pura, testável); aqui só mapeamos ícone e cor.
+const LOAD_TIER_STYLE = {
+  no_base: { color: 'text-muted-foreground', bg: 'bg-secondary/30', border: 'border-border/40', icon: Gauge },
+  no_data: { color: 'text-muted-foreground', bg: 'bg-secondary/30', border: 'border-border/40', icon: Gauge },
+  undercarga: { color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: TrendingUp },
+  ideal: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: ShieldCheck },
+  elevada: { color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: ShieldAlert },
+  alta: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: TrendingDown },
+};
+
 function getLoadClassification(load) {
-  const ratio = load?.ratio;
-  if (ratio == null) {
-    return {
-      label: 'Sem dados', color: 'text-muted-foreground', bg: 'bg-secondary/30', border: 'border-border/40', icon: Gauge,
-      summary: 'Ainda não dá para calcular a relação carga aguda/crônica.',
-      recommendation: 'Continue registrando treinos e check-ins por algumas semanas.',
-    };
-  }
-  if (ratio < 0.8) {
-    return {
-      label: 'Subcarga', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', icon: TrendingUp,
-      summary: `Sua carga recente está abaixo da sua média (ACWR ${ratio.toFixed(2)}).`,
-      recommendation: 'Há espaço para aumentar volume/intensidade de forma progressiva, se a recuperação acompanhar.',
-    };
-  }
-  if (ratio <= 1.3) {
-    return {
-      label: 'Faixa ideal', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: ShieldCheck,
-      summary: `Sua carga aguda está alinhada com a crônica (ACWR ${ratio.toFixed(2)}).`,
-      recommendation: 'Boa zona para sustentar consistência sem sobrecarregar.',
-    };
-  }
-  if (ratio <= 1.5) {
-    return {
-      label: 'Carga elevada', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', icon: ShieldAlert,
-      summary: `Sua carga aguda subiu acima da sua média recente (ACWR ${ratio.toFixed(2)}).`,
-      recommendation: 'Vale evitar novos saltos de volume por alguns dias antes de seguir subindo.',
-    };
-  }
-  return {
-    label: 'Carga muito alta', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: TrendingDown,
-    summary: `Sua carga aguda está bem acima da crônica (ACWR ${ratio.toFixed(2)}).`,
-    recommendation: 'Priorize recuperação e segure novos aumentos de carga até a relação cair.',
-  };
+  const c = classifyTrainingLoad(load);
+  const style = LOAD_TIER_STYLE[c.tier] || LOAD_TIER_STYLE.no_data;
+  return { ...c, ...style };
 }
 
 function getLoadPointerPercent(ratio) {
@@ -181,6 +169,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
   const load = calculateTrainingLoad(sorted, sessions);
   const acwr = load?.ratio ?? null;
   const classification = getLoadClassification(load);
+  const muted = classification.muted;
   const pointerPercent = getLoadPointerPercent(acwr);
   const Icon = classification.icon;
 
@@ -197,6 +186,7 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
             <h3 className="text-sm font-semibold tracking-tight">Balance de carga e recuperação</h3>
             <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Carga aguda (7 dias) vs crônica — razão ACWR.
+              <span className="text-muted-foreground/60"> · 7 vs 42 dias (fixo)</span>
             </p>
           </div>
         </div>
@@ -234,6 +224,9 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
           <p className={`text-xl font-mono font-semibold ${classification.color}`}>
             {acwr != null ? acwr.toFixed(2) : '—'}
           </p>
+          {classification.outOfScale && (
+            <p className="t-micro text-muted-foreground/70 mt-0.5">fora de escala</p>
+          )}
         </div>
       </div>
 
@@ -249,9 +242,13 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
 
           <div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
-            style={{ left: `${pointerPercent}%` }}
+            style={{ left: `${muted ? 50 : pointerPercent}%` }}
           >
-            <div className="w-3.5 h-3.5 rounded-full bg-background border-2 border-white shadow" />
+            <div
+              className={`w-3.5 h-3.5 rounded-full bg-background border-2 shadow ${
+                muted ? 'border-muted-foreground/50' : 'border-white'
+              }`}
+            />
           </div>
         </div>
 
@@ -854,11 +851,14 @@ export default function Trends() {
 
         const scatterPoints = sortedScatter.slice(0, -1).reduce((acc, c, i) => {
           const nextDay = sortedScatter[i + 1];
+          // ALVO INDEPENDENTE: HRV do dia seguinte, não recovery_score.
+          // Sono é 30% do recovery — usar recovery como alvo é a tautologia que o
+          // detectCorrelations (physiological-engine.js) proíbe explicitamente.
           const sleepH = c.sleep_hours;
-          const nextRecovery = nextDay?.recovery_score;
+          const nextHrv = nextDay?.hrv;
 
-          if (sleepH != null && nextRecovery != null) {
-            acc.push({ x: sleepH, y: nextRecovery, date: c.date });
+          if (sleepH != null && nextHrv != null) {
+            acc.push({ x: sleepH, y: nextHrv, date: c.date });
           }
 
           return acc;
@@ -870,9 +870,21 @@ export default function Trends() {
         const ry = scatterPoints.map((p) => p.y);
         const r = pearson(rx, ry);
         const pVal = corrPValue(r, scatterPoints.length);
-        // Só traça linha se a associação for real: |r|>=0,35, p<=0,05 e amostra mínima.
-        const significant =
-          Math.abs(r) >= 0.35 && pVal <= 0.05 && scatterPoints.length >= 8;
+        // Nunca traçar linha em regime misto: se a janela cruza a quebra de sono,
+        // uma reta mede a mudança de rotina, não o corpo.
+        const crossesRegime = scatterCrossesRegime(scatterPoints);
+        const significant = scatterSignificant({
+          r,
+          pValue: pVal,
+          n: scatterPoints.length,
+          crossesRegime,
+        });
+        // Direção fisiologicamente implausível: mais sono → HRV menor.
+        const implausible = !crossesRegime && r < 0 && pVal <= 0.05;
+
+        // Pontos coloridos por regime (pré = slate, pós = azul).
+        const prePoints = scatterPoints.filter((p) => p.date < REGIME_BREAK);
+        const posPoints = scatterPoints.filter((p) => p.date >= REGIME_BREAK);
 
         let trendLine = [];
         if (significant) {
@@ -899,16 +911,16 @@ export default function Trends() {
             className="rounded-xl bg-card p-4"
           >
             <h3 className="text-sm font-semibold mb-0.5 tracking-tight">
-              Sono × Recovery do dia seguinte
-
+              Sono × HRV do dia seguinte
             </h3>
             <p className="t-micro text-muted-foreground mb-3">
               Cada ponto representa um dia com dados válidos
+              <span className="text-muted-foreground/60"> · últimos 30 dias</span>
             </p>
 
             <div
               role="img"
-              aria-label="Gráfico de dispersão mostrando relação entre horas de sono e recovery do dia seguinte"
+              aria-label="Gráfico de dispersão mostrando relação entre horas de sono e HRV do dia seguinte"
               className="h-52"
             >
               <ResponsiveContainer width="100%" height="100%">
@@ -938,29 +950,43 @@ export default function Trends() {
                   <YAxis
                     type="number"
                     dataKey="y"
-                    name="Recovery"
-                    domain={[0, 100]}
+                    name="HRV"
+                    domain={['auto', 'auto']}
                     tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
-                    width={30}
+                    width={34}
+                    label={{
+                      value: 'HRV (ms)',
+                      angle: -90,
+                      position: 'insideLeft',
+                      fill: 'hsl(215,15%,45%)',
+                      fontSize: 10,
+                    }}
                   />
 
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(val, name) =>
-                      name === 'Recovery'
-                        ? [`${val}`, 'Recovery no dia seguinte']
+                      name === 'HRV'
+                        ? [`${val} ms`, 'HRV no dia seguinte']
                         : [`${val}h`, 'Horas de sono']
                     }
                     cursor={{ strokeDasharray: '3 3' }}
                   />
 
                   <Scatter
-                    name="dias"
-                    data={scatterPoints}
+                    name="Pré-11/07"
+                    data={prePoints}
+                    fill="hsl(215,20%,55%)"
+                    fillOpacity={0.85}
+                    r={4}
+                  />
+                  <Scatter
+                    name="Pós-11/07"
+                    data={posPoints}
                     fill="hsl(200,80%,55%)"
-                    fillOpacity={0.8}
+                    fillOpacity={0.85}
                     r={4}
                   />
 
@@ -979,11 +1005,29 @@ export default function Trends() {
               </ResponsiveContainer>
             </div>
 
-                        <p className="t-micro text-muted-foreground mt-2">
-              {significant
+            <div className="flex gap-4 mt-2">
+              <div className="flex items-center gap-1.5 t-micro text-muted-foreground">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(215,20%,55%)' }} />
+                Pré-11/07
+              </div>
+              <div className="flex items-center gap-1.5 t-micro text-muted-foreground">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'hsl(200,80%,55%)' }} />
+                Pós-11/07
+              </div>
+            </div>
+
+            <p className="t-micro text-muted-foreground mt-2">
+              {crossesRegime
+                ? 'Sem linha de tendência: esta janela atravessa a mudança de regime de sono de 11/07. Uma reta sobre dois regimes mede a mudança de rotina, não o corpo.'
+                : significant
                 ? `Linha = tendência estatística (r=${r.toFixed(2)}, p=${pVal.toFixed(3)}, n=${scatterPoints.length}). Pontos à direita = mais sono.`
                 : `Sem associação significativa nos seus dados (r=${r.toFixed(2)}, n=${scatterPoints.length}) — por isso não traçamos linha. Pontos à direita = mais sono.`}
             </p>
+            {implausible && (
+              <p className="t-micro text-muted-foreground mt-1">
+                Nas noites fragmentadas o HRV do relógio SOBE — é o artefato que o app já corrige no score (_hrvTrustFactor). Aqui ele aparece cru.
+              </p>
+            )}
 
           </motion.div>
         );
