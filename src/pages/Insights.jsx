@@ -125,18 +125,40 @@ function BottleneckInsight({ bottleneck }) {
   }
 
   if (!bottleneck.hasSignal) {
+    const evaluated = bottleneck.evaluated || [];
     return (
       <div className="rounded-2xl border border-border/50 bg-card p-5">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-secondary border border-border/40 flex items-center justify-center shrink-0">
             <Target className="w-4 h-4 text-muted-foreground" />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Sem um gargalo dominante</p>
             <p className="text-xs text-muted-foreground leading-relaxed mt-1">
               Por enquanto nenhum fator isolado domina sua recuperação — seus dados
               estão equilibrados. Isso costuma ser um bom sinal.
             </p>
+
+            {evaluated.length > 0 && (
+              <div className="mt-4 border-t border-border/30 pt-3">
+                <p className="t-micro font-semibold uppercase tracking-widest text-muted-foreground/80 mb-2.5">
+                  O que estou testando agora
+                </p>
+                <div className="space-y-1.5">
+                  {evaluated.map((e) => (
+                    <div key={e.label} className="flex items-center justify-between gap-3">
+                      <span className="text-xs text-foreground/80 truncate">{e.label}</span>
+                      <span className="t-micro font-mono text-muted-foreground shrink-0">
+                        r = {e.r > 0 ? '+' : ''}{e.r} · n = {e.samples} · corte 0,35
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3">
+                  Nenhum passou o corte ainda. O silêncio aqui é proposital.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1359,18 +1381,29 @@ Regras:
         <PrimaryInsightCard item={primaryInsight} />
       )}
 
+      {/* Correlações — ficha técnica logo abaixo do herói, aberta por padrão:
+          é o conteúdo estatístico que sustenta o resto da tela. */}
+      <ExpandableSection
+        title="Correlações"
+        subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
+        defaultOpen
+      >
+        {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
+          <CorrelationsCard
+            correlations={analysis.correlations}
+            laggedEffects={analysis.laggedEffects}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Ainda não há correlação forte o suficiente para destacar. Continue registrando.
+          </p>
+        )}
+      </ExpandableSection>
+
       {/* Fronteira 3 — tendências de longo prazo ("estou melhorando?") */}
       {analysis?.longTermTrends && (
         <LongTermTrendsCard trends={analysis.longTermTrends} />
       )}
-
-      {/* Vitalidade + Idade corporal (BodyAgeCard).
-          "Idade de condicionamento" (FitnessAgeCard) foi aposentada: era troféu
-          de vaidade (VO₂max estimado → "X anos mais jovem que sua idade real"),
-          um número que não muda a ação de hoje — proibido pelo CONTEXT §2.1. O
-          VO₂max sobrevive como contexto de tendência na Vitalidade ao longo do
-          tempo (Tendências), não como troféu na abertura dos Insights. */}
-      <BodyAgeCard />
 
       {/* 1. High-value discoveries — só aparece quando há descoberta real.
           Quando vazio, o herói no topo (PrimaryInsightCard) já cobre o aviso
@@ -1568,21 +1601,13 @@ Regras:
         </div>
       </motion.div>
 
-      {/* 6. Correlações — único conteúdo técnico que não vive na Hoje/Trends */}
+      {/* Vitalidade + idade corporal — acompanhamento de longo prazo, no rodapé
+          e fechado por padrão: não muda a decisão de hoje. */}
       <ExpandableSection
-        title="Correlações nos seus dados"
-        subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
+        title="Vitalidade e idade corporal"
+        subtitle="Acompanhamento de longo prazo. Não muda a decisão de hoje."
       >
-        {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
-          <CorrelationsCard
-            correlations={analysis.correlations}
-            laggedEffects={analysis.laggedEffects}
-          />
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Ainda não há correlação forte o suficiente para destacar. Continue registrando.
-          </p>
-        )}
+        <BodyAgeCard />
       </ExpandableSection>
     </div>
   );
