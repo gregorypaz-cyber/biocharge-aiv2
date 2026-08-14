@@ -357,7 +357,7 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
            Recovery/Sono/Strain saíram do herói — educação de onboarding, ruído
            no dia a dia. A leitura do dia vive no "Leitura de hoje" (um explicador
            só) e o porquê visual no "Seu normal". */}
-        {heroDynamicContext ? (
+        {heroDynamicContext && (
           <div
             className={cn(
               'px-3 py-2.5 rounded-xl border text-xs leading-snug',
@@ -369,19 +369,6 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
             </span>{' '}
             {heroDynamicContext.text}
           </div>
-        ) : (
-          !todaySessions.length && !isRestMode && (
-            // APPLE §6: sem moldura — a frase-ação vive solta sob o herói, não num card.
-            <p className="px-3 text-center text-sm text-muted-foreground leading-snug">
-              {isCalibrating
-                ? 'Ainda calibrando seu baseline. Quando o Recovery abrir, esta linha vira a leitura do seu dia.'
-                : displayedScore >= 70
-                ? 'Recuperação alta — há margem pra puxar um pouco mais hoje, se a vontade pedir.'
-                : displayedScore >= 42
-                ? 'Recuperação moderada — segure a intensidade no controle; não transforme moderado em máximo.'
-                : 'Recuperação baixa — o ganho de hoje está em recuperar, não em forçar.'}
-            </p>
-          )
         )}
 
         {!heroDynamicContext &&
@@ -412,6 +399,10 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
           {phaseCfg.ctaLabel}
         </button>
       )}
+
+      <div className="mt-3 flex justify-center">
+        <QuickIntentEdit />
+      </div>
     </motion.div>
   );
 }
@@ -1508,7 +1499,6 @@ if (isLoading) {
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
           </p>
           <h1 className="t-hero font-bold">Hoje</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{phaseCfg.headerSub}</p>
 
           {checkin?.created_at ? (
             <p className="t-micro text-muted-foreground flex items-center gap-1 mt-1">
@@ -1526,23 +1516,6 @@ if (isLoading) {
         </div>
 
       </div>
-      </motion.div>
-
-      {bannerCfg.bannerText && (
-        <motion.div
-          key={advisoryPhase + (userRest ? '-rest' : '-adv')}
-          {...(cascade
-            ? { variants: CASCADE_ITEM }
-            : { initial: { opacity: 0, y: -6 }, animate: { opacity: 1, y: 0 } })}
-          className={cn('rounded-2xl border px-4 py-3 text-xs font-medium flex items-start gap-2', bannerCfg.bannerClass)}
-        >
-          {bannerCfg.bannerIcon && <bannerCfg.bannerIcon className="w-4 h-4 shrink-0 mt-px" />}
-          <span>{bannerCfg.bannerText}</span>
-        </motion.div>
-      )}
-
-      <motion.div {...(cascade ? { variants: CASCADE_ITEM } : {})}>
-        <QuickIntentEdit />
       </motion.div>
 
       {deepSleepAlert && !deepSleepAlertDismissed && (
@@ -1581,6 +1554,14 @@ if (isLoading) {
               {card}
               <ReckNotouCard checkins={sortedCheckins} today={today} />
               <RecoveryDriversCard drivers={recoveryDrivers} />
+            </React.Fragment>
+          );
+        }
+        if (desc.id === 'sleep_forecast') {
+          // FUSÃO DO PLANO: o Foco do dia (DayFocusCard) passa a viver colado ACIMA
+          // do card de sono, no mesmo React.Fragment — plano + previsão da noite juntos.
+          return (
+            <React.Fragment key={desc.id}>
               <DayFocusCard
                 mode={dailyVerdict?.mode || enrichedCheckin?.decision_mode}
                 acwr={analysis?.trainingLoad?.ratio ?? null}
@@ -1594,6 +1575,7 @@ if (isLoading) {
                 restDay={isRestMode}
                 seed={today ? today.split('-').reduce((s, p) => s + Number(p), 0) : 0}
               />
+              {card}
             </React.Fragment>
           );
         }

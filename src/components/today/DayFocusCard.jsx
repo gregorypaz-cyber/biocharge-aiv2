@@ -15,7 +15,11 @@ const DOT = {
 };
 
 export default function DayFocusCard({ mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed }) {
-  const items = buildDayFocus({ mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed });
+  // UM SÓ NÚMERO DE DÉBITO: a dívida de sono canônica vive no SleepForecastCard
+  // (1 casa decimal). Aqui a bullet de débito sai — DayFocusCard e SleepForecastCard
+  // mostravam o mesmo número com arredondamentos diferentes (6.9h vs ~7h).
+  const items = buildDayFocus({ mode, acwr, sleepDebtHours, soreness, stress, hrvDeltaPct, restDay, seed })
+    .filter((it) => !/dívida de sono|déficit de sono/i.test(it?.text || ''));
   if (!items?.length) return null;
 
   return (
