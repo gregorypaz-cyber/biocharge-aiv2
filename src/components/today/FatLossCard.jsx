@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Scale, Shield, Scissors, AlertTriangle } from 'lucide-react';
+import { Scale, Shield, Scissors, AlertTriangle, ChevronDown } from 'lucide-react';
 import { flSummary, FL } from '@/lib/biocharge-utils';
 
 // Card "Corte" — FatLossEngine v1.
@@ -34,6 +34,34 @@ function rateLabel(rate, phase) {
   return `${dir} kg/sem · abaixo do ritmo`;
 }
 
+/** Sparkline compacto do modo fechado: só a linha do trend, 14 dias, h=24. */
+function CompactSparkline({ series }) {
+  const pts = series.slice(-14);
+  if (pts.length < 3) return null;
+  const W = 96;
+  const H = 24;
+  const vals = pts.map((p) => p.trend);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const span = Math.max(max - min, 0.5);
+  const x = (i) => (i / (pts.length - 1)) * W;
+  const y = (v) => H - 3 - ((v - min) / span) * (H - 6);
+  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.trend).toFixed(1)}`).join(' ');
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 24 }} preserveAspectRatio="none" aria-hidden="true">
+      <path d={path} fill="none" strokeWidth="2" className="stroke-emerald-400/80" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Delta/semana curto pro modo compacto (só direção + ritmo, sem o julgamento). */
+function compactRate(rate) {
+  if (rate == null) return 'coletando';
+  const abs = Math.abs(rate).toFixed(2).replace('.', ',');
+  const dir = rate < -0.05 ? '▼' : rate > 0.05 ? '▲' : '●';
+  return `${dir} ${abs} kg/sem`;
+}
+
 /** Sparkline: linha do trend + pontos das pesagens cruas (últimos ~30 aceitos). */
 function TrendSparkline({ series }) {
   const pts = series.slice(-30);
@@ -59,6 +87,7 @@ function TrendSparkline({ series }) {
 
 export default function FatLossCard({ checkins }) {
   const s = useMemo(() => flSummary(checkins), [checkins]);
+  const [open, setOpen] = useState(false);
 
   if (!s || s.series.length < 5) return null; // sem histórico de peso suficiente
 
@@ -82,14 +111,32 @@ export default function FatLossCard({ checkins }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-border bg-card p-4 space-y-3"
+      className="rounded-2xl border border-border bg-card p-4"
     >
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Scale className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wide">Corte</span>
+      {/* MODO COMPACTO (padrão): uma linha — ícone + Corte + peso + delta/sem +
+          sparkline 14d + chevron. Clique expande o card completo. */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center gap-2.5 text-left tap-target"
+      >
+        <Scale className="w-4 h-4 text-emerald-400 shrink-0" />
+        <span className="text-sm font-semibold tracking-tight shrink-0">Corte</span>
+        <span className="text-sm font-mono shrink-0">{fmtKg(s.trendNow)} kg</span>
+        <span className={`t-micro font-semibold shrink-0 ${zone.text}`}>{compactRate(s.rate)}</span>
+        <div className="flex-1 min-w-0">
+          <CompactSparkline series={s.series} />
         </div>
+        <ChevronDown
+          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {!open ? null : (
+      <div className="mt-3 space-y-3">
+      {/* Fase */}
+      <div className="flex items-center justify-end gap-3">
         <span
           className={`inline-flex items-center gap-1 t-micro font-bold px-2 py-0.5 rounded-full border ${
             isProtect
@@ -152,6 +199,8 @@ export default function FatLossCard({ checkins }) {
             {FL.PLATEAU_WEEKS} semanas sem queda na tendência — hora de revisar as calorias.
           </p>
         </div>
+      )}
+      </div>
       )}
     </motion.div>
   );

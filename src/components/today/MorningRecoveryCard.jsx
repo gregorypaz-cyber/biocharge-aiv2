@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Clock, HeartPulse, Activity } from 'lucide-react';
+import { Moon, HeartPulse, Activity } from 'lucide-react';
 import { getZoneColor } from '@/lib/biocharge-utils';
 import { buildSleepArchitecture, sleepStageNormals } from '@/lib/physiological-engine';
-import { formatDateFull } from '@/lib/date-utils';
 import { useMotionSafe } from '@/hooks/use-motion-safe';
 
 // HhMM a partir de minutos (piso 0). Formato do card da noite.
@@ -115,7 +114,7 @@ function SleepArchitecture({ checkin, normals }) {
 
   return (
     <div className="space-y-2.5">
-      <p className="t-micro font-semibold uppercase tracking-widest text-muted-foreground">
+      <p className="text-sm font-semibold tracking-tight text-muted-foreground">
         Arquitetura da noite
       </p>
 
@@ -258,14 +257,10 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
       transition={reducedTransition}
       className="rounded-2xl bg-card p-4 space-y-4"
     >
-      {/* Header */}
+      {/* Header — a data já está no topo da tela, não repetir aqui */}
       <div className="flex items-center gap-2">
         <Moon className="w-4 h-4 text-blue-400" />
         <span className="text-sm font-semibold tracking-tight">Sua noite</span>
-        <span className="ml-auto t-micro text-muted-foreground flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          {formatDateFull(checkin.date)}
-        </span>
       </div>
 
       {/* KPI da noite — duração dormindo + tempo na cama */}
@@ -308,7 +303,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
           <div className="flex items-center gap-1.5 mb-1">
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="t-micro uppercase tracking-wider text-muted-foreground">RMSSD</span>
+            <span className="t-micro uppercase tracking-wider text-muted-foreground">HRV</span>
           </div>
           <p className="text-sm font-semibold">
             {hrvVal != null ? <>{hrvVal}<span className="t-micro font-normal text-muted-foreground"> ms</span></> : '—'}
@@ -320,7 +315,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
         <div className="rounded-xl bg-secondary/50 border border-border/40 p-2.5">
           <div className="flex items-center gap-1.5 mb-1">
             <HeartPulse className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="t-micro uppercase tracking-wider text-muted-foreground">RHR</span>
+            <span className="t-micro uppercase tracking-wider text-muted-foreground">FC repouso</span>
           </div>
           <p className="text-sm font-semibold">
             {rhrVal != null ? <>{rhrVal}<span className="t-micro font-normal text-muted-foreground"> bpm</span></> : '—'}
@@ -335,7 +330,7 @@ export default function MorningRecoveryCard({ checkin, delta = null, recentCheck
             <span className="t-micro uppercase tracking-wider text-muted-foreground">Sono</span>
           </div>
           <p className="text-sm font-semibold">
-            {sleepVal != null ? `${sleepVal}h` : '—'}
+            {sleepVal != null ? hhmm(sleepVal * 60) : '—'}
           </p>
           <Qualifier ctx={sleepCtx} />
           <MiniSpark data={sparkSleep} color="hsl(199,89%,60%)" baselineValue={sleepBase} />

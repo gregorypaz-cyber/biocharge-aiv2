@@ -1,6 +1,6 @@
 # Status atual — Reck / BioCharge AI
 
-> Atualizado em **12/08/2026**. Foto do estado vigente. Onde este arquivo divergir do código, **o código manda** — e quem corrigir a divergência atualiza este documento na mesma sessão.
+> Atualizado em **14/08/2026**. Foto do estado vigente. Onde este arquivo divergir do código, **o código manda** — e quem corrigir a divergência atualiza este documento na mesma sessão.
 
 ## Fórmulas em produção
 
@@ -10,6 +10,27 @@ _(copiadas de `CONTEXT.md §3` — não inventar; se o código divergir, o códi
 - **Sleep score (Sono v2)** — sinais crus portáveis, não o score do Zepp: duração 42% (curva centrada ~7,5h) / regularidade 25% / continuidade-despertares 15% / profundo 10% / REM 8% (renormalizado sobre os componentes presentes). `sleep_score` e `biocharge_morning` do Zepp ficam só como referência de calibração — não entram em fórmula.
 - **readiness_score** = Recovery×0,80 + (100 − `fatigue_score`)×0,20, com `fatigue_score` = fadiga×0,65 + dor muscular(%)×0,20 + estresse(%)×0,15. Quase não aparece na UI; efeito real é categórico via `getDailyMasterSignal`/`decision_mode`.
 - **Strain** — métrica SEPARADA (0–21), nunca entra no Recovery. `calculateStrainScore` prefere o Training Effect do Zepp em corridas, FC média como fallback. FC máx default 185.
+
+## Reorganização da Today — 14/08/2026 (só composição, zero fórmula)
+
+Tela Hoje reorganizada em 3 ondas, **sem tocar em nenhuma fórmula** (recovery/sono/
+strain/readiness/constantes intactos). Detalhe em `ai-decisions.md` (2026-08-14).
+
+- **Saiu:** banner de fase (duplicava o verbo do herói); frase-ação repetida sob os
+  satélites; subtítulo "Decisão do dia"; a bullet de débito de sono do `DayFocusCard`
+  (número canônico agora só no `SleepForecastCard`, 1 casa decimal); o segundo empty
+  state e o CTA duplicado da lista de treinos; a data do cabeçalho do card da noite.
+- **Consolidou:** `QuickIntentEdit` entrou no herói; `DayFocusCard` colou acima do
+  card de sono (fusão do plano); `why_score`/`current_state` deixaram de gastar vaga
+  de `MAX_PRIMARY` no `priorityEngine`; `morning_recovery` subiu para vir antes do
+  plano.
+- **Entrou:** linha de causa no herói (sono HhMM · HRV/FC + Δ vs baseline, fato sem
+  cor); chip de saúde ligado ao Monitor (`acute`/`sustained` → `/saude`); alvo de
+  carga no plano ("carga alvo até {strainTarget}"); `FatLossCard` compacto (uma linha
+  + chevron); header único de card (ícone 16px + sentence case); nomenclatura
+  "HRV"/"FC repouso" e sono em HhMM no card da noite.
+- **Ordem da tela:** herói → Sua noite → Seu normal → Foco+Missão → Treinos → Corte →
+  Seu dia completo. Alvos: uma frase de veredito, um número de débito, um CTA de treino.
 
 ## Sessão de agosto/2026 — o que entrou
 

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Plus, Zap, Dumbbell, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight } from 'lucide-react';
+import { Plus, Zap, Dumbbell, Moon, Heart, X, ChevronDown, TrendingUp, Settings, ChevronRight, AlertTriangle, Flag, ArrowUpRight, Compass } from 'lucide-react';
 import { getTodayLocal } from '@/lib/date-utils';
 import { computeCheckinScores, getDayScore, explainRecoveryV3, getZone, getZoneColor, getZoneClasses } from '@/lib/biocharge-utils';
 import {
@@ -318,8 +318,9 @@ function ExecutionCard({ displayedScore, enrichedCheckin, strainVsTarget, isRest
         {/* Decisão de hoje */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-               Decisão de hoje
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Compass className="w-4 h-4" />
+              <span className="text-sm font-semibold tracking-tight">Decisão de hoje</span>
             </span>
             {isCalibrating ? (
               <h2 className="text-xl font-semibold mt-1 leading-tight">Calibrando seu baseline</h2>
