@@ -290,7 +290,7 @@ function LongTermTrendsCard({ trends }) {
       className="rounded-2xl border border-border/50 bg-card tint-recovery p-5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]"
     >
       <div className="flex items-start justify-between mb-0.5">
-        <h2 className="t-section font-semibold tracking-tight">Sua evolução</h2>
+        <h2 className="text-sm font-semibold tracking-tight">Sua evolução</h2>
         <button
           type="button"
           onClick={() => setShowInfo((v) => !v)}
@@ -555,7 +555,7 @@ function PrimaryInsightCard({ item }) {
   );
 }
 
-function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
+function ExpandableSection({ title, subtitle, children, defaultOpen = false, icon: Icon }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
@@ -564,11 +564,14 @@ function ExpandableSection({ title, subtitle, children, defaultOpen = false }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-secondary/30 transition-colors"
       >
-        <div>
-          <p className="text-sm font-semibold leading-snug">{title}</p>
-          {subtitle ? (
-            <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
-          ) : null}
+        <div className="flex items-center gap-2 min-w-0">
+          {Icon ? <Icon className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={1.5} /> : null}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-tight leading-snug">{title}</p>
+            {subtitle ? (
+              <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">{subtitle}</p>
+            ) : null}
+          </div>
         </div>
 
         <ChevronDown
@@ -1189,7 +1192,7 @@ const primaryInsight = useMemo(() => {
   }
 
   if (sleepDebt != null && sleepDebt >= 4) {
-    qs.push(`Como recuperar ${Math.round(sleepDebt)}h de dívida de sono?`);
+    qs.push(`Como recuperar ${sleepDebt.toFixed(1)}h de dívida de sono?`);
   }
 
   if (ratio != null && ratio > 1.3) {
@@ -1386,6 +1389,7 @@ Regras:
       <ExpandableSection
         title="Correlações"
         subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
+        icon={TrendingUp}
         defaultOpen
       >
         {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
@@ -1452,50 +1456,32 @@ Regras:
         )}
       </div>
 
-     {/* 3. Deep analysis */}
-<motion.div
+     {/* 3. Pergunte ao Reck — superfície única de IA (leitura completa + coach).
+         A "Gerar leitura completa" é a primeira sugestão da lista, não um card
+         à parte. askLLM/buildCoachContext e os estados são preservados. */}
+      <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-xl border border-border/60 bg-card overflow-hidden"
       >
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border/40">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Leitura completa</h2>
-          </div>
-
-          {!todayCheckin?.deep_analysis_text && (
-            <Button
-              onClick={generateInsights}
-              disabled={isGenerating || computed.length < 5}
-              size="sm"
-              className="bg-primary text-primary-foreground h-8 px-4 text-xs tap-target"
-            >
-              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Gerar análise'}
-            </Button>
-          )}
+        <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
+          <Brain className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+          <h2 className="text-sm font-semibold tracking-tight">Pergunte ao Reck</h2>
         </div>
 
-        <div className="p-4">
-          <p className="t-micro text-muted-foreground mb-3">
-            Uma leitura mais detalhada dos padrões recentes de recovery, sono, carga e comportamento.
-          </p>
-
-          {computed.length < 5 ? (
-            <p className="text-sm text-muted-foreground">
-              Registre ao menos 5 check-ins para uma análise profunda mais útil.
-            </p>
-          ) : todayCheckin?.deep_analysis_text ? (
-            <>
+        <div className="p-4 space-y-3.5">
+          {/* Saída da leitura completa (deep analysis) */}
+          {computed.length >= 5 && todayCheckin?.deep_analysis_text ? (
+            <div>
               <AnalysisHighlights analysisText={todayCheckin.deep_analysis_text} />
               <AnalysisBody
                 text={todayCheckin.deep_analysis_text}
                 expanded={analysisExpanded}
                 onExpand={() => setAnalysisExpanded(true)}
               />
-            </>
-          ) : aiInsight ? (
-            <>
+            </div>
+          ) : computed.length >= 5 && aiInsight ? (
+            <div>
               <AnalysisHighlights analysisText={aiInsight} />
               <AnalysisBody
                 text={aiInsight}
@@ -1513,48 +1499,20 @@ Regras:
                   })}
                 </p>
               )}
-            </>
+            </div>
           ) : aiInsightError ? (
             <p className="text-sm text-red-400/80">{aiInsightError}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              A análise profunda aparece automaticamente após o check-in, quando disponível. Você também pode gerar uma nova leitura agora.
-            </p>
-          )}
-        </div>
-      </motion.div>
+          ) : null}
 
-      {/* 4. Coach IA */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.12 }}
-        className="rounded-xl border border-border/60 bg-card overflow-hidden"
-      >
-        <div className="flex items-center gap-2 px-4 py-3.5 border-b border-border/40">
-          <Brain className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Pergunte ao Coach</h2>
-        </div>
-
-        <div className="p-4 space-y-3.5">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-  Use o Coach para transformar seus dados recentes em decisões práticas: recovery, sono, carga e treino.
-</p>
-
+          {/* Resposta do coach */}
           {coachResponse ? (
-            <>
-              <p className="t-micro text-muted-foreground mb-2">
-                Baseado nos seus check-ins, treinos e sinais fisiológicos recentes.
-              </p>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
-              >
-                <ReactMarkdown>{coachResponse}</ReactMarkdown>
-              </motion.div>
-            </>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-4 rounded-xl bg-primary/5 border border-primary/15 prose prose-invert prose-sm max-w-none [&_strong]:text-foreground [&_p]:text-foreground/85"
+            >
+              <ReactMarkdown>{coachResponse}</ReactMarkdown>
+            </motion.div>
           ) : null}
 
           <div className="space-y-2">
@@ -1567,17 +1525,34 @@ Regras:
             />
 
             <div className="grid grid-cols-1 gap-2">
-  {suggestedQuestions.map((q) => (
-    <button
-      key={q}
-      type="button"
-      onClick={() => setCoachInput(q)}
-      className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors tap-target"
-    >
-      {q}
-    </button>
-  ))}
-</div>
+              {/* Leitura completa vira a primeira sugestão da lista */}
+              <button
+                type="button"
+                onClick={generateInsights}
+                disabled={isGenerating || computed.length < 5}
+                className="w-full flex items-center gap-2 text-left px-3 py-2.5 rounded-xl bg-primary/10 border border-primary/25 text-xs font-medium text-foreground hover:bg-primary/15 transition-colors tap-target disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                )}
+                {computed.length < 5
+                  ? 'Gerar leitura completa (5+ check-ins)'
+                  : 'Gerar leitura completa'}
+              </button>
+
+              {suggestedQuestions.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => setCoachInput(q)}
+                  className="w-full text-left px-3 py-2.5 rounded-xl bg-secondary/60 border border-border/60 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors tap-target"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
 
             <Button
               onClick={askCoach}
@@ -1589,7 +1564,7 @@ Regras:
               ) : (
                 <>
                   <Send className="w-3.5 h-3.5 mr-1.5" />
-                  Perguntar ao Coach
+                  Perguntar ao Reck
                 </>
               )}
             </Button>
@@ -1606,6 +1581,7 @@ Regras:
       <ExpandableSection
         title="Vitalidade e idade corporal"
         subtitle="Acompanhamento de longo prazo. Não muda a decisão de hoje."
+        icon={Heart}
       >
         <BodyAgeCard />
       </ExpandableSection>
