@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Scale, Shield, Scissors, AlertTriangle, ChevronDown } from 'lucide-react';
 import { flSummary, FL } from '@/lib/biocharge-utils';
+import { weightTrend } from '@/lib/physiological-engine';
 
 // Card "Corte" — FatLossEngine v1.
 // O herói é o TREND (peso suavizado); a pesagem crua do dia é figurante.
@@ -87,9 +88,15 @@ function TrendSparkline({ series }) {
 
 export default function FatLossCard({ checkins }) {
   const s = useMemo(() => flSummary(checkins), [checkins]);
+  // UM indicador, UM número: o peso exibido é a fonte única weightTrend
+  // (média móvel de 7 pesagens) — o mesmo número que a tela Tendências mostra.
+  // O engine de corte (fase/ritmo/ETA) segue por trás, mas não define o número.
+  const wt = useMemo(() => weightTrend(checkins), [checkins]);
   const [open, setOpen] = useState(false);
 
   if (!s || s.series.length < 5) return null; // sem histórico de peso suficiente
+
+  const weightNow = wt?.current ?? s.trendNow;
 
   const zone = ZONE_CFG[s.zone] || ZONE_CFG.gray;
   const isProtect = s.phase === 'protect';
@@ -123,7 +130,7 @@ export default function FatLossCard({ checkins }) {
       >
         <Scale className="w-4 h-4 text-emerald-400 shrink-0" />
         <span className="text-sm font-semibold tracking-tight shrink-0">Corte</span>
-        <span className="text-sm font-mono shrink-0">{fmtKg(s.trendNow)} kg</span>
+        <span className="text-sm font-mono shrink-0">{fmtKg(weightNow)} kg</span>
         <span className={`t-micro font-semibold shrink-0 ${zone.text}`}>{compactRate(s.rate)}</span>
         <div className="flex-1 min-w-0">
           <CompactSparkline series={s.series} />
@@ -153,11 +160,11 @@ export default function FatLossCard({ checkins }) {
       <div className="flex items-end justify-between gap-3">
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-semibold font-mono">{fmtKg(s.trendNow)}</span>
+            <span className="text-3xl font-semibold font-mono">{fmtKg(weightNow)}</span>
             <span className="text-sm text-muted-foreground">kg</span>
           </div>
           <p className="t-micro text-muted-foreground mt-0.5">
-            tendência real · última pesagem: {fmtKg(s.lastWeighIn)} kg
+            média de 7 pesagens · última pesagem: {fmtKg(s.lastWeighIn)} kg
           </p>
         </div>
         <div className="text-right">

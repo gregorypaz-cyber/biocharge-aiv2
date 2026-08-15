@@ -2042,3 +2042,43 @@ export function detectLongTermTrends(checkins) {
 // Reuso pela camada de UI (ex.: scatter da Trends) e blindagem por teste contra
 // valores de referência (scipy). São a base de TODOS os gates anti-placebo.
 export { _pearson as pearson, _corrPValue as corrPValue, _coefVariation as coefVariation };
+
+// ─── Peso: tendência única (fonte canônica) ──────────────────────────────────
+// UM indicador, UM número. Antes o Hoje mostrava a "tendência real" (EWMA) e a
+// Tendências uma "média de 7 pesagens" — números diferentes para a mesma coisa.
+// weightTrend() é a definição única: média móvel das 7 pesagens mais recentes
+// (aceitas). NÃO entra em nenhuma fórmula de score — é sinal de médio prazo.
+// Devolve { current, delta7, delta100d, samples }.
+export function weightTrend(checkins) {
+  const pts = _ensure(checkins)
+    .filter((c) => c && c.date && Number.isFinite(Number(c.body_weight)) && Number(c.body_weight) > 0)
+    .map((c) => ({ date: String(c.date).slice(0, 10), weight: Number(c.body_weight) }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (pts.length === 0) {
+    return { current: null, delta7: null, delta100d: null, samples: 0 };
+  }
+
+  // Média móvel de 7 pesagens em cada ponto — suaviza água/glicogênio.
+  const ma7 = pts.map((_, i) => {
+    const win = pts.slice(Math.max(0, i - 6), i + 1).map((p) => p.weight);
+    return win.reduce((s, v) => s + v, 0) / win.length;
+  });
+
+  const round1 = (v) => (v == null ? null : Math.round(v * 10) / 10);
+  const current = ma7[ma7.length - 1];
+
+  // delta7: variação da média móvel vs a de ~7 pesagens atrás.
+  const prevIdx7 = ma7.length - 1 - 7;
+  const delta7 = prevIdx7 >= 0 ? current - ma7[prevIdx7] : null;
+
+  // delta100d: variação da média móvel desde o início da janela (~100 pesagens).
+  const delta100d = ma7.length >= 2 ? current - ma7[0] : null;
+
+  return {
+    current: round1(current),
+    delta7: round1(delta7),
+    delta100d: round1(delta100d),
+    samples: pts.length,
+  };
+}

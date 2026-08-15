@@ -3,6 +3,60 @@
 > Entradas mais recentes no topo. Nunca reescrever entrada antiga, só acrescentar.
 > Entradas anteriores a 28/07/2026 vivem nos arquivos do Projeto (ainda não migradas).
 
+## 2026-08-15 · Tendências — honestidade de veredito + fonte única (3 ondas)
+
+**Nenhuma fórmula tocada** (recovery, sono, strain, readiness, constantes intactos).
+Todas as mudanças são de gate/apresentação. Lógica pura extraída para
+`src/lib/trends-gates.js` (sem React), coberta por `src/lib/__tests__/trends-gates.test.js`.
+
+### Scatter: alvo trocado (recovery → HRV do dia seguinte) — anti-circularidade
+- O scatter "Sono × Recovery do dia seguinte" correlacionava sono contra `recovery_score`,
+  mas **sono é 30% do recovery** (CONTEXT §3) — é a tautologia que o `detectCorrelations`
+  proíbe explicitamente (§2.3). Alvo trocado para **HRV do dia seguinte** (`nextDay.hrv`),
+  independente do sono. Eixo Y agora "HRV (ms)", domínio automático.
+- **Sem linha em regime misto:** se a janela de 30 dias cruza a quebra de sono de
+  **11/07/2026** (`REGIME_BREAK`), a reta é suprimida — uma reta sobre dois regimes mede
+  a mudança de rotina, não o corpo. Pontos coloridos por regime (pré = slate / pós = azul).
+- **Direção implausível anotada:** se `r < 0` e `p ≤ 0,05` (mais sono → menos HRV), o rodapé
+  explica que é o artefato que o `_hrvTrustFactor` já corrige no score — aqui aparece cru.
+
+### ACWR: gate de crônica mínima (respeita o motor)
+- `classifyTrainingLoad` (trends-gates): antes de classificar por ratio, se
+  `lowConfidence` **ou** `chronic < 4` pontos/semana (`ACWR_CHRONIC_MIN`), o card vira
+  estado **muted** ("Sem base de comparação"): sem vermelho, sem pill "Carga muito alta",
+  ponteiro cinza no centro. `ratio > 2` é marcado "fora de escala" em vez de saturar o
+  ponteiro em silêncio. Motivo: uma sessão depois de semanas parado infla a razão sem carga real.
+
+### Gate de recência nos cards de corrida (21 dias)
+- Volume semanal e Economia de corrida ficam **dormentes** quando a última corrida com
+  distância é > 21 dias atrás: sem pill de veredito, texto "Sem corridas nos últimos N
+  dias…". O histórico de Volume segue visível em cinza. Evita publicar "22% menos eficiente"
+  sobre um fóssil.
+
+### Peso: fonte única `weightTrend` (Hoje = Tendências)
+- Hoje mostrava "tendência real" (EWMA do FatLossEngine) e Tendências "média de 7 pesagens":
+  dois números para a mesma coisa. Nova função canônica **`weightTrend(checkins)`**
+  (`physiological-engine.js`) → `{ current, delta7, delta100d, samples }`, definida como
+  **média móvel de 7 pesagens**. `FatLossCard` (Hoje) e `WeightTrendCard` (Tendências)
+  consomem o mesmo `current` — nenhum recalcula por conta própria. O engine de corte
+  (fase/ritmo/ETA) segue por trás, mas não define mais o número exibido. **Não entra em
+  nenhuma fórmula de score.**
+
+### Vitalidade: janelas rotuladas (mesma engine, janelas diferentes)
+- Padrões (`BodyAgeCard`, pontual/últimos ~30 dias) mostrava 58; Tendências
+  (`LongevityTrendCard`, média móvel de 3 semanas) mostrava 55. Ambas usam `computeBodyAge`
+  — a divergência é legítima de janela. Em vez de dois números nus, cada tela **rotula a
+  própria janela**: "hoje" (Padrões) vs "média 3 semanas" (Tendências).
+
+### Outros (Onda 2)
+- Cada card fora do seletor 7D/30D/90D declara a própria janela numa t-micro cinza.
+  Subtítulo da página explicita que o seletor só rege o gráfico principal.
+- "Média de N dias": número perde o âmbar da série — recovery segue a gramática de zona
+  (`getZoneColor`), as demais métricas ficam neutras.
+- Bug do tooltip "faixa normal: 63101" corrigido: faixa `[lo, hi]` formatada como "lo–hi".
+- Eixo X já estava em dd/MM via `formatDateChart` em todos os gráficos — nenhum
+  `tickFormatter` extra foi adicionado (reprocessaria uma data já formatada e a quebraria).
+
 ## 2026-08-14 · Padrões/Insights — honestidade de dado + hierarquia (3 ondas)
 
 **Nenhuma fórmula tocada** (recovery, sono, strain, readiness, constantes intactos).
