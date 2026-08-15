@@ -7,7 +7,7 @@ import {
   XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell,
 } from 'recharts';
 import { computeCheckinScores, getZone, getZoneColor } from '@/lib/biocharge-utils';
-import { calculateTrainingLoad, calculateRunningEconomy, pearson, corrPValue } from '@/lib/physiological-engine';
+import { calculateTrainingLoad, calculateRunningEconomy, pearson, corrPValue, weightTrend } from '@/lib/physiological-engine';
 import {
   REGIME_BREAK,
   classifyTrainingLoad,
@@ -508,15 +508,18 @@ function WeightTrendCard({ checkins = [] }) {
     );
   }
 
+  // A série suavizada é só a VISUALIZAÇÃO. O número e o delta vêm da fonte única
+  // weightTrend() — o mesmo que o card "Corte" (Hoje) mostra. Nada é recalculado
+  // por conta própria aqui.
+  const wt = weightTrend(checkins);
   const smoothed = points.map((p, i) => {
     const window = points.slice(Math.max(0, i - 6), i + 1).map((w) => w.weight);
     const avg = window.reduce((s, v) => s + v, 0) / window.length;
     return { date: formatDateChart(p.rawDate), ma7: Number(avg.toFixed(2)) };
   });
 
-  const firstMa = smoothed[0].ma7;
-  const lastMa = smoothed[smoothed.length - 1].ma7;
-  const deltaKg = Number((lastMa - firstMa).toFixed(1));
+  const lastMa = wt.current;
+  const deltaKg = wt.delta100d ?? 0;
 
   const spanDays = Math.max(
     1,
@@ -548,7 +551,7 @@ function WeightTrendCard({ checkins = [] }) {
         </div>
         <div className="text-right shrink-0">
           <p className="text-lg font-semibold font-mono leading-none">
-            {lastMa.toFixed(1)}
+            {lastMa != null ? lastMa.toFixed(1) : '—'}
             <span className="text-xs font-semibold text-muted-foreground"> kg</span>
           </p>
           <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
@@ -579,7 +582,7 @@ function WeightTrendCard({ checkins = [] }) {
       </div>
 
       <p className="t-micro text-muted-foreground leading-relaxed border-t border-border/40 pt-2.5">
-        Baseado em {points.length} pesagens. O peso <span className="text-foreground/80">não entra</span> no seu recovery nem em correlações diárias — variação de 1 dia é quase só água. Aqui ele é só direção de médio prazo.
+        Baseado em {wt.samples} pesagens. O peso <span className="text-foreground/80">não entra</span> no seu recovery nem em correlações diárias — variação de 1 dia é quase só água. Aqui ele é só direção de médio prazo.
       </p>
     </motion.div>
   );

@@ -123,12 +123,14 @@ export default function BodyAgeCard() {
         {/* Vitalidade vira micro-gema (verde/âmbar/vermelha) — a constelação (ART)
            se estende dos satélites da Today pra cá; o peso do glifo carrega a
            magnitude, a cor carrega a faixa. */}
+        {/* Janela rotulada ("hoje") — a Tendências mostra a média de 3 semanas.
+           Mesma engine, janelas diferentes: rotular evita dois números nus. */}
         <RecoveryField
           value={r.vitality}
           max={100}
           color={vitColor}
           label="Vitalidade"
-          caption={vitFaixa}
+          caption={`${vitFaixa} · hoje`}
           size={104}
           live={false}
         />

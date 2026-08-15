@@ -83,6 +83,7 @@ export default function LongevityTrendCard() {
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold text-foreground">{trend.current.vitality}</p>
+          <p className="t-micro text-muted-foreground/70">média 3 semanas</p>
           <p className={`t-micro ${deltaColor}`}>
             {delta === 0 ? 'estável' : `${up ? '+' : ''}${delta} no período`}
           </p>
