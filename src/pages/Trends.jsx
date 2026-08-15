@@ -283,9 +283,52 @@ function StrainRecoveryBalanceCard({ checkins = [], sessions = [] }) {
   );
 }
 
+// Gate de recência dos cards de corrida: sem corrida recente, um veredito de
+// eficiência/volume vira leitura fóssil. Acima deste limite o card fica dormente.
+const RUN_RECENCY_DAYS = 21;
+
+function lastRunInfo(sessions) {
+  const runs = (sessions || [])
+    .filter(
+      (s) =>
+        s?.date &&
+        String(s.sport || '').toLowerCase().includes('corr') &&
+        Number(s.distance_km) > 0
+    )
+    .map((s) => parseLocalDate(s.date))
+    .filter(Boolean)
+    .sort((a, b) => b - a);
+  if (!runs.length) return null;
+  const last = runs[0];
+  const days = Math.floor((Date.now() - last.getTime()) / 86400000);
+  const dateStr = `${String(last.getDate()).padStart(2, '0')}/${String(last.getMonth() + 1).padStart(2, '0')}`;
+  return { days, dateStr };
+}
+
+function DormantRunCard({ icon: Icon, title, subtitle, run }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-card p-4">
+      <div className="flex items-start gap-3">
+        <Icon className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
+          {subtitle && <p className="t-micro text-muted-foreground/60 mt-0.5">{subtitle}</p>}
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            Sem corridas nos últimos {run.days} dias. Última em {run.dateStr}. A leitura volta quando houver corrida recente.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function RunningEconomyCard({ sessions = [] }) {
   const eco = useMemo(() => calculateRunningEconomy(sessions), [sessions]);
+  const run = lastRunInfo(sessions);
   if (!eco) return null;
+  if (run && run.days > RUN_RECENCY_DAYS) {
+    return <DormantRunCard icon={Gauge} title="Economia de corrida" run={run} />;
+  }
   const positive = eco.isImproving;
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-card tint-strain p-4 space-y-3.5">
@@ -381,31 +424,43 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
   const pct = prevKm > 0 ? Math.round((deltaKm / prevKm) * 100) : null;
   const DirIcon = deltaKm > 0.1 ? TrendingUp : deltaKm < -0.1 ? TrendingDown : Minus;
 
+  const run = lastRunInfo(sessions);
+  const dormant = run && run.days > RUN_RECENCY_DAYS;
+
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl bg-card tint-strain p-4 space-y-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
-          <Footprints className="w-4.5 h-4.5 text-amber-400 mt-0.5 shrink-0" />
+          <Footprints className={`w-4.5 h-4.5 mt-0.5 shrink-0 ${dormant ? 'text-muted-foreground' : 'text-amber-400'}`} />
           <div>
             <h3 className="text-sm font-semibold tracking-tight">Volume de corrida (semanal)</h3>
             <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Soma de km por semana (segunda a domingo). Só corridas com distância informada.
+              <span className="text-muted-foreground/60"> · por semana (seg-dom)</span>
             </p>
           </div>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-lg font-semibold font-mono leading-none">
-            {curKm.toFixed(1)}<span className="text-xs font-semibold text-muted-foreground"> km</span>
-          </p>
-          <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
-            <DirIcon className="w-3.5 h-3.5" />
-            <span className="t-micro font-mono">
-              {deltaKm > 0 ? '+' : ''}{deltaKm} km{pct != null ? ` (${pct > 0 ? '+' : ''}${pct}%)` : ''}
-            </span>
+        {!dormant && (
+          <div className="text-right shrink-0">
+            <p className="text-lg font-semibold font-mono leading-none">
+              {curKm.toFixed(1)}<span className="text-xs font-semibold text-muted-foreground"> km</span>
+            </p>
+            <div className="flex items-center justify-end gap-1 mt-1 text-muted-foreground">
+              <DirIcon className="w-3.5 h-3.5" />
+              <span className="t-micro font-mono">
+                {deltaKm > 0 ? '+' : ''}{deltaKm} km{pct != null ? ` (${pct > 0 ? '+' : ''}${pct}%)` : ''}
+              </span>
+            </div>
+            <p className="t-micro text-muted-foreground/70 mt-0.5">semana atual vs anterior</p>
           </div>
-          <p className="t-micro text-muted-foreground/70 mt-0.5">semana atual vs anterior</p>
-        </div>
+        )}
       </div>
+
+      {dormant && (
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Sem corridas nos últimos {run.days} dias. Última em {run.dateStr}. A leitura volta quando houver corrida recente.
+        </p>
+      )}
 
       <div role="img" aria-label="Gráfico de volume de corrida por semana" className="h-40">
         <ResponsiveContainer width="100%" height="100%">
@@ -414,7 +469,7 @@ function WeeklyRunningVolumeCard({ sessions = [] }) {
             <XAxis dataKey="label" tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fill: 'hsl(215,15%,45%)', fontSize: 10 }} axisLine={false} tickLine={false} width={30} />
             <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${Number(v).toFixed(1)} km`, 'Semana']} />
-            <Bar dataKey="km" fill="hsl(142,70%,50%)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="km" fill={dormant ? 'hsl(215,15%,35%)' : 'hsl(142,70%,50%)'} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -487,6 +542,7 @@ function WeightTrendCard({ checkins = [] }) {
             <h3 className="text-sm font-semibold tracking-tight">Peso — tendência lenta</h3>
             <p className="t-micro text-muted-foreground mt-0.5 leading-relaxed">
               Média de 7 pesagens. O dia-a-dia oscila por água e comida; o que importa é a direção.
+              <span className="text-muted-foreground/60"> · últimas ~100 pesagens</span>
             </p>
           </div>
         </div>
@@ -623,7 +679,7 @@ export default function Trends() {
 <div>
         <h1 className="t-hero font-bold">Tendências</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Evolução dos seus sinais fisiológicos ao longo do tempo.
+          O seletor acima controla o gráfico principal; os demais cards declaram a própria janela.
         </p>
       </div>
 
@@ -680,13 +736,18 @@ export default function Trends() {
         </span>
 
         <div className="flex items-baseline gap-2.5 flex-wrap">
+          {/* Sem âmbar da série no número: recovery segue a gramática de zona;
+              as demais métricas ficam neutras (text-foreground). */}
           <p
-            className="t-title font-semibold font-mono leading-none num"
-            style={{
-              color: selectedMetric === 'recovery_score' && periodAvg != null
-                ? getZoneColor(getZone(periodAvg))
-                : metricConfig?.color,
-            }}
+            className={cn(
+              't-title font-semibold font-mono leading-none num',
+              !(selectedMetric === 'recovery_score' && periodAvg != null) && 'text-foreground'
+            )}
+            style={
+              selectedMetric === 'recovery_score' && periodAvg != null
+                ? { color: getZoneColor(getZone(periodAvg)) }
+                : undefined
+            }
           >
             <CountUp value={periodAvg ?? '—'} />
           </p>

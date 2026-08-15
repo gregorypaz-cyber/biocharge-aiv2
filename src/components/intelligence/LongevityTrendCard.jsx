@@ -76,7 +76,10 @@ export default function LongevityTrendCard() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-semibold tracking-tight">Vitalidade ao longo do tempo</p>
-          <p className="t-micro text-muted-foreground mt-0.5">Recalculada por semana a partir do seu histórico.</p>
+          <p className="t-micro text-muted-foreground mt-0.5">
+            Recalculada por semana a partir do seu histórico.
+            <span className="text-muted-foreground/60"> · janelas móveis de 3 semanas</span>
+          </p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold text-foreground">{trend.current.vitality}</p>
