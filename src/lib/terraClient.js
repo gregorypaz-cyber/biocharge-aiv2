@@ -13,8 +13,10 @@
  * injetado em runtime — NÃO committado no código.
  */
 
-const SUPABASE_URL = import.meta.env?.VITE_TERRA_SUPABASE_URL || '';
-const SUPABASE_KEY = import.meta.env?.VITE_TERRA_SUPABASE_KEY || '';
+// Publishable key (anon) — segura para o frontend. A secret key (service role)
+// fica em backend (secret TERRA_SUPABASE_SECRET_KEY) e NUNCA no bundle.
+const SUPABASE_URL = 'https://anmyzcmrrgjvqorjqrvr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_nIuf4ql2djTbhumb21oGLA_ekc0xX_G';
 
 /**
  * Busca registros de wearables da Terra no Supabase.
