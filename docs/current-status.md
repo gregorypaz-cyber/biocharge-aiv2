@@ -1,6 +1,6 @@
 # Status atual — Reck / BioCharge AI
 
-> Atualizado em **14/08/2026**. Foto do estado vigente. Onde este arquivo divergir do código, **o código manda** — e quem corrigir a divergência atualiza este documento na mesma sessão.
+> Atualizado em **04/09/2026**. Foto do estado vigente. Onde este arquivo divergir do código, **o código manda** — e quem corrigir a divergência atualiza este documento na mesma sessão.
 
 ## Fórmulas em produção
 
@@ -57,5 +57,11 @@ strain/readiness/constantes intactos). Detalhe em `ai-decisions.md` (2026-08-14)
 
 ## Próximo passo
 
-- Redesign do `Insights.jsx`.
-- Codificação redundante de cor (zona comunicada só por matiz em Today/History).
+- Codificação redundante de zona (hoje a zona sai só por matiz em `Today.jsx:536` e `History.jsx:89/307`). Mockup em avaliação; patch ainda não escrito.
+
+## Auditoria de 04/09/2026
+
+- Redesign do `Insights.jsx` (14/08) e Tendências (15/08) **concluídos** — seguiam listados como "próximo".
+- Normalização de baseline **já implementada** (`BL_WINDOW_NIGHTS = 90`, `SLEEP_BL_WINDOW_NIGHTS = 90`).
+- Imports órfãos `PhysioStateCard` / `TrainingLoadCard` removidos do `Insights.jsx`.
+- **Última noite registrada: 26/08/2026** (via MCP). Sem check-in novo, nenhum gate congelado pode ser reavaliado.
