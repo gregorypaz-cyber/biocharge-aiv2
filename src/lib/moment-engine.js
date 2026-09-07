@@ -28,6 +28,7 @@ const ZONE_GREEN_STREAK = 6;   // verde é raro/troféu: só celebra sequência 
 const ZONE_RED_STREAK = 2;     // vermelho sustentado importa cedo (espelha o Monitor §7)
 const AWAKE_MIN_HISTORY = 10;  // "incomum pra você" precisa de régua pessoal
 const AWAKE_MIN_ABS = 2;       // e de uma diferença absoluta mínima pra ser "muito"
+const REENTRY_GAP_DAYS = 3;    // acima disto você acabou de voltar — sem afirmar rank/travessia "ao longo do tempo"
 
 const day = (s) => Math.round(Date.parse(s) / 86400000); // 'YYYY-MM-DD' → índice de dia (UTC)
 const daysBetween = (a, b) => Math.abs(day(b) - day(a));
@@ -50,6 +51,17 @@ function meanStd(values) {
   const m = values.reduce((a, b) => a + b, 0) / values.length;
   const v = values.reduce((a, b) => a + (b - m) ** 2, 0) / values.length;
   return { mean: m, std: Math.sqrt(v) };
+}
+
+/* Você acabou de voltar depois de sumir? Distância (em dias) entre a leitura de
+   hoje e a leitura anterior. Um rank "em N dias" ou uma "travessia de ontem pra
+   hoje" pressupõe continuidade: se faz muito tempo desde o último check-in, N
+   dias é quase todo buraco — e o app não pode afirmar honestamente algo que não
+   teve com que comparar. No 1º dia de volta, o silêncio é a resposta certa (§8);
+   o recorde ABSOLUTO ("que já registrei") continua válido, pois independe de gap. */
+function isReentry(desc) {
+  if (!desc || desc.length < 2) return false;
+  return daysBetween(desc[1].date, desc[0].date) > REENTRY_GAP_DAYS;
 }
 
 function sortedDesc(checkins) {
@@ -144,7 +156,10 @@ function detectHrvLow(desc) {
       signature: `hrv_low:absolute:${Math.round(today)}`,
     };
   }
-  if (depth != null && depth >= RANK_MIN_DEPTH) {
+  // "mais baixo em N dias" só é honesto com histórico recente contínuo: se você
+  // acabou de voltar depois de sumir, N dias é quase todo buraco — sem leitura
+  // com que comparar. O recorde absoluto acima independe disso e continua valendo.
+  if (depth != null && depth >= RANK_MIN_DEPTH && !isReentry(desc)) {
     return {
       id: 'hrv_low', priority: 60 + Math.min(depth, 40), tone: 'caution',
       text: `Teu HRV hoje é o mais baixo em ${depth} dias. Não é o fim do mundo — mas é sinal de segurar.`,
@@ -170,7 +185,7 @@ function detectRecoveryHigh(desc) {
       signature: `recovery_high:absolute:${Math.round(today)}`,
     };
   }
-  if (depth != null && depth >= RANK_MIN_DEPTH) {
+  if (depth != null && depth >= RANK_MIN_DEPTH && !isReentry(desc)) {
     return {
       id: 'recovery_high', priority: 58 + Math.min(depth, 40), tone: 'positive',
       text: `Melhor recovery em ${depth} dias. Se a vontade pedir, hoje aguenta.`,
@@ -183,6 +198,7 @@ function detectRecoveryHigh(desc) {
 
 function detectSleepDebtCrossing(desc) {
   if (desc.length < 8) return null;
+  if (isReentry(desc)) return null; // "cruzou de ontem pra hoje" exige um ontem real
   const today = sleepDebt(desc);
   const yesterday = sleepDebt(desc.slice(1));
   if (today == null || yesterday == null) return null;
@@ -245,6 +261,7 @@ function detectZoneStreak(desc) {
 
 function detectSleepDebtCleared(desc) {
   if (desc.length < 8) return null;
+  if (isReentry(desc)) return null; // idem: sem ontem, não há travessia a anunciar
   const today = sleepDebt(desc);
   const yesterday = sleepDebt(desc.slice(1));
   if (today == null || yesterday == null) return null;

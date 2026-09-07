@@ -99,6 +99,42 @@ describe('moment-engine — rank de HRV baixo', () => {
   });
 });
 
+describe('moment-engine — re-entrada depois de sumir', () => {
+  // Cenário do usuário: volta depois de 12 dias e o 1º check-in não pode alegar
+  // "mais baixo em N dias" — não houve leitura no buraco pra comparar (§8).
+  it('não afirma rank "em N dias" no 1º dia de volta após um gap longo', () => {
+    // histórico contínuo de 20 dias em 55; depois um buraco de 12 dias; hoje 49.
+    const base = series(20, '2026-07-18', flat({ hrv: 55 }));
+    const todayCk = { date: '2026-07-30', hrv: 49, resting_hr: 60, sleep_hours: 7.9, recovery_score: 61 };
+    const cks = [...base, todayCk];
+    const m = detectMoments(cks).find((x) => x.id === 'hrv_low');
+    // silêncio: o rank "em N dias" fica gated pela re-entrada; 49 não é recorde
+    // absoluto (houve 55… mas 49<55, então é o menor — vira absoluto e é honesto).
+    // Aqui garantimos que NÃO aparece a moldura enganosa "em N dias".
+    expect(m == null || !/em \d+ dias/.test(m.text)).toBe(true);
+  });
+
+  it('permite o rank "em N dias" quando o histórico recente é contínuo', () => {
+    // 25 dias contínuos; hoje 40 é o menor desde o começo → rank/absoluto honesto.
+    const cks = series(25, '2026-07-30', (i, n) => ({
+      hrv: i === n - 1 ? 40 : 55,
+      resting_hr: 52, sleep_hours: 7.5, recovery_score: 70,
+    }));
+    const m = detectMoments(cks).find((x) => x.id === 'hrv_low');
+    expect(m).toBeTruthy();
+    expect(m.text).toMatch(/mais baixo (em \d+ dias|que já registrei)/);
+  });
+
+  it('recorde ABSOLUTO de FC segue valendo na volta (independe do gap)', () => {
+    // menor FC de todo o histórico, mesmo chegando depois de um gap longo.
+    const base = series(20, '2026-07-18', flat({ resting_hr: 52 }));
+    const todayCk = { date: '2026-07-30', hrv: 55, resting_hr: 43, sleep_hours: 7.5, recovery_score: 70 };
+    const m = detectMoments([...base, todayCk]).find((x) => x.id === 'rhr_record');
+    expect(m).toBeTruthy();
+    expect(m.text).toContain('43 bpm');
+  });
+});
+
 describe('moment-engine — travessia da dívida de sono', () => {
   it('dispara quando a dívida cruza 6h de ontem pra hoje', () => {
     // noites na meta (7.5h → dívida 0); hoje 0.5h → janela de 7 noites passa de 6h

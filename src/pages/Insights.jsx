@@ -123,7 +123,6 @@ function BottleneckInsight({ bottleneck }) {
   }
 
   if (!bottleneck.hasSignal) {
-    const evaluated = bottleneck.evaluated || [];
     return (
       <div className="rounded-2xl border border-border/50 bg-card p-5">
         <div className="flex items-start gap-3">
@@ -137,26 +136,10 @@ function BottleneckInsight({ bottleneck }) {
               estão equilibrados. Isso costuma ser um bom sinal.
             </p>
 
-            {evaluated.length > 0 && (
-              <div className="mt-4 border-t border-border/30 pt-3">
-                <p className="t-micro font-semibold uppercase tracking-widest text-muted-foreground/80 mb-2.5">
-                  O que estou testando agora
-                </p>
-                <div className="space-y-1.5">
-                  {evaluated.map((e) => (
-                    <div key={e.label} className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-foreground/80 truncate">{e.label}</span>
-                      <span className="t-micro font-mono text-muted-foreground shrink-0">
-                        r = {e.r > 0 ? '+' : ''}{e.r} · n = {e.samples} · corte 0,35
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3">
-                  Nenhum passou o corte ainda. O silêncio aqui é proposital.
-                </p>
-              </div>
-            )}
+            <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-3">
+              Sigo cruzando teu sono, stress e treino com o HRV do dia seguinte. Assim
+              que um deles se destacar de verdade, ele aparece aqui.
+            </p>
           </div>
         </div>
       </div>
@@ -1382,13 +1365,68 @@ Regras:
         <PrimaryInsightCard item={primaryInsight} />
       )}
 
-      {/* Correlações — ficha técnica logo abaixo do herói, aberta por padrão:
-          é o conteúdo estatístico que sustenta o resto da tela. */}
+      {/* Sua evolução — glance de longo prazo ("estou melhorando?"), logo abaixo do herói. */}
+      {analysis?.longTermTrends && (
+        <LongTermTrendsCard trends={analysis.longTermTrends} />
+      )}
+
+      {/* O que mudou — UMA seção só. Antes eram três blocos ("Correlações"
+          aberta + "O que seu corpo está mostrando" + "Mudança recente"), todos
+          variações de "seus sinais recentes". Colapsadas num bloco de no máx. 3
+          itens (descobertas de padrão primeiro, mudanças recentes depois), sem
+          repetir o que o herói já disse. A ficha técnica (Correlações) desce
+          pra uma gaveta fechada logo abaixo. */}
+      {(() => {
+        const heroTitle = !analysis?.personalBottleneck ? primaryInsight?.title : null;
+        const merged = [
+          ...discoveries
+            .filter((d) => d.title !== heroTitle)
+            .map((d) => ({ kind: 'discovery', item: d })),
+          ...recentShifts
+            .filter((s) => s.title !== heroTitle)
+            .map((s) => ({ kind: 'shift', item: s })),
+        ].slice(0, 3);
+
+        return (
+          <div className="space-y-3">
+            <SectionHeader
+              title="O que mudou"
+              subtitle="Os sinais mais relevantes dos seus últimos dias."
+            />
+            {merged.length > 0 ? (
+              <div className="space-y-3">
+                {merged.map((m, i) =>
+                  m.kind === 'discovery' ? (
+                    <DiscoveryCard key={`disc-${m.item.title}-${i}`} item={m.item} />
+                  ) : (
+                    <SmallInsightCard
+                      key={`shift-${m.item.title}-${i}`}
+                      icon={m.item.icon}
+                      title={m.item.title}
+                      text={m.item.text}
+                      tone={m.item.tone}
+                    />
+                  )
+                )}
+              </div>
+            ) : (
+              <SmallInsightCard
+                icon={TrendingUp}
+                title="Sem mudança forte recente"
+                text="Nos seus dados atuais, nada mudou o bastante pra destacar aqui."
+                tone="neutral"
+              />
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Correlações — ficha técnica, agora gaveta FECHADA por padrão: quem quer
+          o detalhe estatístico abre; não compete com a leitura do dia. */}
       <ExpandableSection
         title="Correlações"
         subtitle="Relações estatísticas entre seus sinais (só aparecem quando |r| ≥ 0,35)."
         icon={TrendingUp}
-        defaultOpen
       >
         {analysis && (analysis.correlations?.length > 0 || analysis.laggedEffects?.length > 0) ? (
           <CorrelationsCard
@@ -1401,58 +1439,6 @@ Regras:
           </p>
         )}
       </ExpandableSection>
-
-      {/* Fronteira 3 — tendências de longo prazo ("estou melhorando?") */}
-      {analysis?.longTermTrends && (
-        <LongTermTrendsCard trends={analysis.longTermTrends} />
-      )}
-
-      {/* 1. High-value discoveries — só aparece quando há descoberta real.
-          Quando vazio, o herói no topo (PrimaryInsightCard) já cobre o aviso
-          de "ainda calibrando" — repetir aqui era duplicar a mesma mensagem. */}
-      {discoveries.length > 0 && (
-        <div className="space-y-3">
-          <SectionHeader
-  title="O que seu corpo está mostrando"
-  subtitle="Padrões e sinais recentes que ajudam a explicar sua recuperação."
-/>
-
-          <div className="space-y-3">
-            {discoveries.map((item, i) => (
-              <DiscoveryCard key={`${item.title}-${i}`} item={item} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 2. Recent shifts */}
-      <div className="space-y-3">
-        <SectionHeader
-  title="Mudança recente"
-  subtitle="O sinal mais relevante dos últimos 7–14 dias para ajustar sua rotina."
-/>
-
-        {recentShifts.length > 0 ? (
-          <div className="space-y-3">
-            {recentShifts.map((item, i) => (
-              <SmallInsightCard
-                key={`${item.title}-${i}`}
-                icon={item.icon}
-                title={item.title}
-                text={item.text}
-                tone={item.tone}
-              />
-            ))}
-          </div>
-        ) : (
-          <SmallInsightCard
-            icon={TrendingUp}
-            title="Sem mudança forte recente"
-            text="Nos seus dados atuais, não apareceu nenhuma mudança relevante o bastante para destacar nesta seção."
-            tone="neutral"
-          />
-        )}
-      </div>
 
      {/* 3. Pergunte ao Reck — superfície única de IA (leitura completa + coach).
          A "Gerar leitura completa" é a primeira sugestão da lista, não um card

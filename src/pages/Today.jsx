@@ -23,19 +23,16 @@ import MorningRecoveryCard from '@/components/today/MorningRecoveryCard';
 import TrainingSessionsList from '@/components/today/TrainingSessionsList';
 import SleepForecastCard from '@/components/today/SleepForecastCard';
 import WorkoutLoggedState from '@/components/today/WorkoutLoggedState';
-import NarrativeCard from '@/components/intelligence/NarrativeCard';
-import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardingCard';
 import SecondaryMetrics from '@/components/today/SecondaryMetrics';
 import HealthStatusCard from '@/components/today/HealthStatusCard';
 import RecoveryField from '@/components/today/RecoveryField';
 import ReckNotouCard from '@/components/today/ReckNotouCard';
 import RecoveryDriversCard from '@/components/today/RecoveryDriversCard';
 import DayFocusCard from '@/components/today/DayFocusCard';
-import FatLossCard from '@/components/today/FatLossCard';
 import QuickIntentEdit from '@/components/today/QuickIntentEdit';
 import AddTrainingModal from '@/components/training/AddTrainingModal';
 import { buildCardLayout } from '@/utils/priorityEngine';
-import { getDailyVerdict, getSleepDebtHours } from '@/lib/decision-engine';
+import { getDailyVerdict } from '@/lib/decision-engine';
 
 /* ═══ O RITUAL DA MANHÃ ═══════════════════════════════════════════════════
    Ao abrir o Hoje pela primeira vez na sessão, os elementos não aparecem de
@@ -1135,7 +1132,9 @@ const scheduledSport = todaySessions[0]?.sport ?? undefined;
 
     // 'current_state' (CurrentStateCard "Estado do corpo agora") foi consolidado
     // no card "Leitura de hoje" do herói — não renderizar separado.
-    const strip = (arr) => (arr || []).filter((d) => d?.id !== 'current_state');
+    // 'narrative' (prosa reflexiva) saiu do Hoje: não muda a decisão de hoje, e
+    // a superfície de "história/porquê" já vive em Padrões. Hoje = o que faço hoje.
+    const strip = (arr) => (arr || []).filter((d) => d?.id !== 'current_state' && d?.id !== 'narrative');
     layout.primary = strip(layout.primary);
     layout.secondary = strip(layout.secondary);
 
@@ -1367,11 +1366,6 @@ function renderCard(desc) {
           </div>
         );
 
-      case 'narrative':
-        return analysis?.narrative ? (
-          <NarrativeCard key="narrative" narrative={analysis.narrative} />
-        ) : null;
-
       case 'why_score':
         // (Colapsado) WhyScoreCard saiu: os drivers em prosa duplicavam "Seu
         // normal" (as bandas ±1σ visuais, mais premium). Um "porquê" só.
@@ -1600,8 +1594,6 @@ if (isLoading) {
         </motion.div>
       )}
 
-      <LongevityOnboardingCard />
-      
       {/* PAINEL (arco): logo depois do HERÓI (execution) vêm as cartas de
          inteligência — clímax → O Reck notou (emoção) → Seu normal (o porquê) →
          Foco de hoje (a ação) — e só DEPOIS a logística (leitura, missão, treinos,
@@ -1646,9 +1638,11 @@ if (isLoading) {
         return <React.Fragment key={desc.id}>{card}</React.Fragment>;
       })}
 
-      <FatLossCard checkins={sortedCheckins} />
-
-           {/* (Removido) TomorrowHookCard: previsão templated + fadiga-retardada causal +
+      {/* (Movido) Card "Corte" (FatLossCard): composição corporal é decisão de
+         longo prazo, não "o que faço hoje" — vive na tela Tendências, onde a
+         mesma weightTrend() já é exibida. Tirado do Hoje pra não competir com
+         a decisão do dia.
+         (Removido) TomorrowHookCard: previsão templated + fadiga-retardada causal +
           gancho "volte amanhã". A meta de sono real fica no SleepForecastCard. */}
 
 

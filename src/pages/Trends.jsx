@@ -28,6 +28,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import LongevityTrendCard from '@/components/intelligence/LongevityTrendCard';
+import LongevityOnboardingCard from '@/components/intelligence/LongevityOnboardingCard';
 import { useDrawOnView } from '@/hooks/useDrawOnView';
 import CountUp from '@/components/ui/CountUp';
 import { PRESS_CTRL } from '@/lib/motion-press';
@@ -1120,6 +1121,10 @@ export default function Trends() {
 
       {/* Economia de corrida — acende com ~4 corridas que tenham pace */}
       <RunningEconomyCard sessions={trainingSessions} />
+
+      {/* Onboarding de longevidade — nudge leve (só na 1ª sessão, some ao
+         preencher/pular). Movido do Hoje pra cá, onde a longevidade vive. */}
+      <LongevityOnboardingCard />
       <LongevityTrendCard />
     </div>
   );
