@@ -123,7 +123,6 @@ function BottleneckInsight({ bottleneck }) {
   }
 
   if (!bottleneck.hasSignal) {
-    const evaluated = bottleneck.evaluated || [];
     return (
       <div className="rounded-2xl border border-border/50 bg-card p-5">
         <div className="flex items-start gap-3">
@@ -137,26 +136,10 @@ function BottleneckInsight({ bottleneck }) {
               estão equilibrados. Isso costuma ser um bom sinal.
             </p>
 
-            {evaluated.length > 0 && (
-              <div className="mt-4 border-t border-border/30 pt-3">
-                <p className="t-micro font-semibold uppercase tracking-widest text-muted-foreground/80 mb-2.5">
-                  O que estou testando agora
-                </p>
-                <div className="space-y-1.5">
-                  {evaluated.map((e) => (
-                    <div key={e.label} className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-foreground/80 truncate">{e.label}</span>
-                      <span className="t-micro font-mono text-muted-foreground shrink-0">
-                        r = {e.r > 0 ? '+' : ''}{e.r} · n = {e.samples} · corte 0,35
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3">
-                  Nenhum passou o corte ainda. O silêncio aqui é proposital.
-                </p>
-              </div>
-            )}
+            <p className="t-micro text-muted-foreground/70 leading-relaxed mt-3 border-t border-border/30 pt-3">
+              Sigo cruzando teu sono, stress e treino com o HRV do dia seguinte. Assim
+              que um deles se destacar de verdade, ele aparece aqui.
+            </p>
           </div>
         </div>
       </div>
